@@ -34,9 +34,45 @@ SF(
 		if(port != void(0)){
 			this.listen(port, host);
 		}
+		
+		this.sockets = [];
+		this.forbidden = ["server"];
+		
+		this.openSocket();
 	},
 	{
-		forbidden: ["server"],
+		openSocket: function(){
+			var WebSocketServer = require("ws").Server;
+			var that = this;
+			
+			this.wss = new WebSocketServer({server: this.server});
+			this.wss.on('connection', function(ws){
+				var int = 0;
+				that.sockets.push(ws);
+				
+				setInterval(function(){
+						ws.send(JSON.stringify({action: "Sock", data: {test: 1}}), function() { /* ignore errors */ });
+				}, 1500);
+				
+				ws.on('close', function() {
+					console.log("connection closed");
+					clearInterval(int);
+					that.removeSocket(ws);
+				})
+				console.log("connection opened, total:", that.sockets.length);
+			});
+			
+		},
+		removeSocket: function(ws){
+			for(var i=0; i<this.sockets.length; i++){
+				if(this.sockets[i] == ws){
+					this.sockets[i] = this.sockets[this.sockets.length-1];
+					this.sockets.length = this.sockets.length - 1;
+					return;
+				}
+			}
+		},
+		
 		listen: function(port, host){
 			this.server.listen(port, host);
 		},
