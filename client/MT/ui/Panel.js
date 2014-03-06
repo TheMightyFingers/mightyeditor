@@ -1,6 +1,6 @@
 MT.require("ui.Button");
 MT.extend("ui.DomElement")(
-	MT.ui.Panel = function(events){
+	MT.ui.Panel = function(title, events){
 		MT.ui.DomElement.call(this);
 		this.hide();
 		this.addClass("ui-panel");
@@ -10,10 +10,12 @@ MT.extend("ui.DomElement")(
 		this.header.addClass("ui-header");
 		this.header.el.innerHTML = "PANEL";
 		
-		
+		this.header.height = 20;
 		
 		
 		this.addHeader();
+		
+		this.title = title;
 		
 		//this.header.style.height = "20px";
 		//this.header.height = 20;
@@ -29,10 +31,17 @@ MT.extend("ui.DomElement")(
 	},
 	{
 		addHeader: function(){
+			this.addChild(this.header);
 			this.header.show(this.el);
 		},
 		removeHeader: function(){
 			this.header.hide();
+		},
+		set title(val){
+			this.header.el.innerHTML = val;
+		},
+		get title(){
+			return this.header.el.innerHTML;
 		}
 		
 		

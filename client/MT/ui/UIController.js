@@ -6,7 +6,7 @@ MT.require("ui.Events");
 MT.require("ui.DomElement");
 
 MT(
-	MT.ui.Controller = function(){
+	MT.ui.UIController = function(){
 		this.events = new MT.ui.Events();
 		
 		//window.x = new MT.ui.DomElement();
@@ -52,17 +52,25 @@ MT(
 			this.addPanels();
 		},
 		
+		addPanel: function(name){
+			var panel = new MT.ui.Panel(name, this.events);
+			
+			this.right.addPanel(panel);
+			
+			return panel;
+		},
+   
 		addPanels: function(){
 			
 			this.panels = {
 				top: null,//new MT.ui.Panel(this.events),
-				left: new MT.ui.Panel(this.events)
+				left: new MT.ui.Panel("Untitled",this.events)
 			};
 			
 			//this.top.addPanel(this.panels.top);
 			
 			this.right.addPanel(this.panels.left);
-			this.right.addPanel(new MT.ui.Panel(this.events));
+			this.right.addPanel(new MT.ui.Panel("Untitled2",this.events));
 			
 		},
 		

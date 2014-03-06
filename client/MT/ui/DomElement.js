@@ -8,9 +8,24 @@ MT(
 		this.style.bottom = 0;
 		this.style.left = 0;
 		document.body.appendChild(this.el);
+		
+		this.childs = [];
 	},
 	{
 		_parent: null,
+		addChild: function(el){
+			el._parent = this.el.parentNode;
+			this.childs.push(el);
+		},
+		removeChild: function(child){
+			for(var i=0; i<this.childs.length; i++){
+				if(this.childs[i] == child){
+					this.childs[i] = this.childs[this.childs.length-1];
+					this.childs.length = this.childs.length - 1;
+					break;
+				}
+			}
+		},
 		show: function(parent){
 			this._parent = parent || this._parent || document.body;
 			if(this.el.parentNode == this._parent){
@@ -86,6 +101,9 @@ MT(
 			this._height = val;
 			this.style.bottom = 0;
 			this.style.bottom = (this.el.offsetHeight - val)+"px";
+			for(var i=0; i<this.childs.length; i++){
+				this.childs[i].height = this.childs[i]._height;
+			}
 		},
 	
 		_width: 0,
@@ -99,6 +117,9 @@ MT(
 			this._width = val;
 			this.style.right = 0;
 			this.style.right = (this.el.offsetWidth - val)+"px";
+			for(var i=0; i<this.childs.length; i++){
+				this.childs[i].width = this.childs[i]._width;
+			}
 		},
    
 		ox: 0,

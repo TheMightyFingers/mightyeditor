@@ -28,6 +28,9 @@ body{
 .ui-handle-v{
 	cursor: ns-resize;
 }
+.ui-seperator{
+	cursor: ns-resize;
+}
 
 .ui-holder.top{
 	text-align: center;
