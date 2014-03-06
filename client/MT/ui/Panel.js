@@ -1,29 +1,40 @@
 MT.require("ui.Button");
-MT(
-	MT.ui.Panel = function(){
-		this.el = document.createElement("div");
-		this.el.className = "panel";
-		this.el.style.top = 0;
-		this.el.style.left = 0;
-		this.el.style.right = 0;
-		this.el.style.position = "absolute";
-		this.append();
+MT.extend("ui.DomElement")(
+	MT.ui.Panel = function(events){
+		MT.ui.DomElement.call(this);
+		this.hide();
+		this.addClass("ui-panel");
+		this.style.backgroundColor = "rgba(0,0,255, 0.5)";
+		
+		this.header = new MT.ui.DomElement();
+		this.header.addClass("ui-header");
+		this.header.el.innerHTML = "PANEL";
+		
+		
+		
+		
+		this.addHeader();
+		
+		//this.header.style.height = "20px";
+		//this.header.height = 20;
+		
+		
+		this.events = events;
+		var that = this;
+		this.events.on("mousemove", function(e){
+			if(e.target == that.header){
+				console.log(that);
+			}
+		});
 	},
 	{
-		append: function(parent){
-			this.parent = parent || document.body;
-			this.parent.appendChild(this.el);
+		addHeader: function(){
+			this.header.show(this.el);
 		},
-		resize: function(w,h){
-			this.el.style.width = w;
-			this.el.style.height = h;
+		removeHeader: function(){
+			this.header.hide();
 		}
-		
-		
-		
-		
 		
 		
 	}
 );
-

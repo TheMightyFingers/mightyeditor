@@ -1,1 +1,42 @@
- 
+*{
+	padding: 0;
+	margin: 0;
+	border: 0px none;
+	user-select: none;
+	-webkit-user-select: none;
+}
+body{
+	background-color: #666;
+	color: #fff;
+	font-family: "Lucida Sans Unicode", "Lucida Grande", verdana, sans-serif;
+	font-size: 12px;
+	letter-spacing: 1.1px;
+}
+
+.ui-handle-h, .ui-handle-v, .ui-seperator{
+	z-index: 1;
+	background-color: rgba(255,0,0,0.5);
+}
+
+.ui-panel{
+	margin: 4px 0 0 4px;
+}
+
+.ui-handle-h{
+	cursor: ew-resize;
+}
+.ui-handle-v{
+	cursor: ns-resize;
+}
+
+.ui-holder.top{
+	text-align: center;
+	background-color: rgba(0, 0, 0, 0.25) !important;
+	border-top: 1px solid rgba(255,255,255,0.1) !important;
+	border-bottom: 1px solid rgba(0,0,0,0.4) !important;
+	margin: 0 0 1px 0;
+}
+.ui-holder.left{
+	background-color: rgba(0, 0, 0, 0.25);
+	border-right: 1px solid rgba(0,0,0,0.2);
+}

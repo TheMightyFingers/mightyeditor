@@ -9,7 +9,7 @@ MT.onReady(main);
 
 function main(){
 	var socket = new MT.Socket();
-	var ui = new MT.ui.Controller();
+	var ui = window.ui = new MT.ui.Controller();
 	
 	socket.on("open", function(){
 		console.log("connection opened");
@@ -21,6 +21,5 @@ function main(){
 	
 	socket.on("Sock", function(data){
 		//console.log("Sock", data);
-		
 	});
 }

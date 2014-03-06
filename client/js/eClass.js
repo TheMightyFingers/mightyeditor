@@ -261,8 +261,8 @@
 				if(pd.set || pd.get){
 					var pdp = Object.getOwnPropertyDescriptor(parentClass.prototype, key);
 					Object.defineProperty(fn.prototype, key, {
-						set: pd.set || pdp.set,
-						get: pd.get || pdp.get
+						set: pd.set || (pdp ? pdp.set : void(0)) ,
+						get: pd.get || (pdp ? pdp.get : void(0))
 					});
 				}
 			}

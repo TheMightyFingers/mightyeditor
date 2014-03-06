@@ -1,5 +1,5 @@
 "use strict";
-require("../client/src/eClass.js");
+require("../client/js/eClass.js");
 createClass("SF", global, require("path").resolve(""));
 
 SF.require("http.Httpd");
