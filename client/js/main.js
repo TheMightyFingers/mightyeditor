@@ -3,7 +3,7 @@ console.log("Hello World!");
 var MT = createClass("MT", "js");
 MT.require("Core");
 MT.require("Socket");
-MT.require("ui.Controller");
+MT.require("ui.UIController");
 MT.require("plugins.PluginController");
 
 MT.onReady(main);
@@ -13,7 +13,12 @@ function main(){
 	var socket = new MT.Socket();
 	var ui = window.ui = new MT.ui.UIController();
 	
-	new MT.plugins.MapEditor(ui);
+	new MT.plugins.PluginController(ui);
+	
+	
+	
+	
+	
 	
 	socket.on("open", function(){
 		console.log("connection opened");

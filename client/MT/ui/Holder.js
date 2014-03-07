@@ -100,17 +100,39 @@ MT.extend("ui.DomElement")(
 			
 			this.seperators.push(sep);
 			
+			for(var i=0; i<this.seperators.length; i++){
+				this.seperators[i].aligned = false;
+			}
+			
+			
 		},
 		
-		moveSeperator: function(id){
+		moveSeperator: function(id, koef){
+			
+			if(koef == void(0)){
+				koef = 1;
+			}
 			var sep = this.seperators[id];
+			
+			var ph = 0;
+			var n = this.el.offsetHeight;
+			
+			if(id > 0){
+				ph = this.seperators[id-1].y;
+			}
+			
+			if(id < this.seperators.length-1){
+				n = this.seperators[id+1].y;
+			}
+			
+			
 			var p1 = this.panels[id];
 			var p2 = this.panels[id+1];
 			
 			
 			if(this.position == MT.ui.position.LEFT || this.position == MT.ui.position.RIGHT){
 				
-				var val = this.events.mouse.my;
+				var val = this.events.mouse.my * koef;
 				if(sep.oy != 0){
 					val += sep.oy;
 					sep.oy = 0;
@@ -128,13 +150,12 @@ MT.extend("ui.DomElement")(
 				}
 				
 				else{
-					sep.y = sep.y + this.events.mouse.my;
+					sep.y = sep.y + val;
 				}
 				
-				var h = p1.height;
-				p1.height = sep.y;
-				p2.height += (h - sep.y);
+				p1.height = sep.y - ph;
 				p2.y = sep.y;
+				p2.height = n - sep.y;
 				
 			}
 		},
@@ -192,6 +213,11 @@ MT.extend("ui.DomElement")(
 			}
 			
 			this.setPosition(this.position);
+			
+			for(var i=0; i<this.seperators.length; i++){
+				this.moveSeperator(i, 0.5);
+			}
+			
 		},
 		
 		set resizeable(val){
@@ -204,7 +230,6 @@ MT.extend("ui.DomElement")(
 		},
 		
 		resize: function(e){
-			console.log(this.events.mouse.mx);
 			
 			if(this.position == MT.ui.position.LEFT){
 				this.width += this.events.mouse.mx;
@@ -250,6 +275,7 @@ MT.extend("ui.DomElement")(
 			this.bottom.push(holder);
 			this.setPosition(this.position);
 		},
+		
 		getBottom: function(){
 			var ret = 0;
 			for(var i=0; i<this.bottom.length; i++){
@@ -337,7 +363,9 @@ MT.extend("ui.DomElement")(
 			if(!this.panels.length){
 				return;
 			}
-				
+			
+			
+			
 			var off = 0;
 			if(this.position == MT.ui.position.TOP || this.position == MT.ui.position.BOTTOM){
 				for(var i=1; i<this.seperators.length; i++){
@@ -350,16 +378,14 @@ MT.extend("ui.DomElement")(
 						this.seperators[i].width = 4;
 						this.seperators[i].aligned = true;
 					}
-					
 				}
 			}
+			
 			
 			var s = this.el.offsetHeight / this.panels.length;
 			off = 0;
 			
 			if(this.position == MT.ui.position.LEFT || this.position == MT.ui.position.RIGHT){
-				var heights = [];
-				var pos = [0];
 				for(var i=0; i<this.seperators.length; i++){
 					off += s;
 					if(!this.seperators[i].aligned){
@@ -369,27 +395,13 @@ MT.extend("ui.DomElement")(
 					}
 					else{
 						this.seperators[i].height = 4;
-					}
-					pos.push(this.seperators[i].y);
-				}
-				
-				
-				this.panels[0].y = 0;
-				if(this.seperators.length > 0){
-					off = this.seperators[0].y;
-					this.panels[0].height = off;
-					
-					for(var i=1; i<this.panels.length; i++){
-						this.panels[i].y = off;
-						if(i < this.seperators.length){
-							this.panels[i].height = off + this.seperators[i].y;
-						}
-						else{
-							this.panels[i].height = this.el.offsetHeight - off;
-						}
+						this.seperators[i].y = this.seperators[i].y;
 					}
 				}
 				
+				for(var i=0; i<this.seperators.length; i++){
+					this.moveSeperator(i, 0);
+				}
 				
 			}
 		},

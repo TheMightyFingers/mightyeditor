@@ -27,7 +27,7 @@ MT(
 			this.top.el.className += " top";
 			
 			this.top.resizeable = false;
-			
+			this.top.show(document.body);
 			
 			
 			this.left = new MT.ui.Holder(MT.ui.position.LEFT, this.events);
@@ -35,10 +35,14 @@ MT(
 			this.left.resizeable = false;
 			this.left.addTop(this.top);
 			this.left.el.className += " left";
+			this.left.show(document.body);
+			
 			
 			this.bottom = new MT.ui.Holder(MT.ui.position.BOTTOM, this.events);
 			this.bottom.height = 200;
 			this.bottom.addLeft(this.left);
+			this.bottom.show(document.body);
+			
 			
 			//this.left.addBottom(this.bottom);
 			
@@ -46,8 +50,8 @@ MT(
 			
 			this.right.addTop(this.top);
 			this.right.addBottom(this.bottom);
-			this.right.width = 220;
-			
+			this.right.width = 320;
+			this.right.show(document.body);
 			
 			this.addPanels();
 		},
@@ -62,6 +66,7 @@ MT(
    
 		addPanels: function(){
 			
+			/*
 			this.panels = {
 				top: null,//new MT.ui.Panel(this.events),
 				left: new MT.ui.Panel("Untitled",this.events)
@@ -71,7 +76,7 @@ MT(
 			
 			this.right.addPanel(this.panels.left);
 			this.right.addPanel(new MT.ui.Panel("Untitled2",this.events));
-			
+			*/
 		},
 		
 		addEvents: function(){

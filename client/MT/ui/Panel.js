@@ -9,16 +9,20 @@ MT.extend("ui.DomElement")(
 		this.header = new MT.ui.DomElement();
 		this.header.addClass("ui-header");
 		this.header.el.innerHTML = "PANEL";
-		
 		this.header.height = 20;
-		
 		
 		this.addHeader();
 		
 		this.title = title;
 		
-		//this.header.style.height = "20px";
-		//this.header.height = 20;
+		
+		this.content = new MT.ui.DomElement();
+		this.addChild(this.content);
+		this.content.show(this.el);
+		this.content.y = this.header.height;
+		
+		this.content.style.overflow = "auto";
+		
 		
 		
 		this.events = events;
