@@ -2,16 +2,16 @@ MT.require("ui.Button");
 MT.extend("ui.DomElement")(
 	MT.ui.Panel = function(title, events){
 		MT.ui.DomElement.call(this);
-		this.hide();
+		
 		this.addClass("ui-panel");
-		this.style.backgroundColor = "rgba(0,0,255, 0.5)";
+		//this.style.backgroundColor = "rgba(0,0,0, 0.5)";
 		
 		this.header = new MT.ui.DomElement();
-		this.header.addClass("ui-header");
+		this.header.addClass("ui-panel-header");
 		this.header.el.innerHTML = "PANEL";
 		this.header.height = 20;
 		
-		this.addHeader();
+		
 		
 		this.title = title;
 		
@@ -24,6 +24,9 @@ MT.extend("ui.DomElement")(
 		this.content.style.overflow = "auto";
 		
 		
+		this.addHeader();
+		this.hide();
+		
 		
 		this.events = events;
 		var that = this;
@@ -32,6 +35,12 @@ MT.extend("ui.DomElement")(
 				console.log(that);
 			}
 		});
+		
+		this.events.on("resize", function(){
+			that.update();
+			
+		});
+
 	},
 	{
 		addHeader: function(){
@@ -41,6 +50,21 @@ MT.extend("ui.DomElement")(
 		removeHeader: function(){
 			this.header.hide();
 		},
+		
+		addButton: function(title, className, events, cb){
+			var b = new MT.ui.Button(title, className, events, cb);
+			
+			var off = 0;
+			for(var i=0; i<this.children.length; i++){
+				off += this.children[i].width;
+			}
+			
+			b.x += off;
+			
+			this.addChild(b);
+			return b;
+		},
+		
 		set title(val){
 			this.header.el.innerHTML = val;
 		},

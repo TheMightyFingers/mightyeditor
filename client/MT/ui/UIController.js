@@ -17,6 +17,23 @@ MT(
 		this.addEvents();
 		
 		
+		this.topPanel= this.addPanel("top-buttons", this.top);
+		
+		this.topPanel.removeHeader();
+		this.topPanel.addClass("top");
+		
+		var logo = this.topPanel.addButton(null, "logo", this.events, function(e){
+			console.log("clicked", e);
+		});
+		logo.width = 70;
+		logo.style.lineHeight = this.topPanel.el.offsetHeight+"px";
+		
+		
+		/*var ex = this.topPanel.addButton("Export", null, this);
+		ex.width = 70;
+		ex.style.lineHeight = this.topPanel.el.offsetHeight+"px";
+		*/
+		
 	},
 	{
 		
@@ -56,10 +73,12 @@ MT(
 			this.addPanels();
 		},
 		
-		addPanel: function(name){
+		addPanel: function(name, parent){
 			var panel = new MT.ui.Panel(name, this.events);
 			
-			this.right.addPanel(panel);
+			var parent = parent || this.right;
+			
+			parent.addPanel(panel);
 			
 			return panel;
 		},

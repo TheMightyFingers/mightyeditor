@@ -4,7 +4,7 @@ MT.require("plugins.AssetsManager");
 
 
 MT(
-	MT.plugins.PluginController = function(ui){
+	MT.plugins.PluginController = function(ui, socket){
 		
 		var MapEditor = new MT.plugins.MapEditor();
 		var AssetsManager = new MT.plugins.AssetsManager();
@@ -12,7 +12,9 @@ MT(
 		if(ui){
 			AssetsManager.initUI(ui);
 			MapEditor.initUI(ui);
-			
+		}
+		if(socket){
+			AssetsManager.initSocket(socket);
 		}
 		
 		

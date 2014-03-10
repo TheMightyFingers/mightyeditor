@@ -1,7 +1,7 @@
 "use strict";
 
-SF(
-	SF.http.Httpd = function(root, port, host){
+MT(
+	MT.http.Httpd = function(root, port, host){
 		this.root = root;
 		
 		this.http = require("http");
@@ -35,31 +35,16 @@ SF(
 			this.listen(port, host);
 		}
 		
-		this.sockets = [];
 		this.forbidden = ["server"];
-		
-		this.openSocket();
 	},
 	{
-		openSocket: function(){
+		openSocket: function(handler){
 			var WebSocketServer = require("ws").Server;
 			var that = this;
 			
 			this.wss = new WebSocketServer({server: this.server});
 			this.wss.on('connection', function(ws){
-				var int = 0;
-				that.sockets.push(ws);
-				
-				setInterval(function(){
-						ws.send(JSON.stringify({action: "Sock", data: {test: 1}}), function() { /* ignore errors */ });
-				}, 1500);
-				
-				ws.on('close', function() {
-					console.log("connection closed");
-					clearInterval(int);
-					that.removeSocket(ws);
-				})
-				console.log("connection opened, total:", that.sockets.length);
+				handler(ws);
 			});
 			
 		},
@@ -79,15 +64,6 @@ SF(
 		
 		serve: function(req, res){
 			var that = this;
-			
-			/*if(this.cache[req.url]){
-				res.setHeader("content-length", this.cache[req.url].stats.size);
-				res.setHeader("content-type", this.cache[req.url].mime);
-				
-				res.writeHead(200);
-				res.end(this.cache[req.url].content);
-				return;
-			}*/
 			
 			this.fs.stat(req.url, function(err, stats){
 				if(err){

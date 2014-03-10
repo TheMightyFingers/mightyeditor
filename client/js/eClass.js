@@ -39,8 +39,11 @@
 		Loader = function(className, accumulator){};
 		
 		Loader.prototype = {
-			getScript: function(script){
+			getScript: function(script, cb){
 				require(path.resolve(script));
+				if(cb){
+					cb();
+				}
 			}
 		};
 	}

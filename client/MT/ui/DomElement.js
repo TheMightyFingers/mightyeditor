@@ -7,23 +7,72 @@ MT(
 		this.style.right = 0;
 		this.style.bottom = 0;
 		this.style.left = 0;
+		this.el.ctrl = this;
 		
-		this.childs = [];
+		this.index = 0;
+		
+		this.children = [];
 	},
 	{
 		_parent: null,
-		addChild: function(el){
+		addChild: function(el, index){
 			el._parent = this.el;
-			this.childs.push(el);
+			el.parent = this;
+			
+			if(index != void(0)){
+				el.index = index;
+			
+				for(var i=0; i<this.children.length; i++){
+					if(this.children[i].index >= index){
+						this.children[i].index++;
+					}
+				}
+				
+				this.children.push(el);
+				
+				this.sortChildren();
+			}
+			else if(index == void(0)){
+				el.index = this.children.length;
+				this.children.push(el);
+			}
+
+			
+			
 			el.show(el._parent);
 			return el;
 		},
+		
+		sortChildren: function(){
+			var c = null;
+			var children = [];
+			
+			this.children.sort(function(a, b){
+				return a.index - b.index;
+			});
+			
+			for(var i=0; i<this.children.length; i++){
+				var c = this.children[i];
+				children.push(c);
+				if(c.el.parentNode){
+					c.el.parentNode.removeChild(c.el);
+				}
+			}
+			
+			this.children.length = 0;
+			
+			for(var i=0; i<children.length; i++){
+				this.addChild(children[i]);
+			}
+		},
+   
 		removeChild: function(child){
-			for(var i=0; i<this.childs.length; i++){
-				if(this.childs[i] == child){
-					this.childs[i] = this.childs[this.childs.length-1];
-					this.childs.length = this.childs.length - 1;
-					break;
+			for(var i=0; i<this.children.length; i++){
+				if(this.children[i] == child){
+					this.children[i] = this.children[this.children.length-1];
+					this.children.length = this.children.length - 1;
+					this.sortChildren();
+					return child;
 				}
 			}
 		},
@@ -72,6 +121,17 @@ MT(
 			return false;
 		},
 		
+   
+		update: function(){
+			this.height = this._height;
+			this.width = this._width;
+			for(var i=0; i<this.children.length; i++){
+				this.children[i].height = this.children[i]._height;
+				this.children[i].width = this.children[i]._width;
+			}
+			
+		},
+   
 		_x: 0,
 		set x(val){
 			this._x = val;
@@ -100,17 +160,17 @@ MT(
 			this._height = val;
 			
 			if(!val){
-				for(var i=0; i<this.childs.length; i++){
-					this.childs[i].height = this.childs[i]._height;
+				for(var i=0; i<this.children.length; i++){
+					this.children[i].height = this.children[i]._height;
 				}
 				return;
 			}
 			
-			this.style.lineHeight = this._height+"px";
+			//this.style.lineHeight = this._height+"px";
 			this.style.bottom = 0;
 			this.style.bottom = (this.el.offsetHeight - val)+"px";
-			for(var i=0; i<this.childs.length; i++){
-				this.childs[i].height = this.childs[i]._height;
+			for(var i=0; i<this.children.length; i++){
+				this.children[i].height = this.children[i]._height;
 			}
 		},
 	
@@ -125,9 +185,20 @@ MT(
 			this._width = val;
 			this.style.right = 0;
 			this.style.right = (this.el.offsetWidth - val)+"px";
-			for(var i=0; i<this.childs.length; i++){
-				this.childs[i].width = this.childs[i]._width;
+			for(var i=0; i<this.children.length; i++){
+				this.children[i].width = this.children[i]._width;
 			}
+		},
+   
+		calcOffsetY: function(upTo){
+			var ret = this.el.offsetTop;
+			p = this.el.parentNode;
+			while(p && p != upTo){
+				ret += p.offsetTop;
+				p = p.parentNode;
+				
+			}
+			return ret;
 		},
    
 		ox: 0,

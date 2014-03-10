@@ -13,7 +13,7 @@ function main(){
 	var socket = new MT.Socket();
 	var ui = window.ui = new MT.ui.UIController();
 	
-	new MT.plugins.PluginController(ui);
+	new MT.plugins.PluginController(ui, socket);
 	
 	
 	

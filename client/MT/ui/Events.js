@@ -4,7 +4,13 @@ MT(
 		this.events = {
 			mousemove: [],
 			mouseup: [],
-			mousedown: []
+			mousedown: [],
+			drop: [],
+			dragend: [],
+			drag: [],
+			dragover:[],
+			click: [],
+			resize: []
 		};
 		
 		this._cbs = [];
@@ -26,7 +32,7 @@ MT(
 				
 				var cb = this._mk_cb(i);
 				this._cbs.push(cb);
-				document.body.addEventListener(i, cb);
+				window.addEventListener(i, cb, false);
 			}
 		},
 		
@@ -87,17 +93,26 @@ MT(
 		},
 		_mk_cb: function(type){
 			if(type == "mousemove"){
-				
 				return this._mk_mousemove();
 			}
 			
 			
 			var that = this;
 			var cb = function(e){
+				e = e || event;
+				e.preventDefault();
+				if(e.ctrlKey){
+					console.log(e, type);
+				}
 				that.emit(type, e);
 			};
 			cb.type = type;
 			return cb;
+		},
+		
+		_mk_drop: function(e){
+			e.preventDefault();
+			
 		}
 	   
 	   

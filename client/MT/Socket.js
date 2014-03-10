@@ -1,11 +1,3 @@
-
-/*
-  //    var ws = new WebSocket('ws://' + host + ':8080');
-  //    ws.onmessage = function (event) {
-  //      updateStats(JSON.parse(event.data));
-  //    }; 
- 
-*/
 MT(
 	MT.Socket = function(url, autoconnect){
 		if(url){
@@ -26,6 +18,13 @@ MT(
 		this._onerror = [];
 		this._onmessage = [];
 		
+		this._toSend = [];
+		
+		this.sendObject = {
+			channel: "",
+			action: "",
+			data: null
+		};
 	},
 	{
 		connect: function(url){
@@ -43,9 +42,6 @@ MT(
 			
 			this.ws.onmessage = function (event) {
 				var data = JSON.parse(event.data);
-				if(!data.action){
-					console.warn("undefined action", event.data);
-				}
 				that.emit(data.action, data.data);
 				
 			};
@@ -60,6 +56,40 @@ MT(
 			};
 			
 			return this.connection;
+		},
+		
+		delay: 0,
+		
+		send: function(channel, action, data){
+			if(this.ws.readyState == this.ws.OPEN){
+				this.sendObject.channel = channel;
+				this.sendObject.action = action;
+				this.sendObject.data = data;
+				this.ws.send(JSON.stringify(this.sendObject));
+				return;
+			}
+			
+			this._toSend.push([channel, action, data]);
+			if(this.delay === 0){
+				var that = this;
+				this.delay = window.setTimeout(function(){
+					that.sendDelayed();
+				}, 100);
+			}
+		},
+		sendDelayed: function(){
+			if(this.ws.readyState !== this.ws.OPEN){
+				var that = this;
+				this.delay = window.setTimeout(function(){
+					that.sendDelayed();
+				}, 100);
+				return;
+			}
+			
+			for(var i=0; i<this._toSend.length; i++){
+				this.send.apply(this, this._toSend[i]);
+			}
+			
 		},
    
 		on: function(type, cb){
@@ -127,6 +157,7 @@ MT(
    
 		emit: function(type, data){
 			if(!this.callbacks[type]){
+				console.warn("received unhandled data", type, data);
 				return;
 			}
 			var cbs = this.callbacks[type];
