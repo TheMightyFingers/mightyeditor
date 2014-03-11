@@ -8,8 +8,17 @@ MT.extend("core.SocketManager")(
 		
 	},
 	{
-		get: function(data){
-			this.send("assets",{
+		sendFiles: function(path){
+			var that = this;
+			MT.core.FS.readdir(path, true, function(data){
+				console.log("data", data);
+				that.send("receiveFileList", {files: data});
+				that.send("receiveFileList", {files: data});
+			});
+		},
+		
+		getAssets: function(data){
+			this.send("receiveFileList",{
 				files: [
 					{
 						name: "test1.png",

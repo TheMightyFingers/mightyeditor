@@ -130,7 +130,7 @@ MT(
 		},
 		
 		alignCenter: function(){
-			this.center.style.top = this.top.height + "px";
+			this.center.style.top = this.top.el.offsetHeight + "px";
 			this.center.style.bottom = this.bottom.height + "px";
 			this.center.style.left = this.left.width + "px";
 			this.center.style.right = this.right.width + "px";

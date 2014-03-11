@@ -253,7 +253,7 @@ MT.extend("ui.DomElement")(
 		getTop: function(){
 			var ret = 0;
 			for(var i=0; i<this.top.length; i++){
-				ret += this.top[i].height;
+				ret += this.top[i].el.offsetHeight;
 			}
 			return ret;
 		},
@@ -364,6 +364,9 @@ MT.extend("ui.DomElement")(
 				return;
 			}
 			
+			for(var i=0; i<this.panels.length; i++){
+				this.panels[i].height = this.panels[i]._height;
+			}
 			
 			
 			var off = 0;

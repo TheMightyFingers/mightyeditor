@@ -2,7 +2,7 @@ MT.require("ui.TreeView");
 
 MT.extend("core.BasicPlugin")(
 	MT.plugins.AssetsManager = function(){
-		
+		this.name = "assets";
 		
 	},
 	{
@@ -38,32 +38,31 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		initSocket: function(socket){
-			var that = this;
-			this.socket = socket;
-			socket.on("assets", function(list){
-				that.handleSocket(list);
-			});
-			
-			socket.send("assets","get");
+			MT.core.BasicPlugin.initSocket.call(this, socket);
+		},
+		
+		receiveFileList: function(list){
+			this.buildAssetsTree(list);
 			
 		},
 		
 		handleSocket: function(list){
-			this.buildAssetsTree(list);
+			
 			
 		},
    
 		buildAssetsTree: function(list){
 			
+			if(!this.tv){
+				var tv = window.tv = this.tv = new MT.ui.TreeView(list.files);
+			}
+			else{
+				this.tv.update(list.files);
+			}
+		
+			this.tv.tree.show(this.panel.content.el);
 			
-			
-			
-			var tv = window.tv = new MT.ui.TreeView(list.files);
-			tv.tree.show(this.panel.content.el);
-			
-			tv.sortable(this.ui.events);
-			
-			console.log(tv.getData());
+			this.tv.sortable(this.ui.events);
 			
 		}
 	}

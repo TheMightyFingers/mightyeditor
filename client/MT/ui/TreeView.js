@@ -48,6 +48,12 @@ MT(
 			}
 			return data;
 		},
+		
+		update: function(data){
+			this.tree.el.innerHTML = "";
+			
+			this.createObject(data, this.tree);
+		},
    
 		addItem: function(data, type, parent, isVirtual){
 			var el = new MT.ui.DomElement();

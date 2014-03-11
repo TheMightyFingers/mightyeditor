@@ -42,8 +42,7 @@ MT(
 			
 			this.ws.onmessage = function (event) {
 				var data = JSON.parse(event.data);
-				that.emit(data.action, data.data);
-				
+				that.emit(data.channel, data.action, data.data);
 			};
 			
 			this.ws.onerror = function(err){
@@ -155,14 +154,14 @@ MT(
 			}
 		},
    
-		emit: function(type, data){
+		emit: function(type, action, data){
 			if(!this.callbacks[type]){
 				console.warn("received unhandled data", type, data);
 				return;
 			}
 			var cbs = this.callbacks[type];
 			for(var i=0; i<cbs.length; i++){
-				cbs[i](data);
+				cbs[i](action, data);
 			}
 			
 		}

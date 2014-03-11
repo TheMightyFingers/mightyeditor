@@ -16,14 +16,14 @@ body{
 
 .ui-handle-h, .ui-handle-v, .ui-seperator{
 	z-index: 1;
-	visibility: hidden;
-	background-color: rgba(255,0,0,0.5);
+	opacity: 0.5;
+	background: linear-gradient(to bottom, #1e5799 0%,#1e5799 9%,#2989d8 51%,#7db9e8 88%);
 }
 .ui-holder:hover .ui-handle-h, .ui-holder:hover .ui-handle-v, .ui-holder:hover .ui-seperator{
-	visibility: visible;
+	opacity: 0.9;
 }
 .ui-panel{
-	margin: 4px 0 0 4px;
+	margin: 1px 0 0 4px;
 }
 
 .ui-panel-header{
@@ -139,4 +139,5 @@ body{
 	letter-spacing: 0;
 	display: block;
 	border-right: 1px solid rgba(255,255,255,0.1);
+	line-height: 27px
 }

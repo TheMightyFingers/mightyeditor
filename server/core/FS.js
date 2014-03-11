@@ -44,7 +44,7 @@
 		readdir: function(dir, recurse, cb){
 			var buffer = [];
 			if(this.queue.length === 0){
-				this._readdir(dir, recurse, cb);
+				this._readdir(dir, recurse, buffer, cb);
 				return;
 			}
 			this.queue.push([this._readdir, dir, recurse, buffer, cb]);//no arguments
@@ -62,42 +62,54 @@
 			
 			
 			
-			fs.readdir(dir, function(files, err){
-				var toRead = 0;
-				for(var i=0; i<files.length; i++){
-					fs.lstat(files[i], function(stats){
-						if(stats.isDirectory()){
-							buffer.push({
-								name: files[i],
-								contents: []
-							});
-							if(recurse){
-								toRead++;
-								that._readdir(dir + path.sep + files[i], recurse, buffer, function(){
-									toRead--;
-									if(toRead == 0){
-										process();
-									}
-								});
-							}
-							
-						}
-						else{
-							buffer.push({
-								name: files[i]
-							});
-						}
-					})
+			fs.readdir(dir, function(err, files){
+				if(err){
+					console.log("FS:EROR",err);
 				}
-				
-				if(toRead === 0){
-					process();
-				}
-				
+				that._readdir_stat(dir, files, 0, process, buffer, recurse);
 			});
 			
 		},
 		
+ 
+		_readdir_stat: function(dir, list, index, cb, buffer, recurse){
+			if(index >= list.length){
+				cb(buffer);
+				return;
+			}
+			var file = list[index];
+			var toRead = 0;
+			
+			console.log("stat: ", dir + path.sep + file);
+			
+			fs.lstat(dir + path.sep + file, function(err, stats){
+				if(stats.isDirectory()){
+					buffer.push({
+						name: file,
+						contents: []
+					});
+					if(recurse){
+						toRead++;
+						that._readdir(dir + path.sep + file, recurse, buffer[buffer.length-1].contents, function(){
+							toRead--;
+							if(toRead == 0){
+								that._readdir_stat(dir, list, index + 1, cb, buffer);
+							}
+						});
+					}
+				}
+				else{
+					buffer.push({
+						name: file
+					});
+				}
+				
+				if(toRead == 0){
+					that._readdir_stat(dir, list, index + 1, cb, buffer);
+				}
+			});
+		},
+ 
 		processQueue: function(){
 			var next = this.queue.shift();
 			if(next){

@@ -51,8 +51,8 @@ MT.extend("ui.DomElement")(
 			this.header.hide();
 		},
 		
-		addButton: function(title, className, events, cb){
-			var b = new MT.ui.Button(title, className, events, cb);
+		addButton: function(title, className, cb){
+			var b = new MT.ui.Button(title, className, this.events, cb);
 			
 			var off = 0;
 			for(var i=0; i<this.children.length; i++){

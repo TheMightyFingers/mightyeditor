@@ -3,6 +3,8 @@ MT(
 		this.socket = socket;
 		this.channel = channel;
 		
+		console.log("channel:",channel);
+		
 		var that = this;
 		this.socket.on(channel, function(action, data){
 			if(typeof that[action] == "function"){
@@ -12,11 +14,11 @@ MT(
 	},
 	{
 		send: function(action, data){
-			this.socket.send(this.chanel, action, data);
+			this.socket.send(this.channel, action, data);
 		},
 		
 		sendAll: function(action, data){
-			this.socket.sendAll(this.chanel, action, data);
+			this.socket.sendAll(this.channel, action, data);
 		},
 		
 		sendGroup: function(group, action, data){
