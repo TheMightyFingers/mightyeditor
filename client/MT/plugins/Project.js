@@ -1,5 +1,6 @@
 MT.require("plugins.AssetsManager");
 MT.require("plugins.ObjectsManager");
+MT.require("plugins.MapEditor");
 
 MT.extend("core.BasicPlugin")(
 	MT.plugins.Project = function(id){
@@ -9,6 +10,7 @@ MT.extend("core.BasicPlugin")(
 		
 		this.om = new MT.plugins.ObjectsManager(this);
 		
+		this.map = new MT.plugins.MapEditor(this);
 	},
 	{
 		a_selectProject: function(id){

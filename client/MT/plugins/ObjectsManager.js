@@ -49,12 +49,11 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		a_receive: function(list){
-			this.buildAssetsTree(list);
+			this.buildObjectsTree(list);
 		},
 		
 		initSocket: function(socket){
 			MT.core.BasicPlugin.initSocket.call(this, socket);
-			
 		},
    
 		buildObjectsTree: function(list){

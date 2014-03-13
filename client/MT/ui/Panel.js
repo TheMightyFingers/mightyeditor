@@ -9,7 +9,7 @@ MT.extend("ui.DomElement")(
 		this.header = new MT.ui.DomElement();
 		this.header.addClass("ui-panel-header");
 		this.header.el.innerHTML = "PANEL";
-		this.header.height = 20;
+		this.header.height = 25;
 		
 		
 		

@@ -13,9 +13,6 @@ MT.extend("core.BasicPlugin")(
 			window.am = this;
 			var that = this;
 			
-			
-			
-			
 			this.list = new MT.ui.List([
 				{
 					label: "new Folder",
@@ -59,6 +56,14 @@ MT.extend("core.BasicPlugin")(
 				
 				that.handleFiles(e);
 			});
+			
+			this.tv = new MT.ui.TreeView([], this.project.path);
+			this.tv.onChange = function(oldItem, newItem){
+				console.log("updated", oldItem, " -> ", newItem);
+				that.moveFile(oldItem, newItem);
+			};
+			this.tv.sortable(this.ui.events);
+			this.tv.tree.show(this.panel.content.el);
 		},
 		
 		a_receiveFileList: function(list){
@@ -132,22 +137,14 @@ MT.extend("core.BasicPlugin")(
 				return res + incb-inca;
 			});
 			
-			if(!this.tv){
-				this.tv = new MT.ui.TreeView(list, this.project.path);
-				this.tv.onChange = function(oldItem, newItem){
-					console.log("updated", oldItem, " -> ", newItem);
-					that.moveFile(oldItem, newItem);
-				};
-				this.tv.sortable(this.ui.events);
-			}
-			else{
-				this.tv.rootPath = this.project.path;
-				this.tv.merge(list);
-			}
+
+			this.tv.rootPath = this.project.path;
+			this.tv.merge(list);
+
 			
 			
 			
-			this.tv.tree.show(this.panel.content.el);
+			
 			
 			
 			

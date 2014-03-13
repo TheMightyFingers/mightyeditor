@@ -11,8 +11,8 @@ MT.require("core.Project");
 var server = new MT.http.Httpd("../client", 8080);
 var handler = server.openSocket(function(socket){
 	
-	var s = new MT.project.Socket(socket);
-	var project = new MT.Project(s);
+	var s = new MT.core.Socket(socket);
+	var project = new MT.core.Project(s);
 });
 
 

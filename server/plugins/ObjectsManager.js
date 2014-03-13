@@ -12,22 +12,29 @@ MT.extend("core.SocketManager")(
 		
 	},
 	{
-		update: function(){
+		readData: function(){
+			var that = this;
+			
 			this.dbfile = this.project.path + "/objects.js";
-			this.fs.readFile(that.dbfile, function(err, contents){
+			console.log("reading data", this.dbfile);
+			this.fs.readFile(this.dbfile, function(err, contents){
+				console.log("reading done", err, contents);
+				
+				
 				that.data = JSON.parse(contents);
 				that.a_sendData();
 			});
 			
 		},
 		a_sendData: function(){
-			that.sendMyGroup("receive", this.data);
+			this.sendMyGroup("receive", this.data);
 		},
 		
 		a_updateData: function(data){
 			this.data = data;
+			var that = this;
 			this.fs.writeFile(this.dbfile, JSON.stringify(data), function(){
-				console.log("saved data", p);
+				console.log("saved data", data);
 				that.a_sendData();
 			});
 			

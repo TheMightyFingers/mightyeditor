@@ -1,7 +1,7 @@
-MT.project.sockets = [];
+MT.core.sockets = [];
 MT(
-	MT.project.Socket = function(socket){
-		MT.project.sockets.push(this);
+	MT.core.Socket = function(socket){
+		MT.core.sockets.push(this);
 		
 		this.socket = socket;
 		
@@ -28,7 +28,7 @@ MT(
 			});
 		},
 		removeSocket: function(){
-			var sockets = MT.project.sockets;
+			var sockets = MT.core.sockets;
 			for(var i=0; i<sockets.length; i++){
 				if(sockets[i] == this){
 					sockets[i] = sockets[sockets.length-1];
@@ -83,14 +83,14 @@ MT(
 		},
    
 		sendAll: function(channel, action, data){
-			var sockets = MT.project.sockets;
+			var sockets = MT.core.sockets;
 			for(var i=0; i<sockets.length; i++){
 				sockets[i].send(channel, action, data);
 			}
 		},
 		
 		sendGroup: function(group, channel, action, data){
-			var sockets = MT.project.sockets;
+			var sockets = MT.core.sockets;
 			console.log("sending to group", sockets.length, arguments);
 			
 			
@@ -103,7 +103,7 @@ MT(
 		},
 		
 		sendMyGroup: function(channel, action, data){
-			var sockets = MT.project.sockets;
+			var sockets = MT.core.sockets;
 			console.log("sending to group", sockets.length, this.groups);
 			
 			

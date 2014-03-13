@@ -34,9 +34,18 @@ MT(
 		ex.style.lineHeight = this.topPanel.el.offsetHeight+"px";
 		*/
 		
+		var that = this;
+		this.events.on("resize", function(){
+			that.alignCenter();
+			
+		});
+		
 	},
 	{
-		
+		_onResize: [],
+		onResize: function(cb){
+			this._onResize.push(cb);
+		},
 		addHolders: function(){
 			
 			this.top = new MT.ui.Holder(MT.ui.position.TOP, this.events);
@@ -134,6 +143,12 @@ MT(
 			this.center.style.bottom = this.bottom.height + "px";
 			this.center.style.left = this.left.width + "px";
 			this.center.style.right = this.right.width + "px";
+			
+			for(var i=0; i<this._onResize.length; i++){
+				this._onResize[i]();
+			}
+			
+			
 		}
 	   
 	   

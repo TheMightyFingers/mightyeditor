@@ -27,7 +27,7 @@
 			
 		},
 		
-		readFile: function(file, encoding, cb){
+		readFile: function(file, cb){
 			if(this.queue.length === 0){
 				this._readFile(file, cb);
 				return;
