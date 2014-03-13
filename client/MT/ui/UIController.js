@@ -22,7 +22,7 @@ MT(
 		this.topPanel.removeHeader();
 		this.topPanel.addClass("top");
 		
-		var logo = this.topPanel.addButton(null, "logo", this.events, function(e){
+		var logo = this.topPanel.addButton(null, "logo",  function(e){
 			console.log("clicked", e);
 		});
 		logo.width = 70;

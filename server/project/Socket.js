@@ -42,6 +42,7 @@ MT(
 			if(this.inGroup(group)){
 				return;
 			}
+			console.log("joined group", group);
 			this.groups.push(group);
 		},
 		
@@ -53,6 +54,9 @@ MT(
 					return;
 				}
 			}
+		},
+		leaveAllGroups: function(){
+			this.groups.length = 0;
 		},
 		
 		inGroup: function(group){
@@ -67,6 +71,7 @@ MT(
 		handleMessage: function(msg){
 			var data = JSON.parse(msg);
 			this.emit(data.channel, data.action, data.data);
+			console.log("incoming:" ,data.channel, data.action);
 		},
    
 		send: function(channel, action, data){
@@ -86,14 +91,39 @@ MT(
 		
 		sendGroup: function(group, channel, action, data){
 			var sockets = MT.project.sockets;
+			console.log("sending to group", sockets.length, arguments);
+			
+			
 			for(var i=0; i<sockets.length; i++){
-				if(sockets[i].inGroup(group)){
+				if(!sockets[i].inGroup(group)){
 					continue;
 				}
 				sockets[i].send(channel, action, data);
 			}
 		},
 		
+		sendMyGroup: function(channel, action, data){
+			var sockets = MT.project.sockets;
+			console.log("sending to group", sockets.length, this.groups);
+			
+			
+			for(var i=0; i<sockets.length; i++){
+				for(var j=0; j<this.groups.length; j++){
+					if(!sockets[i].inGroup(this.groups[j])){
+						continue;
+					}
+					console.log("sending to group", this.groups[j]);
+					sockets[i].send(channel, action, data);
+					break;
+					
+					
+				}
+				
+				
+			}
+		},
+   
+   
 		
 		on: function(channel, cb){
 			if(this.channels[channel] === void(0)){

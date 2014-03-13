@@ -1,6 +1,7 @@
 
 MT.require("plugins.MapEditor");
 MT.require("plugins.AssetsManager");
+
 MT.require("plugins.Project");
 
 

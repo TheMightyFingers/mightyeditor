@@ -81,7 +81,6 @@ body{
 	background-color: rgba(255,255,255,0.1);
 	background-repeat: no-repeat;
 	margin-bottom: -2px;
-	
 }
 
 .ui-treeView-folder-head{
@@ -95,6 +94,8 @@ body{
 .ui-treeView-folder.open{
 	background-image: url(../img/icons/folder_open.png);
 	background-position: 4px 11px;
+	margin-bottom: -1px;
+	border-bottom: solid 5px rgba(255,255,255,0.1);
 }
 
 .ui-treeView-item{
@@ -121,6 +122,7 @@ body{
 
 .ui-button{
 	cursor: pointer;
+	height: 32px;
 }
 
 .ui-panel.top .ui-button.logo{
@@ -141,3 +143,53 @@ body{
 	border-right: 1px solid rgba(255,255,255,0.1);
 	line-height: 27px
 }
+
+.ui-button.ui-options{
+	background: url("../img/icons/options.png")  no-repeat;
+}
+
+
+.ui-list-button{
+	height: 24px;
+	line-height: 24px;
+	background-color: rgba(75,75,75,0.9);
+	color: #eee;
+	padding: 0 25px;
+	border-bottom: inset 2px rgba(50,50,50,0.9);
+}
+.ui-list-button:hover{
+	
+}
+
+
+.ui-input{
+	position: absolute;
+	width: 180px;
+	height: 23px;
+	margin-top: 5px;
+	margin-left: 25px;
+	border: none;
+	outline: none;
+	background: none;
+	user-select: text;
+	-webkit-user-select: all !important;
+	z-index: 99;
+	color: #fff;
+	font-family: "Lucida Sans Unicode", "Lucida Grande", verdana, sans-serif;
+	font-size: 12px;
+	letter-spacing: 1.1px;
+	background: #777;
+	user-select: text;
+	font-weight: bold;
+}
+
+
+
+
+
+
+
+
+
+
+

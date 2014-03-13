@@ -100,7 +100,10 @@ MT(
 			var that = this;
 			var cb = function(e){
 				e = e || event;
-				e.preventDefault();
+				
+				if(type.indexOf("drop") > -1 || type.indexOf("drag") > -1 ){
+					e.preventDefault();
+				}
 				if(e.ctrlKey){
 					console.log(e, type);
 				}

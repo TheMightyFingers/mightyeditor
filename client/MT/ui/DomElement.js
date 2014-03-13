@@ -10,7 +10,7 @@ MT(
 		this.el.ctrl = this;
 		
 		this.index = 0;
-		
+		this.isVisible = true;
 		this.children = [];
 	},
 	{
@@ -38,8 +38,10 @@ MT(
 			}
 
 			
-			
-			el.show(el._parent);
+			if(el.isVisible){
+				el.show(el._parent);
+			}
+
 			return el;
 		},
 		
@@ -85,6 +87,7 @@ MT(
 			
 			this.height = this._height;
 			this.width = this._width;
+			this.isVisible = true;
 		},
    
 		hide: function(){
@@ -92,6 +95,7 @@ MT(
 				return;
 			}
 			this._parent.removeChild(this.el);
+			this.isVisible = false;
 		},
 		
 		addClass: function(cls){
@@ -167,6 +171,7 @@ MT(
 			}
 			
 			//this.style.lineHeight = this._height+"px";
+			this.style.height = "initial";
 			this.style.bottom = 0;
 			this.style.bottom = (this.el.offsetHeight - val)+"px";
 			for(var i=0; i<this.children.length; i++){
@@ -200,7 +205,16 @@ MT(
 			}
 			return ret;
 		},
-   
+		calcOffsetX: function(upTo){
+			var ret = this.el.offsetLeft;
+			p = this.el.parentNode;
+			while(p && p != upTo){
+				ret += p.offsetLeft;
+				p = p.parentNode;
+				
+			}
+			return ret;
+		},
 		ox: 0,
 		oy: 0
 		

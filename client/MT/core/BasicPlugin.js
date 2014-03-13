@@ -1,10 +1,6 @@
 MT(
-	MT.core.BasicPlugin = function(name){
-		this.name = name;
-		
-		
-		
-		
+	MT.core.BasicPlugin = function(channel){
+		this.channel = channel;
 	},
 	{
 		
@@ -16,15 +12,19 @@ MT(
 			var that = this;
 			this.socket = socket;
 			
-			this.socket.on(this.name, function(action, data){
-				if(that[action]){
-					that[action](data);
+			this.socket.on(this.channel, function(action, data){
+				var act = "a_"+action;
+				if(that[act]){
+					that[act](data);
+				}
+				else{
+					console.warn("unknown action", that.channel + "["+act+"]", data);
 				}
 			});
 		},
    
 		send: function(action, data){
-			this.socket.send(this.name, action, data);
+			this.socket.send(this.channel, action, data);
 		}
 	}
 );

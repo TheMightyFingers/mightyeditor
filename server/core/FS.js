@@ -16,6 +16,9 @@
 			console.log("writing....");
 			
 			fs.writeFile(file, contents, function(e){
+				if(e){
+					console.log("writing Error",e);
+				}
 				if(typeof cb === "function"){
 					cb(e);
 				}
@@ -33,13 +36,50 @@
 		},
  
 		_readFile: function(file, cb){
-			fs.readFile(file, function(e){
+			fs.readFile(file, function(e, contents){
+				if(e){
+					console.log("FS::Readfile", e);
+					
+				}
 				if(typeof cb === "function"){
-					cb(e);
+					cb(e, contents);
 				}
 				that.processQueue();
 			});
 		},
+		
+		mkdir: function(path, cb){
+			if(this.queue.length === 0){
+				this._mkdir(path, cb);
+				return;
+			}
+			this.queue.push([this._mkdir, path, cb]);//no arguments
+			
+			
+		},
+		_mkdir: function(path, cb){
+			fs.stat(path, function(err){
+				if(err){
+					console.log("mkdir err", err);
+				}
+				
+				fs.mkdir(path, cb);
+			});
+			
+		},
+		
+		move: function(a, b, cb){
+			if(this.queue.length === 0){
+				this._move(a, b, cb);
+				return;
+			}
+			this.queue.push([this._move, a, b, cb]);//no arguments
+		},
+ 
+		_move: function(a, b, cb){
+			fs.rename(a, b, cb);
+		},
+ 
  
 		readdir: function(dir, recurse, cb){
 			var buffer = [];
@@ -52,7 +92,6 @@
 		},
 		
 		_readdir: function(dir, recurse, buffer, cb){
-			
 			var process = function(e){
 				if(typeof cb === "function"){
 					cb(e);
@@ -83,29 +122,32 @@
 			console.log("stat: ", dir + path.sep + file);
 			
 			fs.lstat(dir + path.sep + file, function(err, stats){
+				
+				var p = path.normalize( path.relative( "../client", dir + path.sep + file));
+				
 				if(stats.isDirectory()){
 					buffer.push({
 						name: file,
+						fullPath: p,
 						contents: []
 					});
 					if(recurse){
-						toRead++;
 						that._readdir(dir + path.sep + file, recurse, buffer[buffer.length-1].contents, function(){
-							toRead--;
-							if(toRead == 0){
-								that._readdir_stat(dir, list, index + 1, cb, buffer);
-							}
+							that._readdir_stat(dir, list, index + 1, cb, buffer, recurse);
 						});
+					}
+					else{
+						that._readdir_stat(dir, list, index + 1, cb, buffer, recurse);
 					}
 				}
 				else{
+					
+					console.log("PATH:", p);
 					buffer.push({
-						name: file
+						name: file,
+						fullPath: p
 					});
-				}
-				
-				if(toRead == 0){
-					that._readdir_stat(dir, list, index + 1, cb, buffer);
+					that._readdir_stat(dir, list, index + 1, cb, buffer, recurse);
 				}
 			});
 		},

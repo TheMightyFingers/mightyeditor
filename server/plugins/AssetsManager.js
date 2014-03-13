@@ -2,98 +2,47 @@ MT.require("core.FS");
 
 
 MT.extend("core.SocketManager")(
-	MT.plugins.AssetsManager = function(socket){
-		MT.core.SocketManager.call(this, socket, "assets");
+	MT.plugins.AssetsManager = function(socket, project){
+		MT.core.SocketManager.call(this, socket, "Assets");
+		this.project = project;
+		
+		
 		this.fs = MT.core.FS;
 		
 	},
 	{
-		sendFiles: function(path){
+		a_sendFiles: function(){
 			var that = this;
-			MT.core.FS.readdir(path, true, function(data){
-				console.log("data", data);
-				that.send("receiveFileList", {files: data});
-				that.send("receiveFileList", {files: data});
+			
+			MT.core.FS.readdir(this.project.path, true, function(data){
+				that.sendMyGroup("receiveFileList", data);
 			});
 		},
 		
-		getAssets: function(data){
-			this.send("receiveFileList",{
-				files: [
-					{
-						name: "test1.png",
-					},
-					{
-						name: "test2.png",
-					},
-					{
-						name: "testFolder",
-						contents: [
-							{
-								name: "subFile1.png"
-							}
-						]
-					/*	contents: [
-							{
-								name: "subFile1.png"
-							},
-							{
-								name: "subFolder",
-								contents: [
-									{
-										name: "custom image1.png"
-									},
-									{
-										name: "custom image3.png"
-									},
-									{
-										name: "customxxx folder",
-										contents: []
-									}
-								]
-							}
-						]
-					},
-					{
-						name: "anotherFolder",
-						contents: [
-							{
-								name: "subFile1.png"
-							},
-							{
-								name: "subFolder",
-								contents: [
-									{
-										name: "custom image1.png"
-									},
-									{
-										name: "custom image3.png"
-									},
-									{
-										name: "customxxx folder",
-										contents: []
-									}
-								]
-							}
-						]*/
-					}
-				]
+		a_newFolder: function(name){
+			var that = this;
+			console.log("new folder", name);
+			this.fs.mkdir(this.project.path + "/" + name, function(){
+				that.a_sendFiles();
 			});
 		},
 		
-		newImage: function(data){
-			console.log("SAVING IMAGE:");
-			this.fs.writeFile("test.png", new Buffer(data.replace(/^data:image\/\w+;base64,/, ""), "base64"), function(){
-				console.log("DONE");
+		a_moveFile: function(files){
+			var that = this;
+			this.fs.move(this.project.path + files.a, this.project.path + files.b, function(){
+				that.a_sendFiles();
 			});
+		},
+		
+		a_newImage: function(data){
+			var that = this;
+			console.log("SAVING IMAGE:", this.project.path);
 			
-			return;
-			var fs = require("fs");
-			fs.writeFile("test.png", new Buffer(data.replace(/^data:image\/\w+;base64,/, ""), "base64"), function(){
-				console.log("saved");
+			var p = this.project.path  + data.path;
+			this.fs.writeFile(p, new Buffer(data.data, "binary"), function(){
+				console.log("saved image", p);
+				that.a_sendFiles();
 			});
-			
-			
 		}
 	}
 );

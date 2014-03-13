@@ -1,36 +1,38 @@
 MT.require("ui.DomElement");
 MT(
-	MT.ui.TreeView = function(data){
+	MT.ui.TreeView = function(data, root){
 		this.tree = null;
 		this.items = [];
+		this.rootPath = root;
 		
 		if(data != void(0)){
 			this.create(data);
 		}
+		
 	},
 	{
 		create: function(data){
-			console.log(data, typeof data);
-			
 			this.tree = new MT.ui.DomElement();
 			this.tree.style.position = "relative";
 			this.tree.addClass("ui-treeView");
-			this.createObject(data, this.tree);
 			
+			this.updateFullPath(data);
+			
+			this.createObject(data, this.tree);
 		},
-		
+
 		createObject: function(data, parent){
 			var d;
 			for(var i =0; i<data.length; i++){
 				d = data[i];
 				// folder
 				if(d.contents !== void(0)){
-					var p = this.addItem(d, "folder", parent);
+					var p = this.addItem(d, parent);
 					this.createObject(d.contents, p);
 					continue;
 				}
 				
-				this.addItem(d, "item", parent);
+				this.addItem(d, parent);
 				
 			}
 		},
@@ -55,14 +57,32 @@ MT(
 			this.createObject(data, this.tree);
 		},
    
-		addItem: function(data, type, parent, isVirtual){
+		addItem: function(data, parent, isVirtual){
+			
+			for(var i=0; i<this.items.length; i++){
+				if(this.items[i].data.fullPath == data.fullPath){
+					this.items[i].needRemove = false;
+					if(parent.hasClass("close")){
+						this.items[i].hide();
+					}
+					return this.items[i];
+				}
+			}
+			
+			var that = this;
 			var el = new MT.ui.DomElement();
+			var type = "item";
+			if(data.contents){
+				type = "folder";
+			}
+			
 			el.style.position = "relative";
 			el.addClass("ui-treeview-"+type);
 			
 			el.visible = true;
 			
 			el.data = data;
+			el.fullPath = data.fullPath;
 			
 			var head = new MT.ui.DomElement();
 			head.el.innerHTML = data.name;
@@ -70,6 +90,8 @@ MT(
 			
 			//el.addChild(head);
 			head.show(el.el);
+			
+			el.head = head;
 			
 			if(isVirtual){
 				el.show(parent.el);
@@ -81,8 +103,12 @@ MT(
 			if(type == "folder"){
 				head.addClass("ui-treeview-folder-head");
 				el.addClass("open");
-				head.el.onclick = function(){
+				head.el.onclick = function(e){
 					el.visible = !el.visible;
+					if(e.offsetX > 30){
+						return;
+					}
+					console.log(e);
 					
 					if(el.visible){
 						el.addClass("open");
@@ -107,28 +133,41 @@ MT(
 			
 			if(type == "item"){
 				var im = document.createElement("img");
-				im.src = data.path;
+				im.src = this.rootPath + data.fullPath;
 				el.el.appendChild(im);
 				el.image = im;
 				el.isFolder = false;
 			}
 			
 			
+			el.el.ondblclick = function(e){
+				console.log("double click", el.data);
+				that.enableRename(el,e);
+				e.stopPropagation();
+				e.preventDefault();
+			};
+			
+			
 			el.show(parent.el);
 			
 			this.items.push(el);
-			
+			if(parent.hasClass("close")){
+				el.hide();
+			}
+			el.needRemove = false;
 			return el;
 		},
    
+		onChange: null,
    
 		sortable: function(ev){
-			var al = this.addItem({name: "xxx"}, "item", this.tree, true);
+			
+			var al = this.addItem({name: "xxx"}, this.tree, true);
 			
 			al.style.position = "absolute";
 			al.style.pointerEvents = "none";
 			al.style.bottom = "auto";
-			al.style.opacity = 0.1;
+			al.style.opacity = 0.6;
 			
 			var dd = document.createElement("div");
 			dd.style.position = "absolute";
@@ -184,8 +223,9 @@ MT(
 				}
 				dragged = false;
 				
-				item.el.parentNode.removeChild(item.el);
-				
+				if(item.el.parentNode){
+					item.el.parentNode.removeChild(item.el);
+				}
 				
 				item.parent.removeChild(item);
 				if(inFolder){
@@ -201,7 +241,12 @@ MT(
 					else{
 						last.parent.addChild(item, last.index);
 					}
+					if(item.parent.hasClass("close")){
+						item.hide();
+					}
 				}
+				
+				that.updateFullPath(that.getData(), null, true);
 				
 			});
 			
@@ -226,15 +271,30 @@ MT(
 					return;
 				}
 				
+				
+				al.style.display = "block";
+				al.head.el.innerHTML = item.data.name;
+				
+				p2 = activeItem.calcOffsetY(dd.parentNode);
+				if(Math.abs(p1-p2) > al.el.offsetHeight){
+					return;
+				}
+				
 				dragged = true;
 				bottom = false;
 				inFolder = false;
 				
-				al.style.display = "block";
+				
 				dd.style.display = "block";
 				dd.style.height = "4px";
 				
-				p2 = activeItem.calcOffsetY(dd.parentNode);
+				
+				
+				
+				
+				
+				
+				
 				
 				if(p2 < p1){
 					p2 += al.el.offsetHeight;
@@ -250,13 +310,115 @@ MT(
 				dd.style.top = (p2 - 2) +"px";
 				last = activeItem;
 				
-				
-				
-				
 			});
 			
 		},
 		
+   
+		enableRename: function(el, ev){
+			var that = this;
+			if(!this.input){
+				this.input = document.createElement("input");
+				this.input.className = "ui-input";
+			}
+			
+			this.input.style.left = (el.calcOffsetX(document.body))+"px";
+			this.input.style.top = (el.calcOffsetY(document.body)) + "px";
+			
+			this.input.value = el.data.name;
+			
+			this.input.type = "text";
+			
+			document.body.appendChild(this.input);
+			
+			
+			this.input.onclick = function(){
+				console.log("click");
+			};
+			
+			var needSave = true;
+			this.input.onblur = function(){
+				try{
+				if(this.parentNode){
+					this.parentNode.removeChild(this);
+				}}
+				catch(e){}
+				
+				if(needSave){
+					var part = "";
+					if(el.parent.data){
+						part = el.parent.data.fullPath;
+					}
+					
+					var op = el.data.name;
+					
+					el.data.fullPath = part+"/"+this.value;
+					el.data.name = this.value;
+					el.head.el.innerHTML = this.value;
+					that.onChange(part + "/" + op, part+"/"+this.value);
+				}
+			};
+			
+			this.input.onkeyup = function(e){
+				console.log("keyup", e.which);
+				if(e.which == 27){
+					needSave = false;
+					this.blur();
+				}
+				if(e.which == 13){
+					this.blur();
+				}
+			};
+			
+			
+			
+			
+			this.input.focus();
+			
+			var tmp = el.data.name.split(".");
+			var len = 0;
+			if(tmp.length == 1){
+				len = tmp[0].length;
+			}
+			else{
+				len = -1;
+			}
+			for(var i=0; i<tmp.length-1; i++){
+				len += tmp[i].length+1;
+			}
+			
+			
+			
+			this.input.setSelectionRange(0, len)
+			
+			
+			this.inputEnabled = true;
+			
+		},
+   
+		remove: function(){
+			this.tree.hide();
+		},
+		
+		merge: function(data, oldData){
+			for(var i=0; i<this.items.length; i++){
+				this.items[i].needRemove = true;
+			}
+			
+			this.updateFullPath(data);
+			
+			this.createObject(data, this.tree);
+			
+			for(var i=0; i<this.items.length; i++){
+				if(this.items[i].needRemove){
+					this.items[i].parent.removeChild(this.items[i]);
+					this.items[i].hide();
+					console.log("cleaned up", this.items[i]);
+				}
+			}
+			
+		},
+   
 		getOwnItem: function(it){
 			for(var i=0; i<this.items.length; i++){
 				if(it == this.items[i].el){// || it == this.items[i].el.parentNode){
@@ -264,6 +426,27 @@ MT(
 				}
 			}
 			return null;
+		},
+		
+		updateFullPath: function(data, path, shouldNotify){
+			path = path || "";
+			for(var i=0; i<data.length; i++){
+				var fullPath = path + "/" + data[i].name;
+				var op = data[i].fullPath;
+				data[i].fullPath = fullPath;
+				
+				if(op != fullPath){
+					if(shouldNotify && this.onChange){
+						this.onChange(op, fullPath);
+					}
+					
+				}
+				
+				if(data[i].contents){
+					this.updateFullPath(data[i].contents, data[i].fullPath, shouldNotify);
+				}
+			}
+			
 		}
 		
 	}

@@ -1,25 +1,32 @@
+MT.require("plugins.AssetsManager");
+MT.require("plugins.ObjectsManager");
+
 MT.extend("core.BasicPlugin")(
 	MT.plugins.Project = function(id){
 		MT.core.BasicPlugin.call(this, "Project");
-		
 		this.id = id;
+		this.am = new MT.plugins.AssetsManager(this);
 		
-		
-		this.am = new MT.plugins.AssetsManager();
-		
-		
-		
+		this.om = new MT.plugins.ObjectsManager(this);
 		
 	},
 	{
+		a_selectProject: function(id){
+			this.id = id;
+			window.location.hash = id;
+			this.path = "data/projects/"+id;
+		},
+		
+		
 		newProject: function(){
 			this.send("newProject");
 		},
 		
-		setProject: function(projectId){
-			this.id = projectId;
+		loadProject: function(pid){
+			this.id = pid;
+			this.a_selectProject(pid);
+			this.send("loadProject", pid);
 		},
-		
 		
 		initUI: function(ui){
 			this.ui = ui;
@@ -33,19 +40,20 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			this.am.initUI(ui);
+			this.om.initUI(ui);
 		},
 		
 		initSocket: function(socket){
 			MT.core.BasicPlugin.initSocket.call(this, socket);
 			this.am.initSocket(socket);
+			this.om.initSocket(socket);
 			
-			var pid = window.location.pathname.substring(1);
+			var pid = window.location.hash.substring(1);
 			if(pid != ""){
-				this.send("loadProject", pid);
+				this.loadProject(pid);
 			}
 			else{
-				console.log("new Project");
-				this.send("newProject");
+				this.newProject();
 			}
 			
 			

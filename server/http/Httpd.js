@@ -25,7 +25,7 @@ MT(
 			if(req.headers.connection == "keep-alive"){
 				res.setHeader("connection","keep-alive");
 			}
-			req.url = that.path.normalize(that.root + req.url);
+			req.url = decodeURI(that.path.normalize(that.root + req.url));
 			
 			
 			that.serve(req, res);
@@ -86,6 +86,7 @@ MT(
 			res.writeHead(401);
 			res.end('goodbye: '+"\n" + req.url);
 		},
+		
 		notFound: function(req, res, err){
 			console.log("not found!: " + req.url);
 			res.writeHead(404);
