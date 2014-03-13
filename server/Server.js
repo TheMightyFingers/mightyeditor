@@ -3,9 +3,9 @@ require("../client/js/eClass.js");
 createClass("MT", global, require("path").resolve(""));
 
 MT.require("http.Httpd");
-MT.require("project.Socket");
+MT.require("core.Socket");
 
-MT.require("Project");
+MT.require("core.Project");
 
 
 var server = new MT.http.Httpd("../client", 8080);
