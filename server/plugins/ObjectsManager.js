@@ -18,9 +18,12 @@ MT.extend("core.SocketManager")(
 			this.dbfile = this.project.path + "/objects.js";
 			console.log("reading data", this.dbfile);
 			this.fs.readFile(this.dbfile, function(err, contents){
-				console.log("reading done", err, contents);
-				
-				
+				if(err){
+					that.data = [];
+					that.a_sendData();
+					return;
+				}
+
 				that.data = JSON.parse(contents);
 				that.a_sendData();
 			});

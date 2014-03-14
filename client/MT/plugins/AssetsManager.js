@@ -5,6 +5,7 @@ MT.extend("core.BasicPlugin")(
 	MT.plugins.AssetsManager = function(project){
 		MT.core.BasicPlugin.call(this, "Assets");
 		this.project = project;
+		this._onUpdate = [];
 	},
 	{
 		initUI: function(ui){
@@ -60,15 +61,40 @@ MT.extend("core.BasicPlugin")(
 			this.tv = new MT.ui.TreeView([], this.project.path);
 			this.tv.onChange = function(oldItem, newItem){
 				console.log("updated", oldItem, " -> ", newItem);
-				that.moveFile(oldItem, newItem);
+				if(oldItem && newItem){
+					that.moveFile(oldItem, newItem);
+				}
 			};
 			this.tv.sortable(this.ui.events);
 			this.tv.tree.show(this.panel.content.el);
+			
+			
+			this.tv.onDrop(function(e, item, last){
+				if(e.target == that.project.map.game.canvas){
+					
+					that.project.om.addObject(e, item.data);
+					
+					return false;
+				}
+			});
+			
+		},
+		
+		onUpdate: function(cb){
+			this._onUpdate.push(cb);
+		},
+		
+		update: function(){
+			var data = this.tv.getData();
+			for(var i=0; i<this._onUpdate.length; i++){
+				this._onUpdate[i](data);
+			}
+			
 		},
 		
 		a_receiveFileList: function(list){
 			this.buildAssetsTree(list);
-			
+			this.update();
 		},
 		
 		handleFiles: function(e){
@@ -140,14 +166,6 @@ MT.extend("core.BasicPlugin")(
 
 			this.tv.rootPath = this.project.path;
 			this.tv.merge(list);
-
-			
-			
-			
-			
-			
-			
-			
 		},
 		
 		moveFile: function(a, b){

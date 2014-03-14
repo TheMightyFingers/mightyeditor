@@ -118,9 +118,6 @@
 			}
 			var file = list[index];
 			var toRead = 0;
-			
-			console.log("stat: ", dir + path.sep + file);
-			
 			fs.lstat(dir + path.sep + file, function(err, stats){
 				
 				var p = path.normalize( path.relative( "../client", dir + path.sep + file));
@@ -141,8 +138,6 @@
 					}
 				}
 				else{
-					
-					console.log("PATH:", p);
 					buffer.push({
 						name: file,
 						fullPath: p

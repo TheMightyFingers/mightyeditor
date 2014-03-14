@@ -43,6 +43,7 @@ MT.extend("core.BasicPlugin")(
 			
 			this.am.initUI(ui);
 			this.om.initUI(ui);
+			this.map.initUI(ui);
 		},
 		
 		initSocket: function(socket){

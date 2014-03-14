@@ -45,6 +45,17 @@ MT(
 			return el;
 		},
 		
+		hasParent: function(parent){
+			var p = this.parent;
+			while(p){
+				if(p == parent){
+					return true;
+				}
+				p = p.parent;
+			}
+			
+		},
+   
 		sortChildren: function(){
 			var c = null;
 			var children = [];

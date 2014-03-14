@@ -9,8 +9,15 @@ MT(
 			this.create(data);
 		}
 		
+		this._onDrop = [];
+		
 	},
 	{
+		
+		onDrop: function(cb){
+			this._onDrop.push(cb);
+		},
+		
 		create: function(data){
 			this.tree = new MT.ui.DomElement();
 			this.tree.style.position = "relative";
@@ -93,6 +100,8 @@ MT(
 			
 			el.head = head;
 			
+			head.addClass("ui-treeview-item-head");
+			
 			if(isVirtual){
 				el.show(parent.el);
 				return el;
@@ -133,7 +142,14 @@ MT(
 			
 			if(type == "item"){
 				var im = document.createElement("img");
-				im.src = this.rootPath + data.fullPath;
+				if(data.image){
+					im.src = data.image;
+				}
+				else{
+					im.src = this.rootPath + data.fullPath;
+				}
+				
+				
 				el.el.appendChild(im);
 				el.image = im;
 				el.isFolder = false;
@@ -211,17 +227,34 @@ MT(
 			var dragged = false;
 			
 			ev.on("mouseup", function(e){
-				mdown = false;
-				
 				
 				al.style.display = "none";
 				dd.style.display = "none";
 				
-				if(!dragged || !last || last == item || last.parent == item){
-					last = null;
+				if(!mdown){
+					return;
+				}
+				mdown = false;
+				
+				
+				for(var i=0; i<that._onDrop.length; i++){
+					if(that._onDrop[i](e, item, last) === false){
+						return;
+					}
+				}
+				
+				
+				if(!dragged){
 					return;
 				}
 				dragged = false;
+				
+				
+				if(!last || last == item || last.parent == item){
+					last = null;
+					return;
+				}
+				
 				
 				if(item.el.parentNode){
 					item.el.parentNode.removeChild(item.el);
@@ -258,7 +291,6 @@ MT(
 					return;
 				}
 				
-				
 				var dy = my - ui.events.mouse.y;
 				
 				var p1 = parseInt(al.style.top) + ev.mouse.my;
@@ -267,7 +299,7 @@ MT(
 				
 				al.style.top = p1 + "px";
 				
-				if(!activeItem || !item  || activeItem == item || activeItem.parent == item){
+				if(!activeItem || !item  || activeItem == item || activeItem.hasParent(item) ){
 					return;
 				}
 				
@@ -287,14 +319,6 @@ MT(
 				
 				dd.style.display = "block";
 				dd.style.height = "4px";
-				
-				
-				
-				
-				
-				
-				
-				
 				
 				if(p2 < p1){
 					p2 += al.el.offsetHeight;
@@ -445,6 +469,10 @@ MT(
 				if(data[i].contents){
 					this.updateFullPath(data[i].contents, data[i].fullPath, shouldNotify);
 				}
+			}
+			
+			if(shouldNotify){
+				this.onChange(null, null);
 			}
 			
 		}

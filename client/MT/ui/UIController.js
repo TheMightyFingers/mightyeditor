@@ -67,6 +67,7 @@ MT(
 			this.bottom = new MT.ui.Holder(MT.ui.position.BOTTOM, this.events);
 			this.bottom.height = 200;
 			this.bottom.addLeft(this.left);
+			
 			this.bottom.show(document.body);
 			
 			
@@ -75,9 +76,12 @@ MT(
 			this.right = new MT.ui.Holder(MT.ui.position.RIGHT, this.events);
 			
 			this.right.addTop(this.top);
-			this.right.addBottom(this.bottom);
+			//this.right.addBottom(this.bottom);
 			this.right.width = 320;
 			this.right.show(document.body);
+			
+			
+			this.bottom.addRight(this.right);
 			
 			this.addPanels();
 		},
