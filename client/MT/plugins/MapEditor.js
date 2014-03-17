@@ -135,13 +135,13 @@ MT(
 			that.objects.push(sp);
 			
 			sp.inputEnabled = true;
-			sp.input.enableDrag();
-			sp.events.onDragStop.add(function(sprite, ev){
+			
+			/*sp.events.onDragStop.add(function(sprite, ev){
 				console.log("stopped", sprite, ev);
 				obj.x = sprite.x;
 				obj.y = sprite.y;
 				that.project.om.updateData();
-			});
+			});*/
 			
 			
 			
@@ -154,8 +154,8 @@ MT(
 			}
 			this.game.width = this.project.ui.center.offsetWidth;
 			this.game.height = this.project.ui.center.offsetHeight;
-			this.game.stage.bounds.width = this.game.width;
-			this.game.stage.bounds.height = this.game.height;
+			
+			this.game.world.setBounds(0, 0, 2000, 2000);
 			
 			if (this.game.renderType === Phaser.WEBGL){
 				this.game.renderer.resize(this.game.width, this.game.height);
@@ -172,6 +172,60 @@ MT(
 			
 			this.project.am.onUpdate(function(data){
 				that.addAssets(data);
+			});
+			
+			
+			var cameraMoveEnabled = false;
+			var mousedown = false;
+			
+			ui.events.on("mousedown", function(e){
+				if(e.target !== that.game.canvas){
+					return;
+				}
+				
+				if(e.button == 2){
+					cameraMoveEnabled = true;
+					e.preventDefault();
+					return;
+				}
+				
+				mousedown = true;
+				
+				
+				
+			});
+			
+			window.oncontextmenu = function(e){
+				if(e.target == that.game.canvas){
+					e.preventDefault();
+				}
+			};
+			
+			
+			ui.events.on("mouseup", function(){
+				cameraMoveEnabled = false;
+				mousedown = false;
+			});
+				
+			
+			ui.events.on("mousemove", function(e){
+				if(cameraMoveEnabled){
+					that.game.camera.x -= ui.events.mouse.mx;
+					that.game.camera.y -= ui.events.mouse.my;
+					return;
+				}
+				
+				var obj = null;
+				for(var i=0; i<that.objects.length; i++){
+					obj = that.objects[i];
+					console.log(obj);
+					
+					
+				}
+				
+				
+				
+				
 			});
 			
 		},

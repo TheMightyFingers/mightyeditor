@@ -119,15 +119,18 @@ MT(
 				that.right.setPosition();
 			});
 			this.bottom.onupdate(function(){
-				that.left.setPosition();
-				that.right.setPosition();
+				//that.left.setPosition();
+				//that.right.setPosition();
+				that.alignCenter();
 			});
 			this.left.onupdate(function(){
 				that.alignCenter();
+				that.right.setPosition();
 				
 			});
 			this.right.onupdate(function(){
 				that.alignCenter();
+				that.bottom.setPosition();
 			});
 			
 		},

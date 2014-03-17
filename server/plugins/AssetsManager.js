@@ -6,43 +6,78 @@ MT.extend("core.SocketManager")(
 		MT.core.SocketManager.call(this, socket, "Assets");
 		this.project = project;
 		
-		
+		this.db = this.project.db.get("assets");
 		this.fs = MT.core.FS;
 		
 	},
 	{
 		a_sendFiles: function(){
-			var that = this;
 			
-			MT.core.FS.readdir(this.project.path, true, function(data){
-				that.sendMyGroup("receiveFileList", data);
-			});
+			var that = this;
+			this.sendMyGroup("receiveFileList", this.db.contents);
 		},
 		
 		a_newFolder: function(name){
-			var that = this;
-			console.log("new folder", name);
-			this.fs.mkdir(this.project.path + "/" + name, function(){
-				that.a_sendFiles();
-			});
+			this.project.db.get("assets/"+name);
+			this.a_sendFiles();
 		},
 		
 		a_moveFile: function(files){
-			var that = this;
-			this.fs.move(this.project.path + files.a, this.project.path + files.b, function(){
-				that.a_sendFiles();
-			});
+			console.log("files",files);
+			this.project.db.move("assets"+files.a, "assets"+files.b);
+			this.a_sendFiles();
 		},
 		
 		a_newImage: function(data){
 			var that = this;
-			console.log("SAVING IMAGE:", this.project.path);
 			
-			var p = this.project.path  + data.path;
+			
+			var path = data.path.split("/");
+			
+			var name = path.pop();
+			
+			
+			
+			var ext = name.split(".").pop();;
+			
+			var folder = this.project.db.get("assets"+path.join("/"));
+			
+			
+			console.log("assets"+path, folder);
+			
+			
+			console.log(ext);
+			
+			var p = this.project.path  + "/" + this.db.count + "." + ext;
+			data.image = p.split("/");
+			
+			//remove ../client
+			data.image.shift();
+			data.image.shift();
+			
+			data.image = data.image.join("/");
+			
+			console.log("SAVING IMAGE:", p);
+			
+			that.addItem(folder, data);
+			
 			this.fs.writeFile(p, new Buffer(data.data, "binary"), function(){
-				console.log("saved image", p);
 				that.a_sendFiles();
 			});
+			
+		},
+		
+		addItem: function(folder, data){
+			this.db.count++;
+			
+			var d = {
+				name: data.name, 
+				id: this.db.count,
+				__image: data.image
+			};
+			
+			
+			folder.contents.push(d);
 		}
 	}
 );

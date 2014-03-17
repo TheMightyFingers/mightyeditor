@@ -71,7 +71,6 @@ MT(
 		handleMessage: function(msg){
 			var data = JSON.parse(msg);
 			this.emit(data.channel, data.action, data.data);
-			console.log("incoming:" ,data.channel, data.action);
 		},
    
 		send: function(channel, action, data){

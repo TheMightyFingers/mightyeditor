@@ -13,6 +13,7 @@ MT.extend("core.SocketManager")(
 	},
 	{
 		readData: function(){
+			return;
 			var that = this;
 			
 			this.dbfile = this.project.path + "/objects.js";
@@ -30,10 +31,12 @@ MT.extend("core.SocketManager")(
 			
 		},
 		a_sendData: function(){
+			return;
 			this.sendMyGroup("receive", this.data);
 		},
 		
 		a_updateData: function(data){
+			return;
 			this.data = data;
 			var that = this;
 			this.fs.writeFile(this.dbfile, JSON.stringify(data), function(){

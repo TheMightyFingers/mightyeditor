@@ -113,10 +113,11 @@ MT(
 				head.addClass("ui-treeview-folder-head");
 				el.addClass("open");
 				head.el.onclick = function(e){
-					el.visible = !el.visible;
+					
 					if(e.offsetX > 30){
 						return;
 					}
+					el.visible = !el.visible;
 					console.log(e);
 					
 					if(el.visible){
@@ -142,11 +143,8 @@ MT(
 			
 			if(type == "item"){
 				var im = document.createElement("img");
-				if(data.image){
-					im.src = data.image;
-				}
-				else{
-					im.src = this.rootPath + data.fullPath;
+				if(data.__image){
+					im.src = data.__image;
 				}
 				
 				

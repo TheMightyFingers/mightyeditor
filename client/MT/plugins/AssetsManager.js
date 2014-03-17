@@ -155,6 +155,9 @@ MT.extend("core.BasicPlugin")(
 		},
    
 		buildAssetsTree: function(list){
+			console.log("list", list);
+			
+			
 			var that = this;
 			list.sort(function(a,b){
 				var inca = ( a.contents ? 1000 : 0);
