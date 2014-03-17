@@ -112,7 +112,7 @@
 		
  
 		_readdir_stat: function(dir, list, index, cb, buffer, recurse){
-			if(index >= list.length){
+			if(!list || index >= list.length){
 				cb(buffer);
 				return;
 			}
