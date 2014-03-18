@@ -97,7 +97,7 @@ MT(
 			}
 			
 			var game = this.game;
-			var path = this.project.path + asset.fullPath;
+			var path = this.project.path + "/" + asset.__image;
 			if(!MT.core.Helper.isImage(path)){
 				if(typeof cb === "function"){
 					cb();
@@ -108,7 +108,7 @@ MT(
 			
 			var image = new Image();
 			image.onload = function(){
-				game.cache.addImage(path, path, this);
+				game.cache.addImage(asset.__image, asset.__image, this);
 				if(typeof cb === "function"){
 					cb();
 				}
@@ -131,7 +131,7 @@ MT(
 				console.log(game.cache);
 			}
 			
-			var sp = game.add.sprite(obj.x, obj.y, obj.image)
+			var sp = game.add.sprite(obj.x, obj.y, obj.__image)
 			that.objects.push(sp);
 			
 			sp.inputEnabled = true;
@@ -218,14 +218,8 @@ MT(
 				var obj = null;
 				for(var i=0; i<that.objects.length; i++){
 					obj = that.objects[i];
-					console.log(obj);
-					
-					
+					//console.log(obj);
 				}
-				
-				
-				
-				
 			});
 			
 		},

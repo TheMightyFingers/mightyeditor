@@ -256,7 +256,7 @@
 			for(var key in proto){
 				var pd = null;
 				pd = Object.getOwnPropertyDescriptor(proto, key);
-				if(pd.value){
+				if( pd.value !== void(0) ){
 					fn.prototype[key] = pd.value;
 					continue;
 				}
@@ -314,7 +314,7 @@
 				var pd;
 				for(var key in proto){
 					pd = Object.getOwnPropertyDescriptor(proto, key);
-					if(pd.value && typeof(pd.value) === "function"){
+					if(typeof(pd.value) === "function"){
 						fn[key] = proto[key];
 						continue;
 					}

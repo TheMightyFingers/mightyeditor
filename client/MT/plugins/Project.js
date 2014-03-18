@@ -1,16 +1,21 @@
 MT.require("plugins.AssetsManager");
 MT.require("plugins.ObjectsManager");
 MT.require("plugins.MapEditor");
+MT.require("plugins.Settings");
 
 MT.extend("core.BasicPlugin")(
 	MT.plugins.Project = function(id){
 		MT.core.BasicPlugin.call(this, "Project");
 		this.id = id;
 		this.am = new MT.plugins.AssetsManager(this);
-		
 		this.om = new MT.plugins.ObjectsManager(this);
-		
 		this.map = new MT.plugins.MapEditor(this);
+		this.settings = new MT.plugins.Settings(this);
+		
+		
+		
+		
+		
 	},
 	{
 		a_selectProject: function(id){
@@ -44,6 +49,8 @@ MT.extend("core.BasicPlugin")(
 			this.am.initUI(ui);
 			this.om.initUI(ui);
 			this.map.initUI(ui);
+			
+			this.settings.initUI(ui);
 		},
 		
 		initSocket: function(socket){

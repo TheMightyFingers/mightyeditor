@@ -79,9 +79,10 @@ MT.extend("core.BasicPlugin")(
 			no.y = e.offsetY;
 			
 			
-			no.image = this.project.path + no.fullPath;
+			
 			data.push(no);
 			
+			this.tv.rootPath = this.project.path
 			this.tv.merge(data);
 			this.updateData(data);
 			

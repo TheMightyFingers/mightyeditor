@@ -1,6 +1,7 @@
 MT(
-	MT.ui.DomElement = function(){
-		this.el = document.createElement("div");
+	MT.ui.DomElement = function(type){
+		type = type || "div";
+		this.el = document.createElement(type);
 		this.el.style.position = "absolute";
 		this.style = this.el.style;
 		this.style.top = 0;
@@ -54,6 +55,20 @@ MT(
 				p = p.parent;
 			}
 			
+		},
+		
+		clear: function(){
+			for(var i=0; i<this.children.length; i++){
+				this.children[i].remove();
+			}
+			this.children.length = 0;
+			
+		},
+		
+		remove: function(){
+			if(this.el.parentNode){
+				this.el.parentNode.removeChild(this.el);
+			}
 		},
    
 		sortChildren: function(){

@@ -1,6 +1,8 @@
 MT.require("ui.DomElement");
-MT(
+MT.extend("core.Emitter")(
 	MT.ui.TreeView = function(data, root){
+		MT.core.Emitter.call(this);
+		
 		this.tree = null;
 		this.items = [];
 		this.rootPath = root;
@@ -142,16 +144,33 @@ MT(
 			}
 			
 			if(type == "item"){
-				var im = document.createElement("img");
-				if(data.__image){
-					im.src = data.__image;
+				el.isFolder = false;
+				if(!data.type){
+					var im = document.createElement("img");
+					if(data.__image){
+						im.src = this.rootPath + "/" +data.__image;
+					}
+					
+					
+					el.el.appendChild(im);
+					el.image = im;
+				}
+				
+				if(data.type == "input"){
+					var input = new MT.ui.DomElement("span");
+					input.el.innerHTML = "88"
+					
+					input.x = 50;
+					
+					head.addChild(input);
+					el.head = input;
+					
 				}
 				
 				
-				el.el.appendChild(im);
-				el.image = im;
-				el.isFolder = false;
+				
 			}
+			
 			
 			
 			el.el.ondblclick = function(e){
@@ -223,6 +242,18 @@ MT(
 			});
 			
 			var dragged = false;
+			
+			ev.on("click", function(e){
+				if(that.dragged){
+					return;
+				}
+				
+				var item = that.getOwnItem(e.target.parentNode);
+				
+				if(item){
+					that.emit("click", item.data);
+				}
+			});
 			
 			ev.on("mouseup", function(e){
 				
@@ -344,7 +375,7 @@ MT(
 				this.input.className = "ui-input";
 			}
 			
-			this.input.style.left = (el.calcOffsetX(document.body))+"px";
+			this.input.style.left = (el.head.calcOffsetX(document.body))+"px";
 			this.input.style.top = (el.calcOffsetY(document.body)) + "px";
 			
 			this.input.value = el.data.name;
@@ -377,7 +408,9 @@ MT(
 					el.data.fullPath = part+"/"+this.value;
 					el.data.name = this.value;
 					el.head.el.innerHTML = this.value;
-					that.onChange(part + "/" + op, part+"/"+this.value);
+					if(that.onChange){
+						that.onChange(part + "/" + op, part+"/"+this.value);
+					}
 				}
 			};
 			

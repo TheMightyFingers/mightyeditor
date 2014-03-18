@@ -1,4 +1,4 @@
-MT(
+MT.extend("core.Emitter")(
 	MT.Socket = function(url, autoconnect){
 		if(url){
 			this.url = url;
@@ -27,6 +27,9 @@ MT(
 		};
 	},
 	{
+		
+		delay: 0,
+		
 		connect: function(url){
 			if(url){
 				this.url = url;
@@ -56,8 +59,6 @@ MT(
 			
 			return this.connection;
 		},
-		
-		delay: 0,
 		
 		send: function(channel, action, data){
 			if(this.ws.readyState == this.ws.OPEN){
@@ -89,45 +90,6 @@ MT(
 				this.send.apply(this, this._toSend[i]);
 			}
 			
-		},
-   
-		on: function(type, cb){
-			if(!this.callbacks[type]){
-				//console.error("unknown type");
-				//return cb;
-				this.callbacks[type] = [];
-			}
-			this.callbacks[type].push(cb);
-			return cb;
-		},
-   
-		off: function(type, cb){
-			if(cb === void(0)){
-				cb = type; type = void(0);
-			}
-			
-			if(type && !this.callbacks[type]){
-				return;
-			}
-			
-			if(type){
-				this._off(cb, type);
-				return;
-			}
-			
-			for(var i in this.callbacks){
-				this._off(cb, i);
-				
-			}
-		},
-   
-		_off: function(cb, type){
-			var i=0, cbs = null;
-			for(i=0, cbs = this.callbacks[type]; i<cbs.length; i++){
-				if(cbs[i] === cb){
-					cbs.splice(i, 1);
-				}
-			}
 		},
 		
 		onOpen: function(){

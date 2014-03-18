@@ -49,13 +49,13 @@ MT.extend("core.SocketManager")(
 			console.log(ext);
 			
 			var p = this.project.path  + "/" + this.db.count + "." + ext;
-			data.image = p.split("/");
+			data.image = this.db.count + "." + ext;
 			
 			//remove ../client
-			data.image.shift();
-			data.image.shift();
+			//data.image.shift();
+			//data.image.shift();
 			
-			data.image = data.image.join("/");
+			//data.image = data.image.join("/");
 			
 			console.log("SAVING IMAGE:", p);
 			
