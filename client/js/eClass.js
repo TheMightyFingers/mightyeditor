@@ -256,7 +256,11 @@
 			for(var key in proto){
 				var pd = null;
 				pd = Object.getOwnPropertyDescriptor(proto, key);
-				if( pd.value !== void(0) ){
+				if(!pd){
+					fn.prototype[key] = proto[key];
+					continue;
+				}
+				if(pd.value !== void(0) ){
 					fn.prototype[key] = pd.value;
 					continue;
 				}

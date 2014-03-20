@@ -30,9 +30,7 @@ MT(
 			var that = this;
 			for(var i in this.events){
 				
-				var cb = this._mk_cb(i);
-				this._cbs.push(cb);
-				window.addEventListener(i, cb, false);
+				this.addEvent(i);
 			}
 		},
 		
@@ -45,12 +43,19 @@ MT(
 			if(!this.events[type]){
 				console.warn("new Event:", type);
 				this.events[type] = [];
+				this.addEvent(type);
 			}
 			
 			this.events[type].push(cb);
+			return cb;
 		},
    
-		
+		addEvent: function(i){
+			var cb = this._mk_cb(i);
+			this._cbs.push(cb);
+			window.addEventListener(i, cb, false);
+			
+		},
 		
 		off: function(cb){
 			var ev = null;

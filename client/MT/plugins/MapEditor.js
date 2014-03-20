@@ -24,19 +24,86 @@ MT(
 			console.log("new map loaded");
 			var that = this;
 			
-			var game = this.game = new Phaser.Game(800, 600, Phaser.AUTO, '', { 
+			window.sprite = null;
+			
+			this.activeObject = null;
+			
+			var ctx = null;
+			
+			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
 				preload: function(){
 					var c = game.canvas;
 					c.parentNode.removeChild(c);
 					that.project.ui.center.appendChild(c);
-					that.resize();
+					
 				},
 				create: function(){
-					/*game.input.onDown.add(doSomething, this);
+					game.input.onDown.add(function(e){
+						if(e.button !== 0){
+							
+							console.log(e.button);
+							return;
+						}
+						if(e.targetObject){
+							that.activeObject = e.targetObject.sprite;
+						}
+						else{
+							that.activeObject = null;
+						}
+					}, this);
+					
 
-					function doSomething() {
-						console.log("down", this, arguments)
-					}*/
+					that.resize();
+				},
+				render: function(){
+					if(ctx == null){
+						ctx = game.canvas.getContext("2d");
+					}
+					//ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
+					ctx.save();
+					ctx.beginPath();
+					
+					//ctx.translate(-game.camera.x, -game.camera.y);
+					ctx.strokeStyle = "rgba(255,255,255,0.5)";
+					ctx.globalAlpha = 0.5;
+					var g = 64;
+					
+					for(var i = -game.camera.x; i<game.canvas.width; i += g){
+						if(i < 0){
+							continue;
+						}
+						ctx.moveTo(i, -game.camera.y);
+						ctx.lineTo(i, game.canvas.height + game.camera.y);
+					}
+					for(var j = -game.camera.y; j<game.canvas.height; j += g){
+						if(j < 0){
+							continue;
+						}
+						ctx.moveTo(-game.camera.x, j);
+						ctx.lineTo(-game.camera.x + game.canvas.width + game.camera.x, j);
+					}
+					
+					ctx.stroke();
+					ctx.restore();
+					
+					
+					
+					
+					if(that.activeObject){
+						
+						var bounds = that.activeObject.getBounds();
+						ctx.strokeStyle = "#ff0000";
+						ctx.beginPath();
+						ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+						
+						
+						
+						
+						//game.debug.spriteBounds(that.activeObject, "#ff0000", false);
+					}
+					
+					
+					game.debug.inputInfo(32, 32);
 				}
 			});
 			
@@ -72,6 +139,61 @@ MT(
 			
 		},
 		
+		addObject: function(obj, group){
+			
+			
+			var game = this.game;
+			var that = this;
+			if(obj.contents){
+				console.log("group selected");
+				return;
+			}
+			
+			var sp = game.add.sprite(obj.x, obj.y, obj.__image);
+			
+			if(obj.rotation){
+				sp.rotation = Math.PI*obj.rotation/180;
+			}
+			
+			sp.anchor.x = obj.anchorX;
+			sp.anchor.y = obj.anchorY;
+			
+			
+			sp.x = obj.x;
+			sp.y = obj.y;
+			
+			that.objects.push(sp);
+			
+			sp.inputEnabled = true;
+			sp.input.pixelPerfectOver = true;
+			sp.MT_OBJECT = obj;
+			
+			sp.inputEnabled = true;
+			
+			sp.events.onInputDown.add(function(){
+				that.activeObject = sp;
+			});
+			
+			sp.input.enableDrag();
+			
+			if(that.activeObject && obj.id == that.activeObject.MT_OBJECT.id){
+				that.activeObject = sp;
+			}
+			
+			
+		},
+		
+   
+		setActive: function(id){
+			for(var i=0; i<this.objects.length; i++){
+				if(this.objects[i].MT_OBJECT.id == id){
+					this.activeObject = this.objects[i];
+					return;
+				}
+				
+			}
+		},
+   
 		addAssets: function(assets){
 			var game = this.game;
 			var that = this;
@@ -108,7 +230,14 @@ MT(
 			
 			var image = new Image();
 			image.onload = function(){
-				game.cache.addImage(asset.__image, asset.__image, this);
+				if(asset.width != asset.frameWidth || asset.width != asset.frameHeight){
+					game.cache.addSpriteSheet(asset.__image, asset.__image, this, asset.frameWidth, asset.frameHeight, asset.frameMax, asset.margin, asset.spacing);
+				}
+				else{
+					game.cache.addImage(asset.__image, asset.__image, this);
+				}
+				
+				
 				if(typeof cb === "function"){
 					cb();
 				}
@@ -117,36 +246,7 @@ MT(
 		},
    
    
-		addObject: function(obj){
-			
-			
-			var game = this.game;
-			var that = this;
-			if(obj.contents){
-				console.log("group selected");
-				return;
-			}
-			
-			if(game.cache){
-				console.log(game.cache);
-			}
-			
-			var sp = game.add.sprite(obj.x, obj.y, obj.__image)
-			that.objects.push(sp);
-			
-			sp.inputEnabled = true;
-			
-			/*sp.events.onDragStop.add(function(sprite, ev){
-				console.log("stopped", sprite, ev);
-				obj.x = sprite.x;
-				obj.y = sprite.y;
-				that.project.om.updateData();
-			});*/
-			
-			
-			
-			
-		},
+
    
 		resize: function(){
 			if(!this.game){
@@ -157,11 +257,14 @@ MT(
 			
 			this.game.world.setBounds(0, 0, 2000, 2000);
 			
-			if (this.game.renderType === Phaser.WEBGL){
+			//if (this.game.renderType === Phaser.WEBGL){
 				this.game.renderer.resize(this.game.width, this.game.height);
-			}
+			//}
 		},
    
+		pick: function(x, y, obj){
+			game.debug.spriteInputInfo(obj, 32, 32);
+		},
    
 		initUI: function(ui){
 			var that = this;
@@ -178,20 +281,32 @@ MT(
 			var cameraMoveEnabled = false;
 			var mousedown = false;
 			
+			
+			
 			ui.events.on("mousedown", function(e){
 				if(e.target !== that.game.canvas){
 					return;
 				}
 				
-				if(e.button == 2){
-					cameraMoveEnabled = true;
-					e.preventDefault();
-					return;
-				}
 				
 				mousedown = true;
+				if(e.which == 3){
+						cameraMoveEnabled = true;
+					}
 				
-				
+				if(that.activeObject){
+					that.project.om.updateData();
+					that.project.settings.handleObjects(that.activeObject.MT_OBJECT);
+				}
+				else{
+					that.project.settings.handleScene({
+						cameraX: game.camera.x,
+						cameraY: game.camera.y,
+						worldWidth: game.world.width,
+						worldHeight: game.world.height
+					});
+				}
+			
 				
 			});
 			
@@ -214,17 +329,71 @@ MT(
 					that.game.camera.y -= ui.events.mouse.my;
 					return;
 				}
-				
-				var obj = null;
-				for(var i=0; i<that.objects.length; i++){
-					obj = that.objects[i];
-					//console.log(obj);
+				if(that.activeObject && mousedown){
+					//that.project.om.updateData();
+					that.activeObject.x += ui.events.mouse.mx;
+					that.activeObject.y += ui.events.mouse.my;
+					
+					
+					that.activeObject.MT_OBJECT.x = that.activeObject.x;
+					that.activeObject.MT_OBJECT.y = that.activeObject.y;
+					
+					that.project.settings.updateObjects(that.activeObject.MT_OBJECT);
 				}
+				
+			});
+			
+			
+			ui.events.on("keydown", function(e){
+				
+				var w = e.which;
+				console.log(w, e, e.target);
+				
+				if(!that.activeObject || (e.target != game.canvas && e.target != document.body) ){
+					return;
+				}
+				//left
+				if(w == 37){
+					that.activeObject.x -= 1;
+				}
+				//up
+				if(w == 38){
+					that.activeObject.y -= 1;
+				}
+				//right
+				if(w == 39){
+					that.activeObject.x += 1;
+				}
+				//down
+				if(w == 40){
+					that.activeObject.y += 1;
+				}
+				
+				that.activeObject.MT_OBJECT.x = that.activeObject.x;
+				that.activeObject.MT_OBJECT.y = that.activeObject.y;
+				that.project.settings.updateObjects(that.activeObject.MT_OBJECT);
 			});
 			
 		},
+		
+		sync: function(){
+			that.activeObject.MT_OBJECT.x = that.activeObject.x;
+			that.activeObject.MT_OBJECT.y = that.activeObject.y;
+			that.activeObject.MT_OBJECT.rotation = that.activeObject.rotation;
+		},
    
 		move: function(){
+			
+			
+		},
+   
+		updateScene: function(obj){
+			//this.game.width = this.project.ui.center.offsetWidth;
+			//this.game.height = this.project.ui.center.offsetHeight;
+			
+			this.game.world.setBounds(0, 0, obj.worldWidth, obj.worldHeight);
+			this.game.camera.x = obj.cameraX;
+			this.game.camera.y = obj.cameraY;
 			
 			
 		}

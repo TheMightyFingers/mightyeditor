@@ -30,7 +30,6 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		loadProject: function(pid){
-			this.id = pid;
 			this.a_selectProject(pid);
 			this.send("loadProject", pid);
 		},
@@ -40,7 +39,6 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			
 			var b = ui.topPanel.addButton("NEW", null, function(){
-				console.log("NEW project");
 				that.newProject();
 			});
 			b.width = 80;

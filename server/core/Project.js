@@ -16,6 +16,21 @@ MT.extend("core.SocketManager")(
 		
 	},
 	{
+		a_newProject: function(){
+			var that = this;
+			
+			this.getAllProjects(this.root, function(data){
+				that.knownProjects = data;
+				that.createProject(data);
+			});
+		},
+		
+		a_loadProject: function(id){
+			console.log("loading Project", id);
+			this.openProject(id);
+		},
+		
+		
 		loadData: function(data){
 			this.db = data;
 			this.loadPlugins();
@@ -46,26 +61,17 @@ MT.extend("core.SocketManager")(
 			
 		},
 		
-		a_newProject: function(){
-			var that = this;
-			
-			this.getAllProjects(this.root, function(data){
-				that.knownProjects = data;
-				that.createProject(data);
-			});
-		},
-		a_loadProject: function(id){
-			console.log("loading Project", id);
-			this.openProject(id);
-		},
+		
 		
 		createProject: function(){
 			this.id = this.makeID(this.knownProjects.length);
 			this.path = this.root + "/" + this.id;
 			
-			MT.core.FS.mkdir(this.path);
-			
-			this.send("selectProject", this.id);
+			var that = this;
+			MT.core.FS.mkdir(this.path, function(){
+				that.openProject(that.id);
+				that.send("selectProject", that.id);
+			});
 		},
 		
 		getAllProjects: function(path, cb){

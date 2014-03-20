@@ -28,37 +28,22 @@ MT.extend("core.SocketManager")(
 			this.a_sendFiles();
 		},
 		
+		a_updateData: function(data){
+			console.log("updateData");
+			this.db.contents = data;
+			this.sendMyGroup("receiveFileList", this.db.contents);
+		},
+		
 		a_newImage: function(data){
 			var that = this;
 			
-			
 			var path = data.path.split("/");
-			
 			var name = path.pop();
-			
-			
-			
 			var ext = name.split(".").pop();;
-			
 			var folder = this.project.db.get("assets"+path.join("/"));
-			
-			
-			console.log("assets"+path, folder);
-			
-			
-			console.log(ext);
-			
 			var p = this.project.path  + "/" + this.db.count + "." + ext;
-			data.image = this.db.count + "." + ext;
 			
-			//remove ../client
-			//data.image.shift();
-			//data.image.shift();
-			
-			//data.image = data.image.join("/");
-			
-			console.log("SAVING IMAGE:", p);
-			
+			data.__image = this.db.count + "." + ext;
 			that.addItem(folder, data);
 			
 			this.fs.writeFile(p, new Buffer(data.data, "binary"), function(){
@@ -70,14 +55,9 @@ MT.extend("core.SocketManager")(
 		addItem: function(folder, data){
 			this.db.count++;
 			
-			var d = {
-				name: data.name, 
-				id: this.db.count,
-				__image: data.image
-			};
+			data.id = this.db.count;
 			
-			
-			folder.contents.push(d);
+			folder.contents.push(data);
 		}
 	}
 );

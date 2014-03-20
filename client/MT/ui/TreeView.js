@@ -71,6 +71,10 @@ MT.extend("core.Emitter")(
 			for(var i=0; i<this.items.length; i++){
 				if(this.items[i].data.fullPath == data.fullPath){
 					this.items[i].needRemove = false;
+					for(var k in data){
+						this.items[i].data[k] = data[k];
+					}
+					
 					if(parent.hasClass("close")){
 						this.items[i].hide();
 					}
@@ -379,8 +383,11 @@ MT.extend("core.Emitter")(
 			this.input.style.top = (el.calcOffsetY(document.body)) + "px";
 			
 			this.input.value = el.data.name;
+			var lastValue = el.data.name;
 			
 			this.input.type = "text";
+			
+			el.head.el.innerHTML = "&nbsp;"
 			
 			document.body.appendChild(this.input);
 			
@@ -397,7 +404,7 @@ MT.extend("core.Emitter")(
 				}}
 				catch(e){}
 				
-				if(needSave){
+				if(needSave && this.value != ""){
 					var part = "";
 					if(el.parent.data){
 						part = el.parent.data.fullPath;
@@ -411,6 +418,9 @@ MT.extend("core.Emitter")(
 					if(that.onChange){
 						that.onChange(part + "/" + op, part+"/"+this.value);
 					}
+				}
+				else{
+					el.head.el.innerHTML = lastValue;
 				}
 			};
 			
@@ -444,7 +454,7 @@ MT.extend("core.Emitter")(
 			
 			
 			
-			this.input.setSelectionRange(0, len)
+			this.input.setSelectionRange(0, len);
 			
 			
 			this.inputEnabled = true;

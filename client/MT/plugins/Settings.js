@@ -1,17 +1,18 @@
+MT.require("ui.Input");
+
 MT(
 	MT.plugins.Settings = function(project){
 		
 		this.project = project;
+		this.inputs = [];
 		
 		
+		this.objects = {};
 		
 	},
 	{
 		initUI: function(ui){
-			this.tv = new MT.ui.TreeView([], ui);
-			
 			this.panel = ui.addPanel("Settings");
-			this.tv.tree.show(this.panel.content.el);
 			
 			
 			
@@ -25,10 +26,10 @@ MT(
 				that.handleAssets(obj);
 			});
 			
-			
-			
-			
-			this.project.om.tv.on("click", clickFn);
+			this.project.om.tv.on("click", function(obj){
+				that.handleObjects(obj);
+				that.project.map.setActive(obj.id);
+			});
 		},
    
 		handleClick: function(obj){
@@ -36,35 +37,94 @@ MT(
 			
 		},
    
-		handleAssets: function(obj){
-			var data = [
-				{
-					name: "Position",
-					contents: [
-						{
-							type: "input",
-							name: "x",
-							value: 10
-						},
-						{
-							type: "input",
-							name: "y",
-							value: 10
-						},
-					
-					]
-				},
-				{
-					type: "input",
-					name: "zzz",
-					value: 7
-				}
-			];
+		clear: function(){
+			for(var i=0; i<this.inputs.length; i++){
+				this.inputs[i].remove();
+			}
 			
-			this.tv.onChange = function(a,b){
-				console.log(a,b)
+		},
+		
+		addInput: function(key, toControl, right, cb){
+			var p = this.panel.content;
+			
+			var fw = new MT.ui.Input(this.project.ui.events, key, toControl);
+			
+			//fw.width = p.el.offsetWidth*0.5 - 20;
+			
+			fw.show(p.el);
+			if(right){
+			//	fw.x = fw.width + 20;
+			}
+			
+			fw.style.position = "relative";
+			fw.style.height = "20px";
+			
+			this.inputs.push(fw);
+			
+			var that = this;
+			fw.on("change", cb);
+			return fw;
+		},
+   
+		handleAssets: function(obj){
+			if(obj.contents !== void(0)){
+				return;
+			}
+			
+			this.clear();
+			
+			var that = this;
+			var cb = function(){
+				that.project.am.updateData();
 			};
-			this.tv.merge(data);
+			
+			
+			this.addInput( {key: "frameWidth", step: 1}, obj, false, cb);
+			
+			this.addInput( "frameHeight", obj, true, cb);
+			
+			this.addInput( "frameMax", obj, false, cb);
+			
+			this.addInput( "margin", obj, true, cb);
+			
+			this.addInput( "spacing", obj, false, cb);
+		},
+   
+		handleObjects: function(obj){
+			this.clear();
+			
+			var that = this;
+			var cb = function(){
+				that.project.om.updateData();
+			};
+			
+			this.objects.x = this.addInput( "x", obj, true, cb);
+			this.objects.y = this.addInput( "y", obj, true, cb);
+			this.objects.rotation = this.addInput( "rotation", obj, true, cb);
+			this.objects.anchorX = this.addInput( "anchorX", obj, true, cb);
+			this.objects.anchorY = this.addInput( "anchorY", obj, true, cb);
+			
+		},
+   
+		updateObjects: function(obj){
+			for(var i in this.objects){
+				this.objects[i].obj = obj;
+				this.objects[i].setValue(obj[i]);
+			}
+		},
+   
+		handleScene: function(obj){
+			this.clear();
+			
+			var that = this;
+			var cb = function(){
+				that.project.map.updateScene(obj);
+			};
+			
+			this.addInput( "cameraX", obj, true, cb);
+			this.addInput( "cameraY", obj, true, cb);
+			this.addInput( "worldWidth", obj, true, cb);
+			this.addInput( "worldHeight", obj, true, cb);
 			
 		}
 

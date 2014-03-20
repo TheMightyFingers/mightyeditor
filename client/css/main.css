@@ -11,6 +11,10 @@ body{
 	font-family: "Lucida Sans Unicode", "Lucida Grande", verdana, sans-serif;
 	font-size: 12px;
 	letter-spacing: 1.1px;
+	overflow-x: auto !important;
+	min-width: 800px;
+	position: relative;
+	
 }
 
 ::-webkit-scrollbar {
@@ -194,8 +198,22 @@ body{
 	
 }
 
+div.ui-input{
+	margin: 9px 5px -6px 7px;
+	border-bottom: dashed 1px rgba(255,255,255,0.1);
+	text-indent: 3px;
+}
+div.ui-input .ui-input-value{
+	cursor:ns-resize;
+	padding: 0 10px 0 0;
+	font-weight: bold;
+	min-width: 50px;
+	text-align: right;
+	max-width: 50%;
+	overflow: hidden;
+}
 
-.ui-input{
+input.ui-input{
 	position: absolute;
 	width: 180px;
 	height: 23px;
@@ -211,7 +229,7 @@ body{
 	font-family: "Lucida Sans Unicode", "Lucida Grande", verdana, sans-serif;
 	font-size: 12px;
 	letter-spacing: 1.1px;
-	background: #777;
+	background: none;
 	user-select: text;
 	font-weight: bold;
 }

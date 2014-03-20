@@ -26,7 +26,7 @@ MT(
 			console.log("clicked", e);
 		});
 		logo.width = 70;
-		logo.style.lineHeight = this.topPanel.el.offsetHeight+"px";
+		logo.height = 27;
 		
 		
 		/*var ex = this.topPanel.addButton("Export", null, this);
@@ -37,7 +37,7 @@ MT(
 		var that = this;
 		this.events.on("resize", function(){
 			that.alignCenter();
-			
+			that.right.setPosition();
 		});
 		
 	},
