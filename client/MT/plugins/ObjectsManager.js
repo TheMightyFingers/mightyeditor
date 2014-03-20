@@ -71,17 +71,20 @@ MT.extend("core.BasicPlugin")(
 				return;
 			}
 			
-			var no = {};
-			for(var i in obj){
-				no[i] = obj[i];
-			}
-			no.x = e.offsetX;
-			no.y = e.offsetY;
+			var no = {
+				__image: obj.__image,
+				x: e.offsetX,
+				y: e.offsetY,
+				anchorX: 0.5,
+				anchorY: 0.5,
+				rotation: 0,
+				alpha: 1,
+				name: obj.name
+			};
 			
-			
-			no.image = this.project.path + no.fullPath;
 			data.push(no);
 			
+			this.tv.rootPath = this.project.path
 			this.tv.merge(data);
 			this.updateData(data);
 			

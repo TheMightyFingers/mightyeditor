@@ -47,14 +47,8 @@ MT.extend("core.BasicPlugin")(
 			this.options.addClass();
 			this.options.style.width = "33px";
 			this.options.style.left = "auto";
-			//this.options.x = this.panel.el.offsetWidth - this.options.width;
 			
-			//this.buildAssetsTree();
 			ui.events.on("drop", function(e){
-				
-				console.log(e.dataTransfer.files);
-				
-				
 				that.handleFiles(e);
 			});
 			
@@ -65,15 +59,14 @@ MT.extend("core.BasicPlugin")(
 					that.moveFile(oldItem, newItem);
 				}
 			};
+			
 			this.tv.sortable(this.ui.events);
 			this.tv.tree.show(this.panel.content.el);
 			
 			
 			this.tv.onDrop(function(e, item, last){
 				if(e.target == that.project.map.game.canvas){
-					
 					that.project.om.addObject(e, item.data);
-					
 					return false;
 				}
 			});
@@ -128,19 +121,44 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		uploadImage: function(file, path){
-			var fr  = new FileReader();
 			
-			var that = this;
-			fr.onload = function(){
-				var data = {
-					data: this.result,
-					name: file.name,
-					path: path
+				var fr  = new FileReader();
+				var that = this;
+				fr.onload = function(){
+					var img = new Image();
+					img.onload = function(){
+						/*
+						 * if(obj.frameWidth == void(0)){
+							obj.frameWidth = obj.width;
+							obj.frameHeight = obj.height;
+							obj.frameMax = 1;
+							obj.margin = 0;
+							obj.spacing = 0;
+						}
+						 * 
+						 */
+						var data = {
+							data: fr.result,
+							name: file.name,
+							path: path,
+							width: img.width,
+							height: img.height,
+							frameWidth: img.width,
+							frameHeight: img.height,
+							frameMax: 1,
+							margin: 0,
+							spacing: 0
+						};
+						
+						that.send("newImage", data);
+					};
+					img.src = "data:image/png;base64,"+btoa(fr.result);
 				};
-				that.send("newImage", data);
-			};
+				
+				fr.readAsBinaryString(file);
 			
-			fr.readAsBinaryString(file);
+			
+			
 		},
 		
 		initSocket: function(socket){
@@ -151,10 +169,16 @@ MT.extend("core.BasicPlugin")(
 		
 		handleSocket: function(list){
 			
-			
+		},
+		
+		updateData: function(){
+			this.send("updateData", this.tv.getData());
 		},
    
 		buildAssetsTree: function(list){
+			console.log("list", list);
+			
+			
 			var that = this;
 			list.sort(function(a,b){
 				var inca = ( a.contents ? 1000 : 0);

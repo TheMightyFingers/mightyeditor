@@ -2,9 +2,7 @@ MT(
 	MT.core.SocketManager = function(socket, channel){
 		this.socket = socket;
 		this.channel = channel;
-		
-		console.log("channel:",channel);
-		
+
 		var that = this;
 		this.socket.on(channel, function(action, data){
 			if(typeof that["a_"+action] == "function"){

@@ -8,38 +8,41 @@ MT.extend("core.SocketManager")(
 		this.fs = MT.core.FS;
 		
 		var that = this;
-		this.data = [];
+		this.data = this.project.db.get("objects");
 		
 	},
 	{
 		readData: function(){
-			var that = this;
-			
-			this.dbfile = this.project.path + "/objects.js";
-			console.log("reading data", this.dbfile);
-			this.fs.readFile(this.dbfile, function(err, contents){
-				if(err){
-					that.data = [];
-					that.a_sendData();
-					return;
-				}
-
-				that.data = JSON.parse(contents);
-				that.a_sendData();
-			});
-			
+			this.a_sendData();
 		},
 		a_sendData: function(){
-			this.sendMyGroup("receive", this.data);
+			this.sendMyGroup("receive", this.data.contents);
 		},
 		
 		a_updateData: function(data){
-			this.data = data;
-			var that = this;
-			this.fs.writeFile(this.dbfile, JSON.stringify(data), function(){
-				console.log("saved data", data);
-				that.a_sendData();
-			});
+			this.addIndices(data);
+			
+			
+			this.data.contents = data;
+			this.a_sendData();
+		},
+		
+		addIndices: function(data, id){
+			id = id || 0;
+			for(var i=0; i<data.length; i++){
+				id++;
+				if(data[i].contents){
+					id = this.addIndices(data[i].contents, id);
+					continue;
+				}
+				if(data[i].id){
+					id = data[i].id;
+					continue;
+				}
+				data[i].id = id;
+				
+			}
+			
 			
 		}
 	}

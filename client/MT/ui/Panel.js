@@ -22,6 +22,7 @@ MT.extend("ui.DomElement")(
 		this.content.y = this.header.height;
 		
 		this.content.style.overflow = "auto";
+		this.content.addClass("ui-panel-content");
 		
 		
 		this.addHeader();

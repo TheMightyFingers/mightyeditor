@@ -1,6 +1,6 @@
 MT.require("ui.Panel");
 MT.extend("ui.DomElement")(
-	MT.ui.List = function(list, ui){
+	MT.ui.DDList = function(list, ui){
 		MT.ui.DomElement.call(this);
 		this.panel = new MT.ui.Panel("", ui.events);
 		

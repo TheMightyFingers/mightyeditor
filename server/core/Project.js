@@ -5,30 +5,17 @@ MT.require("core.JsonDB");
 
 MT.extend("core.SocketManager")(
 	MT.core.Project = function(socket){
+		var that = this;
+		
 		MT.core.SocketManager.call(this, socket, "Project");
 		
-		this.assets = new MT.plugins.AssetsManager(socket, this);
-		this.objects = new MT.plugins.ObjectsManager(socket, this);
 		
-		this.db = new MT.core.JsonDB("data/JsonDB.json");
 		this.root = "../client/data/projects";
 		
-		var that = this;
 		
 		
 	},
 	{
-		openProject: function(pid){
-			console.log("OPENED project");
-			this.id = pid;
-			this.path = this.root + "/" + this.id;
-			this.socket.leaveAllGroups();
-			this.socket.joinGroup(this.id);
-			
-			this.assets.a_sendFiles(this.path);
-			this.objects.readData();
-		},
-		
 		a_newProject: function(){
 			var that = this;
 			
@@ -37,18 +24,54 @@ MT.extend("core.SocketManager")(
 				that.createProject(data);
 			});
 		},
+		
 		a_loadProject: function(id){
 			console.log("loading Project", id);
 			this.openProject(id);
 		},
 		
+		
+		loadData: function(data){
+			this.db = data;
+			this.loadPlugins();
+			
+		},
+		
+		loadPlugins: function(){
+			this.assets = new MT.plugins.AssetsManager(this.socket, this);
+			this.objects = new MT.plugins.ObjectsManager(this.socket, this);
+		},
+		
+		openProject: function(pid){
+			console.log("OPENED project");
+			var that = this;
+			that.id = pid;
+			that.path = that.root + "/" + that.id;
+			
+			new MT.core.JsonDB(that.path + "/JsonDB.json", function(data){
+				that.loadData(data);
+			
+				
+				that.socket.leaveAllGroups();
+				that.socket.joinGroup(that.id);
+				
+				that.assets.a_sendFiles(that.path);
+				that.objects.readData();
+			});
+			
+		},
+		
+		
+		
 		createProject: function(){
 			this.id = this.makeID(this.knownProjects.length);
 			this.path = this.root + "/" + this.id;
 			
-			MT.core.FS.mkdir(this.path);
-			
-			this.send("selectProject", this.id);
+			var that = this;
+			MT.core.FS.mkdir(this.path, function(){
+				that.openProject(that.id);
+				that.send("selectProject", that.id);
+			});
 		},
 		
 		getAllProjects: function(path, cb){

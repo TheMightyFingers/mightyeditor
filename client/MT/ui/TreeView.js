@@ -1,6 +1,8 @@
 MT.require("ui.DomElement");
-MT(
+MT.extend("core.Emitter")(
 	MT.ui.TreeView = function(data, root){
+		MT.core.Emitter.call(this);
+		
 		this.tree = null;
 		this.items = [];
 		this.rootPath = root;
@@ -69,6 +71,10 @@ MT(
 			for(var i=0; i<this.items.length; i++){
 				if(this.items[i].data.fullPath == data.fullPath){
 					this.items[i].needRemove = false;
+					for(var k in data){
+						this.items[i].data[k] = data[k];
+					}
+					
 					if(parent.hasClass("close")){
 						this.items[i].hide();
 					}
@@ -113,10 +119,11 @@ MT(
 				head.addClass("ui-treeview-folder-head");
 				el.addClass("open");
 				head.el.onclick = function(e){
-					el.visible = !el.visible;
+					
 					if(e.offsetX > 30){
 						return;
 					}
+					el.visible = !el.visible;
 					console.log(e);
 					
 					if(el.visible){
@@ -141,19 +148,33 @@ MT(
 			}
 			
 			if(type == "item"){
-				var im = document.createElement("img");
-				if(data.image){
-					im.src = data.image;
-				}
-				else{
-					im.src = this.rootPath + data.fullPath;
-				}
-				
-				
-				el.el.appendChild(im);
-				el.image = im;
 				el.isFolder = false;
+				if(!data.type){
+					var im = document.createElement("img");
+					if(data.__image){
+						im.src = this.rootPath + "/" +data.__image;
+					}
+					
+					
+					el.el.appendChild(im);
+					el.image = im;
+				}
+				
+				if(data.type == "input"){
+					var input = new MT.ui.DomElement("span");
+					input.el.innerHTML = "88"
+					
+					input.x = 50;
+					
+					head.addChild(input);
+					el.head = input;
+					
+				}
+				
+				
+				
 			}
+			
 			
 			
 			el.el.ondblclick = function(e){
@@ -225,6 +246,18 @@ MT(
 			});
 			
 			var dragged = false;
+			
+			ev.on("click", function(e){
+				if(that.dragged){
+					return;
+				}
+				
+				var item = that.getOwnItem(e.target.parentNode);
+				
+				if(item){
+					that.emit("click", item.data);
+				}
+			});
 			
 			ev.on("mouseup", function(e){
 				
@@ -346,12 +379,15 @@ MT(
 				this.input.className = "ui-input";
 			}
 			
-			this.input.style.left = (el.calcOffsetX(document.body))+"px";
+			this.input.style.left = (el.head.calcOffsetX(document.body))+"px";
 			this.input.style.top = (el.calcOffsetY(document.body)) + "px";
 			
 			this.input.value = el.data.name;
+			var lastValue = el.data.name;
 			
 			this.input.type = "text";
+			
+			el.head.el.innerHTML = "&nbsp;"
 			
 			document.body.appendChild(this.input);
 			
@@ -368,7 +404,7 @@ MT(
 				}}
 				catch(e){}
 				
-				if(needSave){
+				if(needSave && this.value != ""){
 					var part = "";
 					if(el.parent.data){
 						part = el.parent.data.fullPath;
@@ -379,7 +415,12 @@ MT(
 					el.data.fullPath = part+"/"+this.value;
 					el.data.name = this.value;
 					el.head.el.innerHTML = this.value;
-					that.onChange(part + "/" + op, part+"/"+this.value);
+					if(that.onChange){
+						that.onChange(part + "/" + op, part+"/"+this.value);
+					}
+				}
+				else{
+					el.head.el.innerHTML = lastValue;
 				}
 			};
 			
@@ -413,7 +454,7 @@ MT(
 			
 			
 			
-			this.input.setSelectionRange(0, len)
+			this.input.setSelectionRange(0, len);
 			
 			
 			this.inputEnabled = true;
