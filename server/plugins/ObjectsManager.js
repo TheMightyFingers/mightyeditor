@@ -28,19 +28,22 @@ MT.extend("core.SocketManager")(
 		},
 		
 		addIndices: function(data, id){
-			id = id || 0;
+			id = id || this.data.count;
 			for(var i=0; i<data.length; i++){
-				id++;
-				if(data[i].contents){
-					id = this.addIndices(data[i].contents, id);
-					continue;
-				}
-				if(data[i].id){
-					id = data[i].id;
-					continue;
-				}
-				data[i].id = id;
+				this.data.count++;
 				
+				if(data[i].contents){
+					if(data[i].id){
+						id = data[i].id;
+						continue;
+					}
+					data[i].id = this.data.count;
+					
+					this.addIndices(data[i].contents, this.data.count);
+					continue;
+				}
+				
+				data[i].id = this.data.count;
 			}
 			
 			

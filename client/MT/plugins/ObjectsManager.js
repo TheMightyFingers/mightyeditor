@@ -40,15 +40,13 @@ MT.extend("core.BasicPlugin")(
 			
 			this.tv = new MT.ui.TreeView([], this.project.path);
 			this.tv.onChange = function(oldItem, newItem){
+				console.log("change", oldItem, newItem);
 				that.updateData();
 			};
 			
 			this.tv.sortable(this.ui.events);
 			this.tv.tree.show(this.panel.content.el);
 			
-			this.ui.events.on("mouseup", function(){
-				console.log("mouseup");
-			});
 			
 			
 		},
@@ -64,12 +62,21 @@ MT.extend("core.BasicPlugin")(
 			MT.core.BasicPlugin.initSocket.call(this, socket);
 		},
 		
+		//add object from asset
 		addObject: function( e, obj ){
 			var data = this.tv.getData();
 			///data.fullPath = data.name;
 			if(obj.contents){
 				return;
 			}
+			
+			var name = obj.name.split(".");
+			name.pop();
+			name = name.join("");
+			
+			name += this.getNewNameId(name, data);
+			
+			
 			
 			var no = {
 				__image: obj.__image,
@@ -79,7 +86,7 @@ MT.extend("core.BasicPlugin")(
 				anchorY: 0.5,
 				rotation: 0,
 				alpha: 1,
-				name: obj.name
+				name: name
 			};
 			
 			data.push(no);
@@ -87,11 +94,26 @@ MT.extend("core.BasicPlugin")(
 			this.tv.rootPath = this.project.path
 			this.tv.merge(data);
 			this.updateData(data);
-			
-			
-			
 		},
 		
+		
+		getNewNameId: function(name, data, id){
+			id = id || 0;
+			var tmpName = name;
+			if(id > 0){
+				tmpName += id;
+			}
+			
+			
+			for(var i=0; i<data.length; i++){
+				if(data[i].name == tmpName){
+					id++;
+					id = this.getNewNameId(name, data, id);
+				}
+			}
+			
+			return (id > 0 ? id : "");
+		},
 		
 		buildObjectsTree: function(list){
 			var that = this;

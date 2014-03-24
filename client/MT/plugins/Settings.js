@@ -125,6 +125,7 @@ MT(
 			this.addInput( "cameraY", obj, true, cb);
 			this.addInput( "worldWidth", obj, true, cb);
 			this.addInput( "worldHeight", obj, true, cb);
+			this.addInput( "grid", obj, true, cb);
 			
 		}
 
