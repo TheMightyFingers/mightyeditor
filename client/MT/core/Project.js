@@ -6,10 +6,16 @@ MT.extend("core.BasicPlugin")(
 		
 		this.plugins = {};
 		
-		for(var i in MT.plugins){
-			if(i == "Project"){
-				continue;
-			}
+		this.pluginsEnabled = [
+			"AssetsManager",
+			"ObjectsManager",
+			"MapEditor",
+			"Settings",
+			"Export"
+		];
+		
+		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
+			i = this.pluginsEnabled[id];
 			this.plugins[i.toLowerCase()] = new MT.plugins[i](this);
 		}
 		
