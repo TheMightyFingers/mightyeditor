@@ -21,7 +21,11 @@ MT.extend("core.SocketManager")(
 			
 			console.log("assets" + name);
 			
-			var item = this.project.db.get("assets/" + name);
+			if(name.substring(0, 1) !== "/"){
+				name = "/"+name;
+			}
+			
+			var item = this.project.db.get("assets" + name);
 			var iname = name.split("/").pop();
 			
 			item.name = iname;
