@@ -69,7 +69,8 @@ MT.extend("core.Emitter")(
 		addItem: function(data, parent, isVirtual){
 			
 			for(var i=0; i<this.items.length; i++){
-				if(this.items[i].data.fullPath == data.fullPath){
+				if(this.items[i].data.id == data.id){
+					console.log("matching id");
 					this.items[i].needRemove = false;
 					for(var k in data){
 						this.items[i].data[k] = data[k];
@@ -483,6 +484,7 @@ MT.extend("core.Emitter")(
 				if(this.items[i].needRemove){
 					this.items[i].parent.removeChild(this.items[i]);
 					this.items[i].hide();
+					this.items.splice(i,1);
 					console.log("cleaned up", this.items[i]);
 				}
 			}

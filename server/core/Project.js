@@ -1,5 +1,6 @@
 MT.require("plugins.AssetsManager");
 MT.require("plugins.ObjectsManager");
+MT.require("plugins.Export");
 
 MT.require("core.JsonDB");
 
@@ -40,6 +41,7 @@ MT.extend("core.SocketManager")(
 		loadPlugins: function(){
 			this.assets = new MT.plugins.AssetsManager(this.socket, this);
 			this.objects = new MT.plugins.ObjectsManager(this.socket, this);
+			this.export = new MT.plugins.Export(this.socket, this);
 		},
 		
 		openProject: function(pid){
@@ -57,6 +59,7 @@ MT.extend("core.SocketManager")(
 				
 				that.assets.a_sendFiles(that.path);
 				that.objects.readData();
+				
 			});
 			
 		},

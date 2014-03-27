@@ -115,7 +115,7 @@ MT(
 							group = that.activeObject;
 						}
 						else{
-							group = that.activeObject.parent;
+							group = that.activeObject.parent || game.world;
 						}
 						ctx.strokeStyle = "#ffffff";
 						ctx.lineWidth = 1;
@@ -383,7 +383,7 @@ MT(
 			});
 			this.createMap();
 			
-			this.project.am.onUpdate(function(data){
+			this.project.plugins.assetsmanager.onUpdate(function(data){
 				that.addAssets(data);
 			});
 			

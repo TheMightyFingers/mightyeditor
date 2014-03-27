@@ -1,9 +1,8 @@
 MT.require("plugins.list");
 
 MT.extend("core.BasicPlugin")(
-	MT.plugins.Project = function(id){
+	MT.core.Project = function(ui, socket){
 		MT.core.BasicPlugin.call(this, "Project");
-		this.id = id;
 		
 		this.plugins = {};
 		
@@ -14,15 +13,14 @@ MT.extend("core.BasicPlugin")(
 			this.plugins[i.toLowerCase()] = new MT.plugins[i](this);
 		}
 		
-		/*
-		this.am = new MT.plugins.AssetsManager(this);
-		this.om = new MT.plugins.ObjectsManager(this);
-		this.map = new MT.plugins.MapEditor(this);
-		this.settings = new MT.plugins.Settings(this);
-		*/
 		
+		this.am = this.plugins.assetsmanager;
+		this.om = this.plugins.objectsmanager;
+		this.map = this.plugins.mapeditor;
+		this.settings = this.plugins.settings;
 		
-		
+		this.initUI(ui);
+		this.initSocket(socket);
 		
 	},
 	{
@@ -40,6 +38,13 @@ MT.extend("core.BasicPlugin")(
 		loadProject: function(pid){
 			this.a_selectProject(pid);
 			this.send("loadProject", pid);
+			
+			for(var i in this.plugins){
+				if(this.plugins[i].initSocket){
+					this.plugins[i].initSocket(this.socket);
+				}
+			}
+			
 		},
 		
 		initUI: function(ui){
@@ -78,9 +83,6 @@ MT.extend("core.BasicPlugin")(
 			}
 			
 			
-			for(var i in this.plugins){
-				this.plugins[i].initSocket(socket);
-			}
 			
 			
 		}

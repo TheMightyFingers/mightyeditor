@@ -30,7 +30,7 @@ MT.extend("core.BasicPlugin")(
 					}
 				}
 			
-			], ui);
+			], ui, true);
 			
 			this.options = new MT.ui.Button(null, "ui-options", ui.events, function(){
 				console.log("open options");
@@ -109,7 +109,7 @@ MT.extend("core.BasicPlugin")(
 					
 				});
 			} else if (entry.isDirectory) {
-				this.send("newFolder", entry.name);
+				this.send("newFolder", entry.fullPath);
 				
 				var reader = entry.createReader();
 				reader.readEntries(function(ev){

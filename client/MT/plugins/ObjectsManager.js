@@ -22,7 +22,7 @@ MT.extend("core.BasicPlugin")(
 					}
 				}
 			
-			], ui);
+			], ui, true);
 			
 			this.options = new MT.ui.Button(null, "ui-options", ui.events, function(){
 				if(!that.list.isVisible){

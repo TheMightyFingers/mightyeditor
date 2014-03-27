@@ -22,11 +22,11 @@ MT(
 				that.handleClick(obj);
 			};
 			
-			this.project.am.tv.on("click", function(obj){
+			this.project.plugins.assetsmanager.tv.on("click", function(obj){
 				that.handleAssets(obj);
 			});
 			
-			this.project.om.tv.on("click", function(obj){
+			this.project.plugins.objectsmanager.tv.on("click", function(obj){
 				that.handleObjects(obj);
 				that.project.map.setActive(obj.id);
 			});
@@ -100,7 +100,7 @@ MT(
 			
 			this.objects.x = this.addInput( "x", obj, true, cb);
 			this.objects.y = this.addInput( "y", obj, true, cb);
-			this.objects.rotation = this.addInput( "rotation", obj, true, cb);
+			this.objects.angle = this.addInput( "angle", obj, true, cb);
 			this.objects.anchorX = this.addInput( "anchorX", obj, true, cb);
 			this.objects.anchorY = this.addInput( "anchorY", obj, true, cb);
 			
