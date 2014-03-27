@@ -19,13 +19,15 @@ MT.extend("core.SocketManager")(
 			this.db.count++;
 			name = name.split("\\").join("/");
 			
-			var item = this.project.db.get("assets" + name);
+			console.log("assets" + name);
+			
+			var item = this.project.db.get("assets/" + name);
 			var iname = name.split("/").pop();
 			
 			item.name = iname;
 			item.id = this.db.count;
 			
-			console.log("new folder", item.name, item.id);
+			console.log("newFolder", name, item);
 			this.a_sendFiles();
 		},
 		
