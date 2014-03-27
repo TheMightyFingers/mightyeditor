@@ -58,7 +58,7 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			
 			var b = ui.topPanel.addButton("NEW", null, function(){
-				that.newProject();
+				window.location = window.location.toString().split("#").join("");
 			});
 			b.width = 80;
 			
