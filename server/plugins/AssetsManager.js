@@ -12,13 +12,20 @@ MT.extend("core.SocketManager")(
 	},
 	{
 		a_sendFiles: function(){
-			
-			var that = this;
 			this.sendMyGroup("receiveFileList", this.db.contents);
 		},
 		
 		a_newFolder: function(name){
-			this.project.db.get("assets/"+name);
+			this.db.count++;
+			name = name.split("\\").join("/");
+			
+			var item = this.project.db.get("assets" + name);
+			var iname = name.split("/").pop();
+			
+			item.name = iname;
+			item.id = this.db.count;
+			
+			console.log("new folder", item.name, item.id);
 			this.a_sendFiles();
 		},
 		
@@ -41,10 +48,23 @@ MT.extend("core.SocketManager")(
 			var name = path.pop();
 			var ext = name.split(".").pop();;
 			var folder = this.project.db.get("assets"+path.join("/"));
-			var p = this.project.path  + "/" + this.db.count + "." + ext;
 			
-			data.__image = this.db.count + "." + ext;
-			that.addItem(folder, data);
+			this.db.count++;
+			
+			
+			var p = this.project.path  + "/" + this.db.count + "." + ext;
+			var im = {
+				__image: this.db.count + "." + ext
+			};
+			
+			for(var i in data){
+				if(i == "data"){
+					continue;
+				}
+				im[i] = data[i];
+			}
+			
+			this.addItem(folder, im);
 			
 			this.fs.writeFile(p, new Buffer(data.data, "binary"), function(){
 				that.a_sendFiles();
@@ -53,9 +73,8 @@ MT.extend("core.SocketManager")(
 		},
 		
 		addItem: function(folder, data){
-			this.db.count++;
-			
 			data.id = this.db.count;
+			//console.log("new item", data.name, data.id);
 			
 			folder.contents.push(data);
 		}

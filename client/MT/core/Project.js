@@ -1,20 +1,26 @@
-MT.require("plugins.AssetsManager");
-MT.require("plugins.ObjectsManager");
-MT.require("plugins.MapEditor");
-MT.require("plugins.Settings");
+MT.require("plugins.list");
 
 MT.extend("core.BasicPlugin")(
-	MT.plugins.Project = function(id){
+	MT.core.Project = function(ui, socket){
 		MT.core.BasicPlugin.call(this, "Project");
-		this.id = id;
-		this.am = new MT.plugins.AssetsManager(this);
-		this.om = new MT.plugins.ObjectsManager(this);
-		this.map = new MT.plugins.MapEditor(this);
-		this.settings = new MT.plugins.Settings(this);
+		
+		this.plugins = {};
+		
+		for(var i in MT.plugins){
+			if(i == "Project"){
+				continue;
+			}
+			this.plugins[i.toLowerCase()] = new MT.plugins[i](this);
+		}
 		
 		
+		this.am = this.plugins.assetsmanager;
+		this.om = this.plugins.objectsmanager;
+		this.map = this.plugins.mapeditor;
+		this.settings = this.plugins.settings;
 		
-		
+		this.initUI(ui);
+		this.initSocket(socket);
 		
 	},
 	{
@@ -32,6 +38,13 @@ MT.extend("core.BasicPlugin")(
 		loadProject: function(pid){
 			this.a_selectProject(pid);
 			this.send("loadProject", pid);
+			
+			for(var i in this.plugins){
+				if(this.plugins[i].initSocket){
+					this.plugins[i].initSocket(this.socket);
+				}
+			}
+			
 		},
 		
 		initUI: function(ui){
@@ -43,18 +56,23 @@ MT.extend("core.BasicPlugin")(
 			});
 			b.width = 80;
 			
+			for(var i in this.plugins){
+				this.plugins[i].initUI(ui);
+			}
 			
+			/*
 			this.am.initUI(ui);
 			this.om.initUI(ui);
 			this.map.initUI(ui);
 			
 			this.settings.initUI(ui);
+			*/
 		},
 		
 		initSocket: function(socket){
 			MT.core.BasicPlugin.initSocket.call(this, socket);
-			this.am.initSocket(socket);
-			this.om.initSocket(socket);
+			//this.am.initSocket(socket);
+			//this.om.initSocket(socket);
 			
 			var pid = window.location.hash.substring(1);
 			if(pid != ""){
@@ -63,6 +81,8 @@ MT.extend("core.BasicPlugin")(
 			else{
 				this.newProject();
 			}
+			
+			
 			
 			
 		}

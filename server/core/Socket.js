@@ -90,9 +90,6 @@ MT(
 		
 		sendGroup: function(group, channel, action, data){
 			var sockets = MT.core.sockets;
-			console.log("sending to group", sockets.length, arguments);
-			
-			
 			for(var i=0; i<sockets.length; i++){
 				if(!sockets[i].inGroup(group)){
 					continue;
@@ -103,22 +100,14 @@ MT(
 		
 		sendMyGroup: function(channel, action, data){
 			var sockets = MT.core.sockets;
-			console.log("sending to group", sockets.length, this.groups);
-			
-			
 			for(var i=0; i<sockets.length; i++){
 				for(var j=0; j<this.groups.length; j++){
 					if(!sockets[i].inGroup(this.groups[j])){
 						continue;
 					}
-					console.log("sending to group", this.groups[j]);
 					sockets[i].send(channel, action, data);
 					break;
-					
-					
 				}
-				
-				
 			}
 		},
    

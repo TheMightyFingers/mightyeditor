@@ -30,7 +30,7 @@ MT.extend("core.BasicPlugin")(
 					}
 				}
 			
-			], ui);
+			], ui, true);
 			
 			this.options = new MT.ui.Button(null, "ui-options", ui.events, function(){
 				console.log("open options");
@@ -109,7 +109,7 @@ MT.extend("core.BasicPlugin")(
 					
 				});
 			} else if (entry.isDirectory) {
-				this.send("newFolder", entry.name);
+				this.send("newFolder", entry.fullPath);
 				
 				var reader = entry.createReader();
 				reader.readEntries(function(ev){
@@ -127,16 +127,7 @@ MT.extend("core.BasicPlugin")(
 				fr.onload = function(){
 					var img = new Image();
 					img.onload = function(){
-						/*
-						 * if(obj.frameWidth == void(0)){
-							obj.frameWidth = obj.width;
-							obj.frameHeight = obj.height;
-							obj.frameMax = 1;
-							obj.margin = 0;
-							obj.spacing = 0;
-						}
-						 * 
-						 */
+						
 						var data = {
 							data: fr.result,
 							name: file.name,
@@ -145,7 +136,7 @@ MT.extend("core.BasicPlugin")(
 							height: img.height,
 							frameWidth: img.width,
 							frameHeight: img.height,
-							frameMax: 1,
+							frameMax: -1,
 							margin: 0,
 							spacing: 0
 						};

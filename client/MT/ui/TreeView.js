@@ -46,7 +46,7 @@ MT.extend("core.Emitter")(
 			}
 		},
 		
-		getData: function(parent){
+		getData: function(parent, data){
 			parent = parent || this.tree;
 			var c = null;
 			var data = [];
@@ -69,7 +69,8 @@ MT.extend("core.Emitter")(
 		addItem: function(data, parent, isVirtual){
 			
 			for(var i=0; i<this.items.length; i++){
-				if(this.items[i].data.fullPath == data.fullPath){
+				if(this.items[i].data.id == data.id){
+					console.log("matching id");
 					this.items[i].needRemove = false;
 					for(var k in data){
 						this.items[i].data[k] = data[k];
@@ -233,11 +234,13 @@ MT.extend("core.Emitter")(
 			
 			var item = null;
 			
+			var scrollTop = 0;
+			
 			ev.on("mousedown", function(e){
 				item = that.getOwnItem(e.target.parentNode);
 				if( item ){
 					mdown = true;
-					
+					scrollTop = that.tree.el.parentNode.scrollTop;
 					var y = (item.calcOffsetY(that.tree.el));
 					al.el.style.top = y + "px";
 					my = y - ui.events.mouse.y;
@@ -324,9 +327,10 @@ MT.extend("core.Emitter")(
 					return;
 				}
 				
-				var dy = my - ui.events.mouse.y;
+				var dy = my - ui.events.mouse.y ;
 				
-				var p1 = parseInt(al.style.top) + ev.mouse.my;
+				var p1 = parseInt(al.style.top) + ev.mouse.my - (scrollTop - that.tree.el.parentNode.scrollTop);
+				scrollTop = that.tree.el.parentNode.scrollTop;
 				var p2 = 0;
 				var activeItem = that.getOwnItem(e.target.parentNode);
 				
@@ -358,13 +362,15 @@ MT.extend("core.Emitter")(
 					bottom = true;
 				}
 				
-				if(Math.abs(p2-p1) < 4 && activeItem.isFolder){
+				if(Math.abs(p2-p1) < 16 && activeItem.isFolder){
 					dd.style.height = al.el.offsetHeight+"px";
+					dd.style.top = activeItem.el.offsetTop+"px";
 					inFolder = true;
 				}
+				else{
+					dd.style.top = (p2 - 2) +"px";
+				}
 				
-				
-				dd.style.top = (p2 - 2) +"px";
 				last = activeItem;
 				
 			});
@@ -478,6 +484,7 @@ MT.extend("core.Emitter")(
 				if(this.items[i].needRemove){
 					this.items[i].parent.removeChild(this.items[i]);
 					this.items[i].hide();
+					this.items.splice(i,1);
 					console.log("cleaned up", this.items[i]);
 				}
 			}

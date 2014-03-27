@@ -9,6 +9,11 @@ MT(
 		
 		this.assets = [];
 		this.objects = [];
+		this.groups = [];
+		
+		this.grid = 64;
+		
+		window.map = this;
 	},
 	{
 		
@@ -30,7 +35,7 @@ MT(
 			
 			var ctx = null;
 			
-			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
+			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', { 
 				preload: function(){
 					var c = game.canvas;
 					c.parentNode.removeChild(c);
@@ -40,16 +45,24 @@ MT(
 				create: function(){
 					game.input.onDown.add(function(e){
 						if(e.button !== 0){
-							
 							console.log(e.button);
 							return;
 						}
+						
 						if(e.targetObject){
 							that.activeObject = e.targetObject.sprite;
 						}
 						else{
-							that.activeObject = null;
+							var group = that.isGroupHandle(e.x, e.y);
+							if(!group){
+								that.activeObject = null;
+							}
+							else{
+								that.activeObject = group;
+							}
 						}
+						
+						
 					}, this);
 					
 
@@ -64,9 +77,9 @@ MT(
 					ctx.beginPath();
 					
 					//ctx.translate(-game.camera.x, -game.camera.y);
-					ctx.strokeStyle = "rgba(255,255,255,0.5)";
+					ctx.strokeStyle = "rgba(255,255,255,0.1)";
 					ctx.globalAlpha = 0.5;
-					var g = 64;
+					var g = that.grid;
 					
 					for(var i = -game.camera.x; i<game.canvas.width; i += g){
 						if(i < 0){
@@ -90,14 +103,43 @@ MT(
 					
 					
 					if(that.activeObject){
-						
+						ctx.save();
 						var bounds = that.activeObject.getBounds();
 						ctx.strokeStyle = "#ff0000";
-						ctx.beginPath();
+						
 						ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
 						
+						var group = null;
+						
+						if(that.activeObject.MT_OBJECT.contents){
+							group = that.activeObject;
+						}
+						else{
+							group = that.activeObject.parent || game.world;
+						}
+						ctx.strokeStyle = "#ffffff";
+						ctx.lineWidth = 1;
+						
+						var x = group.x - game.camera.x;
+						var y = group.y - game.camera.y;
+						
+						ctx.translate(x, y);
+						ctx.rotate(group.rotation);
+						ctx.translate(-x, -y);
 						
 						
+						//ctx.translate(x, game.camera.y);
+						
+
+						ctx.beginPath();
+						ctx.moveTo(group.x, group.y);
+						ctx.lineTo(group.x, group.y - 16);
+						ctx.stroke();
+						
+						ctx.strokeRect(group.x - 4, group.y - 4, 8, 8);
+					
+					
+						ctx.restore();
 						
 						//game.debug.spriteBounds(that.activeObject, "#ff0000", false);
 					}
@@ -111,8 +153,26 @@ MT(
 			
 		},
 		
+   
+		isGroupHandle: function(x,y){
+			var bounds = null;
+			for(var i=0; i<this.groups.length; i++){
+				bounds = this.groups[i].getBounds();
+				if(bounds.contains(x,y)){
+					return this.groups[i];
+				}
+				
+				if(Math.abs(this.groups[i].x - x) < 10 && Math.abs(this.groups[i].y - y)){
+					return this.groups[i];
+				}
+				
+			}
+		},
+   
+   
 		_addTimeout: 0,
-		addObjects: function(objs){
+		addObjects: function(objs, group){
+			group = group || game.world;
 			if(!this.isAssetsAdded){
 				var that = this;
 				if(this._addTimeout){
@@ -129,27 +189,71 @@ MT(
 			for(var i=this.objects.length-1; i>-1; i--){
 				this.objects[i].destroy();
 			}
-			this.objects.length = 0;
-			for(var i=objs.length-1; i>-1; i--){
-				if(objs[i].contents){
-					continue;
-				}
-				this.addObject(objs[i]);
+			
+			for(var i=this.groups.length-1; i>-1; i--){
+				this.groups[i].destroy();
 			}
+			
+			this.objects.length = 0;
+			this.groups.length = 0;
+			
+			
+			this._addObjects(objs, group);
 			
 		},
-		
-		addObject: function(obj, group){
+   
+   
+		_addObjects: function(objs, group){
 			
-			
-			var game = this.game;
-			var that = this;
-			if(obj.contents){
-				console.log("group selected");
-				return;
+			for(var i=objs.length-1; i>-1; i--){
+				if(objs[i].contents){
+					
+					var tmp = this.addGroup(objs[i]);
+					group.add(tmp);
+					
+					this._addObjects(objs[i].contents, tmp);
+					continue;
+				}
+				this.addObject(objs[i], group);
 			}
 			
-			var sp = game.add.sprite(obj.x, obj.y, obj.__image);
+			/*
+			for(var i=0; i<this.groups.length; i++){
+				this.alignGroup(this.groups[i]);
+			}
+			*/
+		},
+   
+		
+		addGroup: function(obj){
+			
+			var group = this.game.add.group();
+			group.MT_OBJECT = obj;
+			
+			this.groups.push(group);
+			
+			group.x = obj.x;
+			group.y = obj.y;
+			//group.anchor.x = obj.anchorX;
+			//group.anchor.y = obj.anchorY;
+			
+			if(obj.angle){
+				group.angle = Math.PI*obj.rotation/180;
+			}
+			
+			if(this.activeObject && obj.id == this.activeObject.MT_OBJECT.id){
+				this.activeObject = group;
+			}
+			
+			return group;
+		},
+   
+		addObject: function(obj, group){
+			var game = this.game;
+			var that = this;
+			
+			var sp = null;
+			sp = group.create(obj.x, obj.y, obj.__image);
 			
 			if(obj.rotation){
 				sp.rotation = Math.PI*obj.rotation/180;
@@ -162,27 +266,30 @@ MT(
 			sp.x = obj.x;
 			sp.y = obj.y;
 			
+			if(obj.angle){
+				sp.angle = obj.angle;
+			}
+			
 			that.objects.push(sp);
 			
 			sp.inputEnabled = true;
 			sp.input.pixelPerfectOver = true;
 			sp.MT_OBJECT = obj;
 			
-			sp.inputEnabled = true;
 			
-			sp.events.onInputDown.add(function(){
+			/*sp.events.onInputDown.add(function(){
 				that.activeObject = sp;
-			});
+			});*/
 			
-			sp.input.enableDrag();
+			//sp.input.enableDrag();
 			
 			if(that.activeObject && obj.id == that.activeObject.MT_OBJECT.id){
 				that.activeObject = sp;
 			}
 			
-			
 		},
-		
+   
+   
    
 		setActive: function(id){
 			for(var i=0; i<this.objects.length; i++){
@@ -190,8 +297,17 @@ MT(
 					this.activeObject = this.objects[i];
 					return;
 				}
-				
 			}
+			
+			for(var i=0; i<this.groups.length; i++){
+				if(this.groups[i].MT_OBJECT.id == id){
+					this.activeObject = this.groups[i];
+					return;
+				}
+			}
+			
+			console.log("active not found");
+			
 		},
    
 		addAssets: function(assets){
@@ -245,9 +361,6 @@ MT(
 			image.src = path;
 		},
    
-   
-
-   
 		resize: function(){
 			if(!this.game){
 				return;
@@ -273,7 +386,7 @@ MT(
 			});
 			this.createMap();
 			
-			this.project.am.onUpdate(function(data){
+			this.project.plugins.assetsmanager.onUpdate(function(data){
 				that.addAssets(data);
 			});
 			
@@ -303,7 +416,8 @@ MT(
 						cameraX: game.camera.x,
 						cameraY: game.camera.y,
 						worldWidth: game.world.width,
-						worldHeight: game.world.height
+						worldHeight: game.world.height,
+						grid: that.grid
 					});
 				}
 			
@@ -323,6 +437,9 @@ MT(
 			});
 				
 			
+			
+			var dx = 0;
+			var dy = 0;
 			ui.events.on("mousemove", function(e){
 				if(cameraMoveEnabled){
 					that.game.camera.x -= ui.events.mouse.mx;
@@ -330,14 +447,53 @@ MT(
 					return;
 				}
 				if(that.activeObject && mousedown){
-					//that.project.om.updateData();
-					that.activeObject.x += ui.events.mouse.mx;
-					that.activeObject.y += ui.events.mouse.my;
+					
+					var angle = that.getOffsetAngle(that.activeObject);
+					
+					var x = ui.events.mouse.mx;
+					var y = ui.events.mouse.my;
+					if(angle){
+						var x = that.rpx(angle, -ui.events.mouse.mx, -ui.events.mouse.my, 0, 0);
+						var y = that.rpy(angle, -ui.events.mouse.mx, -ui.events.mouse.my, 0, 0);
+					}
 					
 					
-					that.activeObject.MT_OBJECT.x = that.activeObject.x;
-					that.activeObject.MT_OBJECT.y = that.activeObject.y;
+					if(e.ctrlKey){
+						dx += x;
+						dy += y;
+						
+						if(dx > that.grid){
+							that.activeObject.x = Math.round((that.activeObject.x + dx) /that.grid) * that.grid;
+							dx -= that.grid;
+						}
+						else if(dx < -that.grid){
+							that.activeObject.x = Math.round((that.activeObject.x + dx) /that.grid) * that.grid;
+							dx += that.grid;
+						}
+						else{
+							that.activeObject.x = Math.round((that.activeObject.x) /that.grid) * that.grid;
+						}
+						
+						if(dy > that.grid){
+							that.activeObject.y = Math.round((that.activeObject.y + dy) /that.grid) * that.grid;
+							dy -= that.grid;
+						}
+						else if(dy < -that.grid){
+							that.activeObject.y = Math.round((that.activeObject.y + dy) /that.grid) * that.grid;
+							dy += that.grid;
+						}
+						else{
+							that.activeObject.y = Math.round((that.activeObject.y) /that.grid) * that.grid;
+						}
+						
+					}
+					else{
+						//that.project.om.updateData();
+						that.activeObject.x += x;
+						that.activeObject.y += y;
+					}
 					
+					that.sync();
 					that.project.settings.updateObjects(that.activeObject.MT_OBJECT);
 				}
 				
@@ -376,24 +532,56 @@ MT(
 			
 		},
 		
-		sync: function(){
-			that.activeObject.MT_OBJECT.x = that.activeObject.x;
-			that.activeObject.MT_OBJECT.y = that.activeObject.y;
-			that.activeObject.MT_OBJECT.rotation = that.activeObject.rotation;
+		getOffsetAngle: function(obj){
+			var an = 0;
+			var p = obj.parent;
+			while(p){
+				an += p.rotation;
+				p = p.parent;
+			}
+			
+			
+			return an;
+		},
+		
+		rpx: function(angle, x, y, cx, cy){
+			
+			sin = Math.sin(angle);
+			cos = Math.cos(angle);
+			
+			return -(x - cx)*cos - (y - cy)*sin + cx;
+		},
+		
+		rpy: function(angle, x, y, cx, cy){
+			sin = Math.sin(angle);
+			cos = Math.cos(angle);
+			
+			return -(y - cy)*cos + (x - cx)*sin + cy;
+		},
+		
+		sync: function(obj){
+			
+			obj = obj || this.activeObject;
+			
+			obj.MT_OBJECT.x = obj.x;
+			obj.MT_OBJECT.y = obj.y;
+			
+			obj.MT_OBJECT.angle = obj.angle;
 		},
    
 		move: function(){
 			
-			
 		},
    
 		updateScene: function(obj){
-			//this.game.width = this.project.ui.center.offsetWidth;
-			//this.game.height = this.project.ui.center.offsetHeight;
+			this.game.width = obj.worldWidth;//.project.ui.center.offsetWidth;
+			this.game.height = obj.worldHeight;////this.project.ui.center.offsetHeight;
 			
 			this.game.world.setBounds(0, 0, obj.worldWidth, obj.worldHeight);
 			this.game.camera.x = obj.cameraX;
 			this.game.camera.y = obj.cameraY;
+			
+			this.grid = obj.grid;
 			
 			
 		}

@@ -1,6 +1,6 @@
 MT.require("ui.Panel");
 MT.extend("ui.DomElement")(
-	MT.ui.List = function(list, ui){
+	MT.ui.List = function(list, ui, autohide){
 		MT.ui.DomElement.call(this);
 		this.panel = new MT.ui.Panel("", ui.events);
 		
@@ -13,7 +13,9 @@ MT.extend("ui.DomElement")(
 					return;
 				}
 			}
-			that.hide();
+			if(autohide){
+				that.hide();
+			}
 		});
 		
 		this.isVisible = false;
