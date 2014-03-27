@@ -19,7 +19,7 @@ MT.extend("core.BasicPlugin")(
 					label: "Tiled (.tml)",
 					className: "",
 					cb: function(){
-						that.export("tiled");
+						alert("in progress");
 					}
 				}
 			

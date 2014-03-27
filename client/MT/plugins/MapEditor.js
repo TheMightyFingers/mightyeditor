@@ -35,7 +35,7 @@ MT(
 			
 			var ctx = null;
 			
-			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
+			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', { 
 				preload: function(){
 					var c = game.canvas;
 					c.parentNode.removeChild(c);
@@ -237,8 +237,8 @@ MT(
 			//group.anchor.x = obj.anchorX;
 			//group.anchor.y = obj.anchorY;
 			
-			if(obj.rotation){
-				group.rotation = Math.PI*obj.rotation/180;
+			if(obj.angle){
+				group.angle = Math.PI*obj.rotation/180;
 			}
 			
 			if(this.activeObject && obj.id == this.activeObject.MT_OBJECT.id){
@@ -266,13 +266,16 @@ MT(
 			sp.x = obj.x;
 			sp.y = obj.y;
 			
+			if(obj.angle){
+				sp.angle = obj.angle;
+			}
+			
 			that.objects.push(sp);
 			
 			sp.inputEnabled = true;
 			sp.input.pixelPerfectOver = true;
 			sp.MT_OBJECT = obj;
 			
-			sp.inputEnabled = true;
 			
 			/*sp.events.onInputDown.add(function(){
 				that.activeObject = sp;
@@ -540,8 +543,7 @@ MT(
 			
 			return an;
 		},
-   
-   
+		
 		rpx: function(angle, x, y, cx, cy){
 			
 			sin = Math.sin(angle);
@@ -564,11 +566,10 @@ MT(
 			obj.MT_OBJECT.x = obj.x;
 			obj.MT_OBJECT.y = obj.y;
 			
-			obj.MT_OBJECT.rotation = obj.angle;
+			obj.MT_OBJECT.angle = obj.angle;
 		},
    
 		move: function(){
-			
 			
 		},
    

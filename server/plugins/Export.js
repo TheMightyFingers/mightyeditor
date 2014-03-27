@@ -10,8 +10,10 @@ MT.extend("core.SocketManager")(
 		this.fs = MT.core.FS;
 		
 		this.zipName = "mightytools.zip";
-		this.phaserFile = "mt.js";
+		this.phaserFile = "mt.export.js";
+		this.phaserSrc = "phaser.js";
 		
+		this.idList = {};
 	},
 	{
 		a_phaser: function(){
@@ -37,27 +39,38 @@ MT.extend("core.SocketManager")(
 			console.log(this.assets,this.assets.contents);
 			
 			this.parseAssets(this.assets.contents, this.dir + "/assets");
+			this.parseObjects(this.objects.contents);
 			
-			this.fs.writeFile(this.dir + "/" + this.phaserFile, JSON.stringify({
-				assets: this.assets,
-				objects: this.objects
-			}, null, "\t"), function(err){
-				console.log("write done", err);
+			
+			this.fs.copy("phaser/" + this.phaserSrc, this.dir + "/" + this.phaserSrc);
+			this.fs.copy("phaser/example.html", this.dir + "/example.html");
+			
+			
+			var contents = "";
+			this.fs.readFile("phaser/mt.export.js", function(e, c){
+				contents += c;
+				contents += "mt.data = "+JSON.stringify({
+					assets: that.assets,
+					objects: that.objects
+				}, null, "\t")+";\r\n";
 				
-				//zip -9 -r <zip file> <folder name>
-				exec("zip -9 -r ../" + that.zipName + " ./",{
-						cwd: that.dir
-					},function (error, stdout, stderr) {
+				that.fs.writeFile(that.dir + "/" + that.phaserFile, contents, function(err){
+					console.log("write done", err);
 					
-					console.log("exec", error, stdout, stderr);
-					
-					//console.log("EXPORT", this.assets, this.objects);
-					that.send("complete","mightytools.zip");
+					//zip -9 -r <zip file> <folder name>
+					exec("zip -9 -r ../" + that.zipName + " ./",{
+							cwd: that.dir
+						},function (error, stdout, stderr) {
+						
+						console.log("exec", error, stdout, stderr);
+						
+						//console.log("EXPORT", this.assets, this.objects);
+						that.send("complete","mightytools.zip");
+						
+					});
 					
 				});
 			});
-			
-			
 		},
 		
 		parseAssets: function(assets, path){
@@ -72,8 +85,30 @@ MT.extend("core.SocketManager")(
 					continue;
 				}
 				
+				asset.source = path + "/" + asset.name;
+				
 				this.fs.copy(this.project.path + "/" + asset.__image, path + "/" + asset.name);
+				
+				
+				this.idList[asset.id] = asset.path;
 			}
+		},
+		
+		parseObjects: function(objects){
+			var object = null;
+			var tmp = null;
+			
+			for(var i=0; i<objects.length; i++){
+				object = objects[i];
+				if(object.contents){
+					this.parseObjects(object.contents);
+					continue;
+				}
+				
+				assetId = object.__image.split(".")[0];
+				object.assetPath = this.idList[assetId];
+			}
+			
 		}
 
 	}

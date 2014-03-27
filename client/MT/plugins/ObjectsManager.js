@@ -21,7 +21,6 @@ MT.extend("core.BasicPlugin")(
 						that.newFolder();
 					}
 				}
-			
 			], ui, true);
 			
 			this.options = new MT.ui.Button(null, "ui-options", ui.events, function(){
@@ -149,6 +148,9 @@ MT.extend("core.BasicPlugin")(
 			
 			data.unshift({
 				name: name,
+				x: 0,
+				y: 0,
+				angle: 0,
 				contents: []
 			});
 			

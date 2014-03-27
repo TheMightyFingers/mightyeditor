@@ -80,13 +80,9 @@ MT(
 			
 			
 			this.addInput( {key: "frameWidth", step: 1}, obj, false, cb);
-			
 			this.addInput( "frameHeight", obj, true, cb);
-			
 			this.addInput( "frameMax", obj, false, cb);
-			
 			this.addInput( "margin", obj, true, cb);
-			
 			this.addInput( "spacing", obj, false, cb);
 		},
    
@@ -97,12 +93,20 @@ MT(
 			var cb = function(){
 				that.project.om.updateData();
 			};
-			
-			this.objects.x = this.addInput( "x", obj, true, cb);
-			this.objects.y = this.addInput( "y", obj, true, cb);
-			this.objects.angle = this.addInput( "angle", obj, true, cb);
-			this.objects.anchorX = this.addInput( "anchorX", obj, true, cb);
-			this.objects.anchorY = this.addInput( "anchorY", obj, true, cb);
+			//group
+			if(obj.contents){
+				this.objects.x = this.addInput( "x", obj, true, cb);
+				this.objects.y = this.addInput( "y", obj, true, cb);
+				this.objects.angle = this.addInput( "angle", obj, true, cb);
+			}
+			//sprite
+			else{
+				this.objects.x = this.addInput( "x", obj, true, cb);
+				this.objects.y = this.addInput( "y", obj, true, cb);
+				this.objects.angle = this.addInput( "angle", obj, true, cb);
+				this.objects.anchorX = this.addInput( "anchorX", obj, true, cb);
+				this.objects.anchorY = this.addInput( "anchorY", obj, true, cb);
+			}
 			
 		},
    

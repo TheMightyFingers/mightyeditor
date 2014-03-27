@@ -127,16 +127,7 @@ MT.extend("core.BasicPlugin")(
 				fr.onload = function(){
 					var img = new Image();
 					img.onload = function(){
-						/*
-						 * if(obj.frameWidth == void(0)){
-							obj.frameWidth = obj.width;
-							obj.frameHeight = obj.height;
-							obj.frameMax = 1;
-							obj.margin = 0;
-							obj.spacing = 0;
-						}
-						 * 
-						 */
+						
 						var data = {
 							data: fr.result,
 							name: file.name,
@@ -145,7 +136,7 @@ MT.extend("core.BasicPlugin")(
 							height: img.height,
 							frameWidth: img.width,
 							frameHeight: img.height,
-							frameMax: 1,
+							frameMax: -1,
 							margin: 0,
 							spacing: 0
 						};
