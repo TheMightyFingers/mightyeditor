@@ -125,12 +125,30 @@ MT(
 		},
 		
 		addClass: function(cls){
+			var cl = cls.split(".");
+			if(cl.length > 1){
+				for(var i=0; i<cl.length; i++){
+					this.addClass(cl[i]);
+				}
+				return;
+			}
+			
+			
 			if(!this.hasClass(cls)){
 				this.el.className += " "+cls;
 			}
 		},
 		
 		removeClass: function(cls){
+			var cl = cls.split(".");
+			if(cl.length > 1){
+				for(var i=0; i<cl.length; i++){
+					this.removeClass(cl[i]);
+				}
+				return;
+			}
+			
+			
 			var c = this.el.className.split(" ");
 			for(var i=0; i<c.length; i++){
 				if(cls == c[i]){
@@ -222,21 +240,23 @@ MT(
 		},
    
 		calcOffsetY: function(upTo){
+			upTo = upTo || document.body;
 			var ret = this.el.offsetTop;
-			p = this.el.parentNode;
+			p = this.el.offsetParent;
 			while(p && p != upTo){
-				ret += p.offsetTop;
-				p = p.parentNode;
+				ret += p.offsetTop - p.scrollTop;
+				p = p.offsetParent;
 				
 			}
 			return ret;
 		},
 		calcOffsetX: function(upTo){
+			upTo = upTo || document.body;
 			var ret = this.el.offsetLeft;
-			p = this.el.parentNode;
+			p = this.el.offsetParent;
 			while(p && p != upTo){
-				ret += p.offsetLeft;
-				p = p.parentNode;
+				ret += p.offsetLeft - p.scrollLeft;
+				p = p.offsetParent;
 				
 			}
 			return ret;

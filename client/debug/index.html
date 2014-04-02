@@ -1,0 +1,52 @@
+<html>
+<head>
+	<title>Phaser memory leak test case</title>
+	<script src="phaser.js"></script>
+</head>
+<body>
+<script>
+
+function main(){
+	var game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
+			preload: function(){
+				this.game.load.spritesheet('test', 'dude.png', 32, 48);
+			},
+			create: function(){
+				//testLeak();
+				testLeak(true);
+			}
+	});
+	
+	var info = document.createElement("span");
+	document.body.appendChild(info);
+	
+	var count = 0;
+	
+	var increaseCount = function(){
+		count++;
+		info.innerHTML = count;
+	};
+	
+	var frames = [0,1,2,3];
+	
+	var testLeak = function(addAnimation){
+		var sprite = game.world.create(0, 0, "test");
+		if(addAnimation){
+			sprite.animations.add("default", frames, 10, false);
+		}
+		
+		increaseCount();
+		
+		window.setTimeout(function(){
+		
+			sprite.destroy(true);
+			testLeak(addAnimation);
+			
+		},0);
+	};
+}
+
+main();
+</script>
+</body>
+</html>

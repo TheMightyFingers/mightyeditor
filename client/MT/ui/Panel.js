@@ -47,22 +47,38 @@ MT.extend("ui.DomElement")(
 		addHeader: function(){
 			this.addChild(this.header);
 			this.header.show(this.el);
+			this.content.y = this.header.height;
 		},
 		removeHeader: function(){
 			this.header.hide();
+			this.content.y = 0;
 		},
 		
 		addButton: function(title, className, cb){
 			var b = new MT.ui.Button(title, className, this.events, cb);
 			
 			var off = 0;
-			for(var i=0; i<this.children.length; i++){
-				off += this.children[i].width;
+			for(var i=0; i<this.content.children.length; i++){
+				off += this.content.children[i].width;
 			}
 			
 			b.x += off;
 			
-			this.addChild(b);
+			this.content.addChild(b);
+			return b;
+		},
+		
+		addButtonV: function(title, className, cb){
+			var b = new MT.ui.Button(title, className, this.events, cb);
+			
+			var off = 0;
+			for(var i=0; i<this.content.children.length; i++){
+				off += this.content.children[i].el.offsetHeight;
+			}
+			
+			b.y += off;
+			
+			this.content.addChild(b);
 			return b;
 		},
 		

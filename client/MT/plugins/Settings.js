@@ -13,23 +13,28 @@ MT(
 	{
 		initUI: function(ui){
 			this.panel = ui.addPanel("Settings");
+			var that = this;
 			
+			ui.events.on("keydown", function(e){
+				if(e.which == MT.keys.esc){
+					that.clear();
+				}
+			});
 			
+		},
+		
+		installUI: function(){
 			
 			var that = this;
-			var clickFn = function(obj){
-				console.log("clicked!", obj);
-				that.handleClick(obj);
-			};
-			
+
 			this.project.plugins.assetsmanager.tv.on("click", function(obj){
 				that.handleAssets(obj);
 			});
 			
 			this.project.plugins.objectsmanager.tv.on("click", function(obj){
 				that.handleObjects(obj);
-				that.project.map.setActive(obj.id);
 			});
+			
 		},
    
 		handleClick: function(obj){
@@ -48,13 +53,7 @@ MT(
 			var p = this.panel.content;
 			
 			var fw = new MT.ui.Input(this.project.ui.events, key, toControl);
-			
-			//fw.width = p.el.offsetWidth*0.5 - 20;
-			
 			fw.show(p.el);
-			if(right){
-			//	fw.x = fw.width + 20;
-			}
 			
 			fw.style.position = "relative";
 			fw.style.height = "20px";
@@ -73,6 +72,8 @@ MT(
 			
 			this.clear();
 			
+			this.panel.title = obj.name;
+			
 			var that = this;
 			var cb = function(){
 				that.project.am.updateData();
@@ -88,7 +89,7 @@ MT(
    
 		handleObjects: function(obj){
 			this.clear();
-			
+			this.panel.title = obj.name;
 			var that = this;
 			var cb = function(){
 				that.project.om.updateData();
@@ -103,6 +104,23 @@ MT(
 			else{
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
+				
+				if(obj._framesCount){
+					this.objects.frame = this.addInput( "frame", obj, true, function(){
+						
+						if(obj.frame >= obj._framesCount){
+							obj.frame = 0;
+						}
+						
+						if(obj.frame < 0){
+							obj.frame = obj._framesCount - 1;
+						}
+						
+						that.objects.frame.setValue(obj.frame, true);
+						
+						cb();
+					});
+				}
 				this.objects.angle = this.addInput( "angle", obj, true, cb);
 				this.objects.anchorX = this.addInput( "anchorX", obj, true, cb);
 				this.objects.anchorY = this.addInput( "anchorY", obj, true, cb);
@@ -122,7 +140,7 @@ MT(
 			
 			var that = this;
 			var cb = function(){
-				that.project.map.updateScene(obj);
+				that.project.plugins.objectsmanager.update(obj);
 			};
 			
 			this.addInput( "cameraX", obj, true, cb);

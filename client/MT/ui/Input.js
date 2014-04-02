@@ -130,10 +130,12 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 		},
 		
-		setValue: function(val){
+		setValue: function(val, silent){
 			this.obj[this.key] = val;
 			this.value.el.innerHTML = val;
-			this.emit("change", val);
+			if(!silent){
+				this.emit("change", val);
+			}
 		},
 		
 		evalValue: function(val){

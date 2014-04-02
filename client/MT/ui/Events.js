@@ -1,6 +1,8 @@
 MT(
 	MT.ui.Events = function(){
 		
+		window.events = this;
+		
 		this.events = {
 			mousemove: [],
 			mouseup: [],
@@ -68,6 +70,14 @@ MT(
 					}
 				}
 			}
+		},
+   
+		simulateKey: function(which){
+			this.emit("keydown",{
+				which: which,
+				target: document.body
+			});
+			
 		},
 		
 		emit: function(type, data){

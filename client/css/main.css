@@ -145,9 +145,16 @@ body{
 */
 .ui-treeView-item.active{
 	background-color: rgba(0,0,0,0.5);
-	
 }
 
+.ui-treeview-item.selected {
+	font-weight: bold;
+	background-color: rgba(0,0,0,0.1);
+}
+.ui-treeview-folder.selected > .ui-treeView-folder-head{
+	font-weight: bold;
+	background-color: rgba(0,0,0,0.1);
+}
 .ui-treeView-item img{
 	position: absolute;
 	top: 6px;
@@ -159,7 +166,7 @@ body{
 
 .ui-button{
 	cursor: pointer;
-	height: 32px;
+	height: 28px;
 }
 
 .ui-panel.top .ui-button.logo{
@@ -234,8 +241,36 @@ input.ui-input{
 	font-weight: bold;
 }
 
+.ui-preview{
+	z-index: 10;
+	background: 50% no-repeat rgba(100,100,100,100.9);
+	border: solid 1px rgba(0,0,0,0.5);
+}
+
+.ui-panel.toolbox{
+	margin: 0;
+}
 
 
+.tool.active{
+	background-color: rgba(0,0,0,0.8) !important;
+}
+.tool.select{
+	border-right: 1px solid rgba(255,255,255,0.1);
+	background: url("../img/tools/select.png")  no-repeat 50%;
+}
+.tool.move{
+	border-right: 1px solid rgba(255,255,255,0.1);
+	background: url("../img/tools/move.png")  no-repeat 50%;
+}
+.tool.brush{
+	border-right: 1px solid rgba(255,255,255,0.1);
+	background: url("../img/tools/brush.png")  no-repeat 50%;
+}
+.tool.stamp{
+	border-right: 1px solid rgba(255,255,255,0.1);
+	background: url("../img/tools/stamp.png")  no-repeat 50%;
+}
 
 
 

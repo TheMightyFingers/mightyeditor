@@ -70,7 +70,6 @@ MT.extend("core.Emitter")(
 			
 			for(var i=0; i<this.items.length; i++){
 				if(this.items[i].data.id == data.id){
-					console.log("matching id");
 					this.items[i].needRemove = false;
 					for(var k in data){
 						this.items[i].data[k] = data[k];
@@ -121,7 +120,7 @@ MT.extend("core.Emitter")(
 				el.addClass("open");
 				head.el.onclick = function(e){
 					
-					if(e.offsetX > 30){
+					if(el.isFolder && e.offsetX > 30){
 						return;
 					}
 					el.visible = !el.visible;
@@ -159,6 +158,7 @@ MT.extend("core.Emitter")(
 					
 					el.el.appendChild(im);
 					el.image = im;
+					im.style.pointerEvents = "none";
 				}
 				
 				if(data.type == "input"){
@@ -185,7 +185,12 @@ MT.extend("core.Emitter")(
 				e.preventDefault();
 			};
 			
-			
+			el.el.onmouseover = function(e){
+				that.emit("mouseover", e, el);
+			};
+			el.el.onmouseout = function(e){
+				that.emit("mouseout", e, el);
+			};
 			el.show(parent.el);
 			
 			this.items.push(el);
@@ -258,7 +263,7 @@ MT.extend("core.Emitter")(
 				var item = that.getOwnItem(e.target.parentNode);
 				
 				if(item){
-					that.emit("click", item.data);
+					that.emit("click", item.data, item);
 				}
 			});
 			
@@ -521,6 +526,16 @@ MT.extend("core.Emitter")(
 			
 			if(shouldNotify){
 				this.onChange(null, null);
+			}
+			
+		},
+		
+		select: function(id){
+			for(var i=0; i<this.items.length; i++){
+				if(id == this.items[i].data.id){
+					this.emit("click", this.items[i].data,  this.items[i]);
+					return;
+				}
 			}
 			
 		}

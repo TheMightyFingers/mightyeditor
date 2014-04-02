@@ -1,4 +1,5 @@
 MT.require("plugins.list");
+MT.require("core.keys");
 
 MT.extend("core.BasicPlugin")(
 	MT.core.Project = function(ui, socket){
@@ -11,7 +12,8 @@ MT.extend("core.BasicPlugin")(
 			"ObjectsManager",
 			"MapEditor",
 			"Settings",
-			"Export"
+			"Export",
+			"Tools"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
@@ -66,6 +68,12 @@ MT.extend("core.BasicPlugin")(
 				this.plugins[i].initUI(ui);
 			}
 			
+			
+			for(var i in this.plugins){
+				if(this.plugins[i].installUI){
+					this.plugins[i].installUI(ui);
+				}
+			}
 			/*
 			this.am.initUI(ui);
 			this.om.initUI(ui);

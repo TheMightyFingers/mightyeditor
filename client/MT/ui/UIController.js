@@ -57,7 +57,7 @@ MT(
 			
 			
 			this.left = new MT.ui.Holder(MT.ui.position.LEFT, this.events);
-			this.left.width = 70;
+			this.left.width = 40;
 			this.left.resizeable = false;
 			this.left.addTop(this.top);
 			this.left.el.className += " left";

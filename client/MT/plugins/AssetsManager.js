@@ -1,11 +1,13 @@
 MT.require("ui.TreeView");
 MT.require("ui.List");
 
-MT.extend("core.BasicPlugin")(
+MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.AssetsManager = function(project){
+		MT.core.Emitter.call(this);
 		MT.core.BasicPlugin.call(this, "Assets");
 		this.project = project;
-		this._onUpdate = [];
+		
+		this.active = null;
 	},
 	{
 		initUI: function(ui){
@@ -44,7 +46,6 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			this.panel.header.addChild(this.options);
-			this.options.addClass();
 			this.options.style.width = "33px";
 			this.options.style.left = "auto";
 			
@@ -71,18 +72,94 @@ MT.extend("core.BasicPlugin")(
 				}
 			});
 			
+			this.tv.on("click", function(data, element){
+				console.log("select");
+				
+				
+				if(data.contents){
+					
+					return;
+				}
+				
+				if(that.active){
+					that.active.removeClass("selected");
+				}
+				
+				that.active = element;
+				that.active.addClass("selected");
+				
+				var o = that.project.map.activeObject;
+				if(o){
+					o.MT_OBJECT.assetId = data.id;
+					o.MT_OBJECT.__image = data.__image;
+					that.project.plugins.objectsmanager.update();
+				}
+			});
+			
+			var prev = new MT.ui.DomElement();
+			prev.width = 200;
+			prev.height = 200;
+			prev.addClass("ui-preview");
+			
+			
+			this.tv.on("mouseover", function(e, el){
+				var data = el.data;
+				if(data.__image){
+					prev.show(document.body);
+					prev.width = data.width;
+					prev.height = data.height;
+					prev.x = el.calcOffsetX() - data.width;
+					prev.y = el.calcOffsetY() - (data.height*0.5 - el.el.offsetHeight*0.5);
+					prev.style.backgroundImage = "url('"+that.project.path + "/" +data.__image+"')";
+				}
+			});
+			this.tv.on("mouseout", function(e, el){
+				prev.hide();
+			});
+			ui.events.on("keydown", function(e){
+				var w = e.which;
+				if(w == 27){
+					if(!that.active){
+						return;
+					}
+					that.active.removeClass("selected");
+					that.active = null;
+				}
+			});
+			
 		},
 		
-		onUpdate: function(cb){
-			this._onUpdate.push(cb);
+		installUI: function(ui){
+			
+			var that = this;
+			
+			this.project.map.on("select", function(sprite){
+				if(sprite == null){
+					if(that.active){
+						that.active.removeClass("selected");
+					}
+					return;
+				}
+				var obj = sprite.MT_OBJECT;
+				that.tv.select(obj.assetId);
+			});
+			
+			this.project.om.tv.on("click", function(obj){
+				if(obj.contents){
+					if(that.active){
+						that.active.removeClass("selected");
+						that.active = null;
+						that.tv.select(null);
+					}
+					return;
+				}
+				that.tv.select(obj.assetId);
+			});
 		},
 		
 		update: function(){
 			var data = this.tv.getData();
-			for(var i=0; i<this._onUpdate.length; i++){
-				this._onUpdate[i](data);
-			}
-			
+			this.emit("update", data);
 		},
 		
 		a_receiveFileList: function(list){
@@ -154,12 +231,6 @@ MT.extend("core.BasicPlugin")(
 		
 		initSocket: function(socket){
 			MT.core.BasicPlugin.initSocket.call(this, socket);
-		},
-		
-		
-		
-		handleSocket: function(list){
-			
 		},
 		
 		updateData: function(){
