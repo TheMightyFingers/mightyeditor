@@ -32,18 +32,21 @@ MT.extend("core.SocketManager")(
 			item.id = this.db.count;
 			
 			console.log("newFolder", name, item);
+			this.project.db.save();
 			this.a_sendFiles();
 		},
 		
 		a_moveFile: function(files){
 			console.log("files",files);
 			this.project.db.move("assets"+files.a, "assets"+files.b);
+			this.project.db.save();
 			this.a_sendFiles();
 		},
 		
 		a_updateData: function(data){
 			console.log("updateData");
 			this.db.contents = data;
+			this.project.db.save();
 			this.sendMyGroup("receiveFileList", this.db.contents);
 		},
 		
@@ -83,6 +86,7 @@ MT.extend("core.SocketManager")(
 			//console.log("new item", data.name, data.id);
 			
 			folder.contents.push(data);
+			this.project.db.save();
 		}
 	}
 );

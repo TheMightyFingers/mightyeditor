@@ -24,6 +24,7 @@ MT.extend("core.SocketManager")(
 			
 			
 			this.data.contents = data;
+			this.project.db.save();
 			this.a_sendData();
 		},
 		

@@ -38,11 +38,15 @@ MT(
 			});
 			
 		},
+		//_saveInProgress: false,
    
 		save: function(cb){
 			var that = this;
 			this.fs.writeFile(this.dbfile, JSON.stringify(this.data), function(){
 				console.log("saved data", that.data);
+				if(typeof cb == "function"){
+					cb();
+				}
 			});
 		},
 		
@@ -133,7 +137,8 @@ MT(
 			adb[0].name = name;
 			
 			parent.contents.push(adb[0]);
-
+			
+			this.save();
 		},
    
 		delete: function(name){
