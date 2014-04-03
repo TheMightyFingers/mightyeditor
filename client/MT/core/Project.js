@@ -39,6 +39,8 @@ MT.extend("core.BasicPlugin")(
 			this.id = id;
 			window.location.hash = id;
 			this.path = "data/projects/"+id;
+			
+			this.initPlugins();
 		},
 		
 		
@@ -49,8 +51,6 @@ MT.extend("core.BasicPlugin")(
 		loadProject: function(pid){
 			this.a_selectProject(pid);
 			this.send("loadProject", pid);
-			
-			this.initPlugins();
 		},
 		
 		initUI: function(ui){
