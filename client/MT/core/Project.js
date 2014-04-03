@@ -50,12 +50,7 @@ MT.extend("core.BasicPlugin")(
 			this.a_selectProject(pid);
 			this.send("loadProject", pid);
 			
-			for(var i in this.plugins){
-				if(this.plugins[i].initSocket){
-					this.plugins[i].initSocket(this.socket);
-				}
-			}
-			
+			this.initPlugins();
 		},
 		
 		initUI: function(ui){
@@ -67,6 +62,17 @@ MT.extend("core.BasicPlugin")(
 			});
 			b.width = 80;
 			
+			/*
+			this.am.initUI(ui);
+			this.om.initUI(ui);
+			this.map.initUI(ui);
+			
+			this.settings.initUI(ui);
+			*/
+		},
+		
+		initPlugins: function(){
+			
 			for(var i in this.plugins){
 				this.plugins[i].initUI(ui);
 			}
@@ -77,19 +83,16 @@ MT.extend("core.BasicPlugin")(
 					this.plugins[i].installUI(ui);
 				}
 			}
-			/*
-			this.am.initUI(ui);
-			this.om.initUI(ui);
-			this.map.initUI(ui);
 			
-			this.settings.initUI(ui);
-			*/
+			for(var i in this.plugins){
+				if(this.plugins[i].initSocket){
+					this.plugins[i].initSocket(this.socket);
+				}
+			}
 		},
 		
 		initSocket: function(socket){
 			MT.core.BasicPlugin.initSocket.call(this, socket);
-			//this.am.initSocket(socket);
-			//this.om.initSocket(socket);
 			
 			var pid = window.location.hash.substring(1);
 			if(pid != ""){
