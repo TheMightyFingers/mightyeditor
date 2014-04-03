@@ -533,7 +533,7 @@ MT.extend("core.Emitter")(
 		select: function(id){
 			for(var i=0; i<this.items.length; i++){
 				if(id == this.items[i].data.id){
-					this.emit("click", this.items[i].data,  this.items[i]);
+					this.emit("select", this.items[i].data,  this.items[i]);
 					return;
 				}
 			}

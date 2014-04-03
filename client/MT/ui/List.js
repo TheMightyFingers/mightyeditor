@@ -3,7 +3,8 @@ MT.extend("ui.DomElement")(
 	MT.ui.List = function(list, ui, autohide){
 		MT.ui.DomElement.call(this);
 		this.panel = new MT.ui.Panel("", ui.events);
-		
+		this.panel.removeHeader();
+		this.panel.content.style.overflow = "initial";
 		
 		var that = this;
 		

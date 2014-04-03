@@ -35,7 +35,8 @@ MT.extend("core.BasicPlugin")(
 			this.list.y = b.el.offsetHeight;
 			this.list.x = b.el.offsetLeft-5;
 			this.list.el.style.bottom = "initial";
-			
+			//this.list.removeHeader();
+			//this.list.content.overflow = "initial";
 			
 		},
 		

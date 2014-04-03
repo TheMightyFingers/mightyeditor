@@ -23,8 +23,11 @@ MT.extend("core.Emitter")(
 		window.map = this;
 	},
 	{
+		_mousedown: false,
+		
 		/* basic pluginf fns */
 		initUI: function(ui){
+			this.ui = ui;
 			
 			var that = this;
 			this.project.ui.onResize(function(){
@@ -33,52 +36,16 @@ MT.extend("core.Emitter")(
 			
 			this.createMap();
 			
-			this.project.plugins.assetsmanager.on("update",function(data){
-				that.addAssets(data);
-			});
-			
-			
-			var cameraMoveEnabled = false;
-			var mousedown = false;
 			
 			
 			var tools = this.project.plugins.tools;
 			var om = this.project.plugins.objectsmanager;
 			
 			ui.events.on("mousedown", function(e){
-				if(e.target !== that.game.canvas){
+				if(e.target != game.canvas){
 					return;
 				}
-				if(tools.activeTool == tools.tools.stamp){
-					that.sync(that.activeObject);
-					
-					om.insertObject(that.activeObject.MT_OBJECT);
-					
-					tools.initStamp();
-					return;
-				}
-				
-				
-				mousedown = true;
-				if(e.which == 3){
-						cameraMoveEnabled = true;
-					}
-				
-				if(that.activeObject){
-					that.project.om.updateData();
-					that.project.settings.handleObjects(that.activeObject.MT_OBJECT);
-				}
-				else{
-					that.project.settings.handleScene({
-						cameraX: game.camera.x,
-						cameraY: game.camera.y,
-						worldWidth: game.world.width,
-						worldHeight: game.world.height,
-						grid: that.grid
-					});
-				}
-			
-				
+				that.handleMouseDown(e);
 			});
 			
 			window.oncontextmenu = function(e){
@@ -88,9 +55,9 @@ MT.extend("core.Emitter")(
 			};
 			
 			
-			ui.events.on("mouseup", function(){
-				cameraMoveEnabled = false;
-				mousedown = false;
+			ui.events.on("mouseup", function(e){
+				that.handleMouseUp(e);
+				
 			});
 				
 			
@@ -98,79 +65,13 @@ MT.extend("core.Emitter")(
 			var dx = 0;
 			var dy = 0;
 			ui.events.on("mousemove", function(e){
-				
-				if(that.followObject){
-					that.followObject.x = e.offsetX;
-					that.followObject.y = e.offsetY;
-					return;
-				}
-				
-				
-				
-				if(cameraMoveEnabled){
-					that.game.camera.x -= ui.events.mouse.mx;
-					that.game.camera.y -= ui.events.mouse.my;
-					return;
-				}
-				if(that.activeObject && mousedown){
-					
-					var angle = that.getOffsetAngle(that.activeObject);
-					
-					var x = ui.events.mouse.mx;
-					var y = ui.events.mouse.my;
-					if(angle){
-						var x = that.rpx(angle, -ui.events.mouse.mx, -ui.events.mouse.my, 0, 0);
-						var y = that.rpy(angle, -ui.events.mouse.mx, -ui.events.mouse.my, 0, 0);
-					}
-					
-					
-					if(e.ctrlKey){
-						dx += x;
-						dy += y;
-						
-						if(dx > that.grid){
-							that.activeObject.x = Math.round((that.activeObject.x + dx) /that.grid) * that.grid;
-							dx -= that.grid;
-						}
-						else if(dx < -that.grid){
-							that.activeObject.x = Math.round((that.activeObject.x + dx) /that.grid) * that.grid;
-							dx += that.grid;
-						}
-						else{
-							that.activeObject.x = Math.round((that.activeObject.x) /that.grid) * that.grid;
-						}
-						
-						if(dy > that.grid){
-							that.activeObject.y = Math.round((that.activeObject.y + dy) /that.grid) * that.grid;
-							dy -= that.grid;
-						}
-						else if(dy < -that.grid){
-							that.activeObject.y = Math.round((that.activeObject.y + dy) /that.grid) * that.grid;
-							dy += that.grid;
-						}
-						else{
-							that.activeObject.y = Math.round((that.activeObject.y) /that.grid) * that.grid;
-						}
-						
-					}
-					else{
-						//that.project.om.updateData();
-						that.activeObject.x += x;
-						that.activeObject.y += y;
-					}
-					
-					that.sync();
-					that.project.settings.updateObjects(that.activeObject.MT_OBJECT);
-				}
-				
+				that.handleMouseMove(e);
 			});
 			
 			
 			ui.events.on("keydown", function(e){
-				
 				var w = e.which;
-				console.log(w, e, e.target);
-				
+
 				if(!that.activeObject || (e.target != game.canvas && e.target != document.body) ){
 					return;
 				}
@@ -209,11 +110,16 @@ MT.extend("core.Emitter")(
 		installUI: function(){
 			var that = this;
 			
-			this.project.plugins.tools.on("select", function(tool){
-				this.tool = tool;
-				
-				console.log("selected tool", tool);
+			this.tools = this.project.plugins.tools;
+			
+			this.project.plugins.assetsmanager.on("update",function(data){
+				that.addAssets(data);
 			});
+			
+			this.project.plugins.objectsmanager.on("update", function(data){
+				that.addObjects(data);
+			});
+			
 		},
 	
 		createMap: function(){
@@ -236,7 +142,7 @@ MT.extend("core.Emitter")(
 				},
 				create: function(){
 					game.input.onDown.add(function(e){
-						that.handleMouseDown(e);
+						that.selectObject(e);
 					}, this);
 					
 					that.resize();
@@ -305,7 +211,7 @@ MT.extend("core.Emitter")(
 		
 		highlightActiveObject: function(ctx){
 			
-			if(!this.activeObject){
+			if(!this.activeObject || !this.activeObject.game){
 				return;
 			}
 			
@@ -416,6 +322,8 @@ MT.extend("core.Emitter")(
 		
 		_addTimeout: 0,
 		addObjects: function(objs, group){
+			this.addedObjects = objs;
+			
 			group = group || game.world;
 			if(!this.isAssetsAdded){
 				var that = this;
@@ -431,7 +339,7 @@ MT.extend("core.Emitter")(
 			
 			//reverse order
 			for(var i=this.objects.length-1; i>-1; i--){
-				this.objects[i].destroy(true);
+				this._destroyObject(this.objects[i]);
 			}
 			
 			for(var i=this.groups.length-1; i>-1; i--){
@@ -444,13 +352,35 @@ MT.extend("core.Emitter")(
 			
 			this._addObjects(objs, group);
 			
-			
-			if(this.activeObject && this.activeObject.game == null){
-				this.createActiveObject(this.activeObject.MT_OBJECT);
-				this.follow(this.activeObject);
-			}
+			this.emit("objectsAdded", this);
 		},
-   
+		
+		_destroyObject: function(object){
+    
+			var anims = object.animations._anims;
+			var anim = null;
+			for(var i in anims){
+				anim = anims[i];
+				
+				anim._parent = null;
+				anim._frames = null;
+				anim._frameData = null;
+				anim.currentFrame = null;
+				anim.isPlaying = false;
+
+				anim.onStart.dispose();
+				anim.onLoop.dispose();
+				anim.onComplete.dispose();
+
+				anim.game.onPause.remove(anim.onPause, anim);
+				anim.game.onResume.remove(anim.onResume, anim);
+				
+				anim.game = null;
+			}
+			
+			object.destroy(true);
+		},
+		
 		_addObjects: function(objs, group){
 			
 			for(var i=objs.length-1; i>-1; i--){
@@ -464,12 +394,6 @@ MT.extend("core.Emitter")(
 				}
 				this.addObject(objs[i], group);
 			}
-			
-			/*
-			for(var i=0; i<this.groups.length; i++){
-				this.alignGroup(this.groups[i]);
-			}
-			*/
 		},
    
 		addGroup: function(obj){
@@ -545,11 +469,16 @@ MT.extend("core.Emitter")(
 			
 			return sp;
 		},
-   
+		
+		reloadObjects: function(){
+			if(this.addedObjects){
+				this.addObjects(this.addedObjects);
+			}
+		},
 		
 		/* input handling */
-		
-		handleMouseDown: function(e){
+		//this goes from game
+		selectObject: function(e){
 			
 			if(!this.tool == "select"){
 				return;
@@ -574,6 +503,94 @@ MT.extend("core.Emitter")(
 			
 			this.emit("select", this.activeObject);
 		},
+		
+		/*rest events goes from ui.events*/
+		handleMouseDown: function(e){
+			this.tools.mouseDown(e);
+		},
+		
+		handleMouseUp: function(e){
+			console.log("up");
+			this.tools.mouseUp(e);
+			
+			
+		},
+		
+		emptyFn: function(){},
+		_handleMouseMove: function(){},
+		set handleMouseMove(val){
+			this._handleMouseMove = val;
+		},
+		
+		get handleMouseMove(){
+			return this._handleMouseMove;
+		},
+		
+		_cameraMove: function(e){
+			this.game.camera.x -= this.ui.events.mouse.mx;
+			this.game.camera.y -= this.ui.events.mouse.my;
+		},
+		
+		_objectMove: function(e){
+			var angle = this.getOffsetAngle(this.activeObject);
+			
+			var x = ui.events.mouse.mx;
+			var y = ui.events.mouse.my;
+			
+			if(angle){
+				var x = this.rpx(angle, -ui.events.mouse.mx, -ui.events.mouse.my, 0, 0);
+				var y = this.rpy(angle, -ui.events.mouse.mx, -ui.events.mouse.my, 0, 0);
+			}
+			
+			
+			if(e.ctrlKey){
+				dx += x;
+				dy += y;
+				
+				if(dx > this.grid){
+					this.activeObject.x = Math.round((this.activeObject.x + dx) /this.grid) * this.grid;
+					dx -= this.grid;
+				}
+				else if(dx < -this.grid){
+					this.activeObject.x = Math.round((this.activeObject.x + dx) /this.grid) * this.grid;
+					dx += this.grid;
+				}
+				else{
+					this.activeObject.x = Math.round((this.activeObject.x) /this.grid) * this.grid;
+				}
+				
+				if(dy > this.grid){
+					this.activeObject.y = Math.round((this.activeObject.y + dy) /this.grid) * this.grid;
+					dy -= this.grid;
+				}
+				else if(dy < -this.grid){
+					this.activeObject.y = Math.round((this.activeObject.y + dy) /this.grid) * this.grid;
+					dy += this.grid;
+				}
+				else{
+					this.activeObject.y = Math.round((this.activeObject.y) /this.grid) * this.grid;
+				}
+				
+			}
+			else{
+				//this.project.om.updateData();
+				this.activeObject.x += x;
+				this.activeObject.y += y;
+			}
+			
+			this.sync();
+			this.project.settings.updateObjects(this.activeObject.MT_OBJECT);
+		},
+		
+		_followMouse: function(e){
+			if(!this.activeObject){
+				return;
+			}
+			this.activeObject.x = e.x;
+			this.activeObject.y = e.y;
+		},
+		
+		
 		
 		
 		setActive: function(id){
@@ -624,14 +641,16 @@ MT.extend("core.Emitter")(
 			return -(y - cy)*cos + (x - cx)*sin + cy;
 		},
 		
-		sync: function(obj){
+		sync: function(sprite, obj){
+			sprite = sprite || this.activeObject;
+			obj = obj || sprite.MT_OBJECT;
 			
-			obj = obj || this.activeObject;
+			obj.x = sprite.x;
+			obj.y = sprite.y;
 			
-			obj.MT_OBJECT.x = obj.x;
-			obj.MT_OBJECT.y = obj.y;
+			obj.angle = sprite.angle;
 			
-			obj.MT_OBJECT.angle = obj.angle;
+			this.emit("sync", this);
 		},
    
 		
@@ -649,7 +668,6 @@ MT.extend("core.Emitter")(
 		createActiveObject: function(obj){
 			this.activeObject = this.addObject(obj, this.game.world);
 			return this.activeObject;
-			
 		},
 		
 		

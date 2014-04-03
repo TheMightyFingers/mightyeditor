@@ -4,6 +4,14 @@ MT(
 	},
 	{
 		on: function(action, cb){
+			if(Array.isArray(action)){
+				for(var i=0; i<action.length; i++){
+					this.on(action[i], cb);
+				}
+				return;
+			}
+			
+			
 			if(!this.callbacks[action]){
 				this.callbacks[action] = [];
 			}

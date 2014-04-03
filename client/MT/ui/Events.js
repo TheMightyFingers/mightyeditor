@@ -119,7 +119,7 @@ MT(
 				if(type.indexOf("drop") > -1 || type.indexOf("drag") > -1 ){
 					e.preventDefault();
 				}
-				if(e.ctrlKey){
+				if(e.ctrlKey && e.altKey){
 					console.log(e, type);
 				}
 				that.emit(type, e);

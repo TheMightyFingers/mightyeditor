@@ -28,7 +28,6 @@ MT.extend("core.SocketManager")(
 		},
 		
 		addIndices: function(data){
-			id = this.data.count;
 			
 			for(var i=0; i<data.length; i++){
 				if(data[i].id == void(0)){

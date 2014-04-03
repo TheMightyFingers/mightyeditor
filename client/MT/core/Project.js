@@ -5,6 +5,8 @@ MT.extend("core.BasicPlugin")(
 	MT.core.Project = function(ui, socket){
 		MT.core.BasicPlugin.call(this, "Project");
 		
+		window.pp = this;
+		
 		this.plugins = {};
 		
 		this.pluginsEnabled = [
@@ -13,7 +15,8 @@ MT.extend("core.BasicPlugin")(
 			"MapEditor",
 			"Settings",
 			"Export",
-			"Tools"
+			"Tools",
+			"UndoRedo"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){

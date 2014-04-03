@@ -1,8 +1,9 @@
 MT.require("ui.TreeView");
 MT.require("ui.List");
 
-MT.extend("core.BasicPlugin")(
+MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.ObjectsManager = function(project){
+		MT.core.Emitter.call(this);
 		MT.core.BasicPlugin.call(this, "ObjectsManager");
 		this.project = project;
 	},
@@ -40,14 +41,14 @@ MT.extend("core.BasicPlugin")(
 			this.tv = new MT.ui.TreeView([], this.project.path);
 			this.tv.onChange = function(oldItem, newItem){
 				console.log("change", oldItem, newItem);
-				that.updateData();
+				that.update();
 			};
 			
 			this.tv.sortable(this.ui.events);
 			this.tv.tree.show(this.panel.content.el);
 			
 			
-			this.tv.on("click", function(data, element){
+			var select = function(data, element){
 				
 				if(that.active){
 					that.active.removeClass("selected");
@@ -58,7 +59,10 @@ MT.extend("core.BasicPlugin")(
 				
 				that.project.plugins.mapeditor.setActive(data.id);
 				
-			});
+			};
+			
+			this.tv.on("click", select);
+			this.tv.on("select", select);
 			
 			this.ui.events.on("keyup", function(e){
 				if(e.which == MT.keys.delete){
@@ -75,7 +79,9 @@ MT.extend("core.BasicPlugin")(
 		installUI: function(ui){
 			var that = this;
 			
-			this.project.map.on("select", function(sprite){
+			var map = this.project.plugins.mapeditor;
+			
+			map.on("select", function(sprite){
 				if(sprite == null){
 					if(that.active){
 						that.active.removeClass("selected");
@@ -86,15 +92,17 @@ MT.extend("core.BasicPlugin")(
 				
 				that.tv.select(sprite.MT_OBJECT.id);
 			});
+			
+			map.on("sync", function(){
+				that.sync();
+			});
 		},
 		
-		a_receive: function(list){
-			this.buildObjectsTree(list);
+		a_receive: function(data){
+			this.buildObjectsTree(data);
+			
+			this.emit("afterSync", this.tv.getData());
 			this.update();
-		},
-		
-		update: function(){
-			this.project.map.addObjects(this.tv.getData());
 		},
 		
 		initSocket: function(socket){
@@ -118,7 +126,8 @@ MT.extend("core.BasicPlugin")(
 			
 			this.tv.rootPath = this.project.path
 			this.tv.merge(data);
-			this.updateData(data);
+			
+			this.sync();
 			
 		},
 		
@@ -161,7 +170,7 @@ MT.extend("core.BasicPlugin")(
 			
 			this.ui.events.simulateKey(MT.keys.esc);
 			
-			this.updateData(data);
+			this.sync();
 		},
 		
 		getNewNameId: function(name, data, id){
@@ -197,10 +206,8 @@ MT.extend("core.BasicPlugin")(
 			});
 		},
 		
-		updateData: function(){
-			
-			var data = this.tv.getData();
-			this.send("updateData", data);
+		update: function(){
+			this.emit("update", this.tv.getData());
 		},
 		
 		newFolder: function(){
@@ -223,8 +230,28 @@ MT.extend("core.BasicPlugin")(
 			});
 			
 			this.tv.merge(data);
-			
-			this.updateData();
+			this.sync();
+		},
+		
+		
+		_syncTm: 0,
+		sync: function(silent){
+			if(this._syncTm){
+				window.clearTimeout(this._syncTm);
+				this._syncTm = 0;
+			}
+			var that = this;
+			this._syncTm = window.setTimeout(function(){
+				var data = that.tv.getData();
+				if(!silent){
+					that.emit("beforeSync", data);
+				}
+				
+				console.log("sync");
+				
+				that.send("updateData", data);
+				that._syncTm = 0;
+			}, 100);
 		}
 	}
 );

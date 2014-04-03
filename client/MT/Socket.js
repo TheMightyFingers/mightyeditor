@@ -12,11 +12,7 @@ MT.extend("core.Emitter")(
 		}
 		
 		this.callbacks = {};
-		
-		this._onopen = [];
-		this._onclose = [];
-		this._onerror = [];
-		this._onmessage = [];
+
 		
 		this._toSend = [];
 		
@@ -41,6 +37,7 @@ MT.extend("core.Emitter")(
 			
 			this.ws.onopen = function(e){
 				console.log("WS connected",e);
+				that.emit("core","open");
 			};
 			
 			this.ws.onmessage = function (event) {
@@ -54,7 +51,7 @@ MT.extend("core.Emitter")(
 			
 			this.ws.onclose = function(){
 				console.log("WS close");
-				that.onClose();
+				that.emit("core","open");
 			};
 			
 			return this.connection;
@@ -91,30 +88,6 @@ MT.extend("core.Emitter")(
 			}
 			
 		},
-		
-		onOpen: function(){
-			for(var i=0; i<this._onopen.length; i++){
-				this._onopen[i]();
-			}
-		},
-   
-		onMessage: function(){
-			for(var i=0; i<this._onmessage.length; i++){
-				this._onmessage[i]();
-			}
-		},
-		
-		onError: function(){
-			for(var i=0; i<this._onerror.length; i++){
-				this._onerror[i]();
-			}
-		},
-		
-		onClose: function(){
-			for(var i=0; i<this._onclose.length; i++){
-				this._onclose[i]();
-			}
-		},
    
 		emit: function(type, action, data){
 			if(!this.callbacks[type]){
@@ -125,7 +98,6 @@ MT.extend("core.Emitter")(
 			for(var i=0; i<cbs.length; i++){
 				cbs[i](action, data);
 			}
-			
 		}
 		
 	}

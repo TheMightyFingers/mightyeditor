@@ -13,7 +13,9 @@ function main(){
 			},
 			create: function(){
 				//testLeak();
-				testLeak(true);
+				for(var i=0; i<100; i++){
+					testLeak(true);
+				}
 			}
 	});
 	
@@ -32,17 +34,51 @@ function main(){
 	var testLeak = function(addAnimation){
 		var sprite = game.world.create(0, 0, "test");
 		if(addAnimation){
+			sprite.events.onAnimationStart = false;
 			sprite.animations.add("default", frames, 10, false);
+			
 		}
 		
 		increaseCount();
 		
 		window.setTimeout(function(){
-		
-			sprite.destroy(true);
+			
+			destroySprite(sprite);
+			
+			
+			
+			
+			
+			
 			testLeak(addAnimation);
 			
 		},0);
+	};
+	var destroySprite = function(sprite){
+		var anims = sprite.animations._anims;
+		var anim = null;
+		for(var i in anims){
+			anim = anims[i];
+			
+			//http://docs.phaser.io/Animation.js.html#sunlight-1-line-380
+			anim._parent = null;
+			anim._frames = null;
+			anim._frameData = null;
+			anim.currentFrame = null;
+			anim.isPlaying = false;
+
+			anim.onStart.dispose();
+			anim.onLoop.dispose();
+			anim.onComplete.dispose();
+
+			anim.game.onPause.remove(anim.onPause, anim);
+			anim.game.onResume.remove(anim.onResume, anim);
+			
+			anim.game = null;
+		}
+		
+		sprite.destroy(true);
+
 	};
 }
 

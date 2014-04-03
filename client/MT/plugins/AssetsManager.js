@@ -72,7 +72,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
-			this.tv.on("click", function(data, element){
+			var select = function(data, element){
 				console.log("select");
 				
 				
@@ -94,7 +94,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					o.MT_OBJECT.__image = data.__image;
 					that.project.plugins.objectsmanager.update();
 				}
-			});
+			};
+			
+			this.tv.on("click", select);
+			this.tv.on("select", select);
 			
 			var prev = new MT.ui.DomElement();
 			prev.width = 200;
@@ -144,7 +147,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.tv.select(obj.assetId);
 			});
 			
-			this.project.om.tv.on("click", function(obj){
+			var select = function(obj){
 				if(obj.contents){
 					if(that.active){
 						that.active.removeClass("selected");
@@ -154,7 +157,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					return;
 				}
 				that.tv.select(obj.assetId);
-			});
+			};
+			
+			this.project.om.tv.on("click", select);
+			this.project.om.tv.on("select", select);
 		},
 		
 		update: function(){
@@ -280,6 +286,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.send("newFolder", name);
 			
 			this.tv.merge(data);
+		},
+		
+		getById: function(id){
+			var items = this.tv.items;
+			for(var i=0; i<items.length; i++){
+				if(items[i].data.id == id){
+					return items[i].data;
+				}
+			}
+			
+			return null;
 		}
 	}
 );

@@ -27,11 +27,11 @@ MT(
 			
 			var that = this;
 
-			this.project.plugins.assetsmanager.tv.on("click", function(obj){
+			this.project.plugins.assetsmanager.tv.on(["click", "select"], function(obj){
 				that.handleAssets(obj);
 			});
 			
-			this.project.plugins.objectsmanager.tv.on("click", function(obj){
+			this.project.plugins.objectsmanager.tv.on(["click", "select"], function(obj){
 				that.handleObjects(obj);
 			});
 			
@@ -43,6 +43,7 @@ MT(
 		},
    
 		clear: function(){
+			this.panel.title = "Settings";
 			for(var i=0; i<this.inputs.length; i++){
 				this.inputs[i].remove();
 			}
@@ -92,7 +93,7 @@ MT(
 			this.panel.title = obj.name;
 			var that = this;
 			var cb = function(){
-				that.project.om.updateData();
+				that.project.om.update();
 			};
 			//group
 			if(obj.contents){
