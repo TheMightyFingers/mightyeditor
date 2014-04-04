@@ -43,7 +43,6 @@ MT(
 		save: function(cb){
 			var that = this;
 			this.fs.writeFile(this.dbfile, JSON.stringify(this.data), function(){
-				console.log("saved data", that.data);
 				if(typeof cb == "function"){
 					cb();
 				}

@@ -3,6 +3,9 @@ MT.extend("core.BasicPlugin")(
 		this.project = project;
 		this.buffer = [];
 		this.step = 0;
+		
+		window.ur = this;
+		
 	},
 	{
 		installUI: function(){
@@ -35,7 +38,7 @@ MT.extend("core.BasicPlugin")(
 							that.step--;
 							var data = that.buffer[that.step];
 							that.om.a_receive(JSON.parse(data));
-							that.om.sync(true);
+							//that.om.sync(true);
 						}
 					}
 					else{
@@ -44,7 +47,7 @@ MT.extend("core.BasicPlugin")(
 							var data = that.buffer[that.step];
 							that.om.a_receive(JSON.parse(data));
 							that.step++;
-							that.om.sync(true);
+							//that.om.sync(true);
 						}
 						
 					}

@@ -11,12 +11,12 @@ MT.onReady(main);
 
 function main(){
 	var socket = new MT.Socket();
-	var ui = window.ui = new MT.ui.UIController();
-	
 	socket.on("core", function(type){
 		if(type == "open"){
-			console.log("connection opened");
-			new MT.core.Project(ui, socket);
+			new MT.core.Project(new MT.ui.UIController(), socket);
+		}
+		if(type == "close"){
+			document.body.innerHTML = "";
 		}
 	});
 }

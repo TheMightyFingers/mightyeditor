@@ -8,17 +8,27 @@ MT.extend("core.Emitter")(
 		
 		
 		this.selectedObject = null;
+		this.selected = [];
+		
 		this.project = project;
 		
 		this.assets = [];
 		this.objects = [];
+		this.oldObjects = [];
 		this.groups = [];
+		this.oldGroups = [];
+		
+		this.tmpObjects = [];
 		
 		this.grid = 64;
 		
 		
+		this.dist = {};
+		
 		this.tool = "select";
 		
+		
+		this.selection = new Phaser.Rectangle();
 		
 		window.map = this;
 	},
@@ -57,9 +67,7 @@ MT.extend("core.Emitter")(
 			
 			ui.events.on("mouseup", function(e){
 				that.handleMouseUp(e);
-				
 			});
-				
 			
 			
 			var dx = 0;
@@ -71,38 +79,22 @@ MT.extend("core.Emitter")(
 			
 			ui.events.on("keydown", function(e){
 				var w = e.which;
-
-				if(!that.activeObject || (e.target != game.canvas && e.target != document.body) ){
+				
+				if( (e.target != game.canvas && e.target != document.body) ){
 					return;
 				}
 				
 				//escape
-				if(w == 27){
+				if(w == MT.keys.esc){
 					that.activeObject = null;
+					that.selected.length = 0;
 					that.emit("select", null);
 					return;
 				}
 				
-				//left
-				if(w == 37){
-					that.activeObject.x -= 1;
+				for(var i=0; i<that.selected.length; i++){
+					that.moveByKey(e, that.selected[i]);
 				}
-				//up
-				if(w == 38){
-					that.activeObject.y -= 1;
-				}
-				//right
-				if(w == 39){
-					that.activeObject.x += 1;
-				}
-				//down
-				if(w == 40){
-					that.activeObject.y += 1;
-				}
-				
-				that.activeObject.MT_OBJECT.x = that.activeObject.x;
-				that.activeObject.MT_OBJECT.y = that.activeObject.y;
-				that.project.settings.updateObjects(that.activeObject.MT_OBJECT);
 			});
 			
 		},
@@ -133,7 +125,7 @@ MT.extend("core.Emitter")(
 			this.activeObject = null;
 			
 			var ctx = null;
-			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', { 
+			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
 				preload: function(){
 					var c = game.canvas;
 					c.parentNode.removeChild(c);
@@ -141,10 +133,6 @@ MT.extend("core.Emitter")(
 					
 				},
 				create: function(){
-					game.input.onDown.add(function(e){
-						that.selectObject(e);
-					}, this);
-					
 					that.resize();
 					
 					if(!ctx){
@@ -156,7 +144,12 @@ MT.extend("core.Emitter")(
 				render: function(){
 					
 					that.drawGrid(ctx);
-					that.highlightActiveObject(ctx);
+					for(var i=0; i<that.selected.length; i++){
+						that.highlightObject(ctx, that.selected[i]);
+					}
+					
+					that.drawSelection(ctx);
+					
 				}
 			});
 			
@@ -209,20 +202,20 @@ MT.extend("core.Emitter")(
 			ctx.restore();
 		},
 		
-		highlightActiveObject: function(ctx){
+		highlightObject: function(ctx, obj){
 			
-			if(!this.activeObject || !this.activeObject.game){
+			if(!obj || !obj.game){
 				return;
 			}
 			
-			var bounds = this.activeObject.getBounds();
+			var bounds = obj.getBounds();
 			var group = null;
 			
-			if(this.activeObject.MT_OBJECT.contents){
-				group = this.activeObject;
+			if(obj.MT_OBJECT.contents){
+				group = obj;
 			}
 			else{
-				group = this.activeObject.parent || game.world;
+				group = obj.parent || game.world;
 			}
 			
 			var x = group.x - game.camera.x;
@@ -231,8 +224,12 @@ MT.extend("core.Emitter")(
 			
 			ctx.save();
 			
-			ctx.strokeStyle = "#ff0000";
-			
+			if(this.activeObject == obj){
+				ctx.strokeStyle = "rgba(255,0,0,4)";
+			}
+			else{
+				ctx.strokeStyle = "rgba(255,100,0,0.5)";
+			}
 			ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
 			ctx.strokeStyle = "#ffffff";
@@ -243,28 +240,32 @@ MT.extend("core.Emitter")(
 			ctx.translate(-x, -y);
 			
 			ctx.beginPath();
-			ctx.moveTo(group.x, group.y);
-			ctx.lineTo(group.x, group.y - 16);
+			ctx.moveTo(x, y);
+			ctx.lineTo(x, y - 16);
 			ctx.stroke();
 			
-			ctx.strokeRect(group.x - 4, group.y - 4, 8, 8);
+			ctx.strokeRect(x - 4, y - 4, 8, 8);
 			ctx.restore();
 			
 		},
 		
-		isGroupHandle: function(x,y){
-			var bounds = null;
-			for(var i=0; i<this.groups.length; i++){
-				bounds = this.groups[i].getBounds();
-				if(bounds.contains(x,y)){
-					return this.groups[i];
-				}
-				
-				if(Math.abs(this.groups[i].x - x) < 10 && Math.abs(this.groups[i].y - y)){
-					return this.groups[i];
-				}
-				
+		
+		drawSelection: function(ctx){
+			
+			if(this.selection.empty){
+				return;
 			}
+			
+			ctx.save();
+			
+			ctx.strokeStyle = "rgba(0,70, 150, 0.8)";
+			ctx.fillStyle = "rgba(0,70, 150, 0.2)";
+			
+			ctx.strokeRect(this.selection.x - this.game.camera.x, this.selection.y - this.game.camera.y, this.selection.width, this.selection.height);
+			ctx.fillRect(this.selection.x - this.game.camera.x, this.selection.y - this.game.camera.y, this.selection.width, this.selection.height);
+			
+			ctx.restore();
+			
 		},
 		
 		
@@ -305,10 +306,10 @@ MT.extend("core.Emitter")(
 			var image = new Image();
 			image.onload = function(){
 				if(asset.width != asset.frameWidth || asset.width != asset.frameHeight){
-					game.cache.addSpriteSheet(asset.__image, asset.__image, this, asset.frameWidth, asset.frameHeight, asset.frameMax, asset.margin, asset.spacing);
+					game.cache.addSpriteSheet(asset.id, asset.__image, this, asset.frameWidth, asset.frameHeight, asset.frameMax, asset.margin, asset.spacing);
 				}
 				else{
-					game.cache.addImage(asset.__image, asset.__image, this);
+					game.cache.addImage(asset.id, asset.__image, this);
 				}
 				
 				
@@ -337,14 +338,17 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			
-			//reverse order
-			for(var i=this.objects.length-1; i>-1; i--){
-				this._destroyObject(this.objects[i]);
+			this.oldObjects.length = 0;
+			this.oldObjects = this.objects.slice(0);
+			
+			for(var i=0; i<this.groups.length; i++){
+				this.groups[i].destroy(false);
 			}
 			
-			for(var i=this.groups.length-1; i>-1; i--){
-				this.groups[i].destroy(true);
-			}
+			
+			//this.oldGroups.length = 0;
+			//this.oldGroups = this.oldGroups.slice(0);
+			
 			
 			this.objects.length = 0;
 			this.groups.length = 0;
@@ -352,6 +356,28 @@ MT.extend("core.Emitter")(
 			
 			this._addObjects(objs, group);
 			
+			var remove = true;
+			for(var i=0; i<this.oldObjects.length; i++){
+				remove = true;
+				for(var j=0; j<this.objects.length; j++){
+					
+					if(this.oldObjects[i].MT_OBJECT.id == this.objects[j].MT_OBJECT.id){
+						remove = false;
+						break;
+					}
+				}
+				if(remove){
+					this._destroyObject(this.oldObjects[i]);
+				}
+			}
+			
+			
+			
+			for(var i=0; i<this.tmpObjects.length; i++){
+				this.tmpObjects[i].bringToTop();
+			}
+			
+			this.updateSelected();
 			this.emit("objectsAdded", this);
 		},
 		
@@ -392,7 +418,10 @@ MT.extend("core.Emitter")(
 					this._addObjects(objs[i].contents, tmp);
 					continue;
 				}
-				this.addObject(objs[i], group);
+				
+				var obj = this.addObject(objs[i], group);
+				obj.kill().revive().bringToTop();
+				obj.z = i;
 			}
 		},
    
@@ -412,19 +441,45 @@ MT.extend("core.Emitter")(
 				group.angle = obj.angle;
 			}
 			
-			if(this.activeObject && obj.id == this.activeObject.MT_OBJECT.id){
-				this.activeObject = group;
-			}
-			
 			return group;
 		},
    
 		addObject: function(obj, group){
+			var oo = null;
+			var od = null;
+			for(var i=0; i<this.oldObjects.length; i++){
+				od = this.oldObjects[i];
+				oo = this.oldObjects[i].MT_OBJECT;
+				
+				
+				if(oo.id == obj.id ){
+					od.loadTexture(oo.assetId, oo.frame);
+					
+					
+					od.x = oo.x;
+					od.y = oo.y;
+					od.MT_OBJECT = obj;
+					
+					this.objects.push(od);
+					group.add(od);
+					return od;
+				}
+			}
+			
+			
+			
+			var sp = this.createSprite(obj, group);
+			this.objects.push(sp);
+			
+			return sp;
+		},
+		
+		createSprite: function(obj, group){
 			var game = this.game;
-			var that = this;
+			group = group || game.world;
 			
 			var sp = null;
-			sp = group.create(obj.x, obj.y, obj.__image);
+			sp = group.create(obj.x, obj.y, obj.assetId);
 			
 			sp.anchor.x = obj.anchorX;
 			sp.anchor.y = obj.anchorY;
@@ -439,7 +494,7 @@ MT.extend("core.Emitter")(
 			obj._framesCount = 0;
 			
 			
-			var frameData = game.cache.getFrameData(obj.__image);
+			var frameData = game.cache.getFrameData(obj.assetId);
 			
 			if(frameData){
 				var arr = [];
@@ -457,15 +512,12 @@ MT.extend("core.Emitter")(
 			
 			
 			
-			that.objects.push(sp);
+			
 			
 			sp.inputEnabled = true;
 			sp.input.pixelPerfectOver = true;
-			sp.MT_OBJECT = obj;
 			
-			if(that.activeObject && obj.id == that.activeObject.MT_OBJECT.id){
-				that.activeObject = sp;
-			}
+			sp.MT_OBJECT = obj;
 			
 			return sp;
 		},
@@ -476,36 +528,99 @@ MT.extend("core.Emitter")(
 			}
 		},
 		
-		/* input handling */
-		//this goes from game
-		selectObject: function(e){
-			
-			if(!this.tool == "select"){
-				return;
-			}
-			
-			if(e.button !== 0){
-				return;
-			}
-			
-			if(e.targetObject){
-				this.activeObject = e.targetObject.sprite;
-			}
-			else{
-				var group = this.isGroupHandle(e.x, e.y);
-				if(!group){
-					this.activeObject = null;
-				}
-				else{
-					this.activeObject = group;
-				}
-			}
-			
-			this.emit("select", this.activeObject);
+		_activeObject: null,
+		
+		get activeObject(){
+			return this._activeObject;
 		},
 		
-		/*rest events goes from ui.events*/
+		
+		_justSelected: null,
+		
+		set activeObject(val){
+			
+			if(val){
+				
+				if(this.isSelected(val) && this._justSelected != val){
+					
+					if(this._activeObject && this.activeObject == val && this.ui.events.mouse.lastClick && this.ui.events.mouse.lastClick.shiftKey){
+						this.removeSelected(val);
+						
+						if(this.selected.length > 0){
+							this._activeObject = this.selected[0];
+							this._justSelected = this._activeObject;
+							
+							console.log("unselect");
+							
+							this.emit("select", this._activeObject);
+						}
+						else{
+							this._justSelected = null;
+							this._activeObject = null;
+							this.emit("select", null);
+						}
+						
+						
+						return;
+					}
+					
+					if(this.ui.events.mouse.lastClick && !this.ui.events.mouse.lastClick.shiftKey){
+						this.selected.length = 0;
+					}
+					this.addSelected(val);
+					
+					this._activeObject = val;
+					return;
+				}
+				this._justSelected = null;
+				if(this.ui.events.mouse.lastClick && !this.ui.events.mouse.lastClick.shiftKey){
+					this.selected.length = 0;
+				}
+				
+				this.addSelected(val);
+			}
+			else{
+				if(this.ui.events.mouse.lastClick && !this.ui.events.mouse.lastClick.shiftKey){
+					this.selected.length = 0;
+				}
+			}
+			this._activeObject = val;
+		},
+		
+		get offsetX(){
+			return this.ui.center.offsetLeft - this.game.camera.x;
+		},
+		
+		get offsetY(){
+			return this.ui.center.offsetTop - this.game.camera.y;
+		},
+		
+		get offsetXCam(){
+			return this.ui.center.offsetLeft + this.game.camera.x;
+		},
+		
+		get offsetYCam(){
+			return this.ui.center.offsetTop + this.game.camera.y;
+		},
+		/* input handling */
+		
 		handleMouseDown: function(e){
+			
+			
+			if(e.button == 0){
+				for(var i in this.dist){
+					this.dist[i].x = 0;
+					this.dist[i].y = 0;
+				}
+				
+				var x = e.x - this.offsetXCam;
+				var y = e.y - this.offsetYCam;
+				
+				var obj = this.pickObject(x,y);
+				
+				this.emit("select", obj);
+				
+			}
 			this.tools.mouseDown(e);
 		},
 		
@@ -531,89 +646,123 @@ MT.extend("core.Emitter")(
 			this.game.camera.y -= this.ui.events.mouse.my;
 		},
 		
-		_objectMove: function(e){
-			var angle = this.getOffsetAngle(this.activeObject);
-			
-			var x = ui.events.mouse.mx;
-			var y = ui.events.mouse.my;
-			
-			if(angle){
-				var x = this.rpx(angle, -ui.events.mouse.mx, -ui.events.mouse.my, 0, 0);
-				var y = this.rpy(angle, -ui.events.mouse.mx, -ui.events.mouse.my, 0, 0);
+		
+		dist: null,
+		
+		_objectMove: function(e, object){
+			if(!object){
+				
+				
+				for(var i=0; i<this.selected.length; i++){
+					this._objectMove(e, this.selected[i]);
+				}
+				return;
 			}
 			
+			var id = object.MT_OBJECT.id;
+			
+			var angle = this.getOffsetAngle(object);
+			
+			var x = this.ui.events.mouse.mx;
+			var y = this.ui.events.mouse.my;
+			
+			if(!this.dist[id]){
+				this.dist[id] = {
+					x: 0,
+					y: 0
+				};
+			}
+			var dist = this.dist[id];
+			
+			
+			if(angle){
+				x = this.rpx(angle, -this.ui.events.mouse.mx, -this.ui.events.mouse.my, 0, 0);
+				y = this.rpy(angle, -this.ui.events.mouse.mx, -this.ui.events.mouse.my, 0, 0);
+			}
 			
 			if(e.ctrlKey){
-				dx += x;
-				dy += y;
 				
-				if(dx > this.grid){
-					this.activeObject.x = Math.round((this.activeObject.x + dx) /this.grid) * this.grid;
-					dx -= this.grid;
-				}
-				else if(dx < -this.grid){
-					this.activeObject.x = Math.round((this.activeObject.x + dx) /this.grid) * this.grid;
-					dx += this.grid;
-				}
-				else{
-					this.activeObject.x = Math.round((this.activeObject.x) /this.grid) * this.grid;
-				}
+				dist.x += x;
+				dist.y += y;
 				
-				if(dy > this.grid){
-					this.activeObject.y = Math.round((this.activeObject.y + dy) /this.grid) * this.grid;
-					dy -= this.grid;
-				}
-				else if(dy < -this.grid){
-					this.activeObject.y = Math.round((this.activeObject.y + dy) /this.grid) * this.grid;
-					dy += this.grid;
-				}
-				else{
-					this.activeObject.y = Math.round((this.activeObject.y) /this.grid) * this.grid;
-				}
+				var mx = Math.round( ( dist.x ) / this.grid) * this.grid;
+				var my = Math.round( ( dist.y ) / this.grid) * this.grid;
+
+				dist.x -= mx;
+				dist.y -= my;
+				
+				object.x += mx;
+				object.y += my;
+				
+				object.x = Math.round( object.x / this.grid ) * this.grid;
+				object.y = Math.round( object.y / this.grid ) * this.grid;
 				
 			}
 			else{
-				//this.project.om.updateData();
-				this.activeObject.x += x;
-				this.activeObject.y += y;
+				dist.x = x;
+				dist.y = y;
+				
+				object.x += dist.x;
+				object.y += dist.y;
 			}
 			
-			this.sync();
-			this.project.settings.updateObjects(this.activeObject.MT_OBJECT);
+			this.sync(object);
+			this.project.settings.updateObjects(object.MT_OBJECT);
 		},
 		
-		_followMouse: function(e){
+		moveByKey: function(e, object){
+			var w = e.which;
+			var inc = 1;
+			
+			if(e.ctrlKey){
+				inc = this.grid;
+			}
+			
+			
+			//left
+			if(w == 37){
+				object.x -= inc;
+			}
+			//up
+			if(w == 38){
+				object.y -= inc;
+			}
+			//right
+			if(w == 39){
+				object.x += inc;
+			}
+			//down
+			if(w == 40){
+				object.y += inc;
+			}
+			
+			object.MT_OBJECT.x = object.x;
+			object.MT_OBJECT.y = object.y;
+			this.project.settings.updateObjects(object.MT_OBJECT);
+			
+		},
+		
+		_followMouse: function(e, snapToGrid){
 			if(!this.activeObject){
 				return;
 			}
-			this.activeObject.x = e.x;
-			this.activeObject.y = e.y;
+			
+			
+			this.activeObject.x = e.x - this.ui.center.offsetLeft + this.game.camera.x;
+			this.activeObject.y = e.y - this.ui.center.offsetTop + this.game.camera.y;
+			
+			if(e.ctrlKey || snapToGrid){
+				this.activeObject.x = Math.round(this.activeObject.x / this.grid) * this.grid;
+				this.activeObject.y = Math.round(this.activeObject.y / this.grid) * this.grid;
+			}
+			
 		},
 		
 		
 		
 		
-		setActive: function(id){
-			
-			for(var i=0; i<this.objects.length; i++){
-				if(this.objects[i].MT_OBJECT.id == id){
-					this.activeObject = this.objects[i];
-				
-					return;
-				}
-			}
-			
-			for(var i=0; i<this.groups.length; i++){
-				if(this.groups[i].MT_OBJECT.id == id){
-					this.activeObject = this.groups[i];
-					
-					return;
-				}
-			}
-			
-			console.log("active not found");
-		},
-
+		/* helper fns */
+		
 		getOffsetAngle: function(obj){
 			var an = 0;
 			var p = obj.parent;
@@ -653,6 +802,21 @@ MT.extend("core.Emitter")(
 			this.emit("sync", this);
 		},
    
+		createObject: function(obj){
+			var sprite = this.createSprite(obj);
+			this.tmpObjects.push(sprite);
+			
+			return sprite;
+		},
+		
+		removeObject: function(obj){
+			for(var i=0; i<this.tmpObjects.length; i++){
+				if(this.tmpObjects[i] == obj){
+					this.tmpObjects.splice(i,1)[0].destroy();
+					i--;
+				}
+			}
+		},
 		
 		updateScene: function(obj){
 			this.game.width = obj.worldWidth;
@@ -666,10 +830,163 @@ MT.extend("core.Emitter")(
 		},
 		
 		createActiveObject: function(obj){
-			this.activeObject = this.addObject(obj, this.game.world);
+			this.activeObject = this.addObject(obj, this.game.world, true);
 			return this.activeObject;
 		},
 		
+		pickObject: function(x,y){
+			
+			x += this.game.camera.x;
+			y += this.game.camera.y;
+			
+			var ctrl = this.ui.events.mouse.lastClick.ctrlKey;
+			var shift = this.ui.events.mouse.lastClick.shiftKey;
+			
+			for(var i=this.objects.length-1; i>-1; i--){
+				var box = this.objects[i].getBounds();
+				if(box.contains(x,y)){
+					if(!ctrl && this.activeObject && this.objects[i].parent != this.game.world && this.activeObject.MT_OBJECT == this.objects[i].parent.MT_OBJECT){
+						return this.objects[i].parent;
+					}
+					
+					/*if(shift){
+						this.addSelected(this.objects[i]);
+					}*/
+					
+					return this.objects[i];
+				}
+			}
+			
+			for(var i=0; i<this.tmpObjects.length; i++){
+				var box = this.tmpObjects[i].getBounds();
+				if(box.contains(x,y)){
+					return this.tmpObjects[i];
+				}
+			}
+			
+			for(var i=this.groups.length-1; i>-1; i--){
+				var box = this.groups[i].getBounds();
+				if(box.contains(x, y)){
+					
+					window.box = box;
+					return this.groups[i];
+				}
+			}
+			
+			var group = this.isGroupHandle(x, y);
+			return group;
+		},
 		
+		selectRect: function(rect, clear){
+			var box = null;
+			if(clear){
+				this.selected.length = 0;
+			}
+			
+			for(var i=0; i<this.objects.length; i++){
+				box = this.objects[i].getBounds();
+				if(box.intersects(rect)){
+					this.addSelected(this.objects[i]);
+				}
+			}
+			
+		},
+		
+		isGroupHandle: function(x,y){
+			var bounds = null;
+			for(var i=0; i<this.groups.length; i++){
+				bounds = this.groups[i].getBounds();
+				if(bounds.contains(x,y)){
+					return this.groups[i];
+				}
+				
+				if(this.isGroupSelected(this.groups[i])){
+					if(Math.abs(this.groups[i].x - x - this.game.camera.x) < 10 && Math.abs(this.groups[i].y - y - this.game.camera.y) < 10){
+						return this.groups[i];
+					}
+				}
+				
+			}
+		},
+		
+		isGroupSelected: function(group){
+			for(var i=0; i<this.selected.length; i++){
+				if(this.selected[i].MT_OBJECT.id == group.MT_OBJECT.id){
+					return true;
+				}
+				
+				if(this.selected[i].parent.MT_OBJECT){
+					if(this.selected[i].parent.MT_OBJECT.id == group.MT_OBJECT.id){
+						return true;
+					}
+				}
+			}
+			
+			return false;
+		},
+		
+		isSelected: function(obj){
+			if(!obj){
+				return false;
+			}
+			for(var i=0; i<this.selected.length; i++){
+				if(this.selected[i].MT_OBJECT.id == obj.MT_OBJECT.id){
+					return true;
+				}
+			}
+			
+			return false;
+			
+		},
+		
+		addSelected: function(obj){
+			for(var i=0; i<this.selected.length; i++){
+				if(this.selected[i].MT_OBJECT.id == obj.MT_OBJECT.id){
+					return;
+				}
+			}
+			
+			this.selected.push(obj);
+			
+		},
+		
+		removeSelected: function(obj){
+			for(var i=0; i<this.selected.length; i++){
+				if(this.selected[i].MT_OBJECT.id == obj.MT_OBJECT.id){
+					this.selected.splice(i,1);
+					return obj;
+				}
+			}
+			
+		},
+		
+		updateSelected: function(){
+			var obj = null;
+			for(var i=0; i<this.selected.length; i++){
+				obj = this.getById(this.selected[i].MT_OBJECT.id);
+				if(!obj){
+					this.selected.splice(i, 1);
+					i--;
+					continue;
+				}
+				this.selected[i] = obj;
+			}
+		},
+		
+		
+		getById: function(id){
+			for(var i=0; i<this.objects.length; i++){
+				if(this.objects[i].MT_OBJECT.id == id){
+					return this.objects[i];
+				}
+			}
+			
+			for(var i=0; i<this.groups.length; i++){
+				if(this.groups[i].MT_OBJECT.id == id){
+					return this.groups[i];
+				}
+			}
+			
+		}
 	}
 );   

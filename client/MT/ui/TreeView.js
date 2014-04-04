@@ -248,7 +248,7 @@ MT.extend("core.Emitter")(
 					scrollTop = that.tree.el.parentNode.scrollTop;
 					var y = (item.calcOffsetY(that.tree.el));
 					al.el.style.top = y + "px";
-					my = y - ui.events.mouse.y;
+					my = y - ev.mouse.y;
 					
 				}
 			});
@@ -332,7 +332,7 @@ MT.extend("core.Emitter")(
 					return;
 				}
 				
-				var dy = my - ui.events.mouse.y ;
+				var dy = my - ev.mouse.y ;
 				
 				var p1 = parseInt(al.style.top) + ev.mouse.my - (scrollTop - that.tree.el.parentNode.scrollTop);
 				scrollTop = that.tree.el.parentNode.scrollTop;
@@ -490,6 +490,7 @@ MT.extend("core.Emitter")(
 					this.items[i].parent.removeChild(this.items[i]);
 					this.items[i].hide();
 					this.items.splice(i,1);
+					i--;
 					console.log("cleaned up", this.items[i]);
 				}
 			}

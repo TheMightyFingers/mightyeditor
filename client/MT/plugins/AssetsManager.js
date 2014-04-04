@@ -87,16 +87,36 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				that.active = element;
 				that.active.addClass("selected");
+			};
+			
+			var click = function(data, element){
+				console.log("select");
+				
+				
+				if(data.contents){
+					
+					return;
+				}
+				
+				if(that.active){
+					that.active.removeClass("selected");
+				}
+				
+				that.active = element;
+				that.active.addClass("selected");
 				
 				var o = that.project.map.activeObject;
 				if(o){
-					o.MT_OBJECT.assetId = data.id;
-					o.MT_OBJECT.__image = data.__image;
-					that.project.plugins.objectsmanager.update();
+					var oldId = o.MT_OBJECT.assetId;
+					if(oldId != data.id){
+						o.MT_OBJECT.assetId = data.id;
+						o.MT_OBJECT.__image = data.__image;
+						that.project.plugins.objectsmanager.update();
+						that.project.plugins.objectsmanager.sync();
+					}
 				}
 			};
-			
-			this.tv.on("click", select);
+			this.tv.on("click", click);
 			this.tv.on("select", select);
 			
 			var prev = new MT.ui.DomElement();

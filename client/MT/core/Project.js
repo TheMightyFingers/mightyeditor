@@ -74,13 +74,13 @@ MT.extend("core.BasicPlugin")(
 		initPlugins: function(){
 			
 			for(var i in this.plugins){
-				this.plugins[i].initUI(ui);
+				this.plugins[i].initUI(this.ui);
 			}
 			
 			
 			for(var i in this.plugins){
 				if(this.plugins[i].installUI){
-					this.plugins[i].installUI(ui);
+					this.plugins[i].installUI(this.ui);
 				}
 			}
 			

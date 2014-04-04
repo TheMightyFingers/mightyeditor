@@ -24,7 +24,8 @@ MT(
 			y: 0,
 			mx: 0,
 			my: 0,
-			lastEvent: null
+			lastEvent: null,
+			lastClick: null
 		};
 	},
 	{
@@ -100,15 +101,51 @@ MT(
 				that.mouse.x = e.pageX;
 				that.mouse.y = e.pageY;
 				
+				that.mouse.lastEvent = e;
+				
 				that.emit("mousemove", e);
 			};
 			cb.type = "mousemove";
 			return cb;
 			
 		},
+		_mk_mousedown: function(){
+			
+			var that = this;
+			var cb = function(e){
+				that.mouse.down = true;
+				that.mouse.lastClick = e;
+				
+				that.emit("mousedown", e);
+			};
+			cb.type = "mousedown";
+			return cb;
+		},
+		_mk_mouseup: function(){
+			
+			var that = this;
+			var cb = function(e){
+				that.mouse.down = false;
+				that.mouse.lastClick = e;
+				
+				that.emit("mouseup", e);
+			};
+			cb.type = "mouseup";
+			return cb;
+		},
+   
+   
 		_mk_cb: function(type){
 			if(type == "mousemove"){
 				return this._mk_mousemove();
+			}
+			
+			if(type == "mouseup"){
+				return this._mk_mouseup();
+			}
+			
+			if(type == "mousedown"){
+				return this._mk_mousedown();
 			}
 			
 			

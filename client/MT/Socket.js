@@ -51,7 +51,10 @@ MT.extend("core.Emitter")(
 			
 			this.ws.onclose = function(){
 				console.log("WS close");
-				that.emit("core","open");
+				that.emit("core","close");
+				window.setTimeout(function(){
+					that.connect();
+				},1000);
 			};
 			
 			return this.connection;

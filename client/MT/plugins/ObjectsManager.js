@@ -6,6 +6,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		MT.core.Emitter.call(this);
 		MT.core.BasicPlugin.call(this, "ObjectsManager");
 		this.project = project;
+		
+		
+		
 	},
 	{
 		initUI: function(ui){
@@ -56,9 +59,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				that.active = element;
 				that.active.addClass("selected");
-				
-				that.project.plugins.mapeditor.setActive(data.id);
-				
 			};
 			
 			this.tv.on("click", select);
@@ -94,12 +94,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			map.on("sync", function(){
-				that.sync();
+				//that.sync();
 			});
 		},
 		
 		a_receive: function(data){
-			this.buildObjectsTree(data);
+			this.tv.merge(data);
 			
 			this.emit("afterSync", this.tv.getData());
 			this.update();
@@ -122,11 +122,18 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		insertObject: function(obj){
 			var data = this.tv.getData();
+			
+			//if(obj.id){
+				obj.id = "tmp"+Date.now();
+			//}
+			
+			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, data, 0);
 			data.push(obj);
 			
 			this.tv.rootPath = this.project.path
 			this.tv.merge(data);
 			
+			this.update();
 			this.sync();
 			
 		},
@@ -140,8 +147,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var name = obj.name.split(".");
 			name.pop();
 			name = name.join("");
-			
-			name += this.getNewNameId(name, data);
 
 			return  {
 				assetId: obj.id,
@@ -152,7 +157,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				anchorY: 0.5,
 				angle: 0,
 				alpha: 1,
-				name: name,
+				tmpName: name,
 				frame: 0
 			};
 		},
@@ -247,11 +252,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.emit("beforeSync", data);
 				}
 				
-				console.log("sync");
-				
 				that.send("updateData", data);
 				that._syncTm = 0;
-			}, 100);
+			}, 10);
 		}
 	}
 );
