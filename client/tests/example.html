@@ -1,0 +1,26 @@
+<html>
+<head>
+	<title>mt example</title>
+	<script src="phaser.js"></script>
+	<script src="mt.export.js"></script>
+</head>
+<body>
+<script>
+	var game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
+			preload: function(){
+				mt.preload(this.game);
+			},
+			create: function(){
+				mt.create();
+				
+				/*
+				var player = mt.objects.player;
+				player.animations.add("idle", [0,1,2,3], 10, true);
+				player.animations.play("idle");
+				*/
+			}
+	});
+
+</script>
+</body>
+</html>
