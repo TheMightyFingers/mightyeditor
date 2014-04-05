@@ -165,18 +165,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		deleteObj: function(id, silent){
 			console.log("delete", id);
 			var data = this.tv.getData();
-			for(var i=0; i<data.length; i++){
-				if(data[i].id == id){
-					data.splice(i, 1);
-					break;
-				}
-			}
+			this._delete(id, data);
 			this.tv.merge(data);
 			
 			//if using silent.. you should call manually sync
 			if(!silent){
 				this.ui.events.simulateKey(MT.keys.esc);
 				this.sync();
+			}
+		},
+		_delete: function(id, data){
+			for(var i=0; i<data.length; i++){
+				if(data[i].id == id){
+					data.splice(i, 1);
+					break;
+				}
+				if(data[i].contents){
+					this._delete(id, data[i].contents);
+				}
 			}
 		},
 		
