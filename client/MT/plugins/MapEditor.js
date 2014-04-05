@@ -92,6 +92,14 @@ MT.extend("core.Emitter")(
 					return;
 				}
 				
+				if(w == MT.keys.delete){
+					for(var i=0; i<that.selected.length; i++){
+						om.deleteObj(that.selected[i].MT_OBJECT.id, true);
+					}
+					om.sync();
+					return;
+				}
+				
 				for(var i=0; i<that.selected.length; i++){
 					that.moveByKey(e, that.selected[i]);
 				}
@@ -564,9 +572,9 @@ MT.extend("core.Emitter")(
 						return;
 					}
 					
-					if(this.ui.events.mouse.lastClick && !this.ui.events.mouse.lastClick.shiftKey){
-						this.selected.length = 0;
-					}
+					//if(this.ui.events.mouse.lastClick && !this.ui.events.mouse.lastClick.shiftKey){
+					//	this.selected.length = 0;
+					//}
 					this.addSelected(val);
 					
 					this._activeObject = val;

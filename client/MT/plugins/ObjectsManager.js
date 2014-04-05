@@ -162,7 +162,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			};
 		},
 		
-		deleteObj: function(id){
+		deleteObj: function(id, silent){
 			console.log("delete", id);
 			var data = this.tv.getData();
 			for(var i=0; i<data.length; i++){
@@ -173,9 +173,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			this.tv.merge(data);
 			
-			this.ui.events.simulateKey(MT.keys.esc);
-			
-			this.sync();
+			//if using silent.. you should call manually sync
+			if(!silent){
+				this.ui.events.simulateKey(MT.keys.esc);
+				this.sync();
+			}
 		},
 		
 		getNewNameId: function(name, data, id){
