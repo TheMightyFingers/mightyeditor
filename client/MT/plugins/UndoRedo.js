@@ -2,31 +2,55 @@ MT.extend("core.BasicPlugin")(
 	MT.plugins.UndoRedo = function(project){
 		this.project = project;
 		this.buffer = [];
-		this.step = 0;
+		this._step = 0;
+		
+		this.max = 100;
+		
+		this.undos = 0;
 		
 		window.ur = this;
 		
 	},
 	{
+		set step(val){
+			this._step = val;
+			console.log(val);
+		},
+		
+		get step(){
+			return this._step;
+		},
+		
 		installUI: function(){
 			var that = this;
 			
 			this.om = this.project.plugins.objectsmanager;
 			this.om.on("beforeSync", function(data){
-				if(that.step < that.buffer.length){
-					that.buffer.splice(that.step, that.buffer.length-that.step);
-				}
-				that.step++;
-				that.buffer.push(JSON.stringify(data));
 				
-				if(that.buffer.length > 100){
+				var str = JSON.stringify(data);
+				
+				if(that.buffer[that.step-1] == str){
+					console.log("nothing changed");
+					return;
+				}
+				
+				if(that.step > that.max){
 					that.buffer.shift();
 				}
+				else{
+					that.buffer[that.step] = str;
+					that.step++;
+				}
+				
+				
+				
+				
+				
 			});
 			this.om.on("afterSync", function(data){
-				if(that.step == 0){
-					that.step++;
+				if(that.buffer.length == 0){
 					that.buffer.push(JSON.stringify(data));
+					that.step++;
 				}
 			});
 			
@@ -34,25 +58,37 @@ MT.extend("core.BasicPlugin")(
 			this.ui.events.on("keydown", function(e){
 				if(e.which == "Z".charCodeAt(0)){
 					if(!e.shiftKey){
-						if(that.step > 0){
-							that.step--;
-							var data = that.buffer[that.step];
-							that.om.a_receive(JSON.parse(data));
-							//that.om.sync(true);
-						}
+							
+							if(that.step > 0){
+								that.step--;
+								var data = that.buffer[that.step];
+								that.om.a_receive(JSON.parse(data), true);
+							}
+							else{
+								console.log("nothing to undo");
+							}
 					}
 					else{
 						if(that.step < that.buffer.length){
 							
+							
 							var data = that.buffer[that.step];
-							that.om.a_receive(JSON.parse(data));
-							that.step++;
-							//that.om.sync(true);
+							if(data){
+								
+								that.om.a_receive(JSON.parse(data), true);
+								that.step++;
+							}
+							else{
+								console.log("nothing to redo - no data?");
+							}
 						}
-						
+						else{
+							console.log("nothing to redo");
+						}
 					}
 				}
 			});
+			
 		}
 
 	}

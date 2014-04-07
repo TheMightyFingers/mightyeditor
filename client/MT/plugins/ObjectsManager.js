@@ -45,6 +45,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.onChange = function(oldItem, newItem){
 				console.log("change", oldItem, newItem);
 				that.update();
+				that.sync();
 			};
 			
 			this.tv.sortable(this.ui.events);
@@ -73,6 +74,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 			});
 			
+			
+			
 		},
 		
 		
@@ -96,12 +99,20 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			map.on("sync", function(){
 				//that.sync();
 			});
+			
+			this.ui.events.on("mouseup", function(e){
+				if(e.target == map.game.canvas){
+					that.sync();
+				}
+			});
 		},
 		
-		a_receive: function(data){
+		a_receive: function(data, silent){
 			this.tv.merge(data);
 			
-			this.emit("afterSync", this.tv.getData());
+			if(!silent){
+				this.emit("afterSync", this.tv.getData());
+			}
 			this.update();
 		},
 		
@@ -254,15 +265,25 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this._syncTm = 0;
 			}
 			var that = this;
+			
+			
 			this._syncTm = window.setTimeout(function(){
 				var data = that.tv.getData();
+				var json = JSON.stringify(data);
+				if(this._lastData == json){
+					this._syncTm = 0;
+					return;
+				}
+				
+				console.log("sync");
+				this._lastData = json;
 				if(!silent){
 					that.emit("beforeSync", data);
 				}
 				
 				that.send("updateData", data);
 				that._syncTm = 0;
-			}, 10);
+			}, 100);
 		}
 	}
 );

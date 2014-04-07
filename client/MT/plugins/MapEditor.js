@@ -2,8 +2,9 @@
 MT.requireFile("js/phaser.js");
 MT.require("core.Helper");
 
-MT.extend("core.Emitter")(
+MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	MT.plugins.MapEditor = function(project){
+		MT.core.BasicPlugin.call(this, "MapEditor");
 		MT.core.Emitter.call(this);
 		
 		
@@ -20,9 +21,6 @@ MT.extend("core.Emitter")(
 		
 		this.tmpObjects = [];
 		
-		this.grid = 64;
-		
-		
 		this.dist = {};
 		
 		this.tool = "select";
@@ -31,6 +29,17 @@ MT.extend("core.Emitter")(
 		this.selection = new Phaser.Rectangle();
 		
 		window.map = this;
+		
+		
+		this.settings = {
+			cameraX: 0,
+			cameraY: 0,
+			worldWidth: 2000,
+			worldHeight: 2000,
+			gridX: 64,
+			gridY: 64
+		};
+		
 	},
 	{
 		_mousedown: false,
@@ -103,6 +112,10 @@ MT.extend("core.Emitter")(
 				for(var i=0; i<that.selected.length; i++){
 					that.moveByKey(e, that.selected[i]);
 				}
+			});
+			
+			ui.events.on("keyup", function(e){
+				om.sync();
 			});
 			
 		},
@@ -179,7 +192,7 @@ MT.extend("core.Emitter")(
 
 		/* drawing fns */
 		drawGrid: function(ctx){
-			var g = this.grid;
+			var g = 0;
 			var game = this.game;
 			
 			
@@ -189,6 +202,9 @@ MT.extend("core.Emitter")(
 			ctx.strokeStyle = "rgba(255,255,255,0.1)";
 			ctx.globalAlpha = 0.5;
 			
+			
+			g = this.settings.gridX;
+			
 			for(var i = -game.camera.x; i<game.canvas.width; i += g){
 				if(i < 0){
 					continue;
@@ -197,6 +213,7 @@ MT.extend("core.Emitter")(
 				ctx.lineTo(i, game.canvas.height + game.camera.y);
 			}
 			
+			g = this.settings.gridY;
 			for(var j = -game.camera.y; j<game.canvas.height; j += g){
 				if(j < 0){
 					continue;
@@ -226,8 +243,8 @@ MT.extend("core.Emitter")(
 				group = obj.parent || game.world;
 			}
 			
-			var x = group.x - game.camera.x;
-			var y = group.y - game.camera.y;
+			var x = this.getObjectOffsetX(group);
+			var y = this.getObjectOffsetY(group);
 			
 			
 			ctx.save();
@@ -242,6 +259,20 @@ MT.extend("core.Emitter")(
 
 			ctx.strokeStyle = "#ffffff";
 			ctx.lineWidth = 1;
+			
+			var par = group.parent;
+			var oo = [];
+			while(par){
+				oo.push({x: par.x, y: par.y, r: par.rotation});
+				par = par.parent;
+			}
+			
+			while(oo.length){
+				var p = oo.pop();
+				ctx.translate(p.x, p.y);
+				ctx.rotate(p.r);
+				ctx.translate(-p.x, -p.y);
+			}
 			
 			ctx.translate(x, y);
 			ctx.rotate(group.rotation);
@@ -350,7 +381,9 @@ MT.extend("core.Emitter")(
 			this.oldObjects = this.objects.slice(0);
 			
 			for(var i=0; i<this.groups.length; i++){
-				this.groups[i].destroy(false);
+				if(this.groups[i].parent){
+					this.groups[i].destroy(false);
+				}
 			}
 			
 			
@@ -442,8 +475,6 @@ MT.extend("core.Emitter")(
 			
 			group.x = obj.x;
 			group.y = obj.y;
-			//group.anchor.x = obj.anchorX;
-			//group.anchor.y = obj.anchorY;
 			
 			if(obj.angle){
 				group.angle = obj.angle;
@@ -464,9 +495,8 @@ MT.extend("core.Emitter")(
 					od.loadTexture(oo.assetId, oo.frame);
 					
 					
-					od.x = oo.x;
-					od.y = oo.y;
-					od.MT_OBJECT = obj;
+					this.inheritSprite(od, obj);
+					
 					
 					this.objects.push(od);
 					group.add(od);
@@ -489,17 +519,7 @@ MT.extend("core.Emitter")(
 			var sp = null;
 			sp = group.create(obj.x, obj.y, obj.assetId);
 			
-			sp.anchor.x = obj.anchorX;
-			sp.anchor.y = obj.anchorY;
-			
-			
-			sp.x = obj.x;
-			sp.y = obj.y;
-			
-			if(obj.angle){
-				sp.angle = obj.angle;
-			}
-			obj._framesCount = 0;
+			this.inheritSprite(sp, obj);
 			
 			
 			var frameData = game.cache.getFrameData(obj.assetId);
@@ -513,21 +533,31 @@ MT.extend("core.Emitter")(
 				obj._framesCount = frameData.total;
 			}
 			
-			if(obj.frame){
-				sp.frame = obj.frame;
-			}
+			//sp.inputEnabled = true;
+			//sp.input.pixelPerfectOver = true;
 			
-			
-			
-			
-			
-			
-			sp.inputEnabled = true;
-			sp.input.pixelPerfectOver = true;
+			return sp;
+		},
+		
+		inheritSprite: function(sp, obj){
 			
 			sp.MT_OBJECT = obj;
 			
-			return sp;
+			sp.anchor.x = obj.anchorX;
+			sp.anchor.y = obj.anchorY;
+			
+			sp.x = obj.x;
+			sp.y = obj.y;
+			
+			if(obj.angle){
+				sp.angle = obj.angle;
+			}
+			obj._framesCount = 0;
+			
+			
+			if(obj.frame){
+				sp.frame = obj.frame;
+			}
 		},
 		
 		reloadObjects: function(){
@@ -537,18 +567,16 @@ MT.extend("core.Emitter")(
 		},
 		
 		_activeObject: null,
+		_justSelected: null,
 		
 		get activeObject(){
 			return this._activeObject;
 		},
 		
-		
-		_justSelected: null,
-		
 		set activeObject(val){
+			console.log("set active", val);
 			
 			if(val){
-				
 				if(this.isSelected(val) && this._justSelected != val){
 					
 					if(this._activeObject && this.activeObject == val && this.ui.events.mouse.lastClick && this.ui.events.mouse.lastClick.shiftKey){
@@ -593,6 +621,11 @@ MT.extend("core.Emitter")(
 				}
 			}
 			this._activeObject = val;
+			
+			if(!this._activeObject){
+				this.emit("select", null);
+			}
+			
 		},
 		
 		get offsetX(){
@@ -640,7 +673,12 @@ MT.extend("core.Emitter")(
 		},
 		
 		emptyFn: function(){},
+		 
+		
+		
 		_handleMouseMove: function(){},
+		
+		
 		set handleMouseMove(val){
 			this._handleMouseMove = val;
 		},
@@ -648,6 +686,7 @@ MT.extend("core.Emitter")(
 		get handleMouseMove(){
 			return this._handleMouseMove;
 		},
+		
 		
 		_cameraMove: function(e){
 			this.game.camera.x -= this.ui.events.mouse.mx;
@@ -693,8 +732,8 @@ MT.extend("core.Emitter")(
 				dist.x += x;
 				dist.y += y;
 				
-				var mx = Math.round( ( dist.x ) / this.grid) * this.grid;
-				var my = Math.round( ( dist.y ) / this.grid) * this.grid;
+				var mx = Math.round( ( dist.x ) / this.settings.gridX) * this.settings.gridX;
+				var my = Math.round( ( dist.y ) / this.settings.gridY) * this.settings.gridY;
 
 				dist.x -= mx;
 				dist.y -= my;
@@ -702,8 +741,8 @@ MT.extend("core.Emitter")(
 				object.x += mx;
 				object.y += my;
 				
-				object.x = Math.round( object.x / this.grid ) * this.grid;
-				object.y = Math.round( object.y / this.grid ) * this.grid;
+				object.x = Math.round( object.x / this.settings.gridX ) * this.settings.gridX;
+				object.y = Math.round( object.y / this.settings.gridY ) * this.settings.gridY;
 				
 			}
 			else{
@@ -723,7 +762,12 @@ MT.extend("core.Emitter")(
 			var inc = 1;
 			
 			if(e.ctrlKey){
-				inc = this.grid;
+				if(w == 37 || w == 39){
+					inc = this.settings.gridX;
+				}
+				else{
+					inc = this.settings.gridY;
+				}
 			}
 			
 			
@@ -747,7 +791,7 @@ MT.extend("core.Emitter")(
 			object.MT_OBJECT.x = object.x;
 			object.MT_OBJECT.y = object.y;
 			this.project.settings.updateObjects(object.MT_OBJECT);
-			
+			this.sync(object);
 		},
 		
 		_followMouse: function(e, snapToGrid){
@@ -760,8 +804,8 @@ MT.extend("core.Emitter")(
 			this.activeObject.y = e.y - this.ui.center.offsetTop + this.game.camera.y;
 			
 			if(e.ctrlKey || snapToGrid){
-				this.activeObject.x = Math.round(this.activeObject.x / this.grid) * this.grid;
-				this.activeObject.y = Math.round(this.activeObject.y / this.grid) * this.grid;
+				this.activeObject.x = Math.round(this.activeObject.x / this.settings.gridX) * this.settings.gridX;
+				this.activeObject.y = Math.round(this.activeObject.y / this.settings.gridY) * this.settings.gridY;
 			}
 			
 		},
@@ -834,13 +878,36 @@ MT.extend("core.Emitter")(
 			this.game.camera.x = obj.cameraX;
 			this.game.camera.y = obj.cameraY;
 			
-			this.grid = obj.grid;
+			this.settings = obj;
+			
+			console.log("save settings");
+			//this.settingsgridX = obj.gridX;
 		},
 		
 		createActiveObject: function(obj){
 			this.activeObject = this.addObject(obj, this.game.world, true);
 			return this.activeObject;
 		},
+		
+		
+		getObjectOffsetX: function(obj){
+			var off = obj.x;
+			while(obj.parent){
+				off += obj.parent.x;
+				obj = obj.parent;
+			}
+			return off;
+		},
+		
+		getObjectOffsetY: function(obj){
+			var off = obj.y;
+			while(obj.parent){
+				off += obj.parent.y;
+				obj = obj.parent;
+			}
+			return off;
+		},
+		
 		
 		pickObject: function(x,y){
 			
@@ -853,9 +920,9 @@ MT.extend("core.Emitter")(
 			for(var i=this.objects.length-1; i>-1; i--){
 				var box = this.objects[i].getBounds();
 				if(box.contains(x,y)){
-					if(!ctrl && this.activeObject && this.objects[i].parent != this.game.world && this.activeObject.MT_OBJECT == this.objects[i].parent.MT_OBJECT){
+					/*if(!ctrl && this.activeObject && this.objects[i].parent != this.game.world && this.activeObject.MT_OBJECT == this.objects[i].parent.MT_OBJECT){
 						return this.objects[i].parent;
-					}
+					}*/
 					
 					/*if(shift){
 						this.addSelected(this.objects[i]);
@@ -871,7 +938,10 @@ MT.extend("core.Emitter")(
 					return this.tmpObjects[i];
 				}
 			}
-			
+			var group = this.isGroupHandle(x, y);
+			if(group){
+				return group;
+			}
 			for(var i=this.groups.length-1; i>-1; i--){
 				var box = this.groups[i].getBounds();
 				if(box.contains(x, y)){
@@ -881,8 +951,8 @@ MT.extend("core.Emitter")(
 				}
 			}
 			
-			var group = this.isGroupHandle(x, y);
-			return group;
+			
+			return null;
 		},
 		
 		selectRect: function(rect, clear){
@@ -903,16 +973,16 @@ MT.extend("core.Emitter")(
 		isGroupHandle: function(x,y){
 			var bounds = null;
 			for(var i=0; i<this.groups.length; i++){
-				bounds = this.groups[i].getBounds();
-				if(bounds.contains(x,y)){
-					return this.groups[i];
-				}
-				
 				if(this.isGroupSelected(this.groups[i])){
-					if(Math.abs(this.groups[i].x - x - this.game.camera.x) < 10 && Math.abs(this.groups[i].y - y - this.game.camera.y) < 10){
+					var ox = this.getObjectOffsetX(this.groups[i]);
+					var oy = this.getObjectOffsetY(this.groups[i]);
+					
+					if(Math.abs(ox - x) < 10 && Math.abs(oy - y) < 10){
 						return this.groups[i];
 					}
 				}
+				
+				
 				
 			}
 		},
@@ -980,6 +1050,8 @@ MT.extend("core.Emitter")(
 				this.selected[i] = obj;
 			}
 		},
+		
+		
 		
 		
 		getById: function(id){

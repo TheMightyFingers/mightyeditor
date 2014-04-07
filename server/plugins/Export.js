@@ -21,7 +21,7 @@ MT.extend("core.SocketManager")(
 			
 			this.assets = this.project.db.get("assets");
 			this.objects = this.project.db.get("objects");
-			
+			this.map = this.project.db.get("map").contents[0];
 			
 			
 			this.dir = this.project.path + "/tmp";
@@ -51,7 +51,8 @@ MT.extend("core.SocketManager")(
 				contents += c;
 				contents += "mt.data = "+JSON.stringify({
 					assets: that.assets,
-					objects: that.objects
+					objects: that.objects,
+					map: that.map
 				}, null, "\t")+";\r\n";
 				
 				that.fs.writeFile(that.dir + "/" + that.phaserFile, contents, function(err){

@@ -218,7 +218,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		select_select: function(obj){
-			this.map.activeObject = obj;
+			
+			var shift = this.ui.events.mouse.lastEvent.shiftKey;
+			if(shift){
+				if(this.map.isSelected(obj)){
+					this.map.removeSelected(obj);
+					return;
+				}
+			}
+			
+			
+			if(this.map.activeObject != obj){
+				this.map.activeObject = obj;
+			}
+			else{
+				if(this.map.activeObject != null){
+					this.map.activeObject = null;
+				}
+			}
 		},
 		
 		

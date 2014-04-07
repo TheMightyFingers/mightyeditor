@@ -88,6 +88,7 @@ MT.extend("ui.DomElement")(
 			
 			this.panels.push(panel);
 			panel.show(this.el);
+			this.children.push(panel);
 			this.alignPanels();
 		},
 		

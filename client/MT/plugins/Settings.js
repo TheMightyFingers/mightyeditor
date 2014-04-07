@@ -15,12 +15,12 @@ MT(
 			this.panel = ui.addPanel("Settings");
 			var that = this;
 			
-			ui.events.on("keydown", function(e){
+			/*ui.events.on("keydown", function(e){
 				if(e.which == MT.keys.esc){
 					that.clear();
 				}
 			});
-			
+			*/
 		},
 		
 		installUI: function(){
@@ -33,6 +33,13 @@ MT(
 			
 			this.project.plugins.objectsmanager.tv.on(["click", "select"], function(obj){
 				that.handleObjects(obj);
+			});
+			
+			var map = this.project.plugins.mapeditor;
+			map.on("select", function(obj){
+				if(!obj){
+					that.handleScene(map.settings);
+				}
 			});
 			
 		},
@@ -141,14 +148,15 @@ MT(
 			
 			var that = this;
 			var cb = function(){
-				that.project.plugins.objectsmanager.update(obj);
+				that.project.plugins.mapeditor.updateScene(obj);
 			};
 			
-			this.addInput( "cameraX", obj, true, cb);
-			this.addInput( "cameraY", obj, true, cb);
+			this.addInput( {key: "cameraX", min: 0}, obj, true, cb);
+			this.addInput( {key: "cameraY", min: 0}, obj, true, cb);
 			this.addInput( "worldWidth", obj, true, cb);
 			this.addInput( "worldHeight", obj, true, cb);
-			this.addInput( "grid", obj, true, cb);
+			this.addInput( {key: "gridX", min: 2}, obj, true, cb);
+			this.addInput( {key: "gridY", min: 2}, obj, true, cb);
 			
 		}
 

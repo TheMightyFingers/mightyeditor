@@ -151,6 +151,8 @@ MT(
 			this.center.style.left = this.left.width + "px";
 			this.center.style.right = this.right.width + "px";
 			
+			this.top.updateChildren();
+			
 			for(var i=0; i<this._onResize.length; i++){
 				this._onResize[i]();
 			}

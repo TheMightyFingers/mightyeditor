@@ -91,8 +91,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var click = function(data, element){
 				console.log("select");
-				
-				
 				if(data.contents){
 					
 					return;
@@ -124,21 +122,54 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			prev.height = 200;
 			prev.addClass("ui-preview");
 			
+			var grid = document.createElement("div");
+			prev.el.appendChild(grid);
+			grid.style.cssText = this.makeGridCss(200,200);
+			
+			var prevHideTm = 0;
 			
 			this.tv.on("mouseover", function(e, el){
 				var data = el.data;
 				if(data.__image){
+					window.clearTimeout(prevHideTm)
 					prev.show(document.body);
 					prev.width = data.width;
 					prev.height = data.height;
+					grid.style.cssText = that.makeGridCss(data.frameWidth, data.frameHeight);
+					
 					prev.x = el.calcOffsetX() - data.width;
 					prev.y = el.calcOffsetY() - (data.height*0.5 - el.el.offsetHeight*0.5);
 					prev.style.backgroundImage = "url('"+that.project.path + "/" +data.__image+"')";
+					prev.target = e.target;
 				}
 			});
+			
+			
+			
 			this.tv.on("mouseout", function(e, el){
-				prev.hide();
+				//console.log(e.target);
+				//if(e.target == prev.target){
+				//	return;
+				//}
+				if(prevHideTm){
+					window.clearTimeout(prevHideTm);
+				}
+				prevHideTm = window.setTimeout(function(){
+					prev.hide();
+				}, 100);
+				
 			});
+			
+			prev.el.onmouseover = function(){
+				console.log("over");
+				if(prevHideTm){
+					window.clearTimeout(prevHideTm);
+				}
+			};
+			prev.el.onmouseout = function(){
+				prev.hide();
+			};
+			
 			ui.events.on("keydown", function(e){
 				var w = e.which;
 				if(w == 27){
@@ -181,6 +212,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.project.om.tv.on("click", select);
 			this.project.om.tv.on("select", select);
+		},
+		
+		makeGridCss: function(w, h){
+			return "background-size: "+w+"px "+h+"px; \
+					background-image:repeating-linear-gradient(0deg, #fff, #fff 1px, transparent 1px, transparent "+h+"px),\
+					repeating-linear-gradient(-90deg, #fff, #fff 1px, transparent 1px, transparent "+w+"px); width: 100%; height: 100%; position: absolute;";
 		},
 		
 		update: function(){

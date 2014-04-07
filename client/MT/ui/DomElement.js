@@ -238,6 +238,14 @@ MT(
 				this.children[i].width = this.children[i]._width;
 			}
 		},
+		
+		updateChildren: function(){
+			for(var i=0; i<this.children.length; i++){
+				this.children[i].width = this.children[i]._width;
+				this.children[i].height = this.children[i]._height;
+				this.children[i].updateChildren();
+			}
+		},
    
 		calcOffsetY: function(upTo){
 			upTo = upTo || document.body;

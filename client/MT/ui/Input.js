@@ -6,12 +6,19 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.obj = obj;
 		this.key = "";
 		this.step = 1;
+		
+		this.min = -Infinity;
+		this.max = Infinity;
+		
 		if(typeof properties === "string"){
 			this.key = properties;
 		}
 		else{
 			this.key = properties.key;
 			this.step = properties.step || this.step;
+			if(properties.min != void(0)){
+				this.min = properties.min;
+			}
 		}
 		
 		
@@ -74,7 +81,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		input.onblur = function(){
 			input.parentNode.removeChild(input);
 			input.isVisible = false;
-			that.value.el.innerHTML = that.obj[that.key];
+			
+			var val = that.evalValue(input.value);
+			that.setValue(val);
 		};
 		
 		
@@ -131,6 +140,15 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		},
 		
 		setValue: function(val, silent){
+			
+			if(val < this.min){
+				val = this.min;
+			}
+			
+			if(val > this.max){
+				val = this.max;
+			}
+			
 			this.obj[this.key] = val;
 			this.value.el.innerHTML = val;
 			if(!silent){

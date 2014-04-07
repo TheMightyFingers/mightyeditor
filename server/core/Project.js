@@ -1,6 +1,7 @@
 MT.require("plugins.AssetsManager");
 MT.require("plugins.ObjectsManager");
 MT.require("plugins.Export");
+MT.require("plugins.MapEditor");
 
 MT.require("core.JsonDB");
 
@@ -42,6 +43,7 @@ MT.extend("core.SocketManager")(
 			this.assets = new MT.plugins.AssetsManager(this.socket, this);
 			this.objects = new MT.plugins.ObjectsManager(this.socket, this);
 			this.export = new MT.plugins.Export(this.socket, this);
+			this.map = new MT.plugins.MapEditor(this.socket, this);
 		},
 		
 		openProject: function(pid){
