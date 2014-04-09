@@ -219,7 +219,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		select_select: function(obj){
 			
-			var shift = this.ui.events.mouse.lastEvent.shiftKey;
+			var shift = (this.ui.events.mouse.lastEvent && this.ui.events.mouse.lastEvent.shiftKey ? true : false);
 			if(shift){
 				if(this.map.isSelected(obj)){
 					this.map.removeSelected(obj);
