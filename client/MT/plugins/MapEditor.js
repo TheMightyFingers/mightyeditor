@@ -2,7 +2,7 @@
 MT.requireFile("js/phaser.js");
 MT.require("core.Helper");
 
-MT.extend("core.Emitter").extend("core.BasicPlugin")(
+MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 	MT.plugins.MapEditor = function(project){
 		MT.core.BasicPlugin.call(this, "MapEditor");
 		MT.core.Emitter.call(this);
