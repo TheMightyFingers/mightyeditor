@@ -10,9 +10,9 @@ MT.extend("core.SocketManager")(
 		this.fs = MT.core.FS;
 		
 		this.zipName = "mightytools.zip";
-		this.phaserFile = "mt.export.js";
 		this.phaserSrc = "phaser.js";
 		
+		this.importFile = "mt.import.js";
 		this.dataFile = "mt.data.js";
 		
 		this.idList = {};
@@ -84,7 +84,7 @@ MT.extend("core.SocketManager")(
 			var contents = "";
 			this.fs.readFile("phaser/mt.export.js", function(e, c){
 				
-				that.fs.writeFile(that.dir + "/" + that.phaserFile, c);
+				that.fs.writeFile(that.dir + "/" + that.importFile, c);
 				
 				contents = "mt.data = "+JSON.stringify({
 					assets: that.assets,
