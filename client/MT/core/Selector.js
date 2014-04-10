@@ -1,37 +1,64 @@
-MT.extends("emitter")(
-	MT.selectable = function(){
-		
-		
+MT.extend("core.Emitter")(
+	MT.core.Selector = function(){
+		this._selected = [];
 	},
 	{
-		select: function(obj){
-			if(!this._selected){
-				this._selected = [];
-				this._selected.push(obj);
+		add: function(obj){
+			if(!obj){
 				return;
 			}
-			if(!this.isSelected(obj)){
+			if(!this.is(obj)){
 				this._selected.push(obj);
+				this.emit("select", obj);
 			}
+			
 			
 		},
 		
-		unselect: function(obj){
+		get count(){
+			return this._selected.length;
+		},
+		
+		remove: function(obj){
+			var o = null;
 			for(var i=0; i<this._selected.length; i++){
 				if(this._selected[i] == obj){
-					this._selected[i] = this.selected.pop();
+					this._selected.splice(i, 1);
+					this.emit("unselect", obj);
 					return;
 				}
 			}
 		},
 		
-		isSelected: function(obj){
+		is: function(obj){
 			for(var i=0; i<this._selected.length; i++){
 				if(this._selected[i] == obj){
 					return true;
 				}
 			}
 			return false;
+		},
+		
+		forEach: function(cb, scope){
+			if(!this._selected){
+				return;
+			}
+			for(var i=0; i<this._selected.length; i++){
+				if(scope){
+					cb.call(scope, this._selected[i]);
+				}
+				else{
+					cb(this._selected[i]);
+				}
+			}
+		},
+		
+		clear: function(){
+			for(var i=0; i<this._selected.length; i++){
+				this.emit("unselect", this._selected[i]);
+			}
+			this._selected.length = 0;
+			this.emit("clear");
 		}
 		
 		

@@ -5,6 +5,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.AssetsManager = function(project){
 		MT.core.Emitter.call(this);
 		MT.core.BasicPlugin.call(this, "Assets");
+		
+		this.selector = new MT.core.Selector();
+		
 		this.project = project;
 		
 		this.active = null;
@@ -25,10 +28,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					}
 				},
 				{
-					label: "Another options",
+					label: "delete selected",
 					className: "",
 					cb: function(){
-						console.log("new Folder");
+						that.deleteAssets();
 					}
 				}
 			
@@ -73,11 +76,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			var select = function(data, element){
+				
+				
 				console.log("select");
 				
 				
 				if(data.contents){
-					
 					return;
 				}
 				
@@ -90,18 +94,37 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			};
 			
 			var click = function(data, element){
-				console.log("select");
-				if(data.contents){
-					
-					return;
+				
+				var shift = false;
+				if(that.ui.events.mouse.lastClick && that.ui.events.mouse.lastClick.shiftKey){
+					shift = true;
 				}
 				
-				if(that.active){
-					that.active.removeClass("selected");
+				if(shift){
+					that.selector.add(element);
+					element.addClass("selected");
 				}
+				else{
+					
+					if(data.contents){
+						return;
+					}
+					that.selector.forEach(function(el){
+						el.removeClass("active.selected");
+					});
+					that.selector.clear();
+				}
+				
+				
+				if(that.active && !shift){
+					that.active.removeClass("active.selected");
+					that.selector.remove(element);
+				}
+				
+				that.selector.add(element);
 				
 				that.active = element;
-				that.active.addClass("selected");
+				that.active.addClass("active.selected");
 				
 				var o = that.project.map.activeObject;
 				if(o){
@@ -144,13 +167,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
-			
-			
 			this.tv.on("mouseout", function(e, el){
-				//console.log(e.target);
-				//if(e.target == prev.target){
-				//	return;
-				//}
 				if(prevHideTm){
 					window.clearTimeout(prevHideTm);
 				}
@@ -172,12 +189,18 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			ui.events.on("keydown", function(e){
 				var w = e.which;
-				if(w == 27){
+				if(w == MT.keys.esc){
+					that.selector.forEach(function(obj){
+						obj.removeClass("active.selected");
+					});
+					that.selector.clear();
+					
 					if(!that.active){
 						return;
 					}
-					that.active.removeClass("selected");
+					that.active.removeClass("active.selected");
 					that.active = null;
+					return;
 				}
 			});
 			
@@ -187,15 +210,36 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var that = this;
 			
-			this.project.map.on("select", function(sprite){
-				if(sprite == null){
-					if(that.active){
-						that.active.removeClass("selected");
-					}
-					return;
+			this.project.plugins.tools.on("selectedObject", function(objId){
+				var obj = that.project.plugins.objectsmanager.getById(objId);
+				if(obj){
+					that.tv.select(obj.assetId);
+					
+					var asset = that.tv.getById(obj.assetId);
+					
+					that.selector.add(asset);
 				}
-				var obj = sprite.MT_OBJECT;
-				that.tv.select(obj.assetId);
+				
+			});
+			
+			this.project.plugins.tools.on("unselectedObject", function(objId){
+				var obj = that.project.plugins.objectsmanager.getById(objId);
+				
+				if(obj){
+					var asset = that.tv.getById(obj.assetId);
+					
+					if(that.active){
+						that.active.removeClass("selected.active");
+						that.active = null;
+					}
+					
+					if(that.selector.is(asset)){
+						asset.removeClass("selected.active");
+						that.selector.remove(asset);
+					}
+				}
+				
+				
 			});
 			
 			var select = function(obj){
@@ -278,7 +322,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							frameHeight: img.height,
 							frameMax: -1,
 							margin: 0,
-							spacing: 0
+							spacing: 0,
+							anchorX: 0,
+							anchorY: 0
 						};
 						
 						that.send("newImage", data);
@@ -343,6 +389,26 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.send("newFolder", name);
 			
 			this.tv.merge(data);
+		},
+		
+		deleteAssets: function(){
+			console.log("deleting");
+			this.selector.forEach(function(obj){
+				this.deleteAsset(obj.data.id);
+			}, this);
+		},
+		
+		deleteAsset: function(id, silent){
+			console.log("delete", id);
+			var data = this.tv.getData();
+			this.send("delete", id);
+			
+			this.tv.merge(data);
+			
+			//if using silent.. you should call manually sync
+			if(!silent){
+				this.ui.events.simulateKey(MT.keys.esc);
+			}
 		},
 		
 		getById: function(id){

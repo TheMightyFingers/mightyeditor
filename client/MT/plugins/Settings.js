@@ -13,14 +13,6 @@ MT(
 	{
 		initUI: function(ui){
 			this.panel = ui.addPanel("Settings");
-			var that = this;
-			
-			/*ui.events.on("keydown", function(e){
-				if(e.which == MT.keys.esc){
-					that.clear();
-				}
-			});
-			*/
 		},
 		
 		installUI: function(){
@@ -31,7 +23,8 @@ MT(
 				that.handleAssets(obj);
 			});
 			
-			this.project.plugins.objectsmanager.tv.on(["click", "select"], function(obj){
+			this.project.plugins.tools.on("selectedObject", function(objId){
+				var obj = that.project.plugins.objectsmanager.getById(objId);
 				that.handleObjects(obj);
 			});
 			
@@ -54,6 +47,7 @@ MT(
 			for(var i=0; i<this.inputs.length; i++){
 				this.inputs[i].remove();
 			}
+			this.inputs.length = 0;
 			
 		},
 		
@@ -85,6 +79,7 @@ MT(
 			var that = this;
 			var cb = function(){
 				that.project.am.updateData();
+				that.project.plugins.mapeditor.reloadObjects();
 			};
 			
 			
@@ -93,6 +88,9 @@ MT(
 			this.addInput( "frameMax", obj, false, cb);
 			this.addInput( "margin", obj, true, cb);
 			this.addInput( "spacing", obj, false, cb);
+			this.addInput( "anchorX", obj, true, cb);
+			this.addInput( "anchorY", obj, true, cb);
+			
 		},
    
 		handleObjects: function(obj){
@@ -107,6 +105,11 @@ MT(
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
 				this.objects.angle = this.addInput( "angle", obj, true, cb);
+				this.objects.isVisible = this.addInput({
+						key: "isVisible",
+						min: 0,
+						max: 1
+					}, obj, true, cb);
 			}
 			//sprite
 			else{
@@ -132,6 +135,11 @@ MT(
 				this.objects.angle = this.addInput( "angle", obj, true, cb);
 				this.objects.anchorX = this.addInput( "anchorX", obj, true, cb);
 				this.objects.anchorY = this.addInput( "anchorY", obj, true, cb);
+				this.objects.isVisible = this.addInput({
+						key: "isVisible",
+						min: 0,
+						max: 1
+					}, obj, true, cb);
 			}
 			
 		},

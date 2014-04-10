@@ -1,5 +1,6 @@
 MT.require("ui.TreeView");
 MT.require("ui.List");
+MT.require("core.Selector");
 
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.ObjectsManager = function(project){
@@ -7,7 +8,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		MT.core.BasicPlugin.call(this, "ObjectsManager");
 		this.project = project;
 		
-		
+		this.selector = new MT.core.Selector();
 		
 	},
 	{
@@ -24,16 +25,30 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					cb: function(){
 						that.newFolder();
 					}
+				},
+				{
+					label: "group selected",
+					className: "",
+					cb: function(){
+						that.groupSelected();
+					}
+				},
+				{
+					label: "delete selected",
+					className: "",
+					cb: function(){
+						that.deleteSelected();
+					}
 				}
 			], ui, true);
 			
 			this.options = new MT.ui.Button(null, "ui-options", ui.events, function(){
-				if(!that.list.isVisible){
-					that.list.show(that.panel.content.el);
-				}
-				else{
-					that.list.hide();
-				}
+				//if(!that.list.isVisible){
+					that.list.show(that.panel.header.el);
+				//}
+				//else{
+				//	that.list.hide();
+				//}
 			});
 			
 			
@@ -51,25 +66,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.sortable(this.ui.events);
 			this.tv.tree.show(this.panel.content.el);
 			
-			
-			var select = function(data, element){
-				
-				if(that.active){
-					that.active.removeClass("selected");
-				}
-				
-				that.active = element;
-				that.active.addClass("selected");
-			};
-			
-			this.tv.on("click", select);
-			this.tv.on("select", select);
-			
 			this.ui.events.on("keyup", function(e){
 				if(e.which == MT.keys.delete){
 					if(that.active){
 						that.deleteObj(that.active.data.id);
 					}
+					that.deleteSelected();
 				}
 				
 			});
@@ -82,24 +84,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		installUI: function(ui){
 			var that = this;
 			
-			var map = this.project.plugins.mapeditor;
+			var tools = this.project.plugins.tools;
 			
-			map.on("select", function(sprite){
-				if(sprite == null){
-					if(that.active){
-						that.active.removeClass("selected");
-					}
-					that.active = null;
-					return;
+			tools.on("selectedObject", function(id){
+				var el = that.tv.getById(id);
+				if(el){
+					el.addClass("selected.active");
+					that.selector.add(el);
 				}
-				
-				that.tv.select(sprite.MT_OBJECT.id);
 			});
 			
-			map.on("sync", function(){
-				//that.sync();
+			tools.on("unselectedObject", function(id){
+				var el = that.tv.getById(id);
+				if(el){
+					el.removeClass("selected.active");
+					that.selector.remove(el);
+				}
 			});
-			
+
 			this.ui.events.on("mouseup", function(e){
 				if(e.target == map.game.canvas){
 					that.sync();
@@ -158,19 +160,33 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var name = obj.name.split(".");
 			name.pop();
 			name = name.join("");
-
+			
+			console.log("----------->",obj);
+			
 			return  {
 				assetId: obj.id,
 				__image: obj.__image,
 				x: x,
 				y: y,
-				anchorX: 0.5,
-				anchorY: 0.5,
+				anchorX: obj.anchorX,
+				anchorY: obj.anchorY,
 				angle: 0,
 				alpha: 1,
 				tmpName: name,
-				frame: 0
+				frame: 0,
+				isVisible: 1
 			};
+		},
+		
+		
+		deleteSelected: function(){
+		
+			this.selector.forEach(function(obj){
+				this.deleteObj(obj.data.id, true);
+			}, this);
+			
+			this.ui.events.simulateKey(MT.keys.esc);
+			this.sync();
 		},
 		
 		deleteObj: function(id, silent){
@@ -185,10 +201,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.sync();
 			}
 		},
+		
 		_delete: function(id, data){
 			for(var i=0; i<data.length; i++){
 				if(data[i].id == id){
-					data.splice(i, 1);
+					data.splice(i, 1)[0];
 					break;
 				}
 				if(data[i].contents){
@@ -234,7 +251,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.emit("update", this.tv.getData());
 		},
 		
-		newFolder: function(){
+		newFolder: function(silent){
 			var data = this.tv.getData();
 			
 			var tmpName= "Group";
@@ -245,17 +262,65 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			}
 			
-			data.unshift({
+			var group = {
+				id: "tmp"+Date.now(),
 				name: name,
 				x: 0,
 				y: 0,
 				angle: 0,
-				contents: []
-			});
+				contents: [],
+				isVisible: 1
+			};
+			
+			data.unshift(group);
 			
 			this.tv.merge(data);
-			this.sync();
+			
+			if(!silent){
+				this.sync();
+			}
+			return group;
 		},
+		
+		select: function(id){
+			this.tv.select(id);
+			
+		},
+		
+		cleanSelection: function(){
+			
+		},
+		
+		
+		
+		groupSelected: function(){
+			var folder = this.newFolder(true);
+			var that = this;
+			
+			var data = this.tv.getData();
+			
+			
+			
+			
+			console.log(data);
+			
+			
+			this.selector.forEach(function(el){
+				var o = el.data;
+				this._delete(o.id, data);
+				
+				folder.contents.push(o);
+				
+			}, this);
+			
+			//this.send("updateData", data);
+			
+			this.tv.merge(data);
+			
+		},
+		
+		
+		
 		
 		
 		_syncTm: 0,
@@ -284,6 +349,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.send("updateData", data);
 				that._syncTm = 0;
 			}, 100);
+		},
+		
+		getById: function(id){
+			var items = this.tv.items;
+			for(var i=0; i<items.length; i++){
+				if(items[i].data.id == id){
+					return items[i].data;
+				}
+			}
+			
+			return null;
 		}
 	}
 );

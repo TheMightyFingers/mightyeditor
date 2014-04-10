@@ -50,6 +50,48 @@ MT.extend("core.SocketManager")(
 			this.sendMyGroup("receiveFileList", this.db.contents);
 		},
 		
+		a_delete: function(id){
+			this.delete(id);
+			this.a_sendFiles();
+		},
+		
+		delete: function(id, data){
+			console.log("delete", id);
+			var data = data || this.db.contents;
+			var item = null;
+			item = this._delete(id, data);
+			if(item){
+				if(item.contents){
+					for(var i=0; i<item.contents.length; i++){
+						if(this.delete(item.contents[i].id, item.contents)){
+							i--;
+						}
+					}
+				}
+				console.log("delete", item);
+				if(!item.contents){
+					this.fs.rm(this.project.path + "/" + item.__image);
+				}
+			}
+			return item;
+		},
+		
+		_delete: function(id, data){
+			var ret = null;
+			
+			for(var i=0; i<data.length; i++){
+				if(data[i].id == id){
+					console.log("FOUND:", id);
+					
+					return data.splice(i, 1)[0];
+				}
+				if(data[i].contents){
+					ret = this._delete(id, data[i].contents);
+				}
+			}
+			return ret;
+		},
+		
 		a_newImage: function(data){
 			var that = this;
 			
@@ -80,6 +122,7 @@ MT.extend("core.SocketManager")(
 			});
 			
 		},
+		
 		
 		addItem: function(folder, data){
 			data.id = this.db.count;

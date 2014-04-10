@@ -99,7 +99,7 @@ body{
 .ui-treeView-folder, .ui-treeView-item{
 	line-height: 25px;
 	cursor: pointer;
-	padding: 2px 0 2px 0px;
+	/*padding: 2px 0 2px 0px;*/
 	text-indent: 25px;
 }
 
@@ -147,14 +147,22 @@ body{
 	background-color: rgba(0,0,0,0.5);
 }
 
-.ui-treeview-item.selected {
-	font-weight: bold;
-	background-color: rgba(0,0,0,0.1);
+.ui-treeview-item.selected, .ui-treeView.active {
+	background-color: rgba(0,0,0,0.3);
 }
-.ui-treeview-folder.selected > .ui-treeView-folder-head{
+.ui-treeview-item.active{
 	font-weight: bold;
-	background-color: rgba(0,0,0,0.1);
 }
+
+
+.ui-treeview-folder.selected > .ui-treeView-folder-head, .ui-treeview-folder.active > .ui-treeView-folder-head{
+	background-color: rgba(0,0,0,0.3);
+}
+.ui-treeview-folder.active > .ui-treeView-folder-head{
+	font-weight: bold;
+}
+
+
 .ui-treeView-item img{
 	position: absolute;
 	top: 6px;

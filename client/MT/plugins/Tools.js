@@ -72,7 +72,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var that = this;
 			var am = this.project.plugins.assetsmanager;
 			var map = this.map = this.project.plugins.mapeditor;
-			var om = this.project.plugins.objectsmanager;
+			var om = this.om = this.project.plugins.objectsmanager;
 			
 			am.tv.on("click", function(asset, element){
 					if( (!that["init_"+that.activeTool])){
@@ -98,6 +98,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.setTool(that.tools.select);
 				select(map.getById(data.id));
 			});
+			
+			
+			
+			map.selector.on("select", function(obj){
+				that.emit("selectedObject", obj.MT_OBJECT.id);
+			});
+			
+			map.selector.on("unselect", function(obj){
+				that.emit("unselectedObject", obj.MT_OBJECT.id);
+			});
+			
+			//map.selector.forEach(function(obj){
+			//	
+			//});
+			
+			
 			
 		},
 		
@@ -160,9 +176,39 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		
 		mouseDown_select: function(e){
-			that = this;
-			if(this.map.activeObject){
+			var that = this;
+			var shift = (e.shiftKey ? true : false);
+			
+			
+			var x = e.x - this.map.offsetXCam;
+			var y = e.y - this.map.offsetYCam;
+			
+			var obj = this.map.pickObject(x, y);
+			var group = this.map.pickGroup(x, y);
+			
+			if(group && (this.map.selector.is(group) || group == this.map.activeObject) ){
 				this.map.handleMouseMove = this.map._objectMove;
+				return;
+			}
+			
+			console.log(obj);
+			
+			if(obj){
+				if(!shift){
+					if(this.map.selector.is(obj)){
+						this.map.handleMouseMove = this.map._objectMove;
+					}
+					else{
+					
+						this.select_select(obj);
+						if(this.map.selector.is(obj)){
+							this.map.handleMouseMove = this.map._objectMove;
+						}
+					}
+				}
+				else{
+					this.select_select(obj);
+				}
 			}
 			else{
 				this.map.handleMouseMove = function(e){
@@ -178,7 +224,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.map.selection.width = 0;
 				this.map.selection.height = 0;
 				
+				if(!shift){
+					this.map.selector.clear();
+					this.map.activeObject = null;
+					this.project.plugins.settings.handleScene(this.map.settings);
+				}
 			}
+			
 		},
 		
 		
@@ -204,7 +256,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.map.selection.height = this.map.selection.sy - y;
 				this.map.selection.y = y;
 			}
+			
+			this.map.selection.x -= this.map.game.camera.x;
+			this.map.selection.y -= this.map.game.camera.y;
+			
+			
+			this.map.selectRect(this.map.selection, true);
+			
+			
 		},
+		
+		
 		mouseUp_select: function(e){
 			this.map.selection.x -= this.map.game.camera.x;
 			this.map.selection.y -= this.map.game.camera.y;
@@ -221,21 +283,20 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var shift = (this.ui.events.mouse.lastEvent && this.ui.events.mouse.lastEvent.shiftKey ? true : false);
 			if(shift){
-				if(this.map.isSelected(obj)){
-					this.map.removeSelected(obj);
+				if(this.map.selector.is(obj)){
+					this.map.selector.remove(obj);
 					return;
 				}
+				
+				this.map.selector.add(obj);
+				return;
 			}
 			
+			this.map.selector.clear();
+			this.map.selector.add(obj);
 			
-			if(this.map.activeObject != obj){
-				this.map.activeObject = obj;
-			}
-			else{
-				if(this.map.activeObject != null){
-					this.map.activeObject = null;
-				}
-			}
+			this.map.activeObject = obj;
+
 		},
 		
 		

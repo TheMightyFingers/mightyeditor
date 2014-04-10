@@ -62,6 +62,9 @@ MT.extend("core.SocketManager")(
 				that.assets.a_sendFiles(that.path);
 				that.objects.readData();
 				
+				that.map.readData();
+				
+				
 			});
 			
 		},

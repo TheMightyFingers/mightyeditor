@@ -16,12 +16,20 @@ MT.extend("core.BasicPlugin")(
 					}
 				},
 				{
+					label: "Phaser.io (data only)",
+					className: "",
+					cb: function(){
+						that.export("phaserDataOnly");
+					}
+				}
+				/*,
+				{
 					label: "Tiled (.tml)",
 					className: "",
 					cb: function(){
 						alert("in progress");
 					}
-				}
+				}*/
 			
 			], ui, true);
 			
@@ -31,7 +39,7 @@ MT.extend("core.BasicPlugin")(
 			b.width = 80;
 			
 			
-			this.list.width = 200;
+			this.list.width = 250;
 			this.list.y = b.el.offsetHeight;
 			this.list.x = b.el.offsetLeft-5;
 			this.list.el.style.bottom = "initial";
@@ -54,7 +62,22 @@ MT.extend("core.BasicPlugin")(
 		
 		a_complete: function(data){
 			console.log("data",data);
-			window.location = this.project.path + "/"+ data;
+			switch(data.action){
+				case "phaser":
+					window.location = this.project.path + "/"+ data.file;
+					break;
+				
+				case "phaserDataOnly":
+					var w = window.innerWidth*0.5;
+					var h = window.innerHeight*0.8;
+					var l = (window.innerWidth - w)*0.5;
+					var t = (window.innerHeight - h)*0.5;
+					
+					window.open(this.project.path + "/"+ data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
+					break;
+			}
+			
+			
 		}
 		
 	}

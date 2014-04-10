@@ -19,6 +19,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			if(properties.min != void(0)){
 				this.min = properties.min;
 			}
+			if(properties.max != void(0)){
+				this.max = properties.max;
+			}
 		}
 		
 		
@@ -92,17 +95,16 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				return;
 			}
 			var w = e.which;
-			if(w == 13){
-				
-				var val = that.evalValue(input.value);
-				
-				
-				that.setValue(val);
+			
+			if(w == MT.keys.esc){
+				input.value = obj[that.key];
 				input.blur();
 			}
-			if(w == 27){
+			
+			if(w == MT.keys.enter){
 				input.blur();
 			}
+			
 			
 		});
 		

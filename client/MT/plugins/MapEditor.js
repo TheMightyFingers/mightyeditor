@@ -1,34 +1,29 @@
 "use strict";
 MT.requireFile("js/phaser.js");
 MT.require("core.Helper");
+MT.require("core.Selector");
 
-MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
+MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	MT.plugins.MapEditor = function(project){
 		MT.core.BasicPlugin.call(this, "MapEditor");
-		MT.core.Emitter.call(this);
-		
-		
-		this.selectedObject = null;
-		this.selected = [];
 		
 		this.project = project;
 		
 		this.assets = [];
+		
 		this.objects = [];
+		this.tmpObjects = [];
 		this.oldObjects = [];
+		
 		this.groups = [];
 		this.oldGroups = [];
 		
-		this.tmpObjects = [];
-		
 		this.dist = {};
-		
-		this.tool = "select";
-		
 		
 		this.selection = new Phaser.Rectangle();
 		
-		window.map = this;
+		this.selector = new MT.core.Selector();
+		
 		
 		
 		this.settings = {
@@ -40,18 +35,32 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 			gridY: 64
 		};
 		
+		
+		window.map = this;
 	},
 	{
 		_mousedown: false,
+		
 		
 		/* basic pluginf fns */
 		initUI: function(ui){
 			this.ui = ui;
 			
 			var that = this;
+			
 			this.project.ui.onResize(function(){
 				that.resize();
 			});
+			
+			this.selector.on("select", function(obj){
+				//that.emit("select", obj);
+			});
+			
+			this.selector.on("unselect", function(obj){
+				that.emit("unselect", obj);
+			});
+			
+			
 			
 			this.createMap();
 			
@@ -96,22 +105,21 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 				//escape
 				if(w == MT.keys.esc){
 					that.activeObject = null;
-					that.selected.length = 0;
-					that.emit("select", null);
+					that.selector.clear();
 					return;
 				}
 				
 				if(w == MT.keys.delete){
-					for(var i=0; i<that.selected.length; i++){
-						om.deleteObj(that.selected[i].MT_OBJECT.id, true);
-					}
+					that.selector.forEach(function(obj){
+						om.deleteObj(obj.MT_OBJECT.id, true);
+					});
 					om.sync();
 					return;
 				}
 				
-				for(var i=0; i<that.selected.length; i++){
-					that.moveByKey(e, that.selected[i]);
-				}
+				that.selector.forEach(function(obj){
+					that.moveByKey(e, obj);
+				});
 			});
 			
 			ui.events.on("keyup", function(e){
@@ -133,6 +141,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 				that.addObjects(data);
 			});
 			
+			
 		},
 	
 		createMap: function(){
@@ -146,6 +155,13 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 			this.activeObject = null;
 			
 			var ctx = null;
+			
+			
+			
+			var drawObjects = function(obj){
+				that.highlightObject(ctx, obj);
+			};
+			
 			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
 				preload: function(){
 					var c = game.canvas;
@@ -165,9 +181,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 				render: function(){
 					
 					that.drawGrid(ctx);
-					for(var i=0; i<that.selected.length; i++){
-						that.highlightObject(ctx, that.selected[i]);
-					}
+					
+					that.selector.forEach(drawObjects);
 					
 					that.drawSelection(ctx);
 					
@@ -229,8 +244,15 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 		
 		highlightObject: function(ctx, obj){
 			
-			if(!obj || !obj.game){
+			if(!obj){
 				return;
+			}
+			
+			if(!obj.game){
+				obj = this.getById(obj.MT_OBJECT.id);
+				if(!obj){
+					return;
+				}
 			}
 			
 			var bounds = obj.getBounds();
@@ -461,7 +483,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 				}
 				
 				var obj = this.addObject(objs[i], group);
-				obj.kill().revive().bringToTop();
+				this.inheritSprite(obj, objs[i]);
 				obj.z = i;
 			}
 		},
@@ -480,6 +502,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 				group.angle = obj.angle;
 			}
 			
+			group.visible = !!obj.isVisible;
+			
 			return group;
 		},
    
@@ -495,7 +519,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 					od.loadTexture(oo.assetId, oo.frame);
 					
 					
-					this.inheritSprite(od, obj);
+					
 					
 					
 					this.objects.push(od);
@@ -533,6 +557,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 				obj._framesCount = frameData.total;
 			}
 			
+			
+			
 			//sp.inputEnabled = true;
 			//sp.input.pixelPerfectOver = true;
 			
@@ -549,6 +575,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 			sp.x = obj.x;
 			sp.y = obj.y;
 			
+			sp.visible = !!obj.isVisible;
+			
 			if(obj.angle){
 				sp.angle = obj.angle;
 			}
@@ -558,6 +586,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 			if(obj.frame){
 				sp.frame = obj.frame;
 			}
+			
+			sp.visible = !!obj.isVisible;
 		},
 		
 		reloadObjects: function(){
@@ -570,62 +600,20 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 		_justSelected: null,
 		
 		get activeObject(){
+			if(!this._activeObject){
+				return null;
+			}
+				
+			if(!this._activeObject.game){
+				this._activeObject = this.getById(this._activeObject.MT_OBJECT.id);
+			}
+			
 			return this._activeObject;
 		},
 		
 		set activeObject(val){
 			console.log("set active", val);
-			
-			if(val){
-				if(this.isSelected(val) && this._justSelected != val){
-					
-					if(this._activeObject && this.activeObject == val && this.ui.events.mouse.lastClick && this.ui.events.mouse.lastClick.shiftKey){
-						this.removeSelected(val);
-						
-						if(this.selected.length > 0){
-							this._activeObject = this.selected[0];
-							this._justSelected = this._activeObject;
-							
-							console.log("unselect");
-							
-							this.emit("select", this._activeObject);
-						}
-						else{
-							this._justSelected = null;
-							this._activeObject = null;
-							this.emit("select", null);
-						}
-						
-						
-						return;
-					}
-					
-					//if(this.ui.events.mouse.lastClick && !this.ui.events.mouse.lastClick.shiftKey){
-					//	this.selected.length = 0;
-					//}
-					this.addSelected(val);
-					
-					this._activeObject = val;
-					return;
-				}
-				this._justSelected = null;
-				if(this.ui.events.mouse.lastClick && !this.ui.events.mouse.lastClick.shiftKey){
-					this.selected.length = 0;
-				}
-				
-				this.addSelected(val);
-			}
-			else{
-				if(this.ui.events.mouse.lastClick && !this.ui.events.mouse.lastClick.shiftKey){
-					this.selected.length = 0;
-				}
-			}
 			this._activeObject = val;
-			
-			if(!this._activeObject){
-				this.emit("select", null);
-			}
-			
 		},
 		
 		get offsetX(){
@@ -654,12 +642,12 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 					this.dist[i].y = 0;
 				}
 				
-				var x = e.x - this.offsetXCam;
+				/*var x = e.x - this.offsetXCam;
 				var y = e.y - this.offsetYCam;
 				
 				var obj = this.pickObject(x,y);
 				
-				this.emit("select", obj);
+				this.emit("select", obj);*/
 				
 			}
 			this.tools.mouseDown(e);
@@ -697,16 +685,20 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 		dist: null,
 		
 		_objectMove: function(e, object){
+			
 			if(!object){
-				
-				
-				for(var i=0; i<this.selected.length; i++){
-					this._objectMove(e, this.selected[i]);
-				}
+				var that = this;
+				this.selector.forEach(function(obj){
+					that._objectMove(e, obj);
+				});
 				return;
 			}
 			
 			var id = object.MT_OBJECT.id;
+			if(!object.world){
+				object = this.getById(id);
+			}
+			
 			
 			var angle = this.getOffsetAngle(object);
 			
@@ -754,7 +746,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 			}
 			
 			this.sync(object);
-			this.project.settings.updateObjects(object.MT_OBJECT);
+			//this.project.settings.updateObjects(object.MT_OBJECT);
 		},
 		
 		moveByKey: function(e, object){
@@ -870,7 +862,11 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 			}
 		},
 		
-		updateScene: function(obj){
+		
+		updateSettings: function(obj){
+			if(!obj){
+				return;
+			}
 			this.game.width = obj.worldWidth;
 			this.game.height = obj.worldHeight;
 			
@@ -880,8 +876,20 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 			
 			this.settings = obj;
 			
+		},
+		
+		updateScene: function(obj){
+			this.updateSettings(obj);
+			
 			console.log("save settings");
+			
+			this.send("updateData", obj);
 			//this.settingsgridX = obj.gridX;
+		},
+		
+		
+		a_receive: function(obj){
+			this.updateSettings(obj);
 		},
 		
 		createActiveObject: function(obj){
@@ -914,20 +922,24 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 			x += this.game.camera.x;
 			y += this.game.camera.y;
 			
-			var ctrl = this.ui.events.mouse.lastClick.ctrlKey;
-			var shift = this.ui.events.mouse.lastClick.shiftKey;
+			
+			
+			var ctrl = false;
+			var shift = false;
+			
+			var lc = this.ui.events.mouse.lastClick;
+			if(this.ui.events.mouse.lastClick){
+				ctrl = lc.ctrlKey;
+				shift = lc.shiftKey
+			}
+			
 			
 			for(var i=this.objects.length-1; i>-1; i--){
+				if(!this.objects[i].visible){
+					continue;
+				}
 				var box = this.objects[i].getBounds();
 				if(box.contains(x,y)){
-					/*if(!ctrl && this.activeObject && this.objects[i].parent != this.game.world && this.activeObject.MT_OBJECT == this.objects[i].parent.MT_OBJECT){
-						return this.objects[i].parent;
-					}*/
-					
-					/*if(shift){
-						this.addSelected(this.objects[i]);
-					}*/
-					
 					return this.objects[i];
 				}
 			}
@@ -942,35 +954,65 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 			if(group){
 				return group;
 			}
-			for(var i=this.groups.length-1; i>-1; i--){
-				var box = this.groups[i].getBounds();
+			return null;
+		},
+		
+		
+		pickGroup: function(x,y){
+			
+			x += this.game.camera.x;
+			y += this.game.camera.y;
+			
+			
+			
+			var ctrl = false;
+			var shift = false;
+			
+			var lc = this.ui.events.mouse.lastClick;
+			if(this.ui.events.mouse.lastClick){
+				ctrl = lc.ctrlKey;
+				shift = lc.shiftKey
+			}
+			
+			
+			var box = null;
+			for(var i=0; i<this.groups.length; i++){
+				if(!this.groups[i].visible){
+					continue;
+				}
+				box = this.groups[i].getBounds();
 				if(box.contains(x, y)){
-					
-					window.box = box;
 					return this.groups[i];
 				}
 			}
 			
-			
 			return null;
 		},
 		
+		
+		
 		selectRect: function(rect, clear){
 			var box = null;
-			if(clear){
-				this.selected.length = 0;
-			}
+			
 			
 			for(var i=0; i<this.objects.length; i++){
+				if(!this.objects[i].visible){
+					continue;
+				}
 				box = this.objects[i].getBounds();
 				if(box.intersects(rect)){
-					this.addSelected(this.objects[i]);
+					this.selector.add(this.objects[i]);
+				}
+				else if(clear){
+					this.selector.remove(this.objects[i]);
 				}
 			}
 			
 		},
 		
 		isGroupHandle: function(x,y){
+			return null;
+			
 			var bounds = null;
 			for(var i=0; i<this.groups.length; i++){
 				if(this.isGroupSelected(this.groups[i])){
@@ -981,74 +1023,15 @@ MT.extend("core.Emitter").extend("core.BasicPlugin").extend("core.Selector")(
 						return this.groups[i];
 					}
 				}
-				
-				
-				
 			}
 		},
 		
 		isGroupSelected: function(group){
-			for(var i=0; i<this.selected.length; i++){
-				if(this.selected[i].MT_OBJECT.id == group.MT_OBJECT.id){
-					return true;
-				}
-				
-				if(this.selected[i].parent.MT_OBJECT){
-					if(this.selected[i].parent.MT_OBJECT.id == group.MT_OBJECT.id){
-						return true;
-					}
-				}
-			}
-			
 			return false;
-		},
-		
-		isSelected: function(obj){
-			if(!obj){
-				return false;
-			}
-			for(var i=0; i<this.selected.length; i++){
-				if(this.selected[i].MT_OBJECT.id == obj.MT_OBJECT.id){
-					return true;
-				}
-			}
-			
-			return false;
-			
-		},
-		
-		addSelected: function(obj){
-			for(var i=0; i<this.selected.length; i++){
-				if(this.selected[i].MT_OBJECT.id == obj.MT_OBJECT.id){
-					return;
-				}
-			}
-			
-			this.selected.push(obj);
-			
-		},
-		
-		removeSelected: function(obj){
-			for(var i=0; i<this.selected.length; i++){
-				if(this.selected[i].MT_OBJECT.id == obj.MT_OBJECT.id){
-					this.selected.splice(i,1);
-					return obj;
-				}
-			}
-			
 		},
 		
 		updateSelected: function(){
-			var obj = null;
-			for(var i=0; i<this.selected.length; i++){
-				obj = this.getById(this.selected[i].MT_OBJECT.id);
-				if(!obj){
-					this.selected.splice(i, 1);
-					i--;
-					continue;
-				}
-				this.selected[i] = obj;
-			}
+			
 		},
 		
 		

@@ -13,9 +13,44 @@ MT.extend("core.SocketManager")(
 		this.phaserFile = "mt.export.js";
 		this.phaserSrc = "phaser.js";
 		
+		this.dataFile = "mt.data.js";
+		
 		this.idList = {};
 	},
 	{
+		a_phaserDataOnly: function(){
+			var that = this;
+			this.assets = this.project.db.get("assets");
+			this.objects = this.project.db.get("objects");
+			this.map = this.project.db.get("map").contents[0];
+			
+			this.dir = this.project.path + "/tmp";
+			
+			this.fs.rmdir(this.dir, function(){
+				console.log("export removed tmp");
+			});
+			this.fs.mkdir(this.dir);
+			
+			
+			var contents = "mt.data = " + JSON.stringify({
+					assets: that.assets,
+					objects: that.objects,
+					map: that.map
+				}, null, "\t")+";\r\n";
+				
+			this.fs.writeFile(this.dir + "/" + this.dataFile, contents, function(err){
+				
+				console.log(err);
+				
+				that.send("complete",{
+					file: "tmp/" + that.dataFile,
+					action: "phaserDataOnly"
+				});
+			});
+			
+			
+		},
+		
 		a_phaser: function(){
 			var that = this;
 			
@@ -48,14 +83,16 @@ MT.extend("core.SocketManager")(
 			
 			var contents = "";
 			this.fs.readFile("phaser/mt.export.js", function(e, c){
-				contents += c;
-				contents += "mt.data = "+JSON.stringify({
+				
+				that.fs.writeFile(that.dir + "/" + that.phaserFile, c);
+				
+				contents = "mt.data = "+JSON.stringify({
 					assets: that.assets,
 					objects: that.objects,
 					map: that.map
 				}, null, "\t")+";\r\n";
 				
-				that.fs.writeFile(that.dir + "/" + that.phaserFile, contents, function(err){
+				that.fs.writeFile(that.dir + "/" + that.dataFile, contents, function(err){
 					console.log("write done", err);
 					
 					//zip -9 -r <zip file> <folder name>
@@ -66,7 +103,10 @@ MT.extend("core.SocketManager")(
 						console.log("exec", error, stdout, stderr);
 						
 						//console.log("EXPORT", this.assets, this.objects);
-						that.send("complete","mightytools.zip");
+						that.send("complete",{
+							file:  that.zipName,
+							action: "phaser"
+						});
 						
 					});
 					

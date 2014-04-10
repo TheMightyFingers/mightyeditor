@@ -78,7 +78,21 @@ MT.extend("core.Emitter")(
 					if(parent.hasClass("close")){
 						this.items[i].hide();
 					}
-					return this.items[i];
+					
+					var item = this.items[i];
+					
+					if(item._parent != parent.el){
+						if(item.el.parentNode){
+							item.el.parentNode.removeChild(item.el);
+						}
+						item.parent.removeChild(item);
+						parent.addChild(item);
+						if(!parent.visible){
+							item.hide();
+						}
+					}
+					
+					return item;
 				}
 			}
 			
@@ -477,11 +491,11 @@ MT.extend("core.Emitter")(
 		},
 		
 		merge: function(data, oldData){
+			this.updateFullPath(data);
+			
 			for(var i=0; i<this.items.length; i++){
 				this.items[i].needRemove = true;
 			}
-			
-			this.updateFullPath(data);
 			
 			this.createObject(data, this.tree);
 			
@@ -531,11 +545,23 @@ MT.extend("core.Emitter")(
 			
 		},
 		
-		select: function(id){
+		select: function(id, silent){
 			for(var i=0; i<this.items.length; i++){
 				if(id == this.items[i].data.id){
+					if(silent){
+						return this.items[i];
+					}
 					this.emit("select", this.items[i].data,  this.items[i]);
 					return;
+				}
+			}
+			
+		},
+		
+		getById: function(id){
+			for(var i=0; i<this.items.length; i++){
+				if(id == this.items[i].data.id){
+					return this.items[i];
 				}
 			}
 			

@@ -11,10 +11,14 @@ MT(
 				return;
 			}
 			
+			if(!this.callbacks){
+				this.callbacks = {};
+			}
 			
 			if(!this.callbacks[action]){
 				this.callbacks[action] = [];
 			}
+			
 			this.callbacks[action].push(cb);
 			return cb;
 		},
@@ -50,13 +54,19 @@ MT(
 		},
 		
 		emit: function(type, action, data){
+			if(!this.callbacks){
+				return;
+			}
 			if(!this.callbacks[type]){
 				//console.warn("received unhandled data", type, data);
 				return;
 			}
+			
 			var cbs = this.callbacks[type];
+			var cb = null;
 			for(var i=0; i<cbs.length; i++){
-				cbs[i](action, data);
+				cb = cbs[i];
+				cb(action, data);
 			}
 		}
 

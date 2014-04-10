@@ -86,8 +86,11 @@ MT(
 				console.warn("unknown event", type);
 			}
 			var ev = this.events[type];
+			var e = null;
+			
 			for(var i=0; i<ev.length; i++){
-				ev[i](data);
+				e = ev[i];
+				e(data);
 			}
 		},
    

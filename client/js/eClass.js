@@ -70,7 +70,7 @@
 			
 			_onload: function(script){
 				//this.loadings--;
-				console.log("loadings", this.loadings, script);
+				//console.log("loadings", this.loadings, script);
 				
 				this.onScriptsLoaded();
 			},
