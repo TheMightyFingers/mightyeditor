@@ -820,7 +820,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			
 			this.sync(object);
-			//this.project.settings.updateObjects(object.MT_OBJECT);
+			this.project.settings.updateObjects(object.MT_OBJECT);
 		},
 		
 		moveByKey: function(e, object){
@@ -941,7 +941,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			console.log("save settings");
 			
-			this.send("updateData", obj);
+			
+			this.sendDelayed("updateData", this.settings, 100);
 			//this.settingsgridX = obj.gridX;
 		},
 		

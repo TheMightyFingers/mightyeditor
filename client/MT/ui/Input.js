@@ -39,7 +39,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.value = new MT.ui.DomElement();
 		this.addChild(this.value).show();
 		
-		this.value.el.innerHTML = obj[this.key];
+		this.setValue(obj[this.key], true);
+		
 		this.value.style.bottom = "initial";
 		this.value.style.left = "initial";
 		this.value.style.right = 0;
@@ -68,17 +69,22 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		
 		this.value.el.ondblclick = function(){
-			document.body.appendChild(input);
-			input.style.top = ( that.value.calcOffsetY(input.parentNode) - 10 ) + "px";
-			input.style.left = ( that.value.calcOffsetX(input.parentNode) - that.value.el.parentNode.offsetWidth*0.5 + 30) + "px";
-			input.style.width = that.value.el.parentNode.parentNode.offsetWidth*0.5 + "px";
+			
+			var w = that.value.el.parentNode.parentNode.offsetWidth*0.5;
+			input.style.width = w + "px";
+			
+			input.style.top = ( that.value.calcOffsetY(that.value.el.offsetParent) - 9 ) + "px";
+			input.style.left = ( that.value.calcOffsetX(that.value.el.offsetParent) - w + that.value.el.offsetWidth - 25) + "px";
 			input.value = that.obj[that.key];
-			input.focus();
+			
 			input.isVisible = true;
 			input.width = that.value.offsetWidth + "px";
 			
+			
+			that.setValue("", true);
+			that.value.el.offsetParent.appendChild(input);
+			input.focus();
 			input.setSelectionRange(0, input.value.length);
-			that.value.el.innerHTML = "";
 		};
 		
 		input.onblur = function(){
@@ -151,8 +157,17 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				val = this.max;
 			}
 			
+			
+			
 			this.obj[this.key] = val;
-			this.value.el.innerHTML = val;
+			
+			if(typeof val == "number"){
+				this.value.el.innerHTML = parseFloat(val.toFixed(8));
+			}
+			else{
+				this.value.el.innerHTML = val;
+			}
+			
 			if(!silent){
 				this.emit("change", val);
 			}
@@ -166,6 +181,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			catch(e){
 				ret = val;
 			}
+			
+			
 			return ret;
 		}
 		

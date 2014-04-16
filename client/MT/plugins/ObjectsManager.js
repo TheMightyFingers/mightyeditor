@@ -47,12 +47,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.options = new MT.ui.Button(null, "ui-options", ui.events, function(){
 				if(!that.list.isVisible){
 					that.list.show(that.panel.header.el);
+					that.options.addClass("selected");
 				}
 				else{
 					that.list.hide();
 				}
 			});
 			
+			this.list.on("hide", function(){
+				that.options.removeClass("selected");
+			});
 			
 			this.panel.header.addChild(this.options);
 			this.options.style.width = "33px";

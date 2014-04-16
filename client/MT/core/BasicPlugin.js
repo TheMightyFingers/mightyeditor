@@ -1,6 +1,7 @@
 MT(
 	MT.core.BasicPlugin = function(channel){
 		this.channel = channel;
+		this.dealys = {};
 	},
 	{
 		
@@ -25,6 +26,19 @@ MT(
    
 		send: function(action, data){
 			this.socket.send(this.channel, action, data);
+		},
+   
+		sendDelayed: function(action, data, timeout){
+			var that = this;
+			if(this.dealys[action]){
+				window.clearTimeout(this.dealys[action]);
+			}
+			
+			this.dealys[action] = window.setTimeout(function(){
+				that.send(action, data);
+				that.dealys[action] = 0;
+			}, timeout);
+			
 		}
 	}
 );

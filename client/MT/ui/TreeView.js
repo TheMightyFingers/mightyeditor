@@ -126,7 +126,7 @@ MT.extend("core.Emitter")(
 			label.el.innerHTML = data.name;
 			head.style.position = "relative";
 			label.style.position = "relative";
-			label.style.marginLeft = "30px";
+			label.style.paddingLeft = "30px";
 			
 			//el.addChild(head);
 			head.show(el.el);
@@ -149,7 +149,7 @@ MT.extend("core.Emitter")(
 				el.addClass("open");
 				head.el.onclick = function(e){
 					
-					if(e.target != el.head.el){
+					if(e.target != el.head.el && e.target != el.head.label.el){
 						return;
 					}
 					

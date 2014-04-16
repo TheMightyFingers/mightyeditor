@@ -133,8 +133,14 @@ MT(
 					});
 				}
 				this.objects.angle = this.addInput( "angle", obj, true, cb);
-				this.objects.anchorX = this.addInput( "anchorX", obj, true, cb);
-				this.objects.anchorY = this.addInput( "anchorY", obj, true, cb);
+				this.objects.anchorX = this.addInput( {
+					key: "anchorX",
+					step: 0.1
+				}, obj, true, cb);
+				this.objects.anchorY = this.addInput( {
+					key: "anchorY",
+					step: 0.1
+				}, obj, true, cb);
 				this.objects.isVisible = this.addInput({
 						key: "isVisible",
 						min: 0,
@@ -147,7 +153,7 @@ MT(
 		updateObjects: function(obj){
 			for(var i in this.objects){
 				this.objects[i].obj = obj;
-				this.objects[i].setValue(obj[i]);
+				this.objects[i].setValue(obj[i], true);
 			}
 		},
    
