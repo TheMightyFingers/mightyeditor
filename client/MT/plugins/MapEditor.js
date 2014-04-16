@@ -32,7 +32,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			worldWidth: 2000,
 			worldHeight: 2000,
 			gridX: 64,
-			gridY: 64
+			gridY: 64,
+			showGrid: 1
 		};
 		
 		
@@ -175,6 +176,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					if(!ctx){
 						ctx = game.canvas.getContext("2d");
 					}
+					
+					that.setCameraBounds();
+					
 				},
 				
 				
@@ -202,11 +206,49 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.game.world.setBounds(0, 0, 2000, 2000);
 			
 			this.game.renderer.resize(this.game.width, this.game.height);
+			
+			this.setCameraBounds();
+			
+		},
+			
+		setCameraBounds: function(){
+			game.camera.bounds.x = -Infinity;
+			game.camera.bounds.y = -Infinity;
+			game.camera.bounds.width = Infinity;
+			game.camera.bounds.height = Infinity;
 		},
 
-
+				
+		
+		updateSettings: function(obj){
+			if(!obj){
+				return;
+			}
+			
+			for(var i in obj){
+				this.settings[i] = obj[i];
+			}
+			
+			
+			this.game.width = obj.worldWidth;
+			this.game.height = obj.worldHeight;
+			
+			this.game.world.setBounds(0, 0, obj.worldWidth, obj.worldHeight);
+			
+			
+			this.setCameraBounds();
+			
+			this.game.camera.x = obj.cameraX;
+			this.game.camera.y = obj.cameraY;
+		},
+		
+		
 		/* drawing fns */
 		drawGrid: function(ctx){
+			if(!this.settings.showGrid){
+				return;
+			}
+			
 			var g = 0;
 			var game = this.game;
 			
@@ -215,30 +257,56 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			ctx.beginPath();
 			
 			ctx.strokeStyle = "rgba(255,255,255,0.1)";
-			ctx.globalAlpha = 0.5;
+			//ctx.globalAlpha = 0.5;
+			
+			
+			
+			
+			
+			var ox = game.camera.x % this.settings.gridX;
+			var oy = game.camera.y % this.settings.gridY;
 			
 			
 			g = this.settings.gridX;
-			
-			for(var i = -game.camera.x; i<game.canvas.width; i += g){
+			for(var i = -ox; i<game.canvas.width; i += g){
 				if(i < 0){
 					continue;
 				}
-				ctx.moveTo(i, -game.camera.y);
-				ctx.lineTo(i, game.canvas.height + game.camera.y);
+				
+				ctx.beginPath();
+				if(i + game.camera.x == 0){
+					ctx.strokeStyle = "rgba(255,0,0,1)";
+				}
+				else{
+					ctx.strokeStyle = "rgba(255,255,255,0.1)";
+				}
+				ctx.moveTo(i, 0);
+				ctx.lineTo(i, game.canvas.height);
+				
+				ctx.stroke();
 			}
 			
+			
 			g = this.settings.gridY;
-			for(var j = -game.camera.y; j<game.canvas.height; j += g){
+			for(var j = -oy; j<game.canvas.height; j += g){
 				if(j < 0){
 					continue;
 				}
-				ctx.moveTo(-game.camera.x, j);
-				ctx.lineTo(-game.camera.x + game.canvas.width + game.camera.x, j);
+				
+				ctx.beginPath();
+				if(j + game.camera.y == 0){
+					ctx.strokeStyle = "rgba(255,0,0,1)";
+				}
+				else{
+					ctx.strokeStyle = "rgba(255,255,255,0.1)";
+				}
+				
+				ctx.moveTo(0, j);
+				ctx.lineTo(game.canvas.width, j);
+				
+				ctx.stroke();
 			}
 			
-			
-			ctx.stroke();
 			ctx.restore();
 		},
 		
@@ -483,6 +551,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				
 				var obj = this.addObject(objs[i], group);
+				obj.bringToTop();
 				this.inheritSprite(obj, objs[i]);
 				obj.z = i;
 			}
@@ -679,6 +748,11 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		_cameraMove: function(e){
 			this.game.camera.x -= this.ui.events.mouse.mx;
 			this.game.camera.y -= this.ui.events.mouse.my;
+			this.settings.cameraX = this.game.camera.x;
+			this.settings.cameraY = this.game.camera.y;
+			
+			this.project.settings.updateScene(this.settings);
+			
 		},
 		
 		
@@ -861,23 +935,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 			}
 		},
-		
-		
-		updateSettings: function(obj){
-			if(!obj){
-				return;
-			}
-			this.game.width = obj.worldWidth;
-			this.game.height = obj.worldHeight;
-			
-			this.game.world.setBounds(0, 0, obj.worldWidth, obj.worldHeight);
-			this.game.camera.x = obj.cameraX;
-			this.game.camera.y = obj.cameraY;
-			
-			this.settings = obj;
-			
-		},
-		
+
 		updateScene: function(obj){
 			this.updateSettings(obj);
 			
@@ -992,6 +1050,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		
 		selectRect: function(rect, clear){
+			rect.x -= this.game.camera.x;
+			rect.y -= this.game.camera.y;
+			
 			var box = null;
 			
 			
@@ -1007,6 +1068,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					this.selector.remove(this.objects[i]);
 				}
 			}
+			
+			rect.x += this.game.camera.x;
+			rect.y += this.game.camera.y;
 			
 		},
 		

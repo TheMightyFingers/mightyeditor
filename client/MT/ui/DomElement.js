@@ -3,6 +3,7 @@ MT(
 		type = type || "div";
 		this.el = document.createElement(type);
 		this.el.style.position = "absolute";
+		
 		this.style = this.el.style;
 		this.style.top = 0;
 		this.style.right = 0;

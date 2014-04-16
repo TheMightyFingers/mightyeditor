@@ -1,11 +1,16 @@
 MT.require("ui.DomElement");
 MT.extend("core.Emitter")(
-	MT.ui.TreeView = function(data, root){
+	MT.ui.TreeView = function(data, options){
 		MT.core.Emitter.call(this);
+		this.options = {};
+		
+		for(var i in options){
+			this.options[i] = options[i];
+		}
 		
 		this.tree = null;
 		this.items = [];
-		this.rootPath = root;
+		this.rootPath = options.root;
 		
 		if(data != void(0)){
 			this.create(data);
@@ -112,13 +117,23 @@ MT.extend("core.Emitter")(
 			el.fullPath = data.fullPath;
 			
 			var head = new MT.ui.DomElement();
-			head.el.innerHTML = data.name;
+			var label = new MT.ui.DomElement();
+			
+			head.label = label;
+			
+			head.addChild(label);
+			
+			label.el.innerHTML = data.name;
 			head.style.position = "relative";
+			label.style.position = "relative";
+			label.style.marginLeft = "30px";
 			
 			//el.addChild(head);
 			head.show(el.el);
 			
 			el.head = head;
+			head.parent = el;
+			
 			
 			head.addClass("ui-treeview-item-head");
 			
@@ -134,9 +149,16 @@ MT.extend("core.Emitter")(
 				el.addClass("open");
 				head.el.onclick = function(e){
 					
+					if(e.target != el.head.el){
+						return;
+					}
+					
 					if(el.isFolder && e.offsetX > 30){
 						return;
 					}
+					
+					e.stopPropagation();
+					
 					el.visible = !el.visible;
 					console.log(e);
 					
@@ -170,7 +192,7 @@ MT.extend("core.Emitter")(
 					}
 					
 					
-					el.el.appendChild(im);
+					head.el.appendChild(im);
 					el.image = im;
 					im.style.pointerEvents = "none";
 				}
@@ -185,9 +207,15 @@ MT.extend("core.Emitter")(
 					el.head = input;
 					
 				}
-				
-				
-				
+			}
+			
+			
+			if(this.options.showHide){
+				el.addClass("show-hide-enabled");
+				var b = this._mkShowHide(el);
+				if(!data.isVisible){
+					b.addClass("hidden");
+				}
 			}
 			
 			
@@ -216,7 +244,27 @@ MT.extend("core.Emitter")(
 		},
    
 		onChange: null,
-   
+		
+		
+		addShowHide: function(){
+			for(var i=0; i<this.items.length; i++){
+				this._mkShowHide(this.items[i]);
+				
+			}
+			
+		},
+		
+		_mkShowHide: function(item){
+			var that = this;
+			var b = new MT.ui.Button("", "show-hide", function(){
+				item.data.isVisible = !item.data.isVisible;
+				that.emit("show", item);
+			});
+			item.head.el.appendChild(b.el);
+			b.parent = item;
+			return b;
+		},
+		
 		sortable: function(ev){
 			
 			var al = this.addItem({name: "xxx"}, this.tree, true);
@@ -256,7 +304,7 @@ MT.extend("core.Emitter")(
 			var scrollTop = 0;
 			
 			ev.on("mousedown", function(e){
-				item = that.getOwnItem(e.target.parentNode);
+				item = that.getOwnItem(e.target.parentNode.parentNode);
 				if( item ){
 					mdown = true;
 					scrollTop = that.tree.el.parentNode.scrollTop;
@@ -270,11 +318,33 @@ MT.extend("core.Emitter")(
 			var dragged = false;
 			
 			ev.on("click", function(e){
-				if(that.dragged){
+				if(!e.target.ctrl){
 					return;
 				}
 				
-				var item = that.getOwnItem(e.target.parentNode);
+				if(!e.target.ctrl.hasParent(that.tree)){
+					return;
+				}
+				
+				if(that.dragged){
+					return;
+				}
+				var item = null;
+				
+				if(e.target.ctrl && e.target.ctrl.hasClass("show-hide")){
+					item = e.target.parentNode.parentNode;
+					console.log(item.ctrl.data);
+					if(e.target.ctrl.hasClass("hidden")){
+						e.target.ctrl.removeClass("hidden")
+					}
+					else{
+						e.target.ctrl.addClass("hidden")
+					}
+					that.emit("show", item.ctrl);
+					return;
+				}
+				
+				item = that.getOwnItem(e.target.parentNode.parentNode);
 				
 				if(item){
 					that.emit("click", item.data, item);
@@ -351,7 +421,7 @@ MT.extend("core.Emitter")(
 				var p1 = parseInt(al.style.top) + ev.mouse.my - (scrollTop - that.tree.el.parentNode.scrollTop);
 				scrollTop = that.tree.el.parentNode.scrollTop;
 				var p2 = 0;
-				var activeItem = that.getOwnItem(e.target.parentNode);
+				var activeItem = that.getOwnItem(e.target.parentNode.parentNode);
 				
 				al.style.top = p1 + "px";
 				
@@ -412,7 +482,7 @@ MT.extend("core.Emitter")(
 			
 			this.input.type = "text";
 			
-			el.head.el.innerHTML = "&nbsp;"
+			el.head.label.el.innerHTML = "&nbsp;"
 			
 			document.body.appendChild(this.input);
 			
@@ -439,13 +509,13 @@ MT.extend("core.Emitter")(
 					
 					el.data.fullPath = part+"/"+this.value;
 					el.data.name = this.value;
-					el.head.el.innerHTML = this.value;
+					el.head.label.el.innerHTML = this.value;
 					if(that.onChange){
 						that.onChange(part + "/" + op, part+"/"+this.value);
 					}
 				}
 				else{
-					el.head.el.innerHTML = lastValue;
+					el.head.label.el.innerHTML = lastValue;
 				}
 			};
 			

@@ -257,8 +257,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.map.selection.y = y;
 			}
 			
-			this.map.selection.x -= this.map.game.camera.x;
-			this.map.selection.y -= this.map.game.camera.y;
+			//this.map.selection.x -= this.map.game.camera.x;
+			//this.map.selection.y -= this.map.game.camera.y;
 			
 			
 			this.map.selectRect(this.map.selection, true);
@@ -268,8 +268,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		
 		mouseUp_select: function(e){
-			this.map.selection.x -= this.map.game.camera.x;
-			this.map.selection.y -= this.map.game.camera.y;
+			//this.map.selection.x -= this.map.game.camera.x;
+			//this.map.selection.y -= this.map.game.camera.y;
 			
 			this.map.selectRect(this.map.selection);
 			

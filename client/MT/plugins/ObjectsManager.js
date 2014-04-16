@@ -42,13 +42,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			], ui, true);
 			
+			this.list.addClass("settings-list");
+			
 			this.options = new MT.ui.Button(null, "ui-options", ui.events, function(){
-				//if(!that.list.isVisible){
+				if(!that.list.isVisible){
 					that.list.show(that.panel.header.el);
-				//}
-				//else{
-				//	that.list.hide();
-				//}
+				}
+				else{
+					that.list.hide();
+				}
 			});
 			
 			
@@ -56,7 +58,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.options.style.width = "33px";
 			this.options.style.left = "auto";
 			
-			this.tv = new MT.ui.TreeView([], this.project.path);
+			this.tv = new MT.ui.TreeView([], {
+				root: this.project.path,
+				showHide: true
+			});
 			this.tv.onChange = function(oldItem, newItem){
 				console.log("change", oldItem, newItem);
 				that.update();
@@ -65,6 +70,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.tv.sortable(this.ui.events);
 			this.tv.tree.show(this.panel.content.el);
+			
+			
 			
 			this.ui.events.on("keyup", function(e){
 				if(e.which == MT.keys.delete){
@@ -77,6 +84,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			
+			
+			this.tv.on("show", function(item){
+				if(item.data.isVisible){
+					item.data.isVisible = 0;
+				}
+				else{
+					item.data.isVisible = 1;
+				}
+				that.update();
+			});
 			
 		},
 		

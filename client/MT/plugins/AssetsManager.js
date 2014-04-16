@@ -37,10 +37,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			], ui, true);
 			
+			this.list.addClass("settings-list");
+			
 			this.options = new MT.ui.Button(null, "ui-options", ui.events, function(){
-				console.log("open options");
 				if(!that.list.isVisible){
-					that.list.show(that.panel.content.el);
+					that.list.show(that.panel.header.el);
 				}
 				else{
 					that.list.hide();
@@ -49,7 +50,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			this.panel.header.addChild(this.options);
-			this.options.style.width = "33px";
+			
 			this.options.style.left = "auto";
 			
 			ui.events.on("drop", function(e){

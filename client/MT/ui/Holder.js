@@ -80,7 +80,8 @@ MT.extend("ui.DomElement")(
 		this.setPosition(pos);
 	},
 	{
-		
+		handleHeight: 3,
+		handleWidth: 3,
 		addPanel: function(panel){
 			if(this.panels.length > 0){
 				this.addSeperator();
@@ -318,7 +319,7 @@ MT.extend("ui.DomElement")(
 				this.el.style.width = "auto";
 				
 				this.handle.style.top = "auto";
-				this.handle.style.height = "4px";
+				this.handle.style.height = this.handleHeight+"px";
 				this.handle.style.width = "auto";
 				this.handle.el.className = "ui-handle-v";
 			}
@@ -329,7 +330,7 @@ MT.extend("ui.DomElement")(
 				this.el.style.height = "auto";
 				
 				this.handle.style.right = "auto";
-				this.handle.style.width = "4px";
+				this.handle.style.width =  this.handleWidth+"px";
 				this.handle.style.height = "auto";
 				this.handle.el.className = "ui-handle-h";
 			}
@@ -340,7 +341,7 @@ MT.extend("ui.DomElement")(
 				this.el.style.width = "auto";
 				
 				this.handle.style.bottom = "auto";
-				this.handle.style.height = "4px";
+				this.handle.style.height = this.handleHeight+"px";
 				this.handle.style.width = "auto";
 				this.handle.el.className = "ui-handle-v";
 			}
@@ -351,7 +352,7 @@ MT.extend("ui.DomElement")(
 				this.el.style.height = "auto";
 				
 				this.handle.style.left = "auto";
-				this.handle.style.width = "4px";
+				this.handle.style.width = this.handleWidth+"px";
 				this.handle.style.height = "auto";
 				this.handle.el.className = "ui-handle-h";
 			}
@@ -379,7 +380,7 @@ MT.extend("ui.DomElement")(
 						
 						off += this.el.offsetWidth / this.panels.length;
 						this.seperators[i].y = off;
-						this.seperators[i].width = 4;
+						this.seperators[i].width = this.handleWidth;
 						this.seperators[i].aligned = true;
 					}
 				}
@@ -394,11 +395,11 @@ MT.extend("ui.DomElement")(
 					off += s;
 					if(!this.seperators[i].aligned){
 						this.seperators[i].y = off;
-						this.seperators[i].height = 4;
+						this.seperators[i].height = this.handleHeight;
 						this.seperators[i].aligned = true;
 					}
 					else{
-						this.seperators[i].height = 4;
+						this.seperators[i].height = this.handleHeight;
 						this.seperators[i].y = this.seperators[i].y;
 					}
 				}

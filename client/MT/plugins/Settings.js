@@ -158,15 +158,22 @@ MT(
 			var cb = function(){
 				that.project.plugins.mapeditor.updateScene(obj);
 			};
+			this.scene = {};
 			
-			this.addInput( {key: "cameraX", min: 0}, obj, true, cb);
-			this.addInput( {key: "cameraY", min: 0}, obj, true, cb);
-			this.addInput( "worldWidth", obj, true, cb);
-			this.addInput( "worldHeight", obj, true, cb);
-			this.addInput( {key: "gridX", min: 2}, obj, true, cb);
-			this.addInput( {key: "gridY", min: 2}, obj, true, cb);
+			this.scene.cameraX = this.addInput( {key: "cameraX"}, obj, true, cb);
+			this.scene.cameraY = this.addInput( {key: "cameraY"}, obj, true, cb);
+			this.scene.gridX = this.addInput( {key: "gridX", min: 2}, obj, true, cb);
+			this.scene.gridY = this.addInput( {key: "gridY", min: 2}, obj, true, cb);
+			this.scene.showGrid = this.addInput( {key: "showGrid", min: 0, max: 1}, obj, true, cb);
 			
-		}
+		},
+   
+		updateScene: function(obj){
+			for(var i in this.scene){
+				this.scene[i].obj = obj;
+				this.scene[i].setValue(obj[i]);
+			}
+		},
 
 
 
