@@ -10,6 +10,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.min = -Infinity;
 		this.max = Infinity;
 		
+		this.type = "number";
+		
 		if(typeof properties === "string"){
 			this.key = properties;
 		}
@@ -21,6 +23,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 			if(properties.max != void(0)){
 				this.max = properties.max;
+			}
+			if(properties.type != void(0)){
+				this.type = properties.type;
 			}
 		}
 		
@@ -114,27 +119,30 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 		});
 		
-		this.onwheel = events.on("wheel", function(e){
-			if(e.target == that.value.el){
-				var d = (e.wheelDelta > 0 ? 1 : -1);
-				that.obj[that.key] += d*that.step;
-				that.setValue(obj[that.key]);
-			}
+		if(this.type == "number"){
+		
+			this.onwheel = events.on("wheel", function(e){
+				if(e.target == that.value.el){
+					var d = (e.wheelDelta > 0 ? 1 : -1);
+					that.obj[that.key] += d*that.step;
+					that.setValue(obj[that.key]);
+				}
+				
+			});
 			
-		});
-		
-		this.mouseup = events.on("mouseup",function(){
-			down = false;
-		});
-		
-		this.mousemove = events.on("mousemove",function(){
-			if(!down){
-				return;
-			}
-			that.obj[that.key] -= events.mouse.my*that.step;
-			that.setValue(that.obj[that.key]);
-		});
-		
+			
+			this.mouseup = events.on("mouseup",function(){
+				down = false;
+			});
+			
+			this.mousemove = events.on("mousemove",function(){
+				if(!down){
+					return;
+				}
+				that.obj[that.key] -= events.mouse.my*that.step;
+				that.setValue(that.obj[that.key]);
+			});
+		}
 	},
 	{
 		remove: function(){
@@ -174,6 +182,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		},
 		
 		evalValue: function(val){
+			if(this.type != "number"){
+				return val;
+			}
 			var ret = null;
 			try{
 				ret = eval(val);

@@ -10,6 +10,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		this.selector = new MT.core.Selector();
 		
+		this.id = Date.now();
+		
 	},
 	{
 		initUI: function(ui){
@@ -76,19 +78,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.tree.show(this.panel.content.el);
 			
 			
-			
-			this.ui.events.on("keyup", function(e){
-				if(e.which == MT.keys.delete){
-					if(that.active){
-						that.deleteObj(that.active.data.id);
-					}
-					that.deleteSelected();
-				}
-				
-			});
-			
-			
-			
 			this.tv.on("show", function(item){
 				if(item.data.isVisible){
 					item.data.isVisible = 0;
@@ -128,6 +117,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.sync();
 				}
 			});
+			
+			this.tv.on("deleted", function(o){
+				that.selector.remove(o);
+			});
+			
 		},
 		
 		a_receive: function(data, silent){
@@ -156,10 +150,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		insertObject: function(obj){
 			var data = this.tv.getData();
+			obj.id = "tmp"+this.mkid();
 			
-			//if(obj.id){
-				obj.id = "tmp"+Date.now();
-			//}
+			obj.tmpName = obj.tmpName || obj.name;
 			
 			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, data, 0);
 			data.push(obj);
@@ -172,25 +165,27 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
-		createObject: function(obj, x, y){
+		createObject: function(asset, x, y){
 			x = x || 0;
 			y = y || 0;
 			
 			
 			var data = this.tv.getData();
-			var name = obj.name.split(".");
+			var name = asset.name.split(".");
 			name.pop();
 			name = name.join("");
 			
-			console.log("----------->",obj);
+			console.log("----------->",asset);
 			
 			return  {
-				assetId: obj.id,
-				__image: obj.__image,
+				assetId: asset.id,
+				__image: asset.__image,
 				x: x,
 				y: y,
-				anchorX: obj.anchorX,
-				anchorY: obj.anchorY,
+				anchorX: asset.anchorX,
+				anchorY: asset.anchorY,
+				scaleX: 1,
+				scaleY: 1,
 				angle: 0,
 				alpha: 1,
 				tmpName: name,
@@ -199,12 +194,41 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			};
 		},
 		
+		copy: function(obj, x, y, name){
+			name = name || obj.name + this.getNewNameId(obj.name, this.tv.getData());
+			var clone = JSON.parse(JSON.stringify(obj));
+			clone.name = name;
+			clone.x = x;
+			clone.y = y;
+			
+			
+			this.cleanUpClone(clone);
+			
+			
+			this.insertObject(clone);
+			return clone;
+		},
+		
+		cleanUpClone: function(obj, inc){
+			inc = inc || 0;
+			inc++;
+			
+			if(obj.contents){
+				for(var i=0; i<obj.contents.length; i++){
+					this.cleanUpClone(obj.contents[i], inc);
+				}
+			}
+			obj.id = "tmp"+this.mkid();
+		},
+		
 		
 		deleteSelected: function(){
 		
 			this.selector.forEach(function(obj){
 				this.deleteObj(obj.data.id, true);
 			}, this);
+			
+			this.selector.clear();
 			
 			this.ui.events.simulateKey(MT.keys.esc);
 			this.sync();
@@ -215,6 +239,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var data = this.tv.getData();
 			this._delete(id, data);
 			this.tv.merge(data);
+			
+			
 			
 			//if using silent.. you should call manually sync
 			if(!silent){
@@ -284,7 +310,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			var group = {
-				id: "tmp"+Date.now(),
+				id: "tmp"+this.mkid(),
 				name: name,
 				x: 0,
 				y: 0,
@@ -312,19 +338,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
-		
+		mkid: function(){
+			this.id++;
+			
+			return this.id;
+		},
 		
 		groupSelected: function(){
 			var folder = this.newFolder(true);
 			var that = this;
 			
 			var data = this.tv.getData();
-			
-			
-			
-			
-			console.log(data);
-			
 			
 			this.selector.forEach(function(el){
 				var o = el.data;
@@ -338,11 +362,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.tv.merge(data);
 			
+			
+			this.send("updateData", data);
 		},
-		
-		
-		
-		
 		
 		_syncTm: 0,
 		sync: function(silent){

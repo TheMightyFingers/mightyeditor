@@ -66,7 +66,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.tv = new MT.ui.TreeView([], this.project.path);
 			this.tv.onChange = function(oldItem, newItem){
-				console.log("updated", oldItem, " -> ", newItem);
 				if(oldItem && newItem){
 					that.moveFile(oldItem, newItem);
 				}
@@ -84,10 +83,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			var select = function(data, element){
-				
-				
-				console.log("select");
-				
 				
 				if(data.contents){
 					return;
@@ -134,16 +129,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active = element;
 				that.active.addClass("active.selected");
 				
-				var o = that.project.map.activeObject;
-				if(o){
-					var oldId = o.MT_OBJECT.assetId;
-					if(oldId != data.id){
-						o.MT_OBJECT.assetId = data.id;
-						o.MT_OBJECT.__image = data.__image;
-						that.project.plugins.objectsmanager.update();
-						that.project.plugins.objectsmanager.sync();
-					}
-				}
+				that.project.map.selector.forEach(function(o){
+					o.MT_OBJECT.assetId = data.id;
+					o.MT_OBJECT.__image = data.__image;
+				});
+				that.project.plugins.objectsmanager.update();
+				that.project.plugins.objectsmanager.sync();
+				
 			};
 			this.tv.on("click", click);
 			this.tv.on("select", select);
@@ -162,7 +154,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.on("mouseover", function(e, el){
 				var data = el.data;
 				if(data.__image){
-					window.clearTimeout(prevHideTm)
+					window.clearTimeout(prevHideTm);
+					
 					prev.show(document.body);
 					prev.width = data.width;
 					prev.height = data.height;
@@ -172,6 +165,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					prev.y = el.calcOffsetY() - (data.height*0.5 - el.el.offsetHeight*0.5);
 					prev.style.backgroundImage = "url('"+that.project.path + "/" +data.__image+"')";
 					prev.target = e.target;
+					prev.data = data;
+					prev.element = el;
 				}
 			});
 			
@@ -181,7 +176,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				prevHideTm = window.setTimeout(function(){
 					prev.hide();
-				}, 100);
+				}, 300);
 				
 			});
 			
@@ -193,6 +188,31 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			};
 			prev.el.onmouseout = function(){
 				prev.hide();
+			};
+			
+			prev.el.onclick = function(e){
+				click(prev.data, prev.element);
+				
+				if(that.active.data != prev.data){
+					return;
+				}
+				
+				var data = prev.data;
+				
+				var frame = that.getFrame(prev.data, e.offsetX, e.offsetY);
+				
+				that.project.map.selector.forEach(function(o){
+					o.MT_OBJECT.assetId = data.id;
+					o.MT_OBJECT.__image = data.__image;
+					o.MT_OBJECT.frame = frame;
+					
+				});
+				
+				that.project.plugins.objectsmanager.update();
+				that.project.plugins.objectsmanager.sync();
+				
+				
+				
 			};
 			
 			ui.events.on("keydown", function(e){
@@ -271,6 +291,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					background-image:repeating-linear-gradient(0deg, #fff, #fff 1px, transparent 1px, transparent "+h+"px),\
 					repeating-linear-gradient(-90deg, #fff, #fff 1px, transparent 1px, transparent "+w+"px); width: 100%; height: 100%; position: absolute;";
 		},
+		
+		getFrame: function(o, x, y){
+			
+			
+			var gx = Math.floor(x/(o.frameWidth));
+			var gy = Math.floor(y/(o.frameHeight));
+			
+			var maxX = Math.floor( o.width / o.frameWidth);
+			
+			var frame = gx + maxX*gy;
+			
+			console.log("frame", gx, gy, frame);
+			
+			return frame;
+		},
+		
 		
 		update: function(){
 			var data = this.tv.getData();

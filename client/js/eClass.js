@@ -268,9 +268,11 @@
 				if(pd.set || pd.get){
 					var pdp = Object.getOwnPropertyDescriptor(parentClass.prototype, key);
 					var pdset = pd.set;
+					
 					if(pdset === void(0)){
 						pdset = pdp ? pdp.set : void(0);
 					}
+					
 					var pdget = pd.get;
 					if(pdget === void(0)){
 						pdget = pdp ? pdp.get : void(0);

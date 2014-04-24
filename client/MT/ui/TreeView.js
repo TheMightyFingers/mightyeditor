@@ -76,15 +76,17 @@ MT.extend("core.Emitter")(
 			for(var i=0; i<this.items.length; i++){
 				if(this.items[i].data.id == data.id){
 					this.items[i].needRemove = false;
+					var item = this.items[i];
+					
 					for(var k in data){
-						this.items[i].data[k] = data[k];
+						item.data[k] = data[k];
 					}
 					
 					if(parent.hasClass("close")){
-						this.items[i].hide();
+						item.hide();
 					}
 					
-					var item = this.items[i];
+					
 					
 					if(item._parent != parent.el){
 						if(item.el.parentNode){
@@ -146,7 +148,13 @@ MT.extend("core.Emitter")(
 			
 			if(type == "folder"){
 				head.addClass("ui-treeview-folder-head");
-				el.addClass("open");
+				if(data.isClosed){
+					el.addClass("close");
+					el.visible = false;
+				}
+				else{
+					el.addClass("open");
+				}
 				head.el.onclick = function(e){
 					
 					if(e.target != el.head.el && e.target != el.head.label.el){
@@ -168,9 +176,10 @@ MT.extend("core.Emitter")(
 						for(var i=0; i<el.children.length; i++){
 							el.children[i].show();
 						}
+						el.data.isClosed = false;
 					}
 					else{
-						
+						el.data.isClosed = true;
 						el.addClass("close");
 						el.removeClass("open");
 						for(var i=0; i<el.children.length; i++){
@@ -182,6 +191,8 @@ MT.extend("core.Emitter")(
 				
 				el.isFolder = true;
 			}
+			
+			
 			
 			if(type == "item"){
 				el.isFolder = false;
@@ -303,19 +314,39 @@ MT.extend("core.Emitter")(
 			
 			var scrollTop = 0;
 			
-			ev.on("mousedown", function(e){
-				item = that.getOwnItem(e.target.parentNode.parentNode);
-				if( item ){
-					mdown = true;
-					scrollTop = that.tree.el.parentNode.scrollTop;
-					var y = (item.calcOffsetY(that.tree.el));
-					al.el.style.top = y + "px";
-					my = y - ev.mouse.y;
-					
-				}
-			});
+
 			
 			var dragged = false;
+			var last = null;
+			var bottom = false;
+			var inFolder = false;
+			
+			var dropItem = function(item, last){
+				
+				if(item.el.parentNode){
+					item.el.parentNode.removeChild(item.el);
+				}
+				
+				item.parent.removeChild(item);
+				if(inFolder){
+					last.addChild(item);
+					if(!last.visible){
+						item.hide();
+					}
+				}
+				else{
+					if(bottom){
+						last.parent.addChild(item, last.index + 1);
+					}
+					else{
+						last.parent.addChild(item, last.index);
+					}
+					if(item.parent.hasClass("close")){
+						item.hide();
+					}
+				}
+				
+			};
 			
 			ev.on("click", function(e){
 				if(!e.target.ctrl){
@@ -351,6 +382,18 @@ MT.extend("core.Emitter")(
 				}
 			});
 			
+			ev.on("mousedown", function(e){
+				item = that.getOwnItem(e.target.parentNode.parentNode);
+				if( item ){
+					mdown = true;
+					scrollTop = that.tree.el.parentNode.scrollTop;
+					var y = (item.calcOffsetY(that.tree.el));
+					al.el.style.top = y + "px";
+					my = y - ev.mouse.y;
+					
+				}
+			});
+			
 			ev.on("mouseup", function(e){
 				
 				al.style.display = "none";
@@ -380,37 +423,24 @@ MT.extend("core.Emitter")(
 					return;
 				}
 				
+				dropItem(item, last);
 				
-				if(item.el.parentNode){
-					item.el.parentNode.removeChild(item.el);
+				for(var i=0; i<that.items.length; i++){
+					var it = that.items[i];
+					if(!it.hasClass("selected")){
+						continue;
+					}
+					if(item == it || last == it || last.parent == it){
+						continue;
+					}
+					dropItem(it, last);
 				}
 				
-				item.parent.removeChild(item);
-				if(inFolder){
-					last.addChild(item);
-					if(!last.visible){
-						item.hide();
-					}
-				}
-				else{
-					if(bottom){
-						last.parent.addChild(item, last.index + 1);
-					}
-					else{
-						last.parent.addChild(item, last.index);
-					}
-					if(item.parent.hasClass("close")){
-						item.hide();
-					}
-				}
 				
 				that.updateFullPath(that.getData(), null, true);
 				
 			});
 			
-			var last = null;
-			var bottom = false;
-			var inFolder = false;
 			ev.on("mousemove", function(e){
 				if(!mdown){
 					return;
@@ -520,7 +550,6 @@ MT.extend("core.Emitter")(
 			};
 			
 			this.input.onkeyup = function(e){
-				console.log("keyup", e.which);
 				if(e.which == 27){
 					needSave = false;
 					this.blur();
@@ -576,6 +605,7 @@ MT.extend("core.Emitter")(
 					this.items.splice(i,1);
 					i--;
 					console.log("cleaned up", this.items[i]);
+					this.emit("deleted", this.items[i]);
 				}
 			}
 			

@@ -121,6 +121,7 @@ MT.extend("ui.DomElement")(
 			
 			if(id > 0){
 				ph = this.seperators[id-1].y;
+				this.moveSeperator(id-1, koef*0.5);
 			}
 			
 			if(id < this.seperators.length-1){

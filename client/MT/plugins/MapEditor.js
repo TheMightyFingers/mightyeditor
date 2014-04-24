@@ -110,13 +110,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					return;
 				}
 				
-				if(w == MT.keys.delete){
-					that.selector.forEach(function(obj){
-						om.deleteObj(obj.MT_OBJECT.id, true);
-					});
-					om.sync();
-					return;
-				}
 				
 				that.selector.forEach(function(obj){
 					that.moveByKey(e, obj);
@@ -238,6 +231,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			this.setCameraBounds();
 			
+			
 			this.game.camera.x = obj.cameraX;
 			this.game.camera.y = obj.cameraY;
 		},
@@ -321,6 +315,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				if(!obj){
 					return;
 				}
+			}
+			
+			if(!this.isVisible(obj)){
+				return;
 			}
 			
 			var bounds = obj.getBounds();
@@ -411,7 +409,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					cnt--;
 					if(cnt == 0){
 						that.isAssetsAdded = true;
+						that.reloadObjects();
 					}
+					
 				});
 			}
 		},
@@ -459,10 +459,12 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				var that = this;
 				if(this._addTimeout){
 					window.clearTimeout(this._addTimeout);
+					this._addTimeout = 0;
 				}
 				
 				this._addTimeout = window.setTimeout(function(){
 					that.addObjects(objs);
+					this._addTimeout = 0;
 				}, 100);
 				return;
 			}
@@ -510,6 +512,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			this.updateSelected();
 			this.emit("objectsAdded", this);
+			this._addTimeout = 0;
 		},
 		
 		_destroyObject: function(object){
@@ -556,7 +559,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				obj.z = i;
 			}
 		},
-   
+		
 		addGroup: function(obj){
 			
 			var group = this.game.add.group();
@@ -644,8 +647,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			sp.x = obj.x;
 			sp.y = obj.y;
 			
-			sp.visible = !!obj.isVisible;
-			
 			if(obj.angle){
 				sp.angle = obj.angle;
 			}
@@ -656,11 +657,16 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				sp.frame = obj.frame;
 			}
 			
+			if(obj.scaleX){
+				sp.scale.x = obj.scaleX;
+				sp.scale.y = obj.scaleY;
+			}
+			
 			sp.visible = !!obj.isVisible;
 		},
 		
 		reloadObjects: function(){
-			if(this.addedObjects){
+			if(this.addedObjects && !this._addTimeout){
 				this.addObjects(this.addedObjects);
 			}
 		},
@@ -917,6 +923,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			obj.angle = sprite.angle;
 			
+			obj.scaleX = sprite.scale.x;
+			obj.scaleY = sprite.scale.y;
+			
 			this.emit("sync", this);
 		},
    
@@ -946,8 +955,12 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			//this.settingsgridX = obj.gridX;
 		},
 		
-		
+		received: false,
 		a_receive: function(obj){
+			if(this.received){
+				return;
+			}
+			this.received = true;
 			this.updateSettings(obj);
 		},
 		
@@ -994,7 +1007,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			for(var i=this.objects.length-1; i>-1; i--){
-				if(!this.objects[i].visible){
+				if(!this.isVisible(this.objects[i])){
 					continue;
 				}
 				var box = this.objects[i].getBounds();
@@ -1048,7 +1061,17 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			return null;
 		},
 		
-		
+		isVisible: function(obj){
+			var o = obj;
+			while(o.parent){
+				if(!o.visible){
+					return false;
+				}
+				o = o.parent;
+			}
+			
+			return o.visible;
+		},
 		
 		selectRect: function(rect, clear){
 			rect.x -= this.game.camera.x;
@@ -1058,7 +1081,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			for(var i=0; i<this.objects.length; i++){
-				if(!this.objects[i].visible){
+				if(!this.isVisible(this.objects[i])){
 					continue;
 				}
 				box = this.objects[i].getBounds();

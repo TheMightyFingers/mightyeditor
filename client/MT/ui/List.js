@@ -1,5 +1,5 @@
 MT.require("ui.Panel");
-MT.extend("ui.DomElement").extend("core.Emitter")(
+MT.extend("core.Emitter").extend("ui.DomElement")(
 	MT.ui.List = function(list, ui, autohide){
 		MT.ui.DomElement.call(this);
 		this.panel = new MT.ui.Panel("", ui.events);

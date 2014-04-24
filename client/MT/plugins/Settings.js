@@ -79,10 +79,14 @@ MT(
 			var that = this;
 			var cb = function(){
 				that.project.am.updateData();
-				that.project.plugins.mapeditor.reloadObjects();
+				//that.project.plugins.mapeditor.reloadObjects();
 			};
 			
+			if(!obj.key){
+				obj.key = obj.fullPath;
+			}
 			
+			this.addInput( {key: "key", type: "text"}, obj, false, cb);
 			this.addInput( {key: "frameWidth", step: 1}, obj, false, cb);
 			this.addInput( "frameHeight", obj, true, cb);
 			this.addInput( "frameMax", obj, false, cb);
@@ -141,6 +145,16 @@ MT(
 					key: "anchorY",
 					step: 0.1
 				}, obj, true, cb);
+				
+				this.objects.scaleX = this.addInput( {
+					key: "scaleX",
+					step: 0.1
+				}, obj, true, cb);
+				this.objects.scaleY = this.addInput( {
+					key: "scaleY",
+					step: 0.1
+				}, obj, true, cb);
+				
 				this.objects.isVisible = this.addInput({
 						key: "isVisible",
 						min: 0,

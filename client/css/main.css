@@ -19,26 +19,37 @@ body{
 	position: relative;
 	
 }
-
 ::-webkit-scrollbar {
-    height: 12px;
-    width: 12px;
-    background: #000;
-	
+    height: 10px;
+    width: 10px;
+    background: rgba(0,0,0,0);
 }
-
-::-webkit-scrollbar-thumb:hover {
-    height: 12px;
-    width: 12px;
-}
-
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.5);
-    -webkit-border-radius: 3px;
-    -webkit-box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.75);
-	padding: 10px;
-	margin: 10px;
+    height: 10px;
+    width: 10px;
+	 background: rgba(0,0,0,0.5);
+   /* -webkit-border-radius: 3px;*/
+    -webkit-box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.75);
+}
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active {
+    height: 8px;
+    width: 8px;
+	border: solid 1px rgba(0,0,0,0.5);
+	background: rgba(0,0,0,0.5);
+}
+::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+::-webkit-scrollbar-track {
+	border: solid transparent;
+}
+
+
+::-webkit-scrollbar-button {
+	height: 0;
+	width: 0;
 }
 
 ::-webkit-scrollbar-corner {
@@ -294,6 +305,7 @@ div.ui-input .ui-input-value{
 	text-align: right;
 	max-width: 50%;
 	overflow: hidden;
+	white-space: nowrap;
 }
 
 input.ui-input{
