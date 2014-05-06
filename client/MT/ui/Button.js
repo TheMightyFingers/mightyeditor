@@ -12,14 +12,18 @@ MT.extend("ui.DomElement")(
 			this.text = text;
 		}
 		
-		if(events && cb){
-			var that = this;
-			events.on("click", function(e){
-				if(e.target === that.el){
-					cb();
-				}
-			});
-			
+		if(cb){
+			if(events == null){
+				this.el.onclick = cb;
+			}
+			else{
+				var that = this;
+				events.on("click", function(e){
+					if(e.target === that.el){
+						cb();
+					}
+				});
+			}
 		}
 		
 	},

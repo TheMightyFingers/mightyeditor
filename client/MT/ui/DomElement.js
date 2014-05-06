@@ -101,6 +101,7 @@ MT(
 					this.children[i] = this.children[this.children.length-1];
 					this.children.length = this.children.length - 1;
 					this.sortChildren();
+					i--;
 					return child;
 				}
 			}

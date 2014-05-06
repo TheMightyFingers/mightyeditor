@@ -33,7 +33,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			worldHeight: 2000,
 			gridX: 64,
 			gridY: 64,
-			showGrid: 1
+			showGrid: 1,
+			backgroundColor: "#111111",
+			gridColor: "rgba(255,255,255,0.1)"
 		};
 		
 		
@@ -203,15 +205,13 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.setCameraBounds();
 			
 		},
-			
+		
 		setCameraBounds: function(){
 			game.camera.bounds.x = -Infinity;
 			game.camera.bounds.y = -Infinity;
 			game.camera.bounds.width = Infinity;
 			game.camera.bounds.height = Infinity;
 		},
-
-				
 		
 		updateSettings: function(obj){
 			if(!obj){
@@ -234,6 +234,11 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			this.game.camera.x = obj.cameraX;
 			this.game.camera.y = obj.cameraY;
+			
+			if(this.game.stage.backgroundColor != obj.backgroundColor){
+				this.game.stage.backgroundColor = obj.backgroundColor;
+			}
+			
 		},
 		
 		
@@ -251,11 +256,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			ctx.beginPath();
 			
 			ctx.strokeStyle = "rgba(255,255,255,0.1)";
-			//ctx.globalAlpha = 0.5;
-			
-			
-			
-			
 			
 			var ox = game.camera.x % this.settings.gridX;
 			var oy = game.camera.y % this.settings.gridY;
@@ -310,7 +310,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return;
 			}
 			
-			if(!obj.game){
+			if(!obj.game || !obj.parent){
 				obj = this.getById(obj.MT_OBJECT.id);
 				if(!obj){
 					return;
@@ -402,12 +402,11 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var game = this.game;
 			var that = this;
 			var asset = null;
-			var cnt = assets.length;
 			this.isAssetsAdded = false;
 			for(var i=0; i<assets.length; i++){
 				this.addAsset(assets[i], function(){
-					cnt--;
-					if(cnt == 0){
+					that.assetsToLoad--;
+					if(that.assetsToLoad == 0){
 						that.isAssetsAdded = true;
 						that.reloadObjects();
 					}
@@ -416,11 +415,14 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 		},
 		
+		assetsToLoad: 0,
 		addAsset: function(asset, cb){
 			if(asset.contents){
 				this.addAssets(asset.contents);
 				return;
 			}
+			
+			this.assetsToLoad++;
 			
 			var game = this.game;
 			var path = this.project.path + "/" + asset.__image;
@@ -1010,6 +1012,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				if(!this.isVisible(this.objects[i])){
 					continue;
 				}
+				if(this.isLocked(this.objects[i])){
+					continue;
+				}
 				var box = this.objects[i].getBounds();
 				if(box.contains(x,y)){
 					return this.objects[i];
@@ -1072,6 +1077,20 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			return o.visible;
 		},
+		isLocked: function(obj){
+			var o = obj;
+			while(o.parent){
+				if(!o.MT_OBJECT){
+					break;
+				}
+				if(o.MT_OBJECT.isLocked){
+					return true;
+				}
+				o = o.parent;
+			}
+			
+			return false;
+		},
 		
 		selectRect: function(rect, clear){
 			rect.x -= this.game.camera.x;
@@ -1084,6 +1103,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				if(!this.isVisible(this.objects[i])){
 					continue;
 				}
+				if(this.isLocked(this.objects[i])){
+					continue;
+				}
+				
 				box = this.objects[i].getBounds();
 				if(box.intersects(rect)){
 					this.selector.add(this.objects[i]);

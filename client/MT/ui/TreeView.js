@@ -41,12 +41,12 @@ MT.extend("core.Emitter")(
 				d = data[i];
 				// folder
 				if(d.contents !== void(0)){
-					var p = this.addItem(d, parent);
+					var p = this.addItem(d, parent, i);
 					this.createObject(d.contents, p);
 					continue;
 				}
 				
-				this.addItem(d, parent);
+				this.addItem(d, parent, i);
 				
 			}
 		},
@@ -71,12 +71,19 @@ MT.extend("core.Emitter")(
 			this.createObject(data, this.tree);
 		},
    
-		addItem: function(data, parent, isVirtual){
+		addItem: function(data, parent, index, isVirtual){
 			
 			for(var i=0; i<this.items.length; i++){
 				if(this.items[i].data.id == data.id){
 					this.items[i].needRemove = false;
 					var item = this.items[i];
+					var p = item.parent;
+					
+					if(p){
+						p.removeChild(item);
+						p.addChild(item, item.index);
+					}
+					
 					
 					for(var k in data){
 						item.data[k] = data[k];
@@ -85,8 +92,6 @@ MT.extend("core.Emitter")(
 					if(parent.hasClass("close")){
 						item.hide();
 					}
-					
-					
 					
 					if(item._parent != parent.el){
 						if(item.el.parentNode){
@@ -105,6 +110,8 @@ MT.extend("core.Emitter")(
 			
 			var that = this;
 			var el = new MT.ui.DomElement();
+			el.index = index;
+			
 			var type = "item";
 			if(data.contents){
 				type = "folder";
@@ -144,7 +151,7 @@ MT.extend("core.Emitter")(
 				return el;
 			}
 			
-			parent.addChild(el);
+			parent.addChild(el, el.index);
 			
 			if(type == "folder"){
 				head.addClass("ui-treeview-folder-head");
@@ -177,6 +184,7 @@ MT.extend("core.Emitter")(
 							el.children[i].show();
 						}
 						el.data.isClosed = false;
+						that.emit("open", el);
 					}
 					else{
 						el.data.isClosed = true;
@@ -185,7 +193,9 @@ MT.extend("core.Emitter")(
 						for(var i=0; i<el.children.length; i++){
 							el.children[i].hide();
 						}
+						that.emit("close", el);
 					}
+					
 					
 				};
 				
@@ -228,7 +238,13 @@ MT.extend("core.Emitter")(
 					b.addClass("hidden");
 				}
 			}
-			
+			if(this.options.lock){
+				el.addClass("lock-enabled");
+				var b = this._mkLock(el);
+				if(!data.isLocked){
+					b.addClass("locked");
+				}
+			}
 			
 			
 			el.el.ondblclick = function(e){
@@ -262,14 +278,65 @@ MT.extend("core.Emitter")(
 				this._mkShowHide(this.items[i]);
 				
 			}
-			
 		},
 		
 		_mkShowHide: function(item){
 			var that = this;
-			var b = new MT.ui.Button("", "show-hide", function(){
+			/*if(e.target.ctrl && e.target.ctrl.hasClass("show-hide")){
+					item = e.target.parentNode.parentNode;
+					console.log(item.ctrl.data);
+					if(e.target.ctrl.hasClass("hidden")){
+						e.target.ctrl.removeClass("hidden")
+					}
+					else{
+						e.target.ctrl.addClass("hidden")
+					}
+					that.emit("show", item.ctrl);
+					return;
+				}*/
+			
+			var b = new MT.ui.Button("", "show-hide", null,  function(e){
 				item.data.isVisible = !item.data.isVisible;
+				
+				if(item.data.isVisible){
+					e.target.ctrl.removeClass("hidden")
+				}
+				else{
+					e.target.ctrl.addClass("hidden")
+				}
+				
+				
 				that.emit("show", item);
+				
+				e.stopPropagation();
+				
+			});
+			item.head.el.appendChild(b.el);
+			b.parent = item;
+			return b;
+		},
+		
+		addLock: function(){
+			for(var i=0; i<this.items.length; i++){
+				this._mkLock(this.items[i]);
+				
+			}
+		},
+		_mkLock: function(item){
+			var that = this;
+			var b = new MT.ui.Button("", "lock", null, function(e){
+				item.data.isLocked = !item.data.isLocked;
+				
+				if(item.data.isLocked){
+					e.target.ctrl.removeClass("locked")
+				}
+				else{
+					e.target.ctrl.addClass("locked")
+				}
+				
+				
+				that.emit("lock", item);
+				e.stopPropagation();
 			});
 			item.head.el.appendChild(b.el);
 			b.parent = item;
@@ -278,7 +345,7 @@ MT.extend("core.Emitter")(
 		
 		sortable: function(ev){
 			
-			var al = this.addItem({name: "xxx"}, this.tree, true);
+			var al = this.addItem({name: "xxx"}, this.tree, 0, true);
 			
 			al.style.position = "absolute";
 			al.style.pointerEvents = "none";
@@ -362,7 +429,7 @@ MT.extend("core.Emitter")(
 				}
 				var item = null;
 				
-				if(e.target.ctrl && e.target.ctrl.hasClass("show-hide")){
+				/*if(e.target.ctrl && e.target.ctrl.hasClass("show-hide")){
 					item = e.target.parentNode.parentNode;
 					console.log(item.ctrl.data);
 					if(e.target.ctrl.hasClass("hidden")){
@@ -373,7 +440,7 @@ MT.extend("core.Emitter")(
 					}
 					that.emit("show", item.ctrl);
 					return;
-				}
+				}*/
 				
 				item = that.getOwnItem(e.target.parentNode.parentNode);
 				
@@ -424,19 +491,18 @@ MT.extend("core.Emitter")(
 				}
 				
 				dropItem(item, last);
-				
-				for(var i=0; i<that.items.length; i++){
-					var it = that.items[i];
-					if(!it.hasClass("selected")){
-						continue;
+				if(item.hasClass("selected")){
+					for(var i=0; i<that.items.length; i++){
+						var it = that.items[i];
+						if(!it.hasClass("selected")){
+							continue;
+						}
+						if(item == it || last == it || last.parent == it){
+							continue;
+						}
+						dropItem(it, last);
 					}
-					if(item == it || last == it || last.parent == it){
-						continue;
-					}
-					dropItem(it, last);
 				}
-				
-				
 				that.updateFullPath(that.getData(), null, true);
 				
 			});

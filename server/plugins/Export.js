@@ -26,6 +26,9 @@ MT.extend("core.SocketManager")(
 			
 			this.dir = this.project.path + "/tmp";
 			
+			this.createIdList(this.assets.contents, this.dir + "/assets");
+			this.parseObjects(this.objects.contents);
+			
 			this.fs.rmdir(this.dir, function(){
 				console.log("export removed tmp");
 			});
@@ -114,6 +117,22 @@ MT.extend("core.SocketManager")(
 			});
 		},
 		
+		createIdList: function(assets, path){
+			path = path || this.project.path;
+			var asset = null;
+			for(var i=0; i<assets.length; i++){
+				asset = assets[i];
+				
+				if(asset.contents){
+					this.createIdList(asset.contents, path + "/" +asset.name);
+					continue;
+				}
+				
+				this.idList[asset.id] = asset.key;
+			}
+			console.log("assets", this.idList);
+		},
+		
 		parseAssets: function(assets, path){
 			path = path || this.project.path;
 			var asset = null;
@@ -131,7 +150,7 @@ MT.extend("core.SocketManager")(
 				this.fs.copy(this.project.path + "/" + asset.__image, path + "/" + asset.name);
 				
 				
-				this.idList[asset.id] = asset.path;
+				this.idList[asset.id] = asset.key;
 			}
 		},
 		
@@ -145,9 +164,11 @@ MT.extend("core.SocketManager")(
 					this.parseObjects(object.contents);
 					continue;
 				}
+
 				
-				assetId = object.__image.split(".")[0];
-				object.assetPath = this.idList[assetId];
+				//console.log("assetkey", object.assetId);
+				
+				object.assetKey = this.idList[object.assetId];
 			}
 			
 		}

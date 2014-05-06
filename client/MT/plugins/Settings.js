@@ -92,8 +92,8 @@ MT(
 			this.addInput( "frameMax", obj, false, cb);
 			this.addInput( "margin", obj, true, cb);
 			this.addInput( "spacing", obj, false, cb);
-			this.addInput( "anchorX", obj, true, cb);
-			this.addInput( "anchorY", obj, true, cb);
+			this.addInput( {key: "anchorX", step: 0.5}, obj, true, cb);
+			this.addInput( {key: "anchorY", step: 0.5}, obj, true, cb);
 			
 		},
    
@@ -109,11 +109,12 @@ MT(
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
 				this.objects.angle = this.addInput( "angle", obj, true, cb);
-				this.objects.isVisible = this.addInput({
-						key: "isVisible",
+				/*this.objects.isLocked = this.addInput({
+						key: "isLocked",
 						min: 0,
 						max: 1
 					}, obj, true, cb);
+				*/
 			}
 			//sprite
 			else{
@@ -155,11 +156,12 @@ MT(
 					step: 0.1
 				}, obj, true, cb);
 				
-				this.objects.isVisible = this.addInput({
-						key: "isVisible",
+				/*this.objects.isLocked = this.addInput({
+						key: "isLocked",
 						min: 0,
 						max: 1
 					}, obj, true, cb);
+				*/
 			}
 			
 		},
@@ -185,6 +187,7 @@ MT(
 			this.scene.gridX = this.addInput( {key: "gridX", min: 2}, obj, true, cb);
 			this.scene.gridY = this.addInput( {key: "gridY", min: 2}, obj, true, cb);
 			this.scene.showGrid = this.addInput( {key: "showGrid", min: 0, max: 1}, obj, true, cb);
+			this.scene.backgroundColor = this.addInput( {key: "backgroundColor", type: "text" }, obj, true, cb);
 			
 		},
    

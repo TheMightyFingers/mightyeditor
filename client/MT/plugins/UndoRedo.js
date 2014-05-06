@@ -30,7 +30,7 @@ MT.extend("core.BasicPlugin")(
 				var str = JSON.stringify(data);
 				
 				if(that.buffer[that.step-1] == str){
-					console.log("nothing changed");
+					console.log("nothing changed", that.buffer.length);
 					return;
 				}
 				
@@ -41,9 +41,6 @@ MT.extend("core.BasicPlugin")(
 					that.buffer[that.step] = str;
 					that.step++;
 				}
-				
-				
-				
 				
 				
 			});
@@ -61,8 +58,13 @@ MT.extend("core.BasicPlugin")(
 							
 							if(that.step > 0){
 								that.step--;
-								var data = that.buffer[that.step];
-								that.om.a_receive(JSON.parse(data), true);
+								var data = that.buffer[that.step-1];
+								if(data){
+									that.om.a_receive(JSON.parse(data), true);
+								}
+								else{
+									that.step++;
+								}
 							}
 							else{
 								console.log("nothing to undo");

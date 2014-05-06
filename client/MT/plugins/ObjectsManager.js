@@ -12,6 +12,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		this.id = Date.now();
 		
+		this.activeGroup = null;
+		
 	},
 	{
 		initUI: function(ui){
@@ -66,7 +68,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.tv = new MT.ui.TreeView([], {
 				root: this.project.path,
-				showHide: true
+				showHide: true,
+				lock: true
 			});
 			this.tv.onChange = function(oldItem, newItem){
 				console.log("change", oldItem, newItem);
@@ -79,15 +82,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			this.tv.on("show", function(item){
-				if(item.data.isVisible){
-					item.data.isVisible = 0;
-				}
-				else{
-					item.data.isVisible = 1;
-				}
 				that.update();
 			});
 			
+			this.tv.on("lock", function(item){
+				that.update();
+			});
 		},
 		
 		
@@ -98,7 +98,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			tools.on("selectedObject", function(id){
 				var el = that.tv.getById(id);
+				
 				if(el){
+					if(el.isFolder){
+						that.activeGroup = el.data;
+					}
 					el.addClass("selected.active");
 					that.selector.add(el);
 				}
@@ -107,15 +111,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			tools.on("unselectedObject", function(id){
 				var el = that.tv.getById(id);
 				if(el){
+					if(that.activeGroup && that.activeGroup.id == id){
+						that.activeGroup = null;
+					}
 					el.removeClass("selected.active");
 					that.selector.remove(el);
 				}
 			});
 
 			this.ui.events.on("mouseup", function(e){
-				if(e.target == map.game.canvas){
-					that.sync();
-				}
+				that.sync();
 			});
 			
 			this.tv.on("deleted", function(o){
@@ -150,12 +155,23 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		insertObject: function(obj){
 			var data = this.tv.getData();
+			
+			
 			obj.id = "tmp"+this.mkid();
 			
 			obj.tmpName = obj.tmpName || obj.name;
 			
-			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, data, 0);
-			data.push(obj);
+			var arr = data;
+			if(this.activeGroup){
+				arr = this.activeGroup.contents;
+			}
+			
+			
+			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, arr, 0);
+			
+			console.log("active Object", this.activeGroup);
+			arr.splice(0,0,obj);
+			
 			
 			this.tv.rootPath = this.project.path
 			this.tv.merge(data);
@@ -190,7 +206,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				alpha: 1,
 				tmpName: name,
 				frame: 0,
-				isVisible: 1
+				isVisible: 1,
+				isLocked: 0
 			};
 		},
 		
@@ -316,7 +333,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				y: 0,
 				angle: 0,
 				contents: [],
-				isVisible: 1
+				isVisible: 1,
+				isLocked: 0
 			};
 			
 			data.unshift(group);
@@ -368,6 +386,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		_syncTm: 0,
 		sync: function(silent){
+			
 			if(this._syncTm){
 				window.clearTimeout(this._syncTm);
 				this._syncTm = 0;

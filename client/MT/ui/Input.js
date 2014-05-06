@@ -59,6 +59,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.value.el.onmousedown = function(){
 			down = true;
 		};
+
 		
 
 		this.events = events;
@@ -72,7 +73,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		input.style.textAlign = "right";
 		input.style.paddingRight = "10px";
 		
-		
+
 		this.value.el.ondblclick = function(){
 			
 			var w = that.value.el.parentNode.parentNode.offsetWidth*0.5;
@@ -89,7 +90,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			that.setValue("", true);
 			that.value.el.offsetParent.appendChild(input);
 			input.focus();
-			input.setSelectionRange(0, input.value.length);
+			if(input.type != "color"){
+				input.setSelectionRange(0, input.value.length);
+			}
 		};
 		
 		input.onblur = function(){

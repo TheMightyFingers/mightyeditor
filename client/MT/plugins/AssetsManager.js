@@ -179,6 +179,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}, 300);
 				
 			});
+			var update = function(){
+				that.updateData();
+			};
+			
+			this.tv.on("open", update);
+			this.tv.on("close", update);
 			
 			prev.el.onmouseover = function(){
 				console.log("over");
@@ -368,7 +374,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							margin: 0,
 							spacing: 0,
 							anchorX: 0,
-							anchorY: 0
+							anchorY: 0,
 						};
 						
 						that.send("newImage", data);

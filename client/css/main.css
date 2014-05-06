@@ -223,23 +223,39 @@ div.ui-treeview-folder.open > .ui-treeView-folder-head:last-child > div{
 }
 
 .ui-treeView .show-hide{
-width: 29px;
-background: url("../img/icons/eye.png") no-repeat 4px 50%;
-left: -29px !important;
-background-clip: content-box;
-padding: 0 5px 0 1px;
-border-right: solid 1px #333;
-height: 27px;
-margin-top: -1px;
-border-bottom: solid 1px rgba(0,0,0,0.4);
-border-top: solid 1px rgba(255,255,255,0.1);
+	width: 29px;
+	background: url("../img/icons/eye.png") no-repeat 4px 50%;
+	left: -29px !important;
+	background-clip: content-box;
+	padding: 0 5px 0 1px;
+	border-right: solid 1px #333;
+	height: 27px;
+	margin-top: -1px;
+	border-bottom: solid 1px rgba(0,0,0,0.4);
+	border-top: solid 1px rgba(255,255,255,0.1);
 }
 
 
 .ui-treeView .show-hide.hidden{
-background-position: -16px 50%;
-padding: 0 5px 0 2px;
+	background-position: -16px 50%;
+	padding: 0 5px 0 2px;
 }
+
+.ui-treeView .lock{
+	width: 18px;
+	background: url("../img/icons/lock.png") no-repeat -15px 50%;
+	left: auto !important;
+	background-clip: content-box;
+	padding: 0 3px 0 0px;
+	height: 27px;
+	margin-top: -1px;
+}
+
+
+.ui-treeView .lock.locked{
+	background-position: 0px 50%;
+}
+
 
 .ui-button{
 	cursor: pointer;
@@ -306,6 +322,7 @@ div.ui-input .ui-input-value{
 	max-width: 50%;
 	overflow: hidden;
 	white-space: nowrap;
+	min-height: 100%;
 }
 
 input.ui-input{
