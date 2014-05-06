@@ -40,7 +40,7 @@
 		_mkdir: function(path, cb){
 			fs.stat(path, function(err){
 				if(err){
-					console.log("mkdir err", err);
+					console.log("FS::mkdir err", err);
 				}
 				
 				fs.mkdir(path, cb);
@@ -57,9 +57,56 @@
 		},
 		
 		copy: function(a, b, cb){
-			this.addQueue([this._copy, a, b, this.mkcb(cb)]);//no arguments
+			this.addQueue([this._copyWrap, a, b, this.mkcb(cb)]);//no arguments
 		},
  
+		_copyWrap: function(source, target, cb){
+			var that = this;
+			fs.stat(source, function(err, stats){
+				if(err){
+					console.log("copy", source, target);
+					console.log("--> error -> FS:copy", err);
+				}
+				
+				
+				if(stats.isDirectory()){
+					that._mkdir(target, function(){
+						
+						that._readdir(source, true, [], function(buff){
+						
+							//process.exit();
+							
+							var toCopy = buff.length;
+							var cbx = function(){
+								toCopy--;
+								if(toCopy == 0){
+									cb();
+								}
+							};
+							
+							for(var i=0; i<buff.length; i++){
+								that._copyWrap(buff[i].fullPath, target + path.sep + buff[i].name, cbx);
+							}
+							
+							if(toCopy == 0){
+								cb();
+							}
+							
+						});
+						
+					});
+					
+				}
+				else{
+					that._copy(source, target, cb);
+				}
+				
+			});
+			
+		},
+		
+		
+		
 		_copy: function(source, target, cb) {
 			
 			var rd = fs.createReadStream(source);
@@ -80,7 +127,7 @@
 
 			function done(err) {
 				if(err){
-					console.log("FS.copy error", err);
+					console.log("FS.copy error ---> ", err, source, target);
 					return;
 				}
 				if(typeof cb == "function"){
@@ -186,7 +233,7 @@
 			var toRead = 0;
 			fs.lstat(dir + path.sep + file, function(err, stats){
 				
-				var p = path.normalize( path.relative( "../client", dir + path.sep + file));
+				var p = dir + path.sep + file;//path.normalize( path.relative( "../client", dir + path.sep + file));
 				
 				if(stats.isDirectory()){
 					buffer.push({

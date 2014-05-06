@@ -173,7 +173,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					}
 					
 					that.setCameraBounds();
-					
+					that.postUpdateSetting();
 				},
 				
 				
@@ -207,10 +207,11 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		setCameraBounds: function(){
-			game.camera.bounds.x = -Infinity;
-			game.camera.bounds.y = -Infinity;
-			game.camera.bounds.width = Infinity;
-			game.camera.bounds.height = Infinity;
+			
+			this.game.camera.bounds.x = -Infinity;
+			this.game.camera.bounds.y = -Infinity;
+			this.game.camera.bounds.width = Infinity;
+			this.game.camera.bounds.height = Infinity;
 		},
 		
 		updateSettings: function(obj){
@@ -222,25 +223,30 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				this.settings[i] = obj[i];
 			}
 			
+			if(!this.game.isBooted){
+				return;
+			}
+		},
+		
+		postUpdateSetting: function(){
 			
-			this.game.width = obj.worldWidth;
-			this.game.height = obj.worldHeight;
 			
-			this.game.world.setBounds(0, 0, obj.worldWidth, obj.worldHeight);
+			this.game.width = this.settings.worldWidth;
+			this.game.height = this.settings.worldHeight;
+			
+			//this.game.world.setBounds(0, 0, obj.worldWidth, obj.worldHeight);
 			
 			
 			this.setCameraBounds();
 			
 			
-			this.game.camera.x = obj.cameraX;
-			this.game.camera.y = obj.cameraY;
+			this.game.camera.x = this.settings.cameraX;
+			this.game.camera.y = this.settings.cameraY;
 			
-			if(this.game.stage.backgroundColor != obj.backgroundColor){
-				this.game.stage.backgroundColor = obj.backgroundColor;
+			if(this.game.stage.backgroundColor != this.settings.backgroundColor){
+				this.game.stage.backgroundColor = this.settings.backgroundColor;
 			}
-			
 		},
-		
 		
 		/* drawing fns */
 		drawGrid: function(ctx){

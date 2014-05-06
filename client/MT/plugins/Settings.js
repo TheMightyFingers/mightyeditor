@@ -94,6 +94,7 @@ MT(
 			this.addInput( "spacing", obj, false, cb);
 			this.addInput( {key: "anchorX", step: 0.5}, obj, true, cb);
 			this.addInput( {key: "anchorY", step: 0.5}, obj, true, cb);
+			this.addInput( {key: "fps", step: 1}, obj, true, cb);
 			
 		},
    
@@ -109,12 +110,6 @@ MT(
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
 				this.objects.angle = this.addInput( "angle", obj, true, cb);
-				/*this.objects.isLocked = this.addInput({
-						key: "isLocked",
-						min: 0,
-						max: 1
-					}, obj, true, cb);
-				*/
 			}
 			//sprite
 			else{
@@ -155,13 +150,6 @@ MT(
 					key: "scaleY",
 					step: 0.1
 				}, obj, true, cb);
-				
-				/*this.objects.isLocked = this.addInput({
-						key: "isLocked",
-						min: 0,
-						max: 1
-					}, obj, true, cb);
-				*/
 			}
 			
 		},

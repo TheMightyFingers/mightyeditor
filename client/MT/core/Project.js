@@ -49,7 +49,6 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		loadProject: function(pid){
-			this.a_selectProject(pid);
 			this.send("loadProject", pid);
 		},
 		
@@ -62,6 +61,11 @@ MT.extend("core.BasicPlugin")(
 			});
 			b.width = 80;
 			
+			var b = ui.topPanel.addButton("CLONE", null, function(){
+				window.location = window.location.toString()+"-copy";
+				window.location.reload();
+			});
+			b.width = 80;
 			/*
 			this.am.initUI(ui);
 			this.om.initUI(ui);

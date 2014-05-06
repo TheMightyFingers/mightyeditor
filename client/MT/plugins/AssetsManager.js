@@ -375,6 +375,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							spacing: 0,
 							anchorX: 0,
 							anchorY: 0,
+							fps: 10
 						};
 						
 						that.send("newImage", data);
