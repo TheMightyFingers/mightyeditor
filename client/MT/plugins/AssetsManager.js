@@ -366,6 +366,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							data: fr.result,
 							name: file.name,
 							path: path,
+							key: path,
 							width: img.width,
 							height: img.height,
 							frameWidth: img.width,
