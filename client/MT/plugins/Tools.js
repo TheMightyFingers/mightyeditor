@@ -448,6 +448,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		init_stamp: function(asset){
+			this.map.selector.clear();
 			asset = asset || this.activeAsset;
 			
 			if(!asset || asset.contents){
@@ -504,6 +505,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		
 		init_brush: function(asset){
+			this.map.selector.clear();
 			asset = asset || this.activeAsset;
 			if(!asset){
 				return;
