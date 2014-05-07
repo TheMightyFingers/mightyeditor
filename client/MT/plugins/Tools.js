@@ -448,7 +448,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		init_stamp: function(asset){
-			this.map.selector.clear();
+			
+			this.unselectObjects();
 			asset = asset || this.activeAsset;
 			
 			if(!asset || asset.contents){
@@ -505,7 +506,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		
 		init_brush: function(asset){
-			this.map.selector.clear();
+			this.unselectObjects();
 			asset = asset || this.activeAsset;
 			if(!asset){
 				return;
@@ -632,7 +633,19 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 
-		
+		unselectObjects: function(){
+			var toUnselect = [];
+			this.map.selector.forEach(function(obj){
+				if(!obj.MT_OBJECT.contents){
+					toUnselect.push(obj);
+				}
+			});
+			
+			for(var i=0; i<toUnselect.length; i++){
+				this.map.selector.remove(toUnselect[i]);
+			}
+			
+		},
 		
 		
 	}
