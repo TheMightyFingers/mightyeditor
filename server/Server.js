@@ -8,7 +8,7 @@ MT.require("core.Project");
 
 var config = require("./config.js").config;
 
-var server = new MT.http.Httpd("../client", 80, "123.123.22.22");
+var server = new MT.http.Httpd("../client", config.port, config.host);
 var handler = server.openSocket(function(socket){
 	
 	var s = new MT.core.Socket(socket);
