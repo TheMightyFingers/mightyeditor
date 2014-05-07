@@ -9,7 +9,6 @@ MT.extend("core.BasicPlugin")(
 		this.undos = 0;
 		
 		window.ur = this;
-		
 	},
 	{
 		set step(val){
@@ -24,6 +23,13 @@ MT.extend("core.BasicPlugin")(
 		installUI: function(){
 			var that = this;
 			
+			var stored = localStorage.getItem(that.project.id);
+			if(stored){
+				this.buffer = JSON.parse(stored);
+				this.step = this.buffer.length;
+			}
+			
+			
 			this.om = this.project.plugins.objectsmanager;
 			this.om.on("beforeSync", function(data){
 				
@@ -36,14 +42,15 @@ MT.extend("core.BasicPlugin")(
 				
 				if(that.step > that.max){
 					that.buffer.shift();
+					that.step--;
 				}
-				else{
-					that.buffer[that.step] = str;
-					that.step++;
-				}
+				that.buffer[that.step] = str;
+				that.step++;
 				
 				
+				localStorage.setItem(that.project.id, JSON.stringify(that.buffer));
 			});
+			
 			this.om.on("afterSync", function(data){
 				if(that.buffer.length == 0){
 					that.buffer.push(JSON.stringify(data));
