@@ -13,6 +13,12 @@ MT(
 	{
 		initUI: function(ui){
 			this.panel = ui.addPanel("Settings");
+			var that = this;
+			ui.events.on("keyup", function(e){
+				if(e.which == MT.keys.esc){
+					that.clear();
+				}
+			});
 		},
 		
 		installUI: function(){

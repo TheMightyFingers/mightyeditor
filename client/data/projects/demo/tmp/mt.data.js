@@ -144,7 +144,7 @@ mt.data = {
 				"count": 0,
 				"id": 4,
 				"fullPath": "/character",
-				"isClosed": false
+				"isClosed": true
 			},
 			{
 				"name": "effects",
@@ -297,7 +297,7 @@ mt.data = {
 				"count": 0,
 				"id": 6,
 				"fullPath": "/effects",
-				"isClosed": false
+				"isClosed": true
 			},
 			{
 				"name": "entities",
@@ -553,7 +553,7 @@ mt.data = {
 					}
 				],
 				"isVisible": true,
-				"isLocked": false,
+				"isLocked": true,
 				"fullPath": "/Character",
 				"isClosed": true,
 				"assetId": 12,
@@ -568,6 +568,28 @@ mt.data = {
 				"y": 0,
 				"angle": 0,
 				"contents": [
+					{
+						"assetId": 23,
+						"__image": "23.png",
+						"x": 0,
+						"y": 0,
+						"anchorX": 0.5,
+						"anchorY": 1,
+						"scaleX": 1,
+						"scaleY": 1,
+						"angle": 0,
+						"alpha": 1,
+						"tmpName": "tower",
+						"frame": 0,
+						"isVisible": 1,
+						"isLocked": 0,
+						"_framesCount": 0,
+						"id": "tmp1398710468079",
+						"name": "tower",
+						"fullPath": "/Effects/tower",
+						"assetPath": "/entities/tower.png",
+						"assetKey": "/entities/tower.png"
+					},
 					{
 						"assetId": 17,
 						"__image": "17.png",
@@ -805,28 +827,6 @@ mt.data = {
 				"y": 0,
 				"angle": 0,
 				"contents": [
-					{
-						"assetId": 23,
-						"__image": "23.png",
-						"x": 0,
-						"y": 0,
-						"anchorX": 0.5,
-						"anchorY": 1,
-						"scaleX": 1,
-						"scaleY": 1,
-						"angle": 0,
-						"alpha": 1,
-						"tmpName": "tower",
-						"frame": 0,
-						"isVisible": 1,
-						"isLocked": 0,
-						"_framesCount": 0,
-						"id": "tmp1398710468079",
-						"name": "tower",
-						"fullPath": "/Ground/tower",
-						"assetPath": "/entities/tower.png",
-						"assetKey": "/entities/tower.png"
-					},
 					{
 						"assetId": 11,
 						"__image": "11.png",
@@ -1298,8 +1298,8 @@ mt.data = {
 		"count": 0
 	},
 	"map": {
-		"cameraX": -397,
-		"cameraY": -476,
+		"cameraX": -400,
+		"cameraY": -480,
 		"worldWidth": 2000,
 		"worldHeight": 2000,
 		"gridX": 48,

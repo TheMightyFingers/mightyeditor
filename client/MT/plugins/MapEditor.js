@@ -226,6 +226,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!this.game.isBooted){
 				return;
 			}
+			
+			this.postUpdateSetting();
 		},
 		
 		postUpdateSetting: function(){
@@ -404,7 +406,19 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		/* assets n objects */
 		isAssetsAdded: false,
+		assetsTimeout: 0,
 		addAssets: function(assets){
+			if(!this.game.isBooted){
+				var that = this;
+				window.clearTimeout(this.assetsTimeout);
+				this.assetsTimeout = window.setTimeout(function(){
+					that.addAssets(assets);
+				}, 100);
+				return;
+			}
+			
+			window.clearTimeout(this.assetsTimeout);
+			
 			var game = this.game;
 			var that = this;
 			var asset = null;

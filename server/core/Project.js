@@ -16,6 +16,15 @@ MT.extend("core.SocketManager")(
 		
 		this.fs = MT.core.FS;
 		
+		this.dbObject  = null;
+		
+		socket.onClose(function(){
+			console.log("socket closed!");
+			if(that.db){
+				that.db.close();
+			}
+		});
+		
 	},
 	{
 		a_newProject: function(){

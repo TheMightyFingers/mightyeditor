@@ -5,8 +5,10 @@ MT(
 		this.fs = MT.core.FS;
 		
 		if(this.cache[file]){
+			
 			console.log("cache", file);
-			this.data = this.cache[file];
+			this.data = this.cache[file].data;
+			this.cache[file].connections++;
 			onReady(this);
 			return;
 		}
@@ -31,7 +33,10 @@ MT(
 				}
 				
 				
-				that.cache[that.dbfile] = that.data;
+				that.cache[that.dbfile] = {
+					data: that.data,
+					connections: 1
+				};
 				if(typeof cb === "function"){
 					cb(that);
 				}
@@ -169,9 +174,21 @@ MT(
 				}
 				
 			}
+		},
+   
+		close: function(){
+			console.log("closing connections", this.cache[this.dbfile]);
+			
+			if(this.cache[this.dbfile]){
+				if(this.cache[this.dbfile].connections == 1){
+					this.cache[this.dbfile] = null;
+					console.log("DB closed");
+					return;
+				}
+				this.cache[this.dbfile].connections--;
+			}
+			
 		}
-		
-		
 	}
 );
 

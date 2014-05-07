@@ -13,6 +13,9 @@ var handler = server.openSocket(function(socket){
 	
 	var s = new MT.core.Socket(socket);
 	var project = new MT.core.Project(s);
+	
+	
+	
 });
 
 

@@ -15,6 +15,8 @@ MT(
 		this.groups = [];
 		
 		this.addBindings();
+		
+		this._onClose = [];
 	},
 	{
 		addBindings: function(){
@@ -25,8 +27,16 @@ MT(
 			
 			this.socket.on('close', function() {
 				that.removeSocket();
+				while(that._onClose.length){
+					that._onClose.pop()();
+				}
 			});
 		},
+		
+		onClose: function(cb){
+			this._onClose.push(cb);
+		},
+   
 		removeSocket: function(){
 			var sockets = MT.core.sockets;
 			for(var i=0; i<sockets.length; i++){

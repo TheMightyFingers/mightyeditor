@@ -21,9 +21,6 @@ MT.extend("core.SocketManager")(
 		
 		a_updateData: function(data){
 			this.addIndices(data);
-			
-			console.log(data);
-			
 			this.data.contents = data;
 			this.project.db.save();
 			this.a_sendData();
