@@ -1,6 +1,8 @@
 MT.require("core.FS");
 MT(
 	MT.core.JsonDB = function(file, onReady){
+		console.log("new DB access", file);
+		
 		this.dbfile = file;
 		this.fs = MT.core.FS;
 		
@@ -29,7 +31,16 @@ MT(
 					};
 				}
 				else{
-					that.data = JSON.parse(contents);
+					try{
+						that.data = JSON.parse(contents);
+					}
+					catch(e){
+						console.error("FAILED TO PARSE DB", e);
+						that.data = {
+							contents: [],
+							count: 0
+						};
+					}
 				}
 				
 				

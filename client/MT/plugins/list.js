@@ -5,3 +5,4 @@ MT.require("plugins.Settings");
 MT.require("plugins.Export");
 MT.require("plugins.Tools");
 MT.require("plugins.UndoRedo");
+MT.require("plugins.DataLink");

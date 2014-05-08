@@ -14,39 +14,26 @@ MT.extend("core.SocketManager")(
 		
 		this.importFile = "mt.import.js";
 		this.dataFile = "mt.data.js";
+		this.jsonFile = "mt.data.json";
+		
+		this.phaserPath = "phaser";
+		this.assetsPath = "assets";
+		
+		this.sep = this.fs.path.sep;
 		
 		this.idList = {};
 	},
 	{
 		a_phaserDataOnly: function(){
 			var that = this;
-			this.assets = this.project.db.get("assets");
-			this.objects = this.project.db.get("objects");
-			this.map = this.project.db.get("map").contents[0];
+			this.dir = this.project.path + this.sep + this.phaserPath;
 			
-			this.dir = this.project.path + "/tmp";
-			
-			this.createIdList(this.assets.contents, this.dir + "/assets");
-			this.parseObjects(this.objects.contents);
-			
-			this.fs.rmdir(this.dir, function(){
-				console.log("export removed tmp");
-			});
-			this.fs.mkdir(this.dir);
-			
-			
-			var contents = "mt.data = " + JSON.stringify({
-					assets: that.assets,
-					objects: that.objects,
-					map: that.map
-				}, null, "\t")+";\r\n";
-				
-			this.fs.writeFile(this.dir + "/" + this.dataFile, contents, function(err){
-				
+
+			this.phaserDataOnly(function(err, localFilePath, filePath){
 				console.log(err);
 				
 				that.send("complete",{
-					file: "tmp/" + that.dataFile,
+					file: localFilePath,
 					action: "phaserDataOnly"
 				});
 			});
@@ -54,66 +41,104 @@ MT.extend("core.SocketManager")(
 			
 		},
 		
+		
+		_cleanUp: function(o){
+
+			delete o.__image;
+			delete o.source;
+			delete o.path;
+			delete o.tmpName;
+			delete o._framesCount;
+		},
+		
+		phaserDataOnly: function(cb){
+			var that = this;
+			
+			this.dir = this.project.path + this.sep + this.phaserPath;
+			
+			this.fs.mkdir(this.dir);
+			
+			var contents = JSON.stringify({
+					assets: this.project.db.get("assets"),
+					objects: this.project.db.get("objects"),
+					map: this.project.db.get("map").contents[0]
+				}, null, "\t");
+			
+			
+			
+			var data = JSON.parse(contents);
+			
+			
+			
+			this.createIdList(data.assets.contents, this.dir + this.sep + this.assetsPath);
+			this.parseObjects(data.objects.contents);
+			
+			
+			var filePath = this.dir + this.sep + this.dataFile;
+			var localFilePath = this.phaserPath + this.sep + this.dataFile;
+			
+			
+			contents = JSON.stringify(data, null, "\t");
+			
+			this.fs.writeFile(this.dir + this.sep + this.jsonFile, contents);
+			this.fs.copy("phaser/mt.export.js", this.dir + this.sep + this.importFile);
+			
+			this.fs.copy("phaser" + this.sep + this.phaserSrc, this.dir + this.sep + this.phaserSrc);
+			
+			
+			
+			this.fs.writeFile(filePath, "window.mt = window.mt || {}; window.mt.data = "+contents+";\r\n", function(err){
+				if(cb){
+					cb(err, localFilePath, filePath);
+				}
+			});
+			
+		},
+		
 		a_phaser: function(){
 			var that = this;
+			
+			this.dir = this.project.path + this.sep + this.phaserPath;
+			this.fs.rmdir(this.dir);
+			this.fs.rm(this.project.path + this.sep +  this.zipName);
+			
+			
+			this.fs.mkdir(this.dir);
+			this.fs.mkdir(this.dir + this.sep + this.assetsPath);
+			
+			this.phaser(function(error, stdout, stderr){
+				console.log("exec", error, stdout, stderr);
+				
+				//console.log("EXPORT", this.assets, this.objects);
+				that.send("complete", {
+					file:  that.zipName,
+					action: "phaser"
+				});
+			});
+			
+		},
+		
+		phaser: function(cb){
+			
+			var that = this;
+			
+			this.dir = this.project.path + this.sep + this.phaserPath;
+			this.fs.mkdir(this.dir);
 			
 			this.assets = this.project.db.get("assets");
 			this.objects = this.project.db.get("objects");
 			this.map = this.project.db.get("map").contents[0];
 			
 			
-			this.dir = this.project.path + "/tmp";
-			
-			this.fs.rmdir(this.dir, function(){
-				console.log("export removed tmp");
-			});
-// 
-			this.fs.mkdir(this.dir);
-			this.fs.mkdir(this.dir + "/assets");
-			
-			this.fs.rm(this.project.path + "/" + this.zipName);
+			this.parseAssets(this.assets.contents);
 			
 			
-			console.log(this.assets,this.assets.contents);
 			
-			this.parseAssets(this.assets.contents, this.dir + "/assets");
-			this.parseObjects(this.objects.contents);
-			
-			
-			this.fs.copy("phaser/" + this.phaserSrc, this.dir + "/" + this.phaserSrc);
-			this.fs.copy("phaser/example.html", this.dir + "/example.html");
-			
-			
-			var contents = "";
-			this.fs.readFile("phaser/mt.export.js", function(e, c){
+			this.phaserDataOnly(function(err, local, pub){
 				
-				that.fs.writeFile(that.dir + "/" + that.importFile, c);
+				//zip -9 -r <zip file> <folder name>
+				exec("zip -9 -r ../" + that.zipName + " ./", { cwd: that.dir }, cb);
 				
-				contents = "mt.data = "+JSON.stringify({
-					assets: that.assets,
-					objects: that.objects,
-					map: that.map
-				}, null, "\t")+";\r\n";
-				
-				that.fs.writeFile(that.dir + "/" + that.dataFile, contents, function(err){
-					console.log("write done", err);
-					
-					//zip -9 -r <zip file> <folder name>
-					exec("zip -9 -r ../" + that.zipName + " ./",{
-							cwd: that.dir
-						},function (error, stdout, stderr) {
-						
-						console.log("exec", error, stdout, stderr);
-						
-						//console.log("EXPORT", this.assets, this.objects);
-						that.send("complete",{
-							file:  that.zipName,
-							action: "phaser"
-						});
-						
-					});
-					
-				});
 			});
 		},
 		
@@ -124,33 +149,33 @@ MT.extend("core.SocketManager")(
 				asset = assets[i];
 				
 				if(asset.contents){
-					this.createIdList(asset.contents, path + "/" +asset.name);
+					this.createIdList(asset.contents, path + asset.name);
+					
+					this._cleanUp(asset);
 					continue;
 				}
 				
+				this._cleanUp(asset);
 				this.idList[asset.id] = asset.key;
 			}
-			console.log("assets", this.idList);
 		},
 		
 		parseAssets: function(assets, path){
-			path = path || this.project.path;
+			path = path || this.dir + this.sep + this.assetsPath;
+			this.fs.mkdir(path);
+			
 			var asset = null;
 			for(var i=0; i<assets.length; i++){
 				asset = assets[i];
 				
 				if(asset.contents){
-					this.fs.mkdir(path + "/" +asset.name);
-					this.parseAssets(asset.contents, path + "/" +asset.name);
+					this.fs.mkdir(path + +asset.name);
+					this.parseAssets(asset.contents, path + this.sep + asset.name);
 					continue;
 				}
 				
-				asset.source = path + "/" + asset.name;
-				
-				this.fs.copy(this.project.path + "/" + asset.__image, path + "/" + asset.name);
-				
-				
-				this.idList[asset.id] = asset.key;
+				asset.source = path + this.sep + asset.name;
+				this.fs.copy(this.project.path + this.sep + asset.__image, asset.source);
 			}
 		},
 		
@@ -161,6 +186,7 @@ MT.extend("core.SocketManager")(
 			for(var i=0; i<objects.length; i++){
 				object = objects[i];
 				if(object.contents){
+					this._cleanUp(object);
 					this.parseObjects(object.contents);
 					continue;
 				}
@@ -169,6 +195,13 @@ MT.extend("core.SocketManager")(
 				//console.log("assetkey", object.assetId);
 				
 				object.assetKey = this.idList[object.assetId];
+				
+				this._cleanUp(object);
+				
+				if(!object.assetKey){
+					console.warn("Missing asset key", object);
+				}
+				
 			}
 			
 		}

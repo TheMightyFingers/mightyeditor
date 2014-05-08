@@ -20,7 +20,7 @@ MT.extend("ui.DomElement")(
 				var that = this;
 				events.on("click", function(e){
 					if(e.target === that.el){
-						cb();
+						cb(e);
 					}
 				});
 			}

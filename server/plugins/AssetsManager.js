@@ -32,6 +32,7 @@ MT.extend("core.SocketManager")(
 			item.id = this.db.count;
 			
 			console.log("newFolder", name, item);
+			
 			this.project.db.save();
 			this.a_sendFiles();
 		},
@@ -41,6 +42,8 @@ MT.extend("core.SocketManager")(
 			this.project.db.move("assets"+files.a, "assets"+files.b);
 			this.project.db.save();
 			this.a_sendFiles();
+			
+			this.project.export.phaser();
 		},
 		
 		a_updateData: function(data){
@@ -48,11 +51,15 @@ MT.extend("core.SocketManager")(
 			this.db.contents = data;
 			this.project.db.save();
 			this.sendMyGroup("receiveFileList", this.db.contents);
+			
+			this.project.export.phaser();
 		},
 		
 		a_delete: function(id){
 			this.delete(id);
 			this.a_sendFiles();
+			
+			this.project.export.phaser();
 		},
 		
 		delete: function(id, data){
@@ -119,14 +126,15 @@ MT.extend("core.SocketManager")(
 			
 			this.fs.writeFile(p, new Buffer(data.data, "binary"), function(){
 				that.a_sendFiles();
+				that.project.export.phaser();
 			});
+			
 			
 		},
 		
 		
 		addItem: function(folder, data){
 			data.id = this.db.count;
-			//console.log("new item", data.name, data.id);
 			
 			folder.contents.push(data);
 			this.project.db.save();

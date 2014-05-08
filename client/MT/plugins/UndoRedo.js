@@ -46,9 +46,7 @@ MT.extend("core.BasicPlugin")(
 				}
 				that.buffer[that.step] = str;
 				that.step++;
-				
-				
-				localStorage.setItem(that.project.id, JSON.stringify(that.buffer));
+				that.save();
 			});
 			
 			this.om.on("afterSync", function(data){
@@ -98,6 +96,16 @@ MT.extend("core.BasicPlugin")(
 				}
 			});
 			
+		},
+		
+		save: function(){
+			
+			try{
+				localStorage.setItem(this.project.id, JSON.stringify(this.buffer));
+			}
+			catch(e){
+				localStorage.setItem(this.project.id, JSON.stringify(this.buffer.slice(this.step, this.step + 10)) );
+			}
 		}
 
 	}

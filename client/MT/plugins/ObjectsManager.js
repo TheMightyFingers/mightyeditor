@@ -129,7 +129,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
+		
+		received: false,
+		
 		a_receive: function(data, silent){
+			
+			if(this.received && !silent){
+				return;
+			}
+			
+			this.received = true;
 			this.tv.merge(data);
 			
 			if(!silent){
@@ -153,8 +162,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.insertObject(no);
 		},
 		
-		insertObject: function(obj){
-			var data = this.tv.getData();
+		insertObject: function(obj, silent, data){
+			data = data || this.tv.getData();
 			
 			
 			obj.id = "tmp"+this.mkid();
@@ -172,13 +181,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			console.log("active Object", this.activeGroup);
 			arr.splice(0,0,obj);
 			
-			
-			this.tv.rootPath = this.project.path
-			this.tv.merge(data);
-			
-			this.update();
-			this.sync();
-			
+			if(!silent){
+				this.tv.rootPath = this.project.path
+				this.tv.merge(data);
+				this.update();
+				this.sync();
+			}
+			return data;
 		},
 		
 		createObject: function(asset, x, y){
@@ -211,7 +220,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			};
 		},
 		
-		copy: function(obj, x, y, name){
+		copy: function(obj, x, y, name, silent){
+			
 			name = name || obj.name + this.getNewNameId(obj.name, this.tv.getData());
 			var clone = JSON.parse(JSON.stringify(obj));
 			clone.name = name;
@@ -222,8 +232,35 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.cleanUpClone(clone);
 			
 			
-			this.insertObject(clone);
+			this.insertObject(clone, silent);
 			return clone;
+		},
+		
+		multiCopy: function(arr, cb){
+			var data = this.tv.getData();
+			var name, obj, clone;
+			var out = [];
+			
+			for(var i=0; i<arr.length; i++){
+				obj = arr[i];
+				name = obj.name + this.getNewNameId(obj.name, data);
+				clone = JSON.parse(JSON.stringify(obj));
+				clone.name = name;
+				if(cb){
+					cb(clone);
+				}
+				
+				out.push(clone);
+				this.insertObject(clone, true, data);
+			}
+			
+			this.tv.rootPath = this.project.path
+			this.tv.merge(data);
+			
+			this.update();
+			this.sync();
+			
+			return out;
 		},
 		
 		cleanUpClone: function(obj, inc){
@@ -241,21 +278,27 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		deleteSelected: function(){
 		
+			var data = this.tv.getData();
 			this.selector.forEach(function(obj){
-				this.deleteObj(obj.data.id, true);
+				this.deleteObj(obj.data.id, true, data);
 			}, this);
 			
-			this.selector.clear();
 			
+			this.selector.clear();
+			this.tv.merge(data);
 			this.ui.events.simulateKey(MT.keys.esc);
 			this.sync();
 		},
 		
-		deleteObj: function(id, silent){
+		deleteObj: function(id, silent, data){
 			console.log("delete", id);
-			var data = this.tv.getData();
-			this._delete(id, data);
-			this.tv.merge(data);
+			var datax = data || this.tv.getData();
+			
+			this._delete(id, datax);
+			
+			if(!data){
+				this.tv.merge(datax);
+			}
 			
 			
 			
@@ -376,11 +419,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 			}, this);
 			
-			//this.send("updateData", data);
-			
 			this.tv.merge(data);
-			
-			
 			this.send("updateData", data);
 		},
 		

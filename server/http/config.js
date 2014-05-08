@@ -6,3 +6,9 @@ this.mimes = {
 	js: "application/x-javascript",
 	css: "text/css"
 };
+
+this.cors = {
+	jpg: "*",
+	png: "*",
+	jpeg: "*"
+}

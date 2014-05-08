@@ -377,7 +377,20 @@ input.ui-input{
 	background: url("../img/tools/stamp.png")  no-repeat 50%;
 }
 
+.ui-button.datalink{
+	padding: 0 5px;
+	/*user-select: text !important;
+	-webkit-user-select: text !important;
+	
+	cursor: text;*/
+}
 
+.ui-button.datalink:hover{
+	-webkit-user-select: text !important;
+	
+	cursor: text;
+	
+}
 
 
 

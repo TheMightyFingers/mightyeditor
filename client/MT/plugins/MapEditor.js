@@ -29,8 +29,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		this.settings = {
 			cameraX: 0,
 			cameraY: 0,
-			worldWidth: 2000,
-			worldHeight: 2000,
 			gridX: 64,
 			gridY: 64,
 			showGrid: 1,

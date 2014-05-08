@@ -104,12 +104,35 @@ MT.extend("core.Emitter")(
 						}
 					}
 					
+					if(item.options.showHide){
+						if(!data.isVisible){
+							item.options.showHide.addClass("hidden");
+						}
+						else{
+							item.options.showHide.removeClass("hidden");
+						}
+					}
+					
+					
+					
+					if(item.options.lock){
+						if(!data.isLocked){
+							item.options.lock.addClass("locked");
+						}
+						else{
+							item.options.lock.removeClass("locked");
+						}
+					}
+					
+					
 					return item;
 				}
 			}
 			
 			var that = this;
 			var el = new MT.ui.DomElement();
+			el.options = {};
+			
 			el.index = index;
 			
 			var type = "item";
@@ -237,13 +260,16 @@ MT.extend("core.Emitter")(
 				if(!data.isVisible){
 					b.addClass("hidden");
 				}
+				el.options.showHide = b;
 			}
+			
 			if(this.options.lock){
 				el.addClass("lock-enabled");
 				var b = this._mkLock(el);
 				if(!data.isLocked){
 					b.addClass("locked");
 				}
+				el.options.lock = b;
 			}
 			
 			
@@ -656,6 +682,11 @@ MT.extend("core.Emitter")(
 		},
 		
 		merge: function(data, oldData){
+			
+			var p = this.tree.el.parentNode;
+			
+			p.removeChild(this.tree.el);
+			
 			this.updateFullPath(data);
 			
 			for(var i=0; i<this.items.length; i++){
@@ -674,6 +705,8 @@ MT.extend("core.Emitter")(
 					this.emit("deleted", this.items[i]);
 				}
 			}
+			
+			p.appendChild(this.tree.el);
 			
 		},
    

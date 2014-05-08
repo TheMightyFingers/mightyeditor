@@ -16,7 +16,8 @@ MT.extend("core.BasicPlugin")(
 			"Settings",
 			"Export",
 			"Tools",
-			"UndoRedo"
+			"UndoRedo",
+			"DataLink"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){

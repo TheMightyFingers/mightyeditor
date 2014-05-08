@@ -2,6 +2,8 @@
 	var fs = require("fs");
 	var path = require("path");
 	var that = MT.core.FS = {
+		path: path,
+		fs: fs,
 		queue: [],
  
 		writeFile: function(file, contents, cb){
@@ -66,6 +68,11 @@
 				if(err){
 					console.log("copy", source, target);
 					console.log("--> error -> FS:copy", err);
+					
+					console.trace();
+					
+					process.exit();
+					return;
 				}
 				
 				
@@ -127,7 +134,8 @@
 
 			function done(err) {
 				if(err){
-					console.log("FS.copy error ---> ", err, source, target);
+					console.log("FS.copy error ---> ", err, source + " -> " + target);
+					console.trace();
 					return;
 				}
 				if(typeof cb == "function"){

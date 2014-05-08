@@ -86,42 +86,57 @@ MT.extend("core.SocketManager")(
 		},
 		
 		loadPlugins: function(){
+			this.export = new MT.plugins.Export(this.socket, this);
+			
 			this.assets = new MT.plugins.AssetsManager(this.socket, this);
 			this.objects = new MT.plugins.ObjectsManager(this.socket, this);
-			this.export = new MT.plugins.Export(this.socket, this);
+			
 			this.map = new MT.plugins.MapEditor(this.socket, this);
 		},
 		
 		openProject: function(pid, cb){
 			console.log("OPENED project");
 			var that = this;
-			that.id = pid;
-			that.path = that.root + "/" + that.id;
 			
-			new MT.core.JsonDB(that.path + "/JsonDB.json", function(data){
-				that.loadData(data);
-				
-				
-				that.socket.leaveAllGroups();
-				that.socket.joinGroup(that.id);
-				
-				if(typeof cb == "function"){
-					cb();
+			that.path = that.root + MT.core.FS.path.sep + pid;
+			
+			
+			this.fs.fs.exists(this.path, function(yes){
+				if(!yes){
+					console.log("non existent project");
+					that.a_newProject();
+					return;
 				}
 				
-				that.assets.a_sendFiles(that.path);
-				that.objects.readData();
-				that.map.readData();
-				
+				that.id = pid;
+				new MT.core.JsonDB(that.path + "/JsonDB.json", function(data){
+					that.loadData(data);
+					
+					
+					that.socket.leaveAllGroups();
+					that.socket.joinGroup(that.id);
+					
+					if(typeof cb == "function"){
+						cb();
+					}
+					
+					that.assets.a_sendFiles(that.path);
+					that.objects.readData();
+					that.map.readData();
+				});
 			});
-			
 		},
 		
 		
 		
 		createProject: function(){
+			console.log("create Project !!!!!!!!!!!!");
+			
+			
 			this.id = this.makeID(this.knownProjects.length);
-			this.path = this.root + "/" + this.id;
+			this.path = this.root + MT.core.FS.path.sep + this.id;
+			
+			console.log("create Project !!!!!!!!!!!!", this.path);
 			
 			var that = this;
 			MT.core.FS.mkdir(this.path, function(){

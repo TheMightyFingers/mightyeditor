@@ -73,7 +73,7 @@ MT.extend("core.BasicPlugin")(
 					var l = (window.innerWidth - w)*0.5;
 					var t = (window.innerHeight - h)*0.5;
 					
-					window.open(this.project.path + "/"+ data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
+					window.open(this.project.path + "/" + data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
 					break;
 			}
 			

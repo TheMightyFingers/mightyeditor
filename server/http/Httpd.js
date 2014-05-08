@@ -7,7 +7,9 @@ MT(
 		this.http = require("http");
 		this.path = require("path");
 		this.fs = require("fs");
-		this.mimes = require("./mimes").mimes;
+		this.config = require("./config");
+		this.mimes = this.config.mimes;
+		this.cors = this.config.cors;
 		
 		var that = this;
 		
@@ -106,6 +108,7 @@ MT(
 		streamFile: function(req, res){
 			var readStream = this.fs.createReadStream(req.url);
 			var mime = this.mimes[req.url.split(".").pop()];
+			
 			if(mime){
 				res.setHeader("content-type", mime);
 			}
@@ -129,10 +132,22 @@ MT(
 			var that = this;
 			this.fs.readFile(req.url, function(err, content){
 				res.setHeader("content-length", stats.size);
-				var mime = that.mimes[req.url.split(".").pop()];
+				var ext = req.url.split(".").pop();
+				var mime = that.mimes[ext];
+				var headers = {};
 				if(mime){
+					headers["content-type"] = mime;
 					res.setHeader("content-type", mime);
 				}
+				var cors = that.cors[ext];
+				if(cors){
+					console.log("cors enabled", req.url, cors);
+					res.setHeader("Access-Control-Allow-Origin", cors);
+					//res.header('Access-Control-Allow-Origin', '*');
+					res.setHeader('Access-Control-Allow-Methods', 'GET');
+					res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+				}
+				
 				
 				
 				res.writeHead(200);

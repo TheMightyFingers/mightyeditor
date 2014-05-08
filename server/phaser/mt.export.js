@@ -1,5 +1,9 @@
 (function(global){
+var data = null;
 
+if(global.mt && global.mt.data){
+	data = global.mt.data;
+}
 global.mt = {
 	
 	assets: {},
@@ -8,12 +12,11 @@ global.mt = {
 	assetsPath: "assets",
 	game: null,
  
-	//to be filled
-	data: null,
+	data: data,
 	
 	preload: function(game){
 		this.game = game;
-		this.game.load.crossOrigin = "Anonymous";
+		this.game.load.crossOrigin = "anonymous";
 		
 		this._loadAssets(this.data.assets.contents, this.assets, "");
 	},
@@ -117,7 +120,7 @@ global.mt = {
 		
 		sp = group.create(object.x, object.y, object.assetKey);
 		
-		var frameData = game.cache.getFrameData(object.assetKey);
+		var frameData = this.game.cache.getFrameData(object.assetKey);
 		
 		if(frameData){
 			var arr = [];

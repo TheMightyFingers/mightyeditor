@@ -98,11 +98,18 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				
 				if(e.which == MT.keys.delete){
+					
+					var data = om.tv.getData();
+					
 					that.map.selector.forEach(function(obj){
-						om.deleteObj(obj.MT_OBJECT.id, true);
+						om.deleteObj(obj.MT_OBJECT.id, true, data);
 						om.selector.clear();
 					});
+					
+					om.tv.merge(data);
+					
 					om.sync();
+					om.update();
 					return;
 				}
 				
@@ -323,7 +330,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				var copy = [];
 				var sel = this.map.selector;
 				sel.forEach(function(o){
-					copy.push(o);
+					copy.push(o.MT_OBJECT);
 				});
 				
 				sel.clear();
@@ -333,12 +340,19 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				var cy = this.map.game.camera.y;
 				
 				
-				for(var i=0; i<copy.length; i++){
-					bounds = copy[i].getBounds();
-					console.log(bounds.x, bounds.x - cx, bounds.y - cy);
+				
+				var data = this.om.multiCopy(copy);
+				
+				var sprite;
+				for(var i=0; i<data.length; i++){
+					sprite = this.map.getById(copy[i].id);
+					bounds = sprite.getBounds();
+					data[i].x = bounds.x + cx;
+					data[i].y = bounds.y + cy;
 					
-					sel.add(this.copy(copy[i].MT_OBJECT,  bounds.x + cx, bounds.y + cy));
+					sel.add(sprite);
 				}
+				
 				
 			}
 			
@@ -371,7 +385,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			//this.map.selection.y -= this.map.game.camera.y;
 			
 			
-			this.map.selectRect(this.map.selection, true);
+			
+			
+			this.map.selectRect(this.map.selection, !e.shiftKey);
 			
 			
 		},
