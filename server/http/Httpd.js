@@ -66,6 +66,8 @@ MT(
 		
 		serve: function(req, res){
 			var that = this;
+			this.setHeaders(req, res);
+			
 			
 			this.fs.stat(req.url, function(err, stats){
 				if(err){
@@ -96,10 +98,14 @@ MT(
 		},
 		
 		proceed: function(stats, req, res){
+			
+			
+			
 			if(stats.size < 1024){
 				this.sendFile(req, res, stats);
 				return;
 			}
+			
 			
 			this.streamFile(req, res);
 		},
@@ -107,12 +113,6 @@ MT(
 		/* big files */
 		streamFile: function(req, res){
 			var readStream = this.fs.createReadStream(req.url);
-			var mime = this.mimes[req.url.split(".").pop()];
-			
-			if(mime){
-				res.setHeader("content-type", mime);
-			}
-			
 			
 			readStream.on('open', function () {
 				res.writeHead(200);
@@ -130,26 +130,13 @@ MT(
 		/*small files */
 		sendFile: function(req, res, stats){
 			var that = this;
+
+			
+			
 			this.fs.readFile(req.url, function(err, content){
 				res.setHeader("content-length", stats.size);
-				var ext = req.url.split(".").pop();
-				var mime = that.mimes[ext];
-				var headers = {};
-				if(mime){
-					headers["content-type"] = mime;
-					res.setHeader("content-type", mime);
-				}
-				var cors = that.cors[ext];
-				if(cors){
-					console.log("cors enabled", req.url, cors);
-					res.setHeader("Access-Control-Allow-Origin", cors);
-					//res.header('Access-Control-Allow-Origin', '*');
-					res.setHeader('Access-Control-Allow-Methods', 'GET');
-					res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
-				}
-				
-				
-				
+				res.setHeader("xxx", "xxx");
+
 				res.writeHead(200);
 				res.end(content);
 				
@@ -161,6 +148,18 @@ MT(
 				};
 				*/
 			});
+		},
+   
+		setHeaders: function(req, res){
+			var ext = req.url.split(".").pop();
+			var mime = this.mimes[ext];
+			if(mime){
+				res.setHeader("content-type", mime);
+			}
+			var cors = this.cors[ext];
+			if(cors){
+				res.setHeader("Access-Control-Allow-Origin", cors);
+			}
 		}
 		
 	}

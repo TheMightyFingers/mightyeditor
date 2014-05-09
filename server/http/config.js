@@ -10,5 +10,6 @@ this.mimes = {
 this.cors = {
 	jpg: "*",
 	png: "*",
-	jpeg: "*"
+	jpeg: "*",
+	json: "*"
 }
