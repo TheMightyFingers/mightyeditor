@@ -1,6 +1,6 @@
 MT.extend("core.BasicPlugin")(
 	MT.plugins.DataLink = function(project){
-		MT.core.BasicPlugin.call(this, "Export");
+		MT.core.BasicPlugin.call(this, "DataLink");
 		this.project = project;
 		
 	},
