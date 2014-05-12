@@ -118,6 +118,7 @@ MT.extend("core.BasicPlugin")(
 				localStorage.setItem(this.project.id, str);
 			}
 			catch(e){
+				off++;
 				localStorage.setItem(this.project.id, JSON.stringify(this.buffer.slice(this.step - off, this.step)) );
 			}
 		},
