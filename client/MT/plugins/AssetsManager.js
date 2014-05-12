@@ -436,7 +436,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		deleteAsset: function(id, silent){
 			console.log("delete", id);
 			this.send("delete", id);
-			
+			this.emit("deleted", id);
 			//if using silent.. you should call manually sync
 			if(!silent){
 				this.ui.events.simulateKey(MT.keys.esc);
@@ -485,6 +485,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.guessFrameWidth(data);
 					
 					that.send("newImage", data);
+					that.emit("added", path);
 				};
 				img.src = "data:image/png;base64,"+btoa(fr.result);
 			};

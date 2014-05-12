@@ -543,28 +543,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		_destroyObject: function(object){
-    
-			var anims = object.animations._anims;
-			var anim = null;
-			for(var i in anims){
-				anim = anims[i];
-				
-				anim._parent = null;
-				anim._frames = null;
-				anim._frameData = null;
-				anim.currentFrame = null;
-				anim.isPlaying = false;
-
-				anim.onStart.dispose();
-				anim.onLoop.dispose();
-				anim.onComplete.dispose();
-
-				anim.game.onPause.remove(anim.onPause, anim);
-				anim.game.onResume.remove(anim.onResume, anim);
-				
-				anim.game = null;
-			}
-			
 			object.destroy(true);
 		},
 		

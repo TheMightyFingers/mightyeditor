@@ -9,6 +9,10 @@ MT.extend("core.BasicPlugin")(
 		this.undos = 0;
 		
 		window.ur = this;
+		this.capacity = 0;
+		
+		
+		this.checkLocalStorageCapacity();
 	},
 	{
 		set step(val){
@@ -100,17 +104,50 @@ MT.extend("core.BasicPlugin")(
 		
 		save: function(){
 			
+			var str = JSON.stringify(this.buffer);
+			var off = 0;
+			
+			while(str.length > this.capacity && off < this.step){
+				off++;
+				str = JSON.stringify(this.buffer.slice(off, this.step));
+			}
+			
+			console.log("saved last",this.step - off,"steps");
+			
 			try{
-				localStorage.setItem(this.project.id, JSON.stringify(this.buffer));
+				localStorage.setItem(this.project.id, str);
 			}
 			catch(e){
-				var off = 10;
-				while(this.step < off){
-					off--;
-				}
-				
 				localStorage.setItem(this.project.id, JSON.stringify(this.buffer.slice(this.step - off, this.step)) );
 			}
+		},
+		
+		checkLocalStorageCapacity: function(){
+			var str = "x";
+			var ret = 0;
+			var koef = 1;
+			
+			while(true){
+				str += str.substring(0, str.length*koef | 0);
+				try{
+					localStorage.setItem("test", str);
+					ret = str.length;
+				}
+				catch(e){
+					koef -= 0.1;
+					if(koef < 0.1){
+						break
+					}
+					
+					str = str.substring(0, ret);
+				}
+			}
+			
+			
+			
+			localStorage.removeItem("test");
+			
+			this.capacity = ret;
 		}
 
 	}
