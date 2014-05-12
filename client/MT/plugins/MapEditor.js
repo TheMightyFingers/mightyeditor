@@ -1,5 +1,5 @@
 "use strict";
-MT.requireFile("js/phaser.js");
+MT.requireFile("js/phaser.min.js");
 MT.require("core.Helper");
 MT.require("core.Selector");
 
@@ -190,7 +190,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		
 		resize: function(){
-			if(!this.game){
+			if(!this.game || !this.game.world){
 				return;
 			}
 			this.game.width = this.project.ui.center.offsetWidth;
@@ -466,6 +466,13 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					cb();
 				}
 			};
+			image.onerror = function(){
+				console.error("couldn't load asset", path);
+				if(typeof cb === "function"){
+					cb();
+				}
+			};
+			
 			image.src = path;
 		},
    
@@ -606,21 +613,13 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				od = this.oldObjects[i];
 				oo = this.oldObjects[i].MT_OBJECT;
 				
-				
 				if(oo.id == obj.id ){
 					od.loadTexture(oo.assetId, oo.frame);
-					
-					
-					
-					
-					
 					this.objects.push(od);
 					group.add(od);
 					return od;
 				}
 			}
-			
-			
 			
 			var sp = this.createSprite(obj, group);
 			this.objects.push(sp);
@@ -633,6 +632,11 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			group = group || game.world;
 			
 			var sp = null;
+			if(!game.cache.getImage(obj.assetId)){
+				obj.assetId = "__missing";
+			}
+			
+			
 			sp = group.create(obj.x, obj.y, obj.assetId);
 			
 			this.inheritSprite(sp, obj);
@@ -707,7 +711,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		set activeObject(val){
-			console.log("set active", val);
 			this._activeObject = val;
 		},
 		

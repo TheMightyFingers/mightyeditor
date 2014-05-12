@@ -34,9 +34,7 @@ MT.extend("core.Emitter")(
 			
 			this.ws = new WebSocket(this.url);
 			
-			
 			this.ws.onopen = function(e){
-				console.log("WS connected",e);
 				that.emit("core","open");
 			};
 			

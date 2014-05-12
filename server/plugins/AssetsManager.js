@@ -58,6 +58,9 @@ MT.extend("core.SocketManager")(
 		a_delete: function(id){
 			this.delete(id);
 			this.a_sendFiles();
+			console.log(this.db.contents);
+			this.project.db.save();
+			
 			
 			this.project.export.phaser();
 		},
@@ -75,7 +78,6 @@ MT.extend("core.SocketManager")(
 						}
 					}
 				}
-				console.log("delete", item);
 				if(!item.contents){
 					this.fs.rm(this.project.path + "/" + item.__image);
 				}

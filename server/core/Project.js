@@ -19,7 +19,6 @@ MT.extend("core.SocketManager")(
 		this.dbObject  = null;
 		
 		socket.onClose(function(){
-			console.log("socket closed!");
 			if(that.db){
 				that.db.close();
 			}

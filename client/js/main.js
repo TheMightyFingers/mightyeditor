@@ -17,7 +17,6 @@ function main(){
 		if(type == "open"){
 			if(hasClosed){
 				window.location.reload();
-				console.log("RELOAD");
 				return;
 			}
 			new MT.core.Project(new MT.ui.UIController(), socket);

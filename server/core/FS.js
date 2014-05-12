@@ -70,8 +70,7 @@
 					console.log("--> error -> FS:copy", err);
 					
 					console.trace();
-					
-					process.exit();
+					cb();
 					return;
 				}
 				

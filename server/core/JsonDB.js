@@ -189,7 +189,7 @@ MT(
    
 		close: function(){
 			console.log("closing connections", this.cache[this.dbfile]);
-			
+			this.save();
 			if(this.cache[this.dbfile]){
 				if(this.cache[this.dbfile].connections == 1){
 					this.cache[this.dbfile] = null;

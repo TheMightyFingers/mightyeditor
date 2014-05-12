@@ -13,7 +13,6 @@ MT.extend("core.BasicPlugin")(
 	{
 		set step(val){
 			this._step = val;
-			console.log(val);
 		},
 		
 		get step(){
@@ -36,7 +35,7 @@ MT.extend("core.BasicPlugin")(
 				var str = JSON.stringify(data);
 				
 				if(that.buffer[that.step-1] == str){
-					console.log("nothing changed", that.buffer.length);
+					//console.log("nothing changed", that.buffer.length);
 					return;
 				}
 				
@@ -44,6 +43,7 @@ MT.extend("core.BasicPlugin")(
 					that.buffer.shift();
 					that.step--;
 				}
+				
 				that.buffer[that.step] = str;
 				that.step++;
 				that.save();
@@ -104,7 +104,12 @@ MT.extend("core.BasicPlugin")(
 				localStorage.setItem(this.project.id, JSON.stringify(this.buffer));
 			}
 			catch(e){
-				localStorage.setItem(this.project.id, JSON.stringify(this.buffer.slice(this.step, this.step + 10)) );
+				var off = 10;
+				while(this.step < off){
+					off--;
+				}
+				
+				localStorage.setItem(this.project.id, JSON.stringify(this.buffer.slice(this.step - off, this.step)) );
 			}
 		}
 

@@ -5,21 +5,21 @@
 *
 * @overview
 *
-* Phaser - http://www.phaser.io
+* Phaser - http://phaser.io
 *
-* v2.0.2 "Ghealdan" - Built: Fri Mar 28 2014 01:30:50
+* v2.0.4 "Mos Shirare" - Built: Tue Apr 29 2014 22:39:37
 *
 * By Richard Davey http://www.photonstorm.com @photonstorm
 *
-* Phaser is a fun, free and fast 2D game framework for making HTML5 games 
-* for desktop and mobile web browsers, supporting Canvas and WebGL.
+* Phaser is a fun, free and fast 2D game framework for making HTML5 games
+* for desktop and mobile web browsers, supporting Canvas and WebGL rendering.
 *
 * Phaser uses Pixi.js for rendering, created by Mat Groves http://matgroves.com @Doormat23
 * Phaser uses p2.js for full-body physics, created by Stefan Hedman https://github.com/schteppe/p2.js @schteppe
 * Phaser contains a port of N+ Physics, converted by Richard Davey, original by http://www.metanetsoftware.com
 *
 * Many thanks to Adam Saltsman (@ADAMATOMIC) for releasing Flixel, from which both Phaser
-* and my love of framework development can be traced.
+* and my love of framework development originate.
 *
 * Follow development at http://phaser.io and on our forum
 *
@@ -27,6 +27,7 @@
 * "If you want them to be more intelligent, read them more fairy tales."
 *                                                     -- Albert Einstein
 */
+
 /**
  * @author Mat Groves http://matgroves.com/ @Doormat23
  */
@@ -44,8 +45,8 @@
  */
 var PIXI = PIXI || {};
 
-/*
-*
+/* 
+* 
 * This file contains a lot of pixi consts which are used across the rendering engine
 * @class Consts
 */
@@ -53,7 +54,7 @@ PIXI.WEBGL_RENDERER = 0;
 PIXI.CANVAS_RENDERER = 1;
 
 // useful for testing against if your lib is using pixi.
-PIXI.VERSION = "v1.5.0";
+PIXI.VERSION = "v1.5.2";
 
 // the various blend modes supported by pixi
 PIXI.blendModes = {
@@ -83,13 +84,12 @@ PIXI.scaleModes = {
     NEAREST:1
 };
 
-// interaction frequency
+// interaction frequency 
 PIXI.INTERACTION_FREQUENCY = 30;
 PIXI.AUTO_PREVENT_DEFAULT = true;
 
 PIXI.RAD_TO_DEG = 180 / Math.PI;
 PIXI.DEG_TO_RAD = Math.PI / 180;
-
 /**
  * @author Mat Groves http://matgroves.com/ @Doormat23
  */
@@ -227,7 +227,6 @@ PIXI.Rectangle.prototype.contains = function(x, y)
 PIXI.Rectangle.prototype.constructor = PIXI.Rectangle;
 
 PIXI.EmptyRectangle = new PIXI.Rectangle(0,0,0,0);
-
 /**
  * @author Adrien Brault <adrien.brault@gmail.com>
  */
@@ -315,8 +314,8 @@ PIXI.Polygon.prototype.constructor = PIXI.Polygon;
  *
  * @class Circle
  * @constructor
- * @param x {Number} The X coordinate of the upper-left corner of the framing rectangle of this circle
- * @param y {Number} The Y coordinate of the upper-left corner of the framing rectangle of this circle
+ * @param x {Number} The X coordinate of the center of this circle
+ * @param y {Number} The Y coordinate of the center of this circle
  * @param radius {Number} The radius of the circle
  */
 PIXI.Circle = function(x, y, radius)
@@ -492,8 +491,8 @@ PIXI.Matrix2 = PIXI.determineMatrixArrayType();
 
 /*
 * @class Matrix
-* The Matrix class is now an object, which makes it a lot faster,
-* here is a representation of it :
+* The Matrix class is now an object, which makes it a lot faster, 
+* here is a representation of it : 
 * | a | b | tx|
 * | c | c | ty|
 * | 0 | 0 | 1 |
@@ -566,13 +565,13 @@ PIXI.Matrix.prototype.toArray = function(transpose)
 };
 
 PIXI.identityMatrix = new PIXI.Matrix();
-
 /**
  * @author Mat Groves http://matgroves.com/ @Doormat23
  */
 
 /**
- * The base class for all objects that are rendered on the screen.
+ * The base class for all objects that are rendered on the screen. 
+ * This is an abstract class and should not be used on its own rather it should be extended.
  *
  * @class DisplayObject
  * @constructor
@@ -691,7 +690,7 @@ PIXI.DisplayObject = function()
 
     /**
      * This is the cursor that will be used when the mouse is over this object. To enable this the element must have interaction = true and buttonMode = true
-     *
+     * 
      * @property defaultCursor
      * @type String
      *
@@ -731,12 +730,13 @@ PIXI.DisplayObject = function()
     this._cr = 1;
 
     /**
-     * The area the filter is applied to
+     * The area the filter is applied to like the hitArea this is used as more of an optimisation
+     * rather than figuring out the dimensions of the displayObject each frame you can set this rectangle
      *
      * @property filterArea
      * @type Rectangle
      */
-    this.filterArea = new PIXI.Rectangle(0,0,1,1);
+    this.filterArea = null;//new PIXI.Rectangle(0,0,1,1);
 
     /**
      * The original, cached bounds of the object
@@ -952,6 +952,13 @@ Object.defineProperty(PIXI.DisplayObject.prototype, 'filters', {
     }
 });
 
+/**
+ * Set weather or not a the display objects is cached as a bitmap.
+ * This basically takes a snap shot of the display object as it is at that moment. It can provide a performance benefit for complex static displayObjects
+ * To remove filters simply set this property to 'null'
+ * @property cacheAsBitmap
+ * @type Boolean
+ */
 Object.defineProperty(PIXI.DisplayObject.prototype, 'cacheAsBitmap', {
     get: function() {
         return  this._cacheAsBitmap;
@@ -1059,7 +1066,7 @@ PIXI.DisplayObject.prototype.generateTexture = function(renderer)
     var bounds = this.getLocalBounds();
 
     var renderTexture = new PIXI.RenderTexture(bounds.width | 0, bounds.height | 0, renderer);
-    renderTexture.render(this);
+    renderTexture.render(this, new PIXI.Point(-bounds.x, -bounds.y) );
 
     return renderTexture;
 };
@@ -1085,11 +1092,11 @@ PIXI.DisplayObject.prototype._generateCachedSprite = function()//renderSession)
 {
     this._cacheAsBitmap = false;
     var bounds = this.getLocalBounds();
-
+   
     if(!this._cachedSprite)
     {
         var renderTexture = new PIXI.RenderTexture(bounds.width | 0, bounds.height | 0);//, renderSession.renderer);
-
+        
         this._cachedSprite = new PIXI.Sprite(renderTexture);
         this._cachedSprite.worldTransform = this.worldTransform;
     }
@@ -1103,7 +1110,11 @@ PIXI.DisplayObject.prototype._generateCachedSprite = function()//renderSession)
     this._filters = null;
 
     this._cachedSprite.filters = tempFilters;
-    this._cachedSprite.texture.render(this);
+    this._cachedSprite.texture.render(this, new PIXI.Point(-bounds.x, -bounds.y) );
+
+    this._cachedSprite.anchor.x = -( bounds.x / bounds.width );
+    this._cachedSprite.anchor.y = -( bounds.y / bounds.height );
+
 
     this._filters = tempFilters;
 
@@ -1114,7 +1125,7 @@ PIXI.DisplayObject.prototype._generateCachedSprite = function()//renderSession)
 * Renders the object using the WebGL renderer
 *
 * @method _renderWebGL
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.DisplayObject.prototype._destroyCachedSprite = function()
@@ -1140,7 +1151,7 @@ PIXI.DisplayObject.prototype._renderWebGL = function(renderSession)
 * Renders the object using the Canvas renderer
 *
 * @method _renderCanvas
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.DisplayObject.prototype._renderCanvas = function(renderSession)
@@ -1311,7 +1322,7 @@ PIXI.DisplayObjectContainer.prototype.swapChildren = function(child, child2)
 
     this.children[index1] = child2;
     this.children[index2] = child;
-
+    
 };
 
 /**
@@ -1328,7 +1339,7 @@ PIXI.DisplayObjectContainer.prototype.getChildAt = function(index)
     }
     else
     {
-        throw new Error('The supplied DisplayObjects must be a child of the caller ' + this);
+        throw new Error('Supplied index does not exist in the child list, or the supplied DisplayObject must be a child of the caller');
     }
 };
 
@@ -1340,39 +1351,56 @@ PIXI.DisplayObjectContainer.prototype.getChildAt = function(index)
  */
 PIXI.DisplayObjectContainer.prototype.removeChild = function(child)
 {
-    var index = this.children.indexOf( child );
-    if ( index !== -1 )
-    {
-        // update the stage reference..
-        if(this.stage)child.removeStageReference();
+    return this.removeChildAt( this.children.indexOf( child ) );
+};
 
-        child.parent = undefined;
-        this.children.splice( index, 1 );
+/**
+ * Removes a child from the specified index position in the child list of the container.
+ *
+ * @method removeChildAt
+ * @param index {Number} The index to get the child from
+ */
+PIXI.DisplayObjectContainer.prototype.removeChildAt = function(index)
+{
+    var child = this.getChildAt( index );
+    if(this.stage)
+        child.removeStageReference();
+
+    child.parent = undefined;
+    this.children.splice( index, 1 );
+    return child;
+};
+
+/**
+* Removes all child instances from the child list of the container.
+*
+* @method removeChildren
+* @param beginIndex {Number} The beginning position. Predefined value is 0.
+* @param endIndex {Number} The ending position. Predefined value is children's array length.
+*/
+PIXI.DisplayObjectContainer.prototype.removeChildren = function(beginIndex, endIndex)
+{
+    var begin = beginIndex || 0;
+    var end = typeof endIndex === 'number' ? endIndex : this.children.length;
+    var range = end - begin;
+
+    if (range > 0 && range <= end)
+    {
+        var removed = this.children.splice(begin, range);
+        for (var i = 0; i < removed.length; i++) {
+            var child = removed[i];
+            if(this.stage)
+                child.removeStageReference();
+            child.parent = undefined;
+        }
+        return removed;
     }
     else
     {
-        throw new Error(child + ' The supplied DisplayObject must be a child of the caller ' + this);
+        throw new Error( 'Range Error, numeric values are outside the acceptable range' );
     }
 };
 
-
-/**
-* Removes all the children
-*
-* @method removeAll
-* NOT tested yet
-*/
-/* PIXI.DisplayObjectContainer.prototype.removeAll = function()
-{
-
-
-    for(var i = 0 , j = this.children.length; i < j; i++)
-    {
-        this.removeChild(this.children[i]);
-    }
-
-};
-*/
 /*
  * Updates the container's childrens transform for rendering
  *
@@ -1429,13 +1457,13 @@ PIXI.DisplayObjectContainer.prototype.getBounds = function(matrix)
     for(var i=0,j=this.children.length; i<j; i++)
     {
         var child = this.children[i];
-
+        
         if(!child.visible)continue;
 
         childVisible = true;
 
         childBounds = this.children[i].getBounds( matrix );
-
+     
         minX = minX < childBounds.x ? minX : childBounds.x;
         minY = minY < childBounds.y ? minY : childBounds.y;
 
@@ -1458,7 +1486,7 @@ PIXI.DisplayObjectContainer.prototype.getBounds = function(matrix)
 
     // TODO: store a reference so that if this function gets called again in the render cycle we do not have to recalculate
     //this._currentBounds = bounds;
-
+   
     return bounds;
 };
 
@@ -1513,7 +1541,7 @@ PIXI.DisplayObjectContainer.prototype.removeStageReference = function()
     }
 
     if(this._interactive)this.stage.dirty = true;
-
+    
     this.stage = null;
 };
 
@@ -1521,19 +1549,19 @@ PIXI.DisplayObjectContainer.prototype.removeStageReference = function()
 * Renders the object using the WebGL renderer
 *
 * @method _renderWebGL
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.DisplayObjectContainer.prototype._renderWebGL = function(renderSession)
 {
     if(!this.visible || this.alpha <= 0)return;
-
+    
     if(this._cacheAsBitmap)
     {
         this._renderCachedSprite(renderSession);
         return;
     }
-
+    
     var i,j;
 
     if(this._mask || this._filters)
@@ -1561,7 +1589,7 @@ PIXI.DisplayObjectContainer.prototype._renderWebGL = function(renderSession)
 
         if(this._filters)renderSession.filterManager.popFilter();
         if(this._mask)renderSession.maskManager.popMask(renderSession);
-
+        
         renderSession.spriteBatch.start();
     }
     else
@@ -1578,7 +1606,7 @@ PIXI.DisplayObjectContainer.prototype._renderWebGL = function(renderSession)
 * Renders the object using the Canvas renderer
 *
 * @method _renderCanvas
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.DisplayObjectContainer.prototype._renderCanvas = function(renderSession)
@@ -1620,8 +1648,8 @@ PIXI.DisplayObjectContainer.prototype._renderCanvas = function(renderSession)
  * @extends DisplayObjectContainer
  * @constructor
  * @param texture {Texture} The texture for this sprite
- *
- * A sprite can be created directly from an image like this :
+ * 
+ * A sprite can be created directly from an image like this : 
  * var sprite = nex PIXI.Sprite.FromImage('assets/image.png');
  * yourStage.addChild(sprite);
  * then obviously don't forget to add it to the stage you have already created
@@ -1676,7 +1704,7 @@ PIXI.Sprite = function(texture)
      * @default 0xFFFFFF
      */
     this.tint = 0xFFFFFF;// * Math.random();
-
+    
     /**
      * The blend mode to be applied to the sprite
      *
@@ -1859,14 +1887,14 @@ PIXI.Sprite.prototype.getBounds = function(matrix)
 * Renders the object using the WebGL renderer
 *
 * @method _renderWebGL
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.Sprite.prototype._renderWebGL = function(renderSession)
 {
     // if the sprite is not visible or the alpha is 0 then no need to render this element
     if(!this.visible || this.alpha <= 0)return;
-
+    
     var i,j;
 
     // do a quick check to see if this element has a mask or a filter.
@@ -1901,7 +1929,7 @@ PIXI.Sprite.prototype._renderWebGL = function(renderSession)
 
         if(this._filters)renderSession.filterManager.popFilter();
         if(this._mask)renderSession.maskManager.popMask(renderSession);
-
+        
         spriteBatch.start();
     }
     else
@@ -1915,22 +1943,22 @@ PIXI.Sprite.prototype._renderWebGL = function(renderSession)
         }
     }
 
-
-    //TODO check culling
+   
+    //TODO check culling  
 };
 
 /**
 * Renders the object using the Canvas renderer
 *
 * @method _renderCanvas
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.Sprite.prototype._renderCanvas = function(renderSession)
 {
     // if the sprite is not visible or the alpha is 0 then no need to render this element
     if(this.visible === false || this.alpha === 0)return;
-
+    
     var frame = this.texture.frame;
     var context = renderSession.context;
     var texture = this.texture;
@@ -1946,7 +1974,7 @@ PIXI.Sprite.prototype._renderCanvas = function(renderSession)
         renderSession.maskManager.pushMask(this._mask, renderSession.context);
     }
 
-
+    
 
     //ignore null sources
     if(frame && frame.width && frame.height && texture.baseTexture.source)
@@ -1973,17 +2001,17 @@ PIXI.Sprite.prototype._renderCanvas = function(renderSession)
 
         if(this.tint !== 0xFFFFFF)
         {
-
+            
             if(this.cachedTint !== this.tint)
             {
                 // no point tinting an image that has not loaded yet!
                 if(!texture.baseTexture.hasLoaded)return;
 
                 this.cachedTint = this.tint;
-
+                
                 //TODO clean up caching - how to clean up the caches?
                 this.tintedTexture = PIXI.CanvasTinter.getTintedTexture(this, this.tint);
-
+                
             }
 
             context.drawImage(this.tintedTexture,
@@ -1999,7 +2027,7 @@ PIXI.Sprite.prototype._renderCanvas = function(renderSession)
         else
         {
 
-
+           
 
             if(texture.trim)
             {
@@ -2017,7 +2045,7 @@ PIXI.Sprite.prototype._renderCanvas = function(renderSession)
             }
             else
             {
-
+               
                 context.drawImage(this.texture.baseTexture.source,
                                frame.x,
                                frame.y,
@@ -2028,7 +2056,7 @@ PIXI.Sprite.prototype._renderCanvas = function(renderSession)
                                frame.width,
                                frame.height);
             }
-
+            
         }
     }
 
@@ -2086,14 +2114,14 @@ PIXI.Sprite.fromImage = function(imageId, crossorigin, scaleMode)
  */
 
 /**
- * The SpriteBatch class is a really fast version of the DisplayObjectContainer
+ * The SpriteBatch class is a really fast version of the DisplayObjectContainer 
  * built solely for speed, so use when you need a lot of sprites or particles.
- * And it's extremely easy to use :
+ * And it's extremely easy to use : 
 
     var container = new PIXI.SpriteBatch();
-
+ 
     stage.addChild(container);
-
+ 
     for(var i  = 0; i < 100; i++)
     {
         var sprite = new PIXI.Sprite.fromImage("myImage.png");
@@ -2148,7 +2176,7 @@ PIXI.SpriteBatch.prototype.updateTransform = function()
 * Renders the object using the WebGL renderer
 *
 * @method _renderWebGL
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.SpriteBatch.prototype._renderWebGL = function(renderSession)
@@ -2156,25 +2184,25 @@ PIXI.SpriteBatch.prototype._renderWebGL = function(renderSession)
     if(!this.visible || this.alpha <= 0 || !this.children.length)return;
 
     if(!this.ready)this.initWebGL( renderSession.gl );
-
+    
     renderSession.spriteBatch.stop();
-
+    
     renderSession.shaderManager.activateShader(renderSession.shaderManager.fastShader);
-
+    
     this.fastSpriteBatch.begin(this, renderSession);
     this.fastSpriteBatch.render(this);
 
     renderSession.shaderManager.activateShader(renderSession.shaderManager.defaultShader);
 
     renderSession.spriteBatch.start();
-
+ 
 };
 
 /**
 * Renders the object using the Canvas renderer
 *
 * @method _renderCanvas
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.SpriteBatch.prototype._renderCanvas = function(renderSession)
@@ -2186,11 +2214,11 @@ PIXI.SpriteBatch.prototype._renderCanvas = function(renderSession)
 
     var transform = this.worldTransform;
     // alow for trimming
-
+       
     var isRotated = true;
 
     for (var i = 0; i < this.children.length; i++) {
-
+       
         var child = this.children[i];
 
         if(!child.visible)continue;
@@ -2222,13 +2250,13 @@ PIXI.SpriteBatch.prototype._renderCanvas = function(renderSession)
         else
         {
             if(!isRotated)isRotated = true;
-
+    
             PIXI.DisplayObject.prototype.updateTransform.call(child);
-
+           
             var childTransform = child.worldTransform;
 
             // allow for trimming
-
+           
             if (renderSession.roundPixels)
             {
                 context.setTransform(childTransform.a, childTransform.c, childTransform.b, childTransform.d, childTransform.tx | 0, childTransform.ty | 0);
@@ -2247,7 +2275,7 @@ PIXI.SpriteBatch.prototype._renderCanvas = function(renderSession)
                                  ((child.anchor.y) * (-frame.height) + 0.5) | 0,
                                  frame.width,
                                  frame.height);
-
+           
 
         }
 
@@ -2262,6 +2290,53 @@ PIXI.SpriteBatch.prototype._renderCanvas = function(renderSession)
  * @author Mat Groves http://matgroves.com/ @Doormat23
  */
 
+/**
+ * This is the base class for creating a pixi.js filter. Currently only webGL supports filters.
+ * If you want to make a custom filter this should be your base class.
+ * @class AbstractFilter
+ * @constructor
+ * @param fragmentSrc
+ * @param uniforms
+ */
+PIXI.AbstractFilter = function(fragmentSrc, uniforms)
+{
+    /**
+    * An array of passes - some filters contain a few steps this array simply stores the steps in a liniear fashion.
+    * For example the blur filter has two passes blurX and blurY.
+    * @property passes
+    * @type Array an array of filter objects
+    * @private
+    */
+    this.passes = [this];
+
+    /**
+    * @property shaders
+    * @type Array an array of shaders
+    * @private
+    */
+    this.shaders = [];
+    
+    this.dirty = true;
+    this.padding = 0;
+
+    /**
+    * @property uniforms
+    * @type object
+    * @private
+    */
+    this.uniforms = uniforms || {};
+    /**
+    * @property fragmentSrc
+    * @type Array
+    * @private
+    */
+    this.fragmentSrc = fragmentSrc || [];
+};
+
+/**
+ * @author Mat Groves http://matgroves.com/ @Doormat23
+ */
+
 
 PIXI.FilterBlock = function()
 {
@@ -2271,10 +2346,11 @@ PIXI.FilterBlock = function()
 
 /**
  * @author Mat Groves http://matgroves.com/ @Doormat23
+ * - Modified by Tom Slezakowski http://www.tomslezakowski.com @TomSlezakowski (24/03/2014) - Added dropShadowColor.
  */
 
 /**
- * A Text Object will create a line(s) of text. To split a line you can use '\n'
+ * A Text Object will create a line(s) of text. To split a line you can use '\n' 
  * or add a wordWrap property set to true and and wordWrapWidth property with a value
  * in the style object
  *
@@ -2290,6 +2366,10 @@ PIXI.FilterBlock = function()
  * @param [style.strokeThickness=0] {Number} A number that represents the thickness of the stroke. Default is 0 (no stroke)
  * @param [style.wordWrap=false] {Boolean} Indicates if word wrap should be used
  * @param [style.wordWrapWidth=100] {Number} The width at which text will wrap, it needs wordWrap to be set to true
+ * @param [style.dropShadow=false] {Boolean} Set a drop shadow for the text
+ * @param [style.dropShadowColor='#000000'] {String} A fill style to be used on the dropshadow e.g 'red', '#00FF00'
+ * @param [style.dropShadowAngle=Math.PI/4] {Number} Set a angle of the drop shadow
+ * @param [style.dropShadowDistance=5] {Number} Set a distance of the drop shadow
  */
 PIXI.Text = function(text, style)
 {
@@ -2333,6 +2413,10 @@ PIXI.Text.prototype.constructor = PIXI.Text;
  * @param [style.strokeThickness=0] {Number} A number that represents the thickness of the stroke. Default is 0 (no stroke)
  * @param [style.wordWrap=false] {Boolean} Indicates if word wrap should be used
  * @param [style.wordWrapWidth=100] {Number} The width at which text will wrap
+ * @param [style.dropShadow=false] {Boolean} Set a drop shadow for the text
+ * @param [style.dropShadowColor='#000000'] {String} A fill style to be used on the dropshadow e.g 'red', '#00FF00'
+ * @param [style.dropShadowAngle=Math.PI/4] {Number} Set a angle of the drop shadow
+ * @param [style.dropShadowDistance=5] {Number} Set a distance of the drop shadow
  */
 PIXI.Text.prototype.setStyle = function(style)
 {
@@ -2344,6 +2428,13 @@ PIXI.Text.prototype.setStyle = function(style)
     style.strokeThickness = style.strokeThickness || 0;
     style.wordWrap = style.wordWrap || false;
     style.wordWrapWidth = style.wordWrapWidth || 100;
+    style.wordWrapWidth = style.wordWrapWidth || 100;
+    
+    style.dropShadow = style.dropShadow || false;
+    style.dropShadowAngle = style.dropShadowAngle || Math.PI / 6;
+    style.dropShadowDistance = style.dropShadowDistance || 4;
+    style.dropShadowColor = style.dropShadowColor || 'black';
+
     this.style = style;
     this.dirty = true;
 };
@@ -2389,47 +2480,90 @@ PIXI.Text.prototype.updateText = function()
         lineWidths[i] = lineWidth;
         maxLineWidth = Math.max(maxLineWidth, lineWidth);
     }
-    this.canvas.width = maxLineWidth + this.style.strokeThickness;
 
+    var width = maxLineWidth + this.style.strokeThickness;
+    if(this.style.dropShadow)width += this.style.dropShadowDistance;
+
+    this.canvas.width = width + this.context.lineWidth;
     //calculate text height
     var lineHeight = this.determineFontHeight('font: ' + this.style.font  + ';') + this.style.strokeThickness;
-    this.canvas.height = lineHeight * lines.length;
+    
+    var height = lineHeight * lines.length;
+    if(this.style.dropShadow)height += this.style.dropShadowDistance;
+
+    this.canvas.height = height;
 
     if(navigator.isCocoonJS) this.context.clearRect(0,0,this.canvas.width,this.canvas.height);
+    
+    this.context.font = this.style.font;
+    this.context.strokeStyle = this.style.stroke;
+    this.context.lineWidth = this.style.strokeThickness;
+    this.context.textBaseline = 'top';
+
+    var linePositionX;
+    var linePositionY;
+
+    if(this.style.dropShadow)
+    {
+        this.context.fillStyle = this.style.dropShadowColor;
+
+        var xShadowOffset = Math.sin(this.style.dropShadowAngle) * this.style.dropShadowDistance;
+        var yShadowOffset = Math.cos(this.style.dropShadowAngle) * this.style.dropShadowDistance;
+
+        for (i = 0; i < lines.length; i++)
+        {
+            linePositionX = this.style.strokeThickness / 2;
+            linePositionY = this.style.strokeThickness / 2 + i * lineHeight;
+
+            if(this.style.align === 'right')
+            {
+                linePositionX += maxLineWidth - lineWidths[i];
+            }
+            else if(this.style.align === 'center')
+            {
+                linePositionX += (maxLineWidth - lineWidths[i]) / 2;
+            }
+
+            if(this.style.fill)
+            {
+                this.context.fillText(lines[i], linePositionX + xShadowOffset, linePositionY + yShadowOffset);
+            }
+
+          //  if(dropShadow)
+        }
+    }
 
     //set canvas text styles
     this.context.fillStyle = this.style.fill;
-    this.context.font = this.style.font;
-
-    this.context.strokeStyle = this.style.stroke;
-    this.context.lineWidth = this.style.strokeThickness;
-
-    this.context.textBaseline = 'top';
-
+    
     //draw lines line by line
     for (i = 0; i < lines.length; i++)
     {
-        var linePosition = new PIXI.Point(this.style.strokeThickness / 2, this.style.strokeThickness / 2 + i * lineHeight);
+        linePositionX = this.style.strokeThickness / 2;
+        linePositionY = this.style.strokeThickness / 2 + i * lineHeight;
 
         if(this.style.align === 'right')
         {
-            linePosition.x += maxLineWidth - lineWidths[i];
+            linePositionX += maxLineWidth - lineWidths[i];
         }
         else if(this.style.align === 'center')
         {
-            linePosition.x += (maxLineWidth - lineWidths[i]) / 2;
+            linePositionX += (maxLineWidth - lineWidths[i]) / 2;
         }
 
         if(this.style.stroke && this.style.strokeThickness)
         {
-            this.context.strokeText(lines[i], linePosition.x, linePosition.y);
+            this.context.strokeText(lines[i], linePositionX, linePositionY);
         }
 
         if(this.style.fill)
         {
-            this.context.fillText(lines[i], linePosition.x, linePosition.y);
+            this.context.fillText(lines[i], linePositionX, linePositionY);
         }
+
+      //  if(dropShadow)
     }
+
 
     this.updateTexture();
 };
@@ -2457,7 +2591,7 @@ PIXI.Text.prototype.updateTexture = function()
 * Renders the object using the WebGL renderer
 *
 * @method _renderWebGL
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.Text.prototype._renderWebGL = function(renderSession)
@@ -2543,7 +2677,7 @@ PIXI.Text.prototype.wordWrap = function(text)
         {
             var wordWidth = this.context.measureText(words[j]).width;
             var wordWidthWithSpace = wordWidth + this.context.measureText(' ').width;
-            if(wordWidthWithSpace > spaceLeft)
+            if(j === 0 || wordWidthWithSpace > spaceLeft)
             {
                 // Skip printing the newline if it's the first word of the line that is
                 // greater than the word wrap width.
@@ -2551,13 +2685,13 @@ PIXI.Text.prototype.wordWrap = function(text)
                 {
                     result += '\n';
                 }
-                result += words[j] + ' ';
+                result += words[j];
                 spaceLeft = this.style.wordWrapWidth - wordWidth;
             }
             else
             {
                 spaceLeft -= wordWidthWithSpace;
-                result += words[j] + ' ';
+                result += ' ' + words[j];
             }
         }
 
@@ -2670,7 +2804,7 @@ PIXI.BitmapText.prototype.updateText = function()
     var lineWidths = [];
     var line = 0;
     var scale = this.fontSize / data.size;
-
+    
 
     for(var i = 0; i < this.text.length; i++)
     {
@@ -2795,12 +2929,12 @@ PIXI.BitmapText.fonts = {};
  * @constructor
  * @param backgroundColor {Number} the background color of the stage, you have to pass this in is in hex format
  *      like: 0xFFFFFF for white
- *
- * Creating a stage is a mandatory process when you use Pixi, which is as simple as this :
+ * 
+ * Creating a stage is a mandatory process when you use Pixi, which is as simple as this : 
  * var stage = new PIXI.Stage(0xFFFFFF);
  * where the parameter given is the background colour of the stage, in hex
  * you will use this stage instance to add your sprites to it and therefore to the renderer
- * Here is how to add a sprite to the stage :
+ * Here is how to add a sprite to the stage : 
  * stage.addChild(sprite);
  */
 PIXI.Stage = function(backgroundColor)
@@ -2922,7 +3056,7 @@ PIXI.Stage.prototype.getMousePosition = function()
 /**
  * @author Mat Groves http://matgroves.com/ @Doormat23
  */
-
+ 
 // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
 
@@ -2932,7 +3066,7 @@ PIXI.Stage.prototype.getMousePosition = function()
 
 /**
  * A polyfill for requestAnimationFrame
- * You can actually use both requestAnimationFrame and requestAnimFrame,
+ * You can actually use both requestAnimationFrame and requestAnimFrame, 
  * you will still benefit from the polyfill
  *
  * @method requestAnimationFrame
@@ -3059,7 +3193,7 @@ PIXI.packColorRGBA = function(r, g, b, a)//r, g, b, a)
    // var g = (i / 4096.0)%64 / 64;
   //  var b = (i / 64.0)%64 / 64;
   //  var a = (i)%64 / 64;
-
+     
   //  console.log(r, g, b, a);
   //  return i;
 
@@ -3120,7 +3254,7 @@ PIXI.getNextPowerOfTwo = function(number)
 /**
  * @author Mat Groves http://matgroves.com/ @Doormat23
  */
-
+ 
 /**
  * https://github.com/mrdoob/eventtarget.js/
  * THankS mr DOob!
@@ -3143,7 +3277,7 @@ PIXI.EventTarget = function () {
     /**
      * Holds all the listeners
      *
-     * @property listeneners
+     * @property listeners
      * @type Object
      */
     var listeners = {};
@@ -3271,7 +3405,7 @@ PIXI.PolyK = {};
  * Triangulates shapes for webGL graphic fills
  *
  * @method Triangulate
- *
+ * 
  */
 PIXI.PolyK.Triangulate = function(p)
 {
@@ -3387,7 +3521,7 @@ PIXI.PolyK._PointInTriangle = function(px, py, ax, ay, bx, by, cx, cy)
  * Checks whether a shape is convex
  *
  * @method _convex
- *
+ * 
  * @private
  */
 PIXI.PolyK._convex = function(ax, ay, bx, by, cx, cy, sign)
@@ -3400,11 +3534,11 @@ PIXI.PolyK._convex = function(ax, ay, bx, by, cx, cy, sign)
  */
 
 // TODO Alvin and Mat
-// Should we eventually create a Utils class ?
+// Should we eventually create a Utils class ? 
 // Or just move this file to the pixi.js file ?
 PIXI.initDefaultShaders = function()
 {
-
+   
   //  PIXI.stripShader = new PIXI.StripShader();
 //    PIXI.stripShader.init();
 
@@ -3508,7 +3642,7 @@ PIXI.PixiShader.prototype.init = function()
     var gl = this.gl;
 
     var program = PIXI.compileProgram(gl, this.vertexSrc || PIXI.PixiShader.defaultVertexSrc, this.fragmentSrc);
-
+    
     gl.useProgram(program);
 
     // get and store the uniforms for the shader
@@ -3870,7 +4004,7 @@ PIXI.PixiFastShader = function(gl)
     */
     this.textureCount = 0;
 
-
+    
     this.init();
 };
 
@@ -3885,7 +4019,7 @@ PIXI.PixiFastShader.prototype.init = function()
     var gl = this.gl;
 
     var program = PIXI.compileProgram(gl, this.vertexSrc, this.fragmentSrc);
-
+    
     gl.useProgram(program);
 
     // get and store the uniforms for the shader
@@ -3905,9 +4039,9 @@ PIXI.PixiFastShader.prototype.init = function()
 
     this.aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
     this.colorAttribute = gl.getAttribLocation(program, 'aColor');
+   
 
-
-
+   
     // Begin worst hack eva //
 
     // WHY??? ONLY on my chrome pixel the line above returns -1 when using filters?
@@ -3920,7 +4054,7 @@ PIXI.PixiFastShader.prototype.init = function()
     }
 
     this.attributes = [this.aVertexPosition, this.aPositionCoord,  this.aScale, this.aRotation, this.aTextureCoord, this.colorAttribute];
-
+    
     // End worst hack eva //
 
 
@@ -4225,7 +4359,7 @@ PIXI.WebGLGraphics.renderGraphics = function(graphics, renderSession)//projectio
 PIXI.WebGLGraphics.updateGraphics = function(graphics, gl)
 {
     var webGL = graphics._webGL[gl.id];
-
+    
     for (var i = webGL.lastIndex; i < graphics.graphicsData.length; i++)
     {
         var data = graphics.graphicsData[i];
@@ -4255,7 +4389,7 @@ PIXI.WebGLGraphics.updateGraphics = function(graphics, gl)
 
     webGL.lastIndex = graphics.graphicsData.length;
 
-
+   
 
     webGL.glPoints = new Float32Array(webGL.points);
 
@@ -4348,7 +4482,7 @@ PIXI.WebGLGraphics.buildRectangle = function(graphicsData, webGLData)
  */
 PIXI.WebGLGraphics.buildCircle = function(graphicsData, webGLData)
 {
-
+    
     // need to convert points to a nice regular data
     var rectData = graphicsData.points;
     var x = rectData[0];
@@ -4735,7 +4869,7 @@ PIXI.WebGLRenderer = function(width, height, view, transparent, antialias)
     // deal with losing context..
     this.contextLost = this.handleContextLost.bind(this);
     this.contextRestoredLost = this.handleContextRestored.bind(this);
-
+    
     this.view.addEventListener('webglcontextlost', this.contextLost, false);
     this.view.addEventListener('webglcontextrestored', this.contextRestoredLost, false);
 
@@ -4864,7 +4998,7 @@ PIXI.WebGLRenderer.prototype.render = function(stage)
             stage.interactionManager.setTarget(this);
         }
     }
-
+    
     var gl = this.gl;
 
     // -- Does this need to be set every frame? -- //
@@ -4935,7 +5069,7 @@ PIXI.WebGLRenderer.prototype.render = function(stage)
  * @method renderDIsplayObject
  * @param displayObject {DisplayObject} The DisplayObject to render
  * @param projection {Point} The projection
- * @param buffer {Array} a standard WebGL buffer
+ * @param buffer {Array} a standard WebGL buffer 
  */
 PIXI.WebGLRenderer.prototype.renderDisplayObject = function(displayObject, projection, buffer)
 {
@@ -5123,7 +5257,7 @@ PIXI.updateWebGLTexture = function(texture, gl)
 
         gl.bindTexture(gl.TEXTURE_2D, null);
     }
-
+    
 };
 
 /**
@@ -5191,7 +5325,7 @@ PIXI.WebGLRenderer.prototype.handleContextRestored = function()
     }
 
     /**
-     * Whether the context was lost
+     * Whether the context was lost 
      * @property contextLost
      * @type Boolean
      */
@@ -5208,7 +5342,7 @@ PIXI.WebGLRenderer.prototype.destroy = function()
 {
 
     // deal with losing context..
-
+    
     // remove listeners
     this.view.removeEventListener('webglcontextlost', this.contextLost);
     this.view.removeEventListener('webglcontextrestored', this.contextRestoredLost);
@@ -5228,7 +5362,7 @@ PIXI.WebGLRenderer.prototype.destroy = function()
     this.spriteBatch = null;
     this.maskManager = null;
     this.filterManager = null;
-
+    
     this.gl = null;
     //
     this.renderSession = null;
@@ -5240,7 +5374,7 @@ PIXI.WebGLRenderer.glContextId = 0;
 /**
  * @author Mat Groves http://matgroves.com/ @Doormat23
  */
-
+ 
 
 /**
 * @class WebGLMaskManager
@@ -5258,7 +5392,7 @@ PIXI.WebGLMaskManager = function(gl)
 
 /**
 * Sets the drawing context to the one given in parameter
-* @method setContext
+* @method setContext 
 * @param gl {WebGLContext} the current WebGL drawing context
 */
 PIXI.WebGLMaskManager.prototype.setContext = function(gl)
@@ -5281,12 +5415,12 @@ PIXI.WebGLMaskManager.prototype.pushMask = function(maskData, renderSession)
         gl.enable(gl.STENCIL_TEST);
         gl.stencilFunc(gl.ALWAYS,1,1);
     }
-
+    
   //  maskData.visible = false;
 
     this.maskStack.push(maskData);
-
-    gl.colorMask(false, false, false, true);
+    
+    gl.colorMask(false, false, false, false);
     gl.stencilOp(gl.KEEP,gl.KEEP,gl.INCR);
 
     PIXI.WebGLGraphics.renderGraphics(maskData, renderSession);
@@ -5321,7 +5455,7 @@ PIXI.WebGLMaskManager.prototype.popMask = function(renderSession)
         gl.stencilFunc(gl.NOTEQUAL,0,this.maskStack.length);
         gl.stencilOp(gl.KEEP,gl.KEEP,gl.KEEP);
     }
-
+   
     if(this.maskStack.length === 0)gl.disable(gl.STENCIL_TEST);
 };
 
@@ -5334,7 +5468,6 @@ PIXI.WebGLMaskManager.prototype.destroy = function()
     this.maskStack = null;
     this.gl = null;
 };
-
 /**
  * @author Mat Groves http://matgroves.com/ @Doormat23
  */
@@ -5364,14 +5497,14 @@ PIXI.WebGLShaderManager = function(gl)
 
 /**
 * Initialises the context and the properties
-* @method setContext
+* @method setContext 
 * @param gl {WebGLContext} the current WebGL drawing context
 * @param transparent {Boolean} Whether or not the drawing context should be transparent
 */
 PIXI.WebGLShaderManager.prototype.setContext = function(gl)
 {
     this.gl = gl;
-
+    
     // the next one is used for rendering primatives
     this.primitiveShader = new PIXI.PrimitiveShader(gl);
 
@@ -5387,9 +5520,9 @@ PIXI.WebGLShaderManager.prototype.setContext = function(gl)
 
 
 /**
-* Takes the attributes given in parameters
+* Takes the attributes given in parameters 
 * @method setAttribs
-* @param attribs {Array} attribs
+* @param attribs {Array} attribs 
 */
 PIXI.WebGLShaderManager.prototype.setAttribs = function(attribs)
 {
@@ -5431,7 +5564,7 @@ PIXI.WebGLShaderManager.prototype.setAttribs = function(attribs)
 };
 
 /**
-* Sets-up the given shader
+* Sets-up the given shader 
 *
 * @method activateShader
 * @param shader {Object} the shader that is going to be activated
@@ -5444,7 +5577,7 @@ PIXI.WebGLShaderManager.prototype.activateShader = function(shader)
 
     this.gl.useProgram(shader.program);
     this.setAttribs(shader.attributes);
-
+  
 };
 
 /**
@@ -5458,7 +5591,7 @@ PIXI.WebGLShaderManager.prototype.activatePrimitiveShader = function()
     gl.useProgram(this.primitiveShader.program);
 
     this.setAttribs(this.primitiveShader.attributes);
-
+    
 };
 
 /**
@@ -5496,7 +5629,7 @@ PIXI.WebGLShaderManager.prototype.destroy = function()
 
 /**
  * @author Mat Groves
- *
+ * 
  * Big thanks to the very clever Matt DesLauriers <mattdesl> https://github.com/mattdesl/
  * for creating the original pixi version!
  *
@@ -5516,7 +5649,7 @@ PIXI.WebGLSpriteBatch = function(gl)
 {
 
     /**
-     *
+     * 
      *
      * @property vertSize
      * @type Number
@@ -5553,7 +5686,7 @@ PIXI.WebGLSpriteBatch = function(gl)
      * @type Uint16Array
      */
     this.indices = new Uint16Array(numIndices);
-
+    
     this.lastIndexCount = 0;
 
     for (var i=0, j=0; i < numIndices; i += 6, j += 4)
@@ -5570,12 +5703,12 @@ PIXI.WebGLSpriteBatch = function(gl)
     this.drawing = false;
     this.currentBatchSize = 0;
     this.currentBaseTexture = null;
-
+    
     this.setContext(gl);
 };
 
 /**
-*
+* 
 * @method setContext
 *
 * @param gl {WebGLContext} the current WebGL drawing context
@@ -5602,7 +5735,7 @@ PIXI.WebGLSpriteBatch.prototype.setContext = function(gl)
 };
 
 /**
-*
+* 
 * @method begin
 *
 * @param renderSession {RenderSession} the RenderSession
@@ -5616,7 +5749,7 @@ PIXI.WebGLSpriteBatch.prototype.begin = function(renderSession)
 };
 
 /**
-*
+* 
 * @method end
 *
 */
@@ -5626,9 +5759,9 @@ PIXI.WebGLSpriteBatch.prototype.end = function()
 };
 
 /**
-*
+* 
 * @method render
-*
+* 
 * @param sprite {Sprite} the sprite to render when using this spritebatch
 */
 PIXI.WebGLSpriteBatch.prototype.render = function(sprite)
@@ -5666,7 +5799,7 @@ PIXI.WebGLSpriteBatch.prototype.render = function(sprite)
     var aY = sprite.anchor.y;
 
     var w0, w1, h0, h1;
-
+        
     if (sprite.texture.trim)
     {
         // if the sprite is trimmed then we need to add the extra space before transforming the sprite coords..
@@ -5738,7 +5871,7 @@ PIXI.WebGLSpriteBatch.prototype.render = function(sprite)
     // color
     verticies[index++] = alpha;
     verticies[index++] = tint;
-
+    
     // increment the batchsize
     this.currentBatchSize++;
 
@@ -5748,7 +5881,7 @@ PIXI.WebGLSpriteBatch.prototype.render = function(sprite)
 /**
 * Renders a tilingSprite using the spriteBatch
 * @method renderTilingSprite
-*
+* 
 * @param sprite {TilingSprite} the tilingSprite to render
 */
 PIXI.WebGLSpriteBatch.prototype.renderTilingSprite = function(tilingSprite)
@@ -5843,7 +5976,7 @@ PIXI.WebGLSpriteBatch.prototype.renderTilingSprite = function(tilingSprite)
     // color
     verticies[index++] = alpha;
     verticies[index++] = tint;
-
+    
     // xy
     verticies[index++] = a * w0 + c * h0 + tx;
     verticies[index++] = d * h0 + b * w0 + ty;
@@ -5873,7 +6006,7 @@ PIXI.WebGLSpriteBatch.prototype.renderTilingSprite = function(tilingSprite)
 * Renders the content and empties the current batch
 *
 * @method flush
-*
+* 
 */
 PIXI.WebGLSpriteBatch.prototype.flush = function()
 {
@@ -5881,12 +6014,12 @@ PIXI.WebGLSpriteBatch.prototype.flush = function()
     if (this.currentBatchSize===0)return;
 
     var gl = this.gl;
-
+    
     // bind the current texture
     gl.bindTexture(gl.TEXTURE_2D, this.currentBaseTexture._glTextures[gl.id] || PIXI.createWebGLTexture(this.currentBaseTexture, gl));
 
     // upload the verts to the buffer
-
+    
     if(this.currentBatchSize > ( this.size * 0.5 ) )
     {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
@@ -5900,10 +6033,10 @@ PIXI.WebGLSpriteBatch.prototype.flush = function()
 
    // var view = this.vertices.subarray(0, this.currentBatchSize * 4 * this.vertSize);
     //gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
-
+    
     // now draw those suckas!
     gl.drawElements(gl.TRIANGLES, this.currentBatchSize * 6, gl.UNSIGNED_SHORT, 0);
-
+   
     // then reset the batch!
     this.currentBatchSize = 0;
 
@@ -5912,7 +6045,7 @@ PIXI.WebGLSpriteBatch.prototype.flush = function()
 };
 
 /**
-*
+* 
 * @method stop
 *
 */
@@ -5922,7 +6055,7 @@ PIXI.WebGLSpriteBatch.prototype.stop = function()
 };
 
 /**
-*
+* 
 * @method start
 *
 */
@@ -5956,7 +6089,7 @@ PIXI.WebGLSpriteBatch.prototype.start = function()
 
 /**
 * Sets-up the given blendMode from WebGL's point of view
-* @method setBlendMode
+* @method setBlendMode 
 *
 * @param blendMode {Number} the blendMode, should be a Pixi const, such as PIXI.BlendModes.ADD
 */
@@ -5965,7 +6098,7 @@ PIXI.WebGLSpriteBatch.prototype.setBlendMode = function(blendMode)
     this.flush();
 
     this.currentBlendMode = blendMode;
-
+    
     var blendModeWebGL = PIXI.blendModesWebGL[this.currentBlendMode];
     this.gl.blendFunc(blendModeWebGL[0], blendModeWebGL[1]);
 };
@@ -5979,19 +6112,19 @@ PIXI.WebGLSpriteBatch.prototype.destroy = function()
 
     this.vertices = null;
     this.indices = null;
-
+    
     this.gl.deleteBuffer( this.vertexBuffer );
     this.gl.deleteBuffer( this.indexBuffer );
-
+    
     this.currentBaseTexture = null;
-
+    
     this.gl = null;
 };
 
 
 /**
  * @author Mat Groves
- *
+ * 
  * Big thanks to the very clever Matt DesLauriers <mattdesl> https://github.com/mattdesl/
  * for creating the original pixi version!
  *
@@ -6001,7 +6134,7 @@ PIXI.WebGLSpriteBatch.prototype.destroy = function()
 
 PIXI.WebGLFastSpriteBatch = function(gl)
 {
-
+   
 
     this.vertSize = 10;
     this.maxSize = 6000;//Math.pow(2, 16) /  this.vertSize;
@@ -6016,7 +6149,7 @@ PIXI.WebGLFastSpriteBatch = function(gl)
     this.vertices = new Float32Array(numVerts);
     //index data
     this.indices = new Uint16Array(numIndices);
-
+    
     this.vertexBuffer = null;
     this.indexBuffer = null;
 
@@ -6035,10 +6168,10 @@ PIXI.WebGLFastSpriteBatch = function(gl)
     this.drawing = false;
     this.currentBatchSize = 0;
     this.currentBaseTexture = null;
-
+   
     this.currentBlendMode = 0;
     this.renderSession = null;
-
+    
 
     this.shader = null;
 
@@ -6091,17 +6224,17 @@ PIXI.WebGLFastSpriteBatch.prototype.render = function(spriteBatch)
     var sprite = children[0];
 
     // if the uvs have not updated then no point rendering just yet!
-
+    
     // check texture.
     if(!sprite.texture._uvs)return;
-
+   
     this.currentBaseTexture = sprite.texture.baseTexture;
     // check blend mode
     if(sprite.blendMode !== this.currentBlendMode)
     {
         this.setBlendMode(sprite.blendMode);
     }
-
+    
     for(var i=0,j= children.length; i<j; i++)
     {
         this.renderSprite(children[i]);
@@ -6114,13 +6247,13 @@ PIXI.WebGLFastSpriteBatch.prototype.renderSprite = function(sprite)
 {
     //sprite = children[i];
     if(!sprite.visible)return;
-
+    
     // TODO trim??
     if(sprite.texture.baseTexture !== this.currentBaseTexture)
     {
         this.flush();
         this.currentBaseTexture = sprite.texture.baseTexture;
-
+        
         if(!sprite.texture._uvs)return;
     }
 
@@ -6173,7 +6306,7 @@ PIXI.WebGLFastSpriteBatch.prototype.renderSprite = function(sprite)
     verticies[index++] = uvs.y1;
     // color
     verticies[index++] = sprite.alpha;
-
+ 
 
     // xy
     verticies[index++] = w0;
@@ -6194,7 +6327,7 @@ PIXI.WebGLFastSpriteBatch.prototype.renderSprite = function(sprite)
     verticies[index++] = uvs.y1;
     // color
     verticies[index++] = sprite.alpha;
-
+  
 
     // xy
     verticies[index++] = w0;
@@ -6215,7 +6348,7 @@ PIXI.WebGLFastSpriteBatch.prototype.renderSprite = function(sprite)
     verticies[index++] = uvs.y2;
     // color
     verticies[index++] = sprite.alpha;
-
+ 
 
 
 
@@ -6255,7 +6388,7 @@ PIXI.WebGLFastSpriteBatch.prototype.flush = function()
     if (this.currentBatchSize===0)return;
 
     var gl = this.gl;
-
+    
     // bind the current texture
 
     if(!this.currentBaseTexture._glTextures[gl.id])PIXI.createWebGLTexture(this.currentBaseTexture, gl);
@@ -6264,7 +6397,7 @@ PIXI.WebGLFastSpriteBatch.prototype.flush = function()
 
     // upload the verts to the buffer
 
-
+   
     if(this.currentBatchSize > ( this.size * 0.5 ) )
     {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
@@ -6275,11 +6408,11 @@ PIXI.WebGLFastSpriteBatch.prototype.flush = function()
 
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
     }
-
-
+    
+    
     // now draw those suckas!
     gl.drawElements(gl.TRIANGLES, this.currentBatchSize * 6, gl.UNSIGNED_SHORT, 0);
-
+   
     // then reset the batch!
     this.currentBatchSize = 0;
 
@@ -6333,7 +6466,7 @@ PIXI.WebGLFastSpriteBatch.prototype.setBlendMode = function(blendMode)
     this.flush();
 
     this.currentBlendMode = blendMode;
-
+    
     var blendModeWebGL = PIXI.blendModesWebGL[this.currentBlendMode];
     this.gl.blendFunc(blendModeWebGL[0], blendModeWebGL[1]);
 };
@@ -6356,7 +6489,7 @@ PIXI.WebGLFilterManager = function(gl, transparent)
     this.transparent = transparent;
 
     this.filterStack = [];
-
+    
     this.offsetX = 0;
     this.offsetY = 0;
 
@@ -6366,7 +6499,7 @@ PIXI.WebGLFilterManager = function(gl, transparent)
 // API
 /**
 * Initialises the context and the properties
-* @method setContext
+* @method setContext 
 * @param gl {WebGLContext} the current WebGL drawing context
 */
 PIXI.WebGLFilterManager.prototype.setContext = function(gl)
@@ -6378,10 +6511,10 @@ PIXI.WebGLFilterManager.prototype.setContext = function(gl)
 };
 
 /**
-*
+* 
 * @method begin
-* @param renderSession {RenderSession}
-* @param buffer {ArrayBuffer}
+* @param renderSession {RenderSession} 
+* @param buffer {ArrayBuffer} 
 */
 PIXI.WebGLFilterManager.prototype.begin = function(renderSession, buffer)
 {
@@ -6407,6 +6540,8 @@ PIXI.WebGLFilterManager.prototype.pushFilter = function(filterBlock)
     var projection = this.renderSession.projection;
     var offset = this.renderSession.offset;
 
+    filterBlock._filterArea = filterBlock.target.filterArea || filterBlock.target.getBounds();
+
 
     // filter program
     // OPTIMISATION - the first filter is free if its a simple color change?
@@ -6414,8 +6549,8 @@ PIXI.WebGLFilterManager.prototype.pushFilter = function(filterBlock)
 
     var filter = filterBlock.filterPasses[0];
 
-    this.offsetX += filterBlock.target.filterArea.x;
-    this.offsetY += filterBlock.target.filterArea.y;
+    this.offsetX += filterBlock._filterArea.x;
+    this.offsetY += filterBlock._filterArea.y;
 
     var texture = this.texturePool.pop();
     if(!texture)
@@ -6429,15 +6564,13 @@ PIXI.WebGLFilterManager.prototype.pushFilter = function(filterBlock)
 
     gl.bindTexture(gl.TEXTURE_2D,  texture.texture);
 
-    filterBlock.target.filterArea = filterBlock.target.getBounds();
+    var filterArea = filterBlock._filterArea;// filterBlock.target.getBounds();///filterBlock.target.filterArea;
 
-    var filterArea = filterBlock.target.filterArea;
-
-    var padidng = filter.padding;
-    filterArea.x -= padidng;
-    filterArea.y -= padidng;
-    filterArea.width += padidng * 2;
-    filterArea.height += padidng * 2;
+    var padding = filter.padding;
+    filterArea.x -= padding;
+    filterArea.y -= padding;
+    filterArea.width += padding * 2;
+    filterArea.height += padding * 2;
 
     // cap filter to screen size..
     if(filterArea.x < 0)filterArea.x = 0;
@@ -6478,7 +6611,7 @@ PIXI.WebGLFilterManager.prototype.popFilter = function()
 {
     var gl = this.gl;
     var filterBlock = this.filterStack.pop();
-    var filterArea = filterBlock.target.filterArea;
+    var filterArea = filterBlock._filterArea;
     var texture = filterBlock._glFilterTexture;
     var projection = this.renderSession.projection;
     var offset = this.renderSession.offset;
@@ -6571,7 +6704,7 @@ PIXI.WebGLFilterManager.prototype.popFilter = function()
     else
     {
         var currentFilter = this.filterStack[this.filterStack.length-1];
-        filterArea = currentFilter.target.filterArea;
+        filterArea = currentFilter._filterArea;
 
         sizeX = filterArea.width;
         sizeY = filterArea.height;
@@ -6591,7 +6724,7 @@ PIXI.WebGLFilterManager.prototype.popFilter = function()
     offset.x = offsetX;
     offset.y = offsetY;
 
-    filterArea = filterBlock.target.filterArea;
+    filterArea = filterBlock._filterArea;
 
     var x = filterArea.x-offsetX;
     var y = filterArea.y-offsetY;
@@ -6632,7 +6765,7 @@ PIXI.WebGLFilterManager.prototype.popFilter = function()
     // bind the buffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, buffer );
 
-    // set the blend mode!
+    // set the blend mode! 
     //gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 
     // set texture
@@ -6781,7 +6914,7 @@ PIXI.WebGLFilterManager.prototype.destroy = function()
     var gl = this.gl;
 
     this.filterStack = null;
-
+    
     this.offsetX = 0;
     this.offsetY = 0;
 
@@ -6789,7 +6922,7 @@ PIXI.WebGLFilterManager.prototype.destroy = function()
     for (var i = 0; i < this.texturePool.length; i++) {
         this.texturePool.destroy();
     }
-
+    
     this.texturePool = null;
 
     //destroy buffers..
@@ -6809,9 +6942,10 @@ PIXI.WebGLFilterManager.prototype.destroy = function()
 * @param gl {WebGLContext} the current WebGL drawing context
 * @param width {Number} the horizontal range of the filter
 * @param height {Number} the vertical range of the filter
+* @param scaleMode {Number} Should be one of the PIXI.scaleMode consts
 * @private
 */
-PIXI.FilterTexture = function(gl, width, height)
+PIXI.FilterTexture = function(gl, width, height, scaleMode)
 {
     /**
      * @property gl
@@ -6823,9 +6957,11 @@ PIXI.FilterTexture = function(gl, width, height)
     this.frameBuffer = gl.createFramebuffer();
     this.texture = gl.createTexture();
 
+    scaleMode = scaleMode || PIXI.scaleModes.DEFAULT;
+
     gl.bindTexture(gl.TEXTURE_2D,  this.texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, scaleMode === PIXI.scaleModes.LINEAR ? gl.LINEAR : gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, scaleMode === PIXI.scaleModes.LINEAR ? gl.LINEAR : gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer );
@@ -6833,6 +6969,11 @@ PIXI.FilterTexture = function(gl, width, height)
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer );
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
 
+    // required for masking a mask??
+    this.renderBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, this.renderBuffer);
+  
     this.resize(width, height);
 };
 
@@ -6844,7 +6985,7 @@ PIXI.FilterTexture = function(gl, width, height)
 PIXI.FilterTexture.prototype.clear = function()
 {
     var gl = this.gl;
-
+    
     gl.clearColor(0,0,0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 };
@@ -6868,6 +7009,9 @@ PIXI.FilterTexture.prototype.resize = function(width, height)
     gl.bindTexture(gl.TEXTURE_2D,  this.texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,  width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
+    // update the stencil buffer width and height
+    gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL, width, height);
 };
 
 /**
@@ -6886,8 +7030,8 @@ PIXI.FilterTexture.prototype.destroy = function()
 
 /**
  * @author Mat Groves
- *
- *
+ * 
+ * 
  */
 /**
  * A set of functions used to handle masking
@@ -6896,7 +7040,7 @@ PIXI.FilterTexture.prototype.destroy = function()
  */
 PIXI.CanvasMaskManager = function()
 {
-
+    
 };
 
 /**
@@ -6909,7 +7053,7 @@ PIXI.CanvasMaskManager = function()
 PIXI.CanvasMaskManager.prototype.pushMask = function(maskData, context)
 {
     context.save();
-
+    
     var cacheAlpha = maskData.alpha;
     var transform = maskData.worldTransform;
 
@@ -6933,11 +7077,10 @@ PIXI.CanvasMaskManager.prototype.popMask = function(context)
     context.restore();
 };
 
-
 /**
  * @author Mat Groves
- *
- *
+ * 
+ * 
  */
 
 /**
@@ -6951,13 +7094,13 @@ PIXI.CanvasTinter = function()
 };
 
 //PIXI.CanvasTinter.cachTint = true;
-
+    
 
 /**
- * Basically this method just needs a sprite and a color and tints the sprite
+ * Basically this method just needs a sprite and a color and tints the sprite 
  * with the given color
- *
- * @method getTintedTexture
+ * 
+ * @method getTintedTexture 
  * @param sprite {Sprite} the sprite to tint
  * @param color {Number} the color to use to tint the sprite with
  */
@@ -6969,17 +7112,17 @@ PIXI.CanvasTinter.getTintedTexture = function(sprite, color)
     color = PIXI.CanvasTinter.roundColor(color);
 
     var stringColor = "#" + ("00000" + ( color | 0).toString(16)).substr(-6);
-
+   
     texture.tintCache = texture.tintCache || {};
 
     if(texture.tintCache[stringColor]) return texture.tintCache[stringColor];
 
      // clone texture..
     var canvas = PIXI.CanvasTinter.canvas || document.createElement("canvas");
-
+    
     //PIXI.CanvasTinter.tintWithPerPixel(texture, stringColor, canvas);
 
-
+    
     PIXI.CanvasTinter.tintMethod(texture, color, canvas);
 
     if(PIXI.CanvasTinter.convertTintToImage)
@@ -6992,7 +7135,7 @@ PIXI.CanvasTinter.getTintedTexture = function(sprite, color)
     }
     else
     {
-
+      
         texture.tintCache[stringColor] = canvas;
         // if we are not converting the texture to an image then we need to lose the reference to the canvas
         PIXI.CanvasTinter.canvas = null;
@@ -7019,9 +7162,9 @@ PIXI.CanvasTinter.tintWithMultiply = function(texture, color, canvas)
     canvas.height = frame.height;
 
     context.fillStyle = "#" + ("00000" + ( color | 0).toString(16)).substr(-6);
-
+    
     context.fillRect(0, 0, frame.width, frame.height);
-
+    
     context.globalCompositeOperation = "multiply";
 
     context.drawImage(texture.baseTexture.source,
@@ -7035,7 +7178,7 @@ PIXI.CanvasTinter.tintWithMultiply = function(texture, color, canvas)
                            frame.height);
 
     context.globalCompositeOperation = "destination-atop";
-
+    
     context.drawImage(texture.baseTexture.source,
                            frame.x,
                            frame.y,
@@ -7063,8 +7206,8 @@ PIXI.CanvasTinter.tintWithOverlay = function(texture, color, canvas)
     canvas.width = frame.width;
     canvas.height = frame.height;
 
-
-
+    
+    
     context.globalCompositeOperation = "copy";
     context.fillStyle = "#" + ("00000" + ( color | 0).toString(16)).substr(-6);
     context.fillRect(0, 0, frame.width, frame.height);
@@ -7080,7 +7223,7 @@ PIXI.CanvasTinter.tintWithOverlay = function(texture, color, canvas)
                            frame.width,
                            frame.height);
 
-
+    
     //context.globalCompositeOperation = "copy";
 
 };
@@ -7100,7 +7243,7 @@ PIXI.CanvasTinter.tintWithPerPixel = function(texture, color, canvas)
 
     canvas.width = frame.width;
     canvas.height = frame.height;
-
+  
     context.globalCompositeOperation = "copy";
     context.drawImage(texture.baseTexture.source,
                            frame.x,
@@ -7148,7 +7291,7 @@ PIXI.CanvasTinter.roundColor = function(color)
 };
 
 /**
- *
+ * 
  * Number of steps which will be used as a cap when rounding colors
  *
  * @property cacheStepsPerColorChannel
@@ -7156,7 +7299,7 @@ PIXI.CanvasTinter.roundColor = function(color)
  */
 PIXI.CanvasTinter.cacheStepsPerColorChannel = 8;
 /**
- *
+ * 
  * Number of steps which will be used as a cap when rounding colors
  *
  * @property convertTintToImage
@@ -7229,7 +7372,7 @@ PIXI.CanvasRenderer = function(width, height, view, transparent)
     if(!PIXI.blendModesCanvas)
     {
         PIXI.blendModesCanvas = [];
-
+        
         if(PIXI.canUseNewCanvasBlendModes())
         {
             PIXI.blendModesCanvas[PIXI.blendModes.NORMAL]   = "source-over";
@@ -7865,7 +8008,7 @@ PIXI.Graphics = function()
      * @default 0xFFFFFF
      */
     this.tint = 0xFFFFFF;// * Math.random();
-
+    
     /**
      * The blend mode to be applied to the graphic shape
      *
@@ -7874,7 +8017,7 @@ PIXI.Graphics = function()
      * @default PIXI.blendModes.NORMAL;
      */
     this.blendMode = PIXI.blendModes.NORMAL;
-
+    
     /**
      * Current path
      *
@@ -7912,7 +8055,7 @@ PIXI.Graphics = function()
     /**
      * the bounds' padding used for bounds calculation
      *
-     * @property bounds
+     * @property boundsPadding
      * @type Number
      */
     this.boundsPadding = 10;
@@ -8150,7 +8293,7 @@ PIXI.Graphics.prototype.generateTexture = function()
     var texture = PIXI.Texture.fromCanvas(canvasBuffer.canvas);
 
     canvasBuffer.context.translate(-bounds.x,-bounds.y);
-
+    
     PIXI.CanvasGraphics.renderGraphics(this, canvasBuffer.context);
 
     return texture;
@@ -8160,26 +8303,27 @@ PIXI.Graphics.prototype.generateTexture = function()
 * Renders the object using the WebGL renderer
 *
 * @method _renderWebGL
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.Graphics.prototype._renderWebGL = function(renderSession)
 {
     // if the sprite is not visible or the alpha is 0 then no need to render this element
     if(this.visible === false || this.alpha === 0 || this.isMask === true)return;
-
+    
     if(this._cacheAsBitmap)
     {
-
+       
         if(this.dirty)
         {
             this._generateCachedSprite();
             // we will also need to update the texture on the gpu too!
             PIXI.updateWebGLTexture(this._cachedSprite.texture.baseTexture, renderSession.gl);
-
+            
             this.dirty =  false;
         }
 
+        this._cachedSprite.alpha = this.alpha;
         PIXI.Sprite.prototype._renderWebGL.call(this._cachedSprite, renderSession);
 
         return;
@@ -8190,7 +8334,7 @@ PIXI.Graphics.prototype._renderWebGL = function(renderSession)
 
         if(this._mask)renderSession.maskManager.pushMask(this.mask, renderSession);
         if(this._filters)renderSession.filterManager.pushFilter(this._filterBlock);
-
+      
         // check blend mode
         if(this.blendMode !== renderSession.spriteBatch.currentBlendMode)
         {
@@ -8198,9 +8342,9 @@ PIXI.Graphics.prototype._renderWebGL = function(renderSession)
             var blendModeWebGL = PIXI.blendModesWebGL[renderSession.spriteBatch.currentBlendMode];
             renderSession.spriteBatch.gl.blendFunc(blendModeWebGL[0], blendModeWebGL[1]);
         }
-
+     
         PIXI.WebGLGraphics.renderGraphics(this, renderSession);
-
+        
         // only render if it has children!
         if(this.children.length)
         {
@@ -8217,7 +8361,7 @@ PIXI.Graphics.prototype._renderWebGL = function(renderSession)
 
         if(this._filters)renderSession.filterManager.popFilter();
         if(this._mask)renderSession.maskManager.popMask(renderSession);
-
+          
         renderSession.drawCount++;
 
         renderSession.spriteBatch.start();
@@ -8228,17 +8372,17 @@ PIXI.Graphics.prototype._renderWebGL = function(renderSession)
 * Renders the object using the Canvas renderer
 *
 * @method _renderCanvas
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.Graphics.prototype._renderCanvas = function(renderSession)
 {
     // if the sprite is not visible or the alpha is 0 then no need to render this element
     if(this.visible === false || this.alpha === 0 || this.isMask === true)return;
-
+    
     var context = renderSession.context;
     var transform = this.worldTransform;
-
+    
     if(this.blendMode !== renderSession.currentBlendMode)
     {
         renderSession.currentBlendMode = this.blendMode;
@@ -8292,28 +8436,24 @@ PIXI.Graphics.prototype.getBounds = function( matrix )
     var x4 =  a * w1 + c * h0 + tx;
     var y4 =  d * h0 + b * w1 + ty;
 
-    var maxX = -Infinity;
-    var maxY = -Infinity;
+    var maxX = x1;
+    var maxY = y1;
 
-    var minX = Infinity;
-    var minY = Infinity;
+    var minX = x1;
+    var minY = y1;
 
-    minX = x1 < minX ? x1 : minX;
     minX = x2 < minX ? x2 : minX;
     minX = x3 < minX ? x3 : minX;
     minX = x4 < minX ? x4 : minX;
 
-    minY = y1 < minY ? y1 : minY;
     minY = y2 < minY ? y2 : minY;
     minY = y3 < minY ? y3 : minY;
     minY = y4 < minY ? y4 : minY;
 
-    maxX = x1 > maxX ? x1 : maxX;
     maxX = x2 > maxX ? x2 : maxX;
     maxX = x3 > maxX ? x3 : maxX;
     maxX = x4 > maxX ? x4 : maxX;
 
-    maxY = y1 > maxY ? y1 : maxY;
     maxY = y2 > maxY ? y2 : maxY;
     maxY = y3 > maxY ? y3 : maxY;
     maxY = y4 > maxY ? y4 : maxY;
@@ -8336,7 +8476,7 @@ PIXI.Graphics.prototype.getBounds = function( matrix )
  */
 PIXI.Graphics.prototype.updateBounds = function()
 {
-
+    
     var minX = Infinity;
     var maxX = -Infinity;
 
@@ -8414,7 +8554,7 @@ PIXI.Graphics.prototype._generateCachedSprite = function()
     {
         var canvasBuffer = new PIXI.CanvasBuffer(bounds.width, bounds.height);
         var texture = PIXI.Texture.fromCanvas(canvasBuffer.canvas);
-
+        
         this._cachedSprite = new PIXI.Sprite(texture);
         this._cachedSprite.buffer = canvasBuffer;
 
@@ -8431,8 +8571,10 @@ PIXI.Graphics.prototype._generateCachedSprite = function()
 
    // this._cachedSprite.buffer.context.save();
     this._cachedSprite.buffer.context.translate(-bounds.x,-bounds.y);
-
+    
     PIXI.CanvasGraphics.renderGraphics(this, this._cachedSprite.buffer.context);
+    this._cachedSprite.alpha = this.alpha;
+
    // this._cachedSprite.buffer.context.restore();
 };
 
@@ -8501,7 +8643,7 @@ PIXI.TilingSprite = function(texture, width, height)
      * @type Point
      */
     this.tileScaleOffset = new PIXI.Point(1,1);
-
+    
     /**
      * The offset position of the image that is being tiled
      *
@@ -8528,7 +8670,7 @@ PIXI.TilingSprite = function(texture, width, height)
      * @default 0xFFFFFF
      */
     this.tint = 0xFFFFFF;
-
+    
     /**
      * The blend mode to be applied to the sprite
      *
@@ -8555,7 +8697,7 @@ Object.defineProperty(PIXI.TilingSprite.prototype, 'width', {
         return this._width;
     },
     set: function(value) {
-
+        
         this._width = value;
     }
 });
@@ -8621,14 +8763,14 @@ PIXI.TilingSprite.prototype.setTexture = function(texture)
 * Renders the object using the WebGL renderer
 *
 * @method _renderWebGL
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.TilingSprite.prototype._renderWebGL = function(renderSession)
 {
 
     if(this.visible === false || this.alpha === 0)return;
-
+    
     var i,j;
 
     if(this.mask)
@@ -8657,7 +8799,7 @@ PIXI.TilingSprite.prototype._renderWebGL = function(renderSession)
         }
     }
     else renderSession.spriteBatch.renderTilingSprite(this);
-
+    
 
     // simple render children!
     for(i=0,j=this.children.length; i<j; i++)
@@ -8669,7 +8811,7 @@ PIXI.TilingSprite.prototype._renderWebGL = function(renderSession)
 
     if(this.filters)renderSession.filterManager.popFilter();
     if(this.mask)renderSession.maskManager.popMask(renderSession);
-
+    
     renderSession.spriteBatch.start();
 };
 
@@ -8677,13 +8819,13 @@ PIXI.TilingSprite.prototype._renderWebGL = function(renderSession)
 * Renders the object using the Canvas renderer
 *
 * @method _renderCanvas
-* @param renderSession {RenderSession}
+* @param renderSession {RenderSession} 
 * @private
 */
 PIXI.TilingSprite.prototype._renderCanvas = function(renderSession)
 {
     if(this.visible === false || this.alpha === 0)return;
-
+    
     var context = renderSession.context;
 
     if(this._mask)
@@ -8693,23 +8835,29 @@ PIXI.TilingSprite.prototype._renderCanvas = function(renderSession)
 
     context.globalAlpha = this.worldAlpha;
 
-
+    
     var transform = this.worldTransform;
 
     // allow for trimming
+//(this.anchor.x) * -frame.width,
+//                               (this.anchor.y) * -frame.height,
 
-    context.setTransform(transform.a, transform.c, transform.b, transform.d, transform.tx, transform.ty);
+         
+    context.setTransform(transform.a, transform.c, transform.b, transform.d, transform.tx , transform.ty);
 
 
     if(!this.__tilePattern ||  this.refreshTexture)
     {
         this.generateTilingTexture(false);
-
+    
         if(this.tilingTexture)
         {
             this.__tilePattern = context.createPattern(this.tilingTexture.baseTexture.source, 'repeat');
         }
-
+        else
+        {
+            return;
+        }
     }
 
     // check blend mode
@@ -8732,7 +8880,10 @@ PIXI.TilingSprite.prototype._renderCanvas = function(renderSession)
     context.translate(tilePosition.x, tilePosition.y);
 
     context.fillStyle = this.__tilePattern;
-    context.fillRect(-tilePosition.x,-tilePosition.y,this.width / tileScale.x, this.height / tileScale.y);
+
+    // make sure to account for the anchor point..
+    context.fillRect(-tilePosition.x + (this.anchor.x * -this._width),-tilePosition.y + (this.anchor.y * -this._height),
+                        this._width / tileScale.x, this._height / tileScale.y);
 
     context.scale(1/tileScale.x, 1/tileScale.y);
     context.translate(-tilePosition.x, -tilePosition.y);
@@ -8772,7 +8923,7 @@ PIXI.TilingSprite.prototype.getBounds = function()
     var d = worldTransform.d;
     var tx = worldTransform.tx;
     var ty = worldTransform.ty;
-
+    
     var x1 = a * w1 + c * h1 + tx;
     var y1 = d * h1 + b * w1 + ty;
 
@@ -8826,9 +8977,9 @@ PIXI.TilingSprite.prototype.getBounds = function()
 };
 
 /**
-*
+* 
 * @method generateTilingTexture
-*
+* 
 * @param forcePowerOfTwo {Boolean} Whether we want to force the texture to be a power of two
 */
 PIXI.TilingSprite.prototype.generateTilingTexture = function(forcePowerOfTwo)
@@ -8853,9 +9004,9 @@ PIXI.TilingSprite.prototype.generateTilingTexture = function(forcePowerOfTwo)
         {
             targetWidth = frame.width;
             targetHeight = frame.height;
-
+           
             newTextureRequired = true;
-
+            
         }
     }
     else
@@ -8886,7 +9037,7 @@ PIXI.TilingSprite.prototype.generateTilingTexture = function(forcePowerOfTwo)
             this.tilingTexture.isTiling = true;
 
         }
-
+        
         canvasBuffer.context.drawImage(texture.baseTexture.source,
                                            frame.x,
                                            frame.y,
@@ -8918,7 +9069,6 @@ PIXI.TilingSprite.prototype.generateTilingTexture = function(forcePowerOfTwo)
     this.refreshTexture = false;
     this.tilingTexture.baseTexture._powerOf2 = true;
 };
-
 /**
  * @author Mat Groves http://matgroves.com/ @Doormat23
  */
@@ -8990,10 +9140,10 @@ PIXI.BaseTexture = function(source, scaleMode)
 
     // used for webGL
     this._glTextures = [];
-
+    
     if(!source)return;
 
-    if(this.source.complete || this.source.getContext)
+    if((this.source.complete || this.source.getContext) && this.source.width && this.source.height)
     {
         this.hasLoaded = true;
         this.width = this.source.width;
@@ -9020,7 +9170,7 @@ PIXI.BaseTexture = function(source, scaleMode)
     this.imageUrl = null;
     this._powerOf2 = false;
 
-
+    
 
 };
 
@@ -9063,13 +9213,15 @@ PIXI.BaseTexture.prototype.updateSourceImage = function(newSrc)
  * @static
  * @method fromImage
  * @param imageUrl {String} The image url of the texture
- * @param crossorigin {Boolean}
+ * @param crossorigin {Boolean} 
  * @param scaleMode {Number} Should be one of the PIXI.scaleMode consts
  * @return BaseTexture
  */
 PIXI.BaseTexture.fromImage = function(imageUrl, crossorigin, scaleMode)
 {
     var baseTexture = PIXI.BaseTextureCache[imageUrl];
+    
+    if(crossorigin === undefined && imageUrl.indexOf('data:') === -1) crossorigin = true;
 
     if(!baseTexture)
     {
@@ -9164,15 +9316,15 @@ PIXI.Texture = function(baseTexture, frame)
      * @type Rectangle
      */
     this.trim = null;
-
+  
     this.scope = this;
 
     this._uvs = null;
-
+    
     if(baseTexture.hasLoaded)
     {
         if(this.noFrame)frame = new PIXI.Rectangle(0,0, baseTexture.width, baseTexture.height);
-
+      
         this.setFrame(frame);
     }
     else
@@ -9197,7 +9349,7 @@ PIXI.Texture.prototype.onBaseTextureLoaded = function()
     baseTexture.removeEventListener( 'loaded', this.onLoaded );
 
     if(this.noFrame)this.frame = new PIXI.Rectangle(0,0, baseTexture.width, baseTexture.height);
-
+    
     this.setFrame(this.frame);
 
     this.scope.dispatchEvent( { type: 'update', content: this } );
@@ -9398,8 +9550,9 @@ PIXI.TextureUvs = function()
  * @constructor
  * @param width {Number} The width of the render texture
  * @param height {Number} The height of the render texture
+ * @param scaleMode {Number} Should be one of the PIXI.scaleMode consts
  */
-PIXI.RenderTexture = function(width, height, renderer)
+PIXI.RenderTexture = function(width, height, renderer, scaleMode)
 {
     PIXI.EventTarget.call( this );
 
@@ -9437,6 +9590,8 @@ PIXI.RenderTexture = function(width, height, renderer)
     this.baseTexture.height = this.height;
     this.baseTexture._glTextures = [];
 
+    this.baseTexture.scaleMode = scaleMode || PIXI.scaleModes.DEFAULT;
+
     this.baseTexture.hasLoaded = true;
 
     // each render texture can only belong to one renderer at the moment if its webGL
@@ -9446,7 +9601,7 @@ PIXI.RenderTexture = function(width, height, renderer)
     {
         var gl = this.renderer.gl;
 
-        this.textureBuffer = new PIXI.FilterTexture(gl, this.width, this.height);
+        this.textureBuffer = new PIXI.FilterTexture(gl, this.width, this.height, this.baseTexture.scaleMode);
         this.baseTexture._glTextures[gl.id] =  this.textureBuffer.texture;
 
         this.render = this.renderWebGL;
@@ -9454,7 +9609,6 @@ PIXI.RenderTexture = function(width, height, renderer)
     }
     else
     {
-        console.log('renderer canvas');
         this.render = this.renderCanvas;
         this.textureBuffer = new PIXI.CanvasBuffer(this.width, this.height);
         this.baseTexture.source = this.textureBuffer.canvas;
@@ -9538,7 +9692,7 @@ PIXI.RenderTexture.prototype.renderWebGL = function(displayObject, position, cle
     // update the textures!
     PIXI.WebGLRenderer.updateTextures();
 
-    //
+    // 
     this.renderer.renderDisplayObject(displayObject, this.projection, this.textureBuffer.frameBuffer);
 
     displayObject.worldTransform = originalWorldTransform;
@@ -9601,7 +9755,6 @@ PIXI.RenderTexture.tempMatrix = new PIXI.Matrix();
         root.PIXI = PIXI;
     }
 }).call(this);
-
 /**
 * @author       Richard Davey <rich@photonstorm.com>
 * @copyright    2014 Photon Storm Ltd.
@@ -9609,21 +9762,21 @@ PIXI.RenderTexture.tempMatrix = new PIXI.Matrix();
 *
 * @overview
 *
-* Phaser - http://www.phaser.io
+* Phaser - http://phaser.io
 *
-* v2.0.2 "Ghealdan" - Built: Fri Mar 28 2014 01:30:50
+* v2.0.4 "Mos Shirare" - Built: Tue Apr 29 2014 22:39:37
 *
 * By Richard Davey http://www.photonstorm.com @photonstorm
 *
-* Phaser is a fun, free and fast 2D game framework for making HTML5 games 
-* for desktop and mobile web browsers, supporting Canvas and WebGL.
+* Phaser is a fun, free and fast 2D game framework for making HTML5 games
+* for desktop and mobile web browsers, supporting Canvas and WebGL rendering.
 *
 * Phaser uses Pixi.js for rendering, created by Mat Groves http://matgroves.com @Doormat23
 * Phaser uses p2.js for full-body physics, created by Stefan Hedman https://github.com/schteppe/p2.js @schteppe
 * Phaser contains a port of N+ Physics, converted by Richard Davey, original by http://www.metanetsoftware.com
 *
 * Many thanks to Adam Saltsman (@ADAMATOMIC) for releasing Flixel, from which both Phaser
-* and my love of framework development can be traced.
+* and my love of framework development originate.
 *
 * Follow development at http://phaser.io and on our forum
 *
@@ -9631,6 +9784,7 @@ PIXI.RenderTexture.tempMatrix = new PIXI.Matrix();
 * "If you want them to be more intelligent, read them more fairy tales."
 *                                                     -- Albert Einstein
 */
+
 /**
 * @author       Richard Davey <rich@photonstorm.com>
 * @copyright    2014 Photon Storm Ltd.
@@ -9653,8 +9807,7 @@ PIXI.RenderTexture.tempMatrix = new PIXI.Matrix();
 */
 var Phaser = Phaser || {
 
-	VERSION: '<%= version %>',
-	DEV_VERSION: '2.0.2',
+	VERSION: '2.0.4',
 	GAMES: [],
 
     AUTO: 0,
@@ -9878,13 +10031,6 @@ Phaser.Utils = {
         return true;
     },
 
-
-    //  deep, target, objects to copy to the target object
-    //  This is a slightly modified version of {@link http://api.jquery.com/jQuery.extend/|jQuery.extend}
-    //  deep (boolean)
-    //  target (object to add to)
-    //  objects ... (objects to recurse and copy from)
-
     /**
     * This is a slightly modified version of http://api.jquery.com/jQuery.extend/
     * @method Phaser.Utils.extend
@@ -10018,6 +10164,95 @@ if (!Array.isArray)
 }
 
 /**
+* A polyfill for Array.forEach
+* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
+*/
+if (!Array.prototype.forEach)
+{
+    Array.prototype.forEach = function(fun /*, thisArg */)
+    {
+        "use strict";
+
+        if (this === void 0 || this === null)
+        {
+            throw new TypeError();
+        }
+
+        var t = Object(this);
+        var len = t.length >>> 0;
+
+        if (typeof fun !== "function")
+        {
+            throw new TypeError();
+        }
+
+        var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+
+        for (var i = 0; i < len; i++)
+        {
+            if (i in t)
+            {
+                fun.call(thisArg, t[i], i, t);
+            }
+        }
+    };
+}
+
+/**
+* Low-budget Float32Array knock-off, suitable for use with P2.js in IE9
+* Source: http://www.html5gamedevs.com/topic/5988-phaser-12-ie9/
+* Cameron Foale (http://www.kibibu.com)
+*/
+if (typeof window.Uint32Array !== "function")
+{
+    var CheapArray = function(type)
+    {
+        var proto = new Array(); // jshint ignore:line
+
+        window[type] = function(arg) {
+
+            if (typeof(arg) === "number")
+            {
+                Array.call(this, arg);
+                this.length = arg;
+
+                for (var i = 0; i < this.length; i++)
+                {
+                    this[i] = 0;
+                }
+            }
+            else
+            {
+                Array.call(this, arg.length);
+
+                this.length = arg.length;
+
+                for (var i = 0; i < this.length; i++)
+                {
+                    this[i] = arg[i];
+                }
+            }
+        };
+
+        window[type].prototype = proto;
+        window[type].constructor = window[type];
+    };
+
+    CheapArray('Uint32Array'); // jshint ignore:line
+    CheapArray('Int16Array');  // jshint ignore:line
+}
+
+/**
+ * Also fix for the absent console in IE9
+ */
+if (!window.console)
+{
+    window.console = {};
+    window.console.log = window.console.assert = function(){};
+    window.console.warn = window.console.assert = function(){};
+}
+
+/**
 * @author       Richard Davey <rich@photonstorm.com>
 * @copyright    2014 Photon Storm Ltd.
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
@@ -10142,7 +10377,7 @@ Phaser.Circle.prototype = {
 
         if (round)
         {
-            return Phaser.Math.distanceRound(this.x, this.y, dest.x, dest.y);
+            return Phaser.Math.distanceRounded(this.x, this.y, dest.x, dest.y);
         }
         else
         {
@@ -10561,12 +10796,21 @@ PIXI.Circle = Phaser.Circle;
 */
 
 /**
-* Creates a new Point. If you pass no parameters a Point is created set to (0,0).
 * @class Phaser.Point
-* @classdesc The Point object represents a location in a two-dimensional coordinate system, where x represents the horizontal axis and y represents the vertical axis.
+* @classdesc
+* The Point object represents a location in a two-dimensional coordinate system, 
+* where x represents the horizontal axis and y represents the vertical axis.
+* The following code creates a point at (0,0):
+* `var myPoint = new Phaser.Point();`
+* You can also use them as 2D Vectors and you'll find different vector related methods in this class.
+*/
+
+/**
+* Creates a new Point object. If you pass no parameters a Point is created set to (0, 0).
+*
 * @constructor
-* @param {number} x The horizontal position of this Point (default 0)
-* @param {number} y The vertical position of this Point (default 0)
+* @param {number} [x=0] - The horizontal position of this Point.
+* @param {number} [y=0] - The vertical position of this Point.
 */
 Phaser.Point = function (x, y) {
 
@@ -10574,12 +10818,12 @@ Phaser.Point = function (x, y) {
     y = y || 0;
 
     /**
-    * @property {number} x - The x coordinate of the point.
+    * @property {number} x - The x value of the point.
     */
     this.x = x;
 
     /**
-    * @property {number} y - The y coordinate of the point.
+    * @property {number} y - The y value of the point.
     */
     this.y = y;
 
@@ -10589,29 +10833,38 @@ Phaser.Point.prototype = {
 
     /**
     * Copies the x and y properties from any given object to this Point.
+    *
     * @method Phaser.Point#copyFrom
     * @param {any} source - The object to copy from.
-    * @return {Point} This Point object.
+    * @return {Phaser.Point} This Point object.
     */
     copyFrom: function (source) {
+
         return this.setTo(source.x, source.y);
+
     },
 
     /**
     * Inverts the x and y values of this Point
+    *
     * @method Phaser.Point#invert
-    * @return {Point} This Point object.
+    * @return {Phaser.Point} This Point object.
     */
     invert: function () {
+
         return this.setTo(this.y, this.x);
+
     },
 
     /**
-    * Sets the x and y values of this Point object to the given coordinates.
+    * Sets the `x` and `y` values of this Point object to the given values.
+    * If you omit the `y` value then the `x` value will be applied to both, for example:
+    * `Point.setTo(2)` is the same as `Point.setTo(2, 2)`
+    *
     * @method Phaser.Point#setTo
-    * @param {number} x - The horizontal position of this point.
-    * @param {number} y - The vertical position of this point.
-    * @return {Point} This Point object. Useful for chaining method calls.
+    * @param {number} x - The horizontal value of this point.
+    * @param {number} [y] - The vertical value of this point. If not given the x value will be used in its place.
+    * @return {Phaser.Point} This Point object. Useful for chaining method calls.
     */
     setTo: function (x, y) {
 
@@ -10623,11 +10876,14 @@ Phaser.Point.prototype = {
     },
 
     /**
-    * Sets the x and y values of this Point object to the given coordinates.
+    * Sets the `x` and `y` values of this Point object to the given values.
+    * If you omit the `y` value then the `x` value will be applied to both, for example:
+    * `Point.setTo(2)` is the same as `Point.setTo(2, 2)`
+    *
     * @method Phaser.Point#set
-    * @param {number} x - The horizontal position of this point.
-    * @param {number} y - The vertical position of this point.
-    * @return {Point} This Point object. Useful for chaining method calls.
+    * @param {number} x - The horizontal value of this point.
+    * @param {number} [y] - The vertical value of this point. If not given the x value will be used in its place.
+    * @return {Phaser.Point} This Point object. Useful for chaining method calls.
     */
     set: function (x, y) {
 
@@ -10640,6 +10896,7 @@ Phaser.Point.prototype = {
 
     /**
     * Adds the given x and y values to this Point.
+    *
     * @method Phaser.Point#add
     * @param {number} x - The value to add to Point.x.
     * @param {number} y - The value to add to Point.y.
@@ -10655,6 +10912,7 @@ Phaser.Point.prototype = {
 
     /**
     * Subtracts the given x and y values from this Point.
+    *
     * @method Phaser.Point#subtract
     * @param {number} x - The value to subtract from Point.x.
     * @param {number} y - The value to subtract from Point.y.
@@ -10669,7 +10927,8 @@ Phaser.Point.prototype = {
     },
 
     /**
-    * Multiplies Point.x and Point.y by the given x and y values.
+    * Multiplies Point.x and Point.y by the given x and y values. Sometimes known as `Scale`.
+    *
     * @method Phaser.Point#multiply
     * @param {number} x - The value to multiply Point.x by.
     * @param {number} y - The value to multiply Point.x by.
@@ -10685,6 +10944,7 @@ Phaser.Point.prototype = {
 
     /**
     * Divides Point.x and Point.y by the given x and y values.
+    *
     * @method Phaser.Point#divide
     * @param {number} x - The value to divide Point.x by.
     * @param {number} y - The value to divide Point.x by.
@@ -10700,6 +10960,7 @@ Phaser.Point.prototype = {
 
     /**
     * Clamps the x value of this Point to be between the given min and max.
+    *
     * @method Phaser.Point#clampX
     * @param {number} min - The minimum value to clamp this Point to.
     * @param {number} max - The maximum value to clamp this Point to.
@@ -10714,6 +10975,7 @@ Phaser.Point.prototype = {
 
     /**
     * Clamps the y value of this Point to be between the given min and max
+    *
     * @method Phaser.Point#clampY
     * @param {number} min - The minimum value to clamp this Point to.
     * @param {number} max - The maximum value to clamp this Point to.
@@ -10728,6 +10990,7 @@ Phaser.Point.prototype = {
 
     /**
     * Clamps this Point object values to be between the given min and max.
+    *
     * @method Phaser.Point#clamp
     * @param {number} min - The minimum value to clamp this Point to.
     * @param {number} max - The maximum value to clamp this Point to.
@@ -10743,6 +11006,7 @@ Phaser.Point.prototype = {
 
     /**
     * Creates a copy of the given Point.
+    *
     * @method Phaser.Point#clone
     * @param {Phaser.Point} [output] Optional Point object. If given the values will be set into this object, otherwise a brand new Point object will be created and returned.
     * @return {Phaser.Point} The new Point object.
@@ -10764,11 +11028,12 @@ Phaser.Point.prototype = {
 
     /**
     * Copies the x and y properties from this Point to any given object.
+    *
     * @method Phaser.Point#copyTo
     * @param {any} dest - The object to copy to.
     * @return {Object} The dest object.
     */
-    copyTo: function(dest) {
+    copyTo: function (dest) {
 
         dest.x = this.x;
         dest.y = this.y;
@@ -10779,66 +11044,121 @@ Phaser.Point.prototype = {
 
     /**
     * Returns the distance of this Point object to the given object (can be a Circle, Point or anything with x/y properties)
+    *
     * @method Phaser.Point#distance
     * @param {object} dest - The target object. Must have visible x and y properties that represent the center of the object.
     * @param {boolean} [round] - Round the distance to the nearest integer (default false).
     * @return {number} The distance between this Point object and the destination Point object.
     */
     distance: function (dest, round) {
+
         return Phaser.Point.distance(this, dest, round);
+
     },
 
     /**
     * Determines whether the given objects x/y values are equal to this Point object.
+    *
     * @method Phaser.Point#equals
-    * @param {Phaser.Point} a - The first object to compare.
-    * @return {boolean} A value of true if the Points are equal, otherwise false.
+    * @param {Phaser.Point|any} a - The object to compare with this Point.
+    * @return {boolean} A value of true if the x and y points are equal, otherwise false.
     */
     equals: function (a) {
-        return (a.x == this.x && a.y == this.y);
+
+        return (a.x === this.x && a.y === this.y);
+
+    },
+
+    /**
+    * Returns the angle between this Point object and another object with public x and y properties.
+    *
+    * @method Phaser.Point#angle
+    * @param {Phaser.Point|any} a - The object to get the angle from this Point to.
+    * @return {number} The angle between the two objects.
+    */
+    angle: function (a) {
+
+        return Math.atan2(this.x * a.y - this.y * a.x, this.x * a.x + this.y * a.y);
+
+    },
+
+    /**
+    * Returns the angle squared between this Point object and another object with public x and y properties.
+    *
+    * @method Phaser.Point#angleSq
+    * @param {Phaser.Point|any} a - The object to get the angleSq from this Point to.
+    * @return {number} The angleSq between the two objects.
+    */
+    angleSq: function (a) {
+
+        return this.subtract(a).angle(a.subtract(this));
+
     },
 
     /**
     * Rotates this Point around the x/y coordinates given to the desired angle.
+    *
     * @method Phaser.Point#rotate
-    * @param {number} x - The x coordinate of the anchor point
-    * @param {number} y - The y coordinate of the anchor point
+    * @param {number} x - The x coordinate of the anchor point.
+    * @param {number} y - The y coordinate of the anchor point.
     * @param {number} angle - The angle in radians (unless asDegrees is true) to rotate the Point to.
     * @param {boolean} asDegrees - Is the given rotation in radians (false) or degrees (true)?
     * @param {number} [distance] - An optional distance constraint between the Point and the anchor.
     * @return {Phaser.Point} The modified point object.
     */
     rotate: function (x, y, angle, asDegrees, distance) {
+
         return Phaser.Point.rotate(this, x, y, angle, asDegrees, distance);
+
     },
 
     /**
-    * Calculates the length of the vector
+    * Calculates the length of the Point object.
+    *
     * @method Phaser.Point#getMagnitude
-    * @return {number} the length of the vector
+    * @return {number} The length of the Point.
     */
-    getMagnitude: function() {
+    getMagnitude: function () {
+
         return Math.sqrt((this.x * this.x) + (this.y * this.y));
+
     },
 
     /**
-    * Alters the length of the vector without changing the direction
+    * Calculates the length squared of the Point object.
+    *
+    * @method Phaser.Point#getMagnitudeSq
+    * @return {number} The length ^ 2 of the Point.
+    */
+    getMagnitudeSq: function () {
+
+        return (this.x * this.x) + (this.y * this.y);
+
+    },
+
+    /**
+    * Alters the length of the Point without changing the direction.
+    *
     * @method Phaser.Point#setMagnitude
-    * @param {number} magnitude the desired magnitude of the resulting vector
-    * @return {Phaser.Point} the modified original vector
+    * @param {number} magnitude - The desired magnitude of the resulting Point.
+    * @return {Phaser.Point} This Point object.
     */
-    setMagnitude: function(magnitude) {
+    setMagnitude: function (magnitude) {
+
         return this.normalize().multiply(magnitude, magnitude);
+
     },
 
     /**
-    * Alters the vector so that its length is 1, but it retains the same direction
+    * Alters the Point object so that its length is 1, but it retains the same direction.
+    *
     * @method Phaser.Point#normalize
-    * @return {Phaser.Point} the modified original vector
+    * @return {Phaser.Point} This Point object.
     */
-    normalize: function() {
+    normalize: function () {
 
-        if(!this.isZero()) {
+        if (!this.isZero())
+        {
             var m = this.getMagnitude();
             this.x /= m;
             this.y /= m;
@@ -10849,21 +11169,89 @@ Phaser.Point.prototype = {
     },
 
     /**
-    * Determine if this point is at 0,0
+    * Determine if this point is at 0,0.
+    *
     * @method Phaser.Point#isZero
-    * @return {boolean} True if this Point is 0,0, otherwise false
+    * @return {boolean} True if this Point is 0,0, otherwise false.
     */
-    isZero: function() {
+    isZero: function () {
+
         return (this.x === 0 && this.y === 0);
+
+    },
+
+    /**
+    * The dot product of this and another Point object.
+    * 
+    * @method Phaser.Point#dot
+    * @param {Phaser.Point} a - The Point object to get the dot product combined with this Point.
+    * @return {number} The result.
+    */
+    dot: function (a) {
+
+        return ((this.x * a.x) + (this.y * a.y));
+
+    },
+
+    /**
+    * The cross product of this and another Point object.
+    * 
+    * @method Phaser.Point#cross
+    * @param {Phaser.Point} a - The Point object to get the cross product combined with this Point.
+    * @return {number} The result.
+    */
+    cross: function (a) {
+
+        return ((this.x * a.y) - (this.y * a.x));
+
+    },
+
+    /**
+    * Make this Point perpendicular (90 degrees rotation)
+    * 
+    * @method Phaser.Point#perp
+    * @return {Phaser.Point} This Point object.
+    */
+    perp: function () {
+
+        return this.setTo(-this.y, this.x);
+
+    },
+
+    /**
+    * Make this Point perpendicular (-90 degrees rotation)
+    * 
+    * @method Phaser.Point#rperp
+    * @return {Phaser.Point} This Point object.
+    */
+    rperp: function () {
+
+        return this.setTo(this.y, -this.x);
+
+    },
+
+    /**
+    * Right-hand normalize (make unit length) this Point.
+    *
+    * @method Phaser.Point#normalRightHand
+    * @return {Phaser.Point} This Point object.
+    */
+    normalRightHand: function () {
+
+        return this.setTo(this.y * -1, this.x);
+
     },
 
     /**
     * Returns a string representation of this object.
+    *
     * @method Phaser.Point#toString
     * @return {string} A string representation of the instance.
     */
     toString: function () {
+
         return '[{Point (x=' + this.x + ' y=' + this.y + ')}]';
+
     }
 
 };
@@ -10872,6 +11260,7 @@ Phaser.Point.prototype.constructor = Phaser.Point;
 
 /**
 * Adds the coordinates of two points together to create a new point.
+*
 * @method Phaser.Point.add
 * @param {Phaser.Point} a - The first Point object.
 * @param {Phaser.Point} b - The second Point object.
@@ -10891,6 +11280,7 @@ Phaser.Point.add = function (a, b, out) {
 
 /**
 * Subtracts the coordinates of two points to create a new point.
+*
 * @method Phaser.Point.subtract
 * @param {Phaser.Point} a - The first Point object.
 * @param {Phaser.Point} b - The second Point object.
@@ -10910,6 +11300,7 @@ Phaser.Point.subtract = function (a, b, out) {
 
 /**
 * Multiplies the coordinates of two points to create a new point.
+*
 * @method Phaser.Point.multiply
 * @param {Phaser.Point} a - The first Point object.
 * @param {Phaser.Point} b - The second Point object.
@@ -10929,6 +11320,7 @@ Phaser.Point.multiply = function (a, b, out) {
 
 /**
 * Divides the coordinates of two points to create a new point.
+*
 * @method Phaser.Point.divide
 * @param {Phaser.Point} a - The first Point object.
 * @param {Phaser.Point} b - The second Point object.
@@ -10948,17 +11340,133 @@ Phaser.Point.divide = function (a, b, out) {
 
 /**
 * Determines whether the two given Point objects are equal. They are considered equal if they have the same x and y values.
+*
 * @method Phaser.Point.equals
 * @param {Phaser.Point} a - The first Point object.
 * @param {Phaser.Point} b - The second Point object.
 * @return {boolean} A value of true if the Points are equal, otherwise false.
 */
 Phaser.Point.equals = function (a, b) {
-    return (a.x == b.x && a.y == b.y);
+
+    return (a.x === b.x && a.y === b.y);
+
+};
+
+/**
+* Returns the angle between two Point objects.
+*
+* @method Phaser.Point.angle
+* @param {Phaser.Point} a - The first Point object.
+* @param {Phaser.Point} b - The second Point object.
+* @return {number} The angle between the two Points.
+*/
+Phaser.Point.angle = function (a, b) {
+
+    return Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y);
+
+};
+
+/**
+* Returns the angle squared between two Point objects.
+*
+* @method Phaser.Point.angleSq
+* @param {Phaser.Point} a - The first Point object.
+* @param {Phaser.Point} b - The second Point object.
+* @return {number} The angle squared between the two Points.
+*/
+Phaser.Point.angleSq = function (a, b) {
+
+    return a.subtract(b).angle(b.subtract(a));
+
+};
+
+/**
+* Creates a negative Point.
+*
+* @method Phaser.Point.negative
+* @param {Phaser.Point} a - The first Point object.
+* @param {Phaser.Point} [out] - Optional Point to store the value in, if not supplied a new Point object will be created.
+* @return {Phaser.Point} The new Point object.
+*/
+Phaser.Point.negative = function (a, out) {
+
+    if (typeof out === "undefined") { out = new Phaser.Point(); }
+
+    return out.setTo(-a.x, -a.y);
+
+};
+
+/**
+* Adds two 2D Points together and multiplies the result by the given scalar.
+* 
+* @method Phaser.Point.multiplyAdd
+* @param {Phaser.Point} a - The first Point object.
+* @param {Phaser.Point} b - The second Point object.
+* @param {number} s - The scaling value.
+* @param {Phaser.Point} [out] - Optional Point to store the value in, if not supplied a new Point object will be created.
+* @return {Phaser.Point} The new Point object.
+*/
+Phaser.Point.multiplyAdd = function (a, b, s, out) {
+
+    if (typeof out === "undefined") { out = new Phaser.Point(); }
+
+    return out.setTo(a.x + b.x * s, a.y + b.y * s);
+
+};
+
+/**
+* Interpolates the two given Points, based on the `f` value (between 0 and 1) and returns a new Point.
+* 
+* @method Phaser.Point.interpolate
+* @param {Phaser.Point} a - The first Point object.
+* @param {Phaser.Point} b - The second Point object.
+* @param {number} f - The level of interpolation between the two points. Indicates where the new point will be, along the line between pt1 and pt2. If f=1, pt1 is returned; if f=0, pt2 is returned.
+* @param {Phaser.Point} [out] - Optional Point to store the value in, if not supplied a new Point object will be created.
+* @return {Phaser.Point} The new Point object.
+*/
+Phaser.Point.interpolate = function (a, b, f, out) {
+
+    if (typeof out === "undefined") { out = new Phaser.Point(); }
+
+    return out.setTo(a.x + (b.x - a.x) * f, a.y + (b.y - a.y) * f);
+
+};
+
+/**
+* Return a perpendicular vector (90 degrees rotation)
+*
+* @method Phaser.Point.perp
+* @param {Phaser.Point} a - The Point object.
+* @param {Phaser.Point} [out] - Optional Point to store the value in, if not supplied a new Point object will be created.
+* @return {Phaser.Point} The new Point object.
+*/
+Phaser.Point.perp = function (a, out) {
+
+    if (typeof out === "undefined") { out = new Phaser.Point(); }
+
+    return out.setTo(-a.y, a.x);
+
+};
+
+/**
+* Return a perpendicular vector (-90 degrees rotation)
+*
+* @method Phaser.Point.rperp
+* @param {Phaser.Point} a - The Point object.
+* @param {Phaser.Point} [out] - Optional Point to store the value in, if not supplied a new Point object will be created.
+* @return {Phaser.Point} The new Point object.
+*/
+Phaser.Point.rperp = function (a, out) {
+
+    if (typeof out === "undefined") { out = new Phaser.Point(); }
+
+    return out.setTo(a.y, -a.x);
+
 };
 
 /**
 * Returns the distance of this Point object to the given object (can be a Circle, Point or anything with x/y properties).
+*
 * @method Phaser.Point.distance
 * @param {object} a - The target object. Must have visible x and y properties that represent the center of the object.
 * @param {object} b - The target object. Must have visible x and y properties that represent the center of the object.
@@ -10971,7 +11479,7 @@ Phaser.Point.distance = function (a, b, round) {
 
     if (round)
     {
-        return Phaser.Math.distanceRound(a.x, a.y, b.x, b.y);
+        return Phaser.Math.distanceRounded(a.x, a.y, b.x, b.y);
     }
     else
     {
@@ -10981,14 +11489,102 @@ Phaser.Point.distance = function (a, b, round) {
 };
 
 /**
+* Project two Points onto another Point.
+* 
+* @method Phaser.Point.project
+* @param {Phaser.Point} a - The first Point object.
+* @param {Phaser.Point} b - The second Point object.
+* @param {Phaser.Point} [out] - Optional Point to store the value in, if not supplied a new Point object will be created.
+* @return {Phaser.Point} The new Point object.
+*/
+Phaser.Point.project = function (a, b, out) {
+
+    if (typeof out === "undefined") { out = new Phaser.Point(); }
+
+    var amt = a.dot(b) / b.getMagnitudeSq();
+
+    if (amt !== 0)
+    {
+        out.setTo(amt * b.x, amt * b.y);
+    }
+
+    return out;
+
+};
+
+/**
+* Project two Points onto a Point of unit length.
+* 
+* @method Phaser.Point.projectUnit
+* @param {Phaser.Point} a - The first Point object.
+* @param {Phaser.Point} b - The second Point object.
+* @param {Phaser.Point} [out] - Optional Point to store the value in, if not supplied a new Point object will be created.
+* @return {Phaser.Point} The new Point object.
+*/
+Phaser.Point.projectUnit = function (a, b, out) {
+
+    if (typeof out === "undefined") { out = new Phaser.Point(); }
+
+    var amt = a.dot(b);
+
+    if (amt !== 0)
+    {
+        out.setTo(amt * b.x, amt * b.y);
+    }
+
+    return out;
+
+};
+
+/**
+* Right-hand normalize (make unit length) a Point.
+*
+* @method Phaser.Point.normalRightHand
+* @param {Phaser.Point} a - The Point object.
+* @param {Phaser.Point} [out] - Optional Point to store the value in, if not supplied a new Point object will be created.
+* @return {Phaser.Point} The new Point object.
+*/
+Phaser.Point.normalRightHand = function (a, out) {
+
+    if (typeof out === "undefined") { out = new Phaser.Point(); }
+
+    return out.setTo(a.y * -1, a.x);
+
+};
+
+/**
+* Normalize (make unit length) a Point.
+*
+* @method Phaser.Point.normalize
+* @param {Phaser.Point} a - The Point object.
+* @param {Phaser.Point} [out] - Optional Point to store the value in, if not supplied a new Point object will be created.
+* @return {Phaser.Point} The new Point object.
+*/
+Phaser.Point.normalize = function (a, out) {
+
+    if (typeof out === "undefined") { out = new Phaser.Point(); }
+
+    var m = a.getMagnitude();
+
+    if (m !== 0)
+    {
+        out.setTo(a.x / m, a.y / m);
+    }
+
+    return out;
+
+};
+
+/**
 * Rotates a Point around the x/y coordinates given to the desired angle.
+*
 * @method Phaser.Point.rotate
 * @param {Phaser.Point} a - The Point object to rotate.
 * @param {number} x - The x coordinate of the anchor point
 * @param {number} y - The y coordinate of the anchor point
 * @param {number} angle - The angle in radians (unless asDegrees is true) to rotate the Point to.
-* @param {boolean} asDegrees - Is the given rotation in radians (false) or degrees (true)?
-* @param {number} distance - An optional distance constraint between the Point and the anchor.
+* @param {boolean} [asDegrees=false] - Is the given rotation in radians (false) or degrees (true)?
+* @param {number} [distance] - An optional distance constraint between the Point and the anchor.
 * @return {Phaser.Point} The modified point object.
 */
 Phaser.Point.rotate = function (a, x, y, angle, asDegrees, distance) {
@@ -11008,6 +11604,47 @@ Phaser.Point.rotate = function (a, x, y, angle, asDegrees, distance) {
     }
 
     return a.setTo(x + distance * Math.cos(angle), y + distance * Math.sin(angle));
+
+};
+
+/**
+* Calculates centroid (or midpoint) from an array of points. If only one point is provided, that point is returned.
+*
+* @method Phaser.Point.centroid
+* @param {Phaser.Point[]} points - The array of one or more points.
+* @param {Phaser.Point} [out] - Optional Point to store the value in, if not supplied a new Point object will be created.
+* @return {Phaser.Point} The new Point object.
+*/
+Phaser.Point.centroid = function (points, out) {
+
+    if (typeof out === "undefined") { out = new Phaser.Point(); }
+
+    if (Object.prototype.toString.call(points) !== '[object Array]')
+    {
+        throw new Error("Phaser.Point. Parameter 'points' must be an array");
+    }
+
+    var pointslength = points.length;
+
+    if (pointslength < 1)
+    {
+        throw new Error("Phaser.Point. Parameter 'points' array must not be empty");
+    }
+
+    if (pointslength === 1)
+    {
+        out.copyFrom(points[0]);
+        return out;
+    }
+
+    for (var i = 0; i < pointslength; i++)
+    {
+        Phaser.Point.add(out, points[i], out);
+    }
+
+    out.divide(pointslength, pointslength);
+
+    return out;
 
 };
 
@@ -11999,7 +12636,7 @@ Object.defineProperty(Phaser.Line.prototype, "length", {
 Object.defineProperty(Phaser.Line.prototype, "angle", {
 
     get: function () {
-        return Math.atan2(this.end.x - this.start.x, this.end.y - this.start.y);
+        return Math.atan2(this.end.y - this.start.y, this.end.x - this.start.x);
     }
 
 });
@@ -12610,7 +13247,7 @@ Phaser.Polygon.prototype = {
 
             if (intersect)
             {
-                inside = true;
+                inside = !inside;
             }
         }
 
@@ -12791,6 +13428,17 @@ Phaser.Camera.prototype = {
                 this.deadzone = null;
                 break;
         }
+
+    },
+
+    /**
+    * Sets the Camera follow target to null, stopping it from following an object if it's doing so.
+    *
+    * @method Phaser.Camera#unfollow
+    */
+    unfollow: function () {
+
+        this.target = null;
 
     },
 
@@ -13078,87 +13726,87 @@ Object.defineProperty(Phaser.Camera.prototype, "height", {
 Phaser.State = function () {
 
     /**
-    * @property {Phaser.Game} game - A reference to the currently running Game.
+    * @property {Phaser.Game} game - This is a reference to the currently running Game.
     */
     this.game = null;
 
     /**
-    * @property {Phaser.GameObjectFactory} add - Reference to the GameObjectFactory.
+    * @property {Phaser.GameObjectFactory} add - A reference to the GameObjectFactory which can be used to add new objects to the World.
     */
     this.add = null;
 
     /**
-    * @property {Phaser.GameObjectCreator} make - Reference to the GameObjectCreator.
+    * @property {Phaser.GameObjectCreator} make - A reference to the GameObjectCreator which can be used to make new objects.
     */
     this.make = null;
 
     /**
-    * @property {Phaser.Camera} camera - A handy reference to world.camera.
+    * @property {Phaser.Camera} camera - A handy reference to World.camera.
     */
     this.camera = null;
 
     /**
-    * @property {Phaser.Cache} cache - Reference to the assets cache.
+    * @property {Phaser.Cache} cache - A reference to the game cache which contains any loaded or generated assets, such as images, sound and more.
     */
     this.cache = null;
 
     /**
-    * @property {Phaser.Input} input - Reference to the input manager
+    * @property {Phaser.Input} input - A reference to the Input Manager.
     */
     this.input = null;
 
     /**
-    * @property {Phaser.Loader} load - Reference to the assets loader.
+    * @property {Phaser.Loader} load - A reference to the Loader, which you mostly use in the preload method of your state to load external assets.
     */
     this.load = null;
 
     /**
-    * @property {Phaser.Math} math - Reference to the math helper.
+    * @property {Phaser.Math} math - A reference to Math class with lots of helpful functions.
     */
     this.math = null;
 
     /**
-    * @property {Phaser.SoundManager} sound - Reference to the sound manager.
+    * @property {Phaser.SoundManager} sound - A reference to the Sound Manager which can create, play and stop sounds, as well as adjust global volume.
     */
     this.sound = null;
 
     /**
-    * @property {Phaser.ScaleManager} scale - Reference to the game scale manager.
+    * @property {Phaser.ScaleManager} scale - A reference to the Scale Manager which controls the way the game scales on different displays.
     */
     this.scale = null;
 
     /**
-    * @property {Phaser.Stage} stage - Reference to the stage.
+    * @property {Phaser.Stage} stage - A reference to the Stage.
     */
     this.stage = null;
 
     /**
-    * @property {Phaser.TimeManager} time - Reference to game clock.
+    * @property {Phaser.Time} time - A reference to the game clock and timed events system.
     */
     this.time = null;
 
     /**
-    * @property {Phaser.TweenManager} tweens - Reference to the tween manager.
+    * @property {Phaser.TweenManager} tweens - A reference to the tween manager.
     */
     this.tweens = null;
 
     /**
-    * @property {Phaser.World} world - Reference to the world.
+    * @property {Phaser.World} world - A reference to the game world. All objects live in the Game World and its size is not bound by the display resolution.
     */
     this.world = null;
 
     /**
-    * @property {Phaser.Particles} particles - The Particle Manager for the game. It is called during the game update loop and in turn updates any Emitters attached to it.
+    * @property {Phaser.Particles} particles - The Particle Manager. It is called during the core gameloop and updates any Particle Emitters it has created.
     */
     this.particles = null;
 
     /**
-    * @property {Phaser.Physics.World} physics - Reference to the physics manager.
+    * @property {Phaser.Physics} physics - A reference to the physics manager which looks after the different physics systems available within Phaser.
     */
     this.physics = null;
 
     /**
-    * @property {Phaser.RandomDataGenerator} rnd - Reference to the random data generator.
+    * @property {Phaser.RandomDataGenerator} rnd - A reference to the seeded and repeatable random data generator.
     */
     this.rnd = null;
 
@@ -13167,8 +13815,9 @@ Phaser.State = function () {
 Phaser.State.prototype = {
 
     /**
-    * Override this method to add some load operations.
-    * If you need to use the loader, you may need to use them here.
+    * preload is called first. Normally you'd use this to load your game assets (or those needed for the current State)
+    * You shouldn't create any objects in this method that require assets that you're also loading in this method, as
+    * they won't yet be available.
     *
     * @method Phaser.State#preload
     */
@@ -13176,7 +13825,7 @@ Phaser.State.prototype = {
     },
 
     /**
-    * Put update logic here.
+    * loadUpdate is called during the Loader process. This only happens if you've set one or more assets to load in the preload method.
     *
     * @method Phaser.State#loadUpdate
     */
@@ -13184,7 +13833,8 @@ Phaser.State.prototype = {
     },
 
     /**
-    * Put render operations here.
+    * loadRender is called during the Loader process. This only happens if you've set one or more assets to load in the preload method.
+    * The difference between loadRender and render is that any objects you render in this method you must be sure their assets exist.
     *
     * @method Phaser.State#loadRender
     */
@@ -13192,8 +13842,8 @@ Phaser.State.prototype = {
     },
 
     /**
-    * This method is called after the game engine successfully switches states.
-    * Feel free to add any setup code here (do not load anything here, override preload() instead).
+    * create is called once preload has completed, this includes the loading of any assets from the Loader.
+    * If you don't have a preload method then create is the first method called in your State.
     *
     * @method Phaser.State#create
     */
@@ -13201,7 +13851,9 @@ Phaser.State.prototype = {
     },
 
     /**
-    * Put update logic here.
+    * The update method is left empty for your own use.
+    * It is called during the core game loop AFTER debug, physics, plugins and the Stage have had their preUpdate methods called.
+    * If is called BEFORE Stage, Tweens, Sounds, Input, Physics, Particles and Plugins have had their postUpdate methods called.
     *
     * @method Phaser.State#update
     */
@@ -13209,7 +13861,9 @@ Phaser.State.prototype = {
     },
 
     /**
-    * Put render operations here.
+    * Nearly all display objects in Phaser render automatically, you don't need to tell them to render.
+    * However the render method is called AFTER the game renderer and plugins have rendered, so you're able to do any
+    * final post-processing style effects here. Note that this happens before plugins postRender takes place.
     *
     * @method Phaser.State#render
     */
@@ -13217,7 +13871,7 @@ Phaser.State.prototype = {
     },
 
     /**
-    * This method will be called when game paused.
+    * This method will be called if the core game loop is paused.
     *
     * @method Phaser.State#paused
     */
@@ -13225,7 +13879,16 @@ Phaser.State.prototype = {
     },
 
     /**
-    * This method will be called when the state is shut down (i.e. you switch to another state from this one).
+    * pauseUpdate is called while the game is paused instead of preUpdate, update and postUpdate.
+    *
+    * @method Phaser.State#pauseUpdate
+    */
+    pauseUpdate: function () {
+    },
+
+    /**
+    * This method will be called when the State is shutdown (i.e. you switch to another state from this one).
+    *
     * @method Phaser.State#shutdown
     */
     shutdown: function () {
@@ -13344,14 +14007,19 @@ Phaser.StateManager = function (game, pendingState) {
     this.onLoadRenderCallback = null;
 
     /**
-    * @property {function} onPausedCallback - This will be called when the state is paused.
+    * @property {function} onPausedCallback - This will be called once each time the game is paused.
     */
     this.onPausedCallback = null;
 
     /**
-    * @property {function} onResumedCallback - This will be called when the state is resumed from a paused state.
+    * @property {function} onResumedCallback - This will be called once each time the game is resumed from a paused state.
     */
     this.onResumedCallback = null;
+
+    /**
+    * @property {function} onPauseUpdateCallback - This will be called every frame while the game is paused.
+    */
+    this.onPauseUpdateCallback = null;
 
     /**
     * @property {function} onShutDownCallback - This will be called when the state is shut down (i.e. swapped to another state).
@@ -13443,7 +14111,7 @@ Phaser.StateManager.prototype = {
     */
     remove: function (key) {
 
-        if (this.current == key)
+        if (this.current === key)
         {
             this.callbackContext = null;
 
@@ -13458,7 +14126,7 @@ Phaser.StateManager.prototype = {
             this.onRenderCallback = null;
             this.onPausedCallback = null;
             this.onResumedCallback = null;
-            this.onDestroyCallback = null;
+            this.onPauseUpdateCallback = null;
         }
 
         delete this.states[key];
@@ -13490,6 +14158,31 @@ Phaser.StateManager.prototype = {
             {
                 this._args = Array.prototype.splice.call(arguments, 3);
             }
+        }
+
+    },
+
+    /**
+    * Restarts the current State. State.shutDown will be called (if it exists) before the State is restarted.
+    *
+    * @method Phaser.StateManager#restart
+    * @param {boolean} [clearWorld=true] - Clear everything in the world? This clears the World display list fully (but not the Stage, so if you've added your own objects to the Stage they will need managing directly)
+    * @param {boolean} [clearCache=false] - Clear the Game.Cache? This purges out all loaded assets. The default is false and you must have clearWorld=true if you want to clearCache as well.
+    * @param {...*} parameter - Additional parameters that will be passed to the State.init function if it has one.
+    */
+    restart: function (clearWorld, clearCache) {
+
+        if (typeof clearWorld === "undefined") { clearWorld = true; }
+        if (typeof clearCache === "undefined") { clearCache = false; }
+
+        //  Place the state in the queue. It will be started the next time the game loop starts.
+        this._pendingState = this.current;
+        this._clearWorld = clearWorld;
+        this._clearCache = clearCache;
+
+        if (arguments.length > 2)
+        {
+            this._args = Array.prototype.splice.call(arguments, 2);
         }
 
     },
@@ -13605,6 +14298,7 @@ Phaser.StateManager.prototype = {
 
     /**
     * Links game properties to the State given by the key.
+    *
     * @method Phaser.StateManager#link
     * @param {string} key - State key.
     * @protected
@@ -13634,6 +14328,7 @@ Phaser.StateManager.prototype = {
 
     /**
     * Sets the current State. Should not be called directly (use StateManager.start)
+    *
     * @method Phaser.StateManager#setCurrentState
     * @param {string} key - State key.
     * @private
@@ -13656,6 +14351,7 @@ Phaser.StateManager.prototype = {
         this.onRenderCallback = this.states[key]['render'] || null;
         this.onPausedCallback = this.states[key]['paused'] || null;
         this.onResumedCallback = this.states[key]['resumed'] || null;
+        this.onPauseUpdateCallback = this.states[key]['pauseUpdate'] || null;
 
         //  Used when the state is no longer the current active state
         this.onShutDownCallback = this.states[key]['shutdown'] || this.dummy;
@@ -13745,6 +14441,26 @@ Phaser.StateManager.prototype = {
     },
 
     /**
+    * @method Phaser.StateManager#pauseUpdate
+    * @protected
+    */
+    pauseUpdate: function () {
+
+        if (this._created && this.onPauseUpdateCallback)
+        {
+            this.onPauseUpdateCallback.call(this.callbackContext, this.game);
+        }
+        else
+        {
+            if (this.onLoadUpdateCallback)
+            {
+                this.onLoadUpdateCallback.call(this.callbackContext, this.game);
+            }
+        }
+
+    },
+
+    /**
     * @method Phaser.StateManager#preRender
     * @protected
     */
@@ -13789,7 +14505,8 @@ Phaser.StateManager.prototype = {
     },
 
     /**
-    * Nuke the entire game from orbit
+    * Removes all StateManager callback references to the State object, nulls the game reference and clears the States object.
+    * You don't recover from this without rebuilding the Phaser instance again.
     * @method Phaser.StateManager#destroy
     */
     destroy: function () {
@@ -13807,7 +14524,7 @@ Phaser.StateManager.prototype = {
         this.onRenderCallback = null;
         this.onPausedCallback = null;
         this.onResumedCallback = null;
-        this.onDestroyCallback = null;
+        this.onPauseUpdateCallback = null;
 
         this.game = null;
         this.states = {};
@@ -13858,7 +14575,7 @@ Phaser.LinkedList = function () {
     this.last = null;
 
     /**
-    * @property {object} game - Number of elements in the list.
+    * @property {number} total - Number of elements in the list.
     * @default
     */
     this.total = 0;
@@ -13877,7 +14594,7 @@ Phaser.LinkedList.prototype = {
     add: function (child) {
 
         //  If the list is empty
-        if (this.total === 0 && this.first == null && this.last == null)
+        if (this.total === 0 && this.first === null && this.last === null)
         {
             this.first = child;
             this.last = child;
@@ -13887,7 +14604,7 @@ Phaser.LinkedList.prototype = {
             return child;
         }
 
-        //  Get gets appended to the end of the list, regardless of anything, and it won't have any children of its own (non-nested list)
+        //  Gets appended to the end of the list, regardless of anything, and it won't have any children of its own (non-nested list)
         this.last.next = child;
 
         child.prev = this.last;
@@ -13901,6 +14618,21 @@ Phaser.LinkedList.prototype = {
     },
 
     /**
+    * Resets the first, last, next and previous node pointers in this list.
+    *
+    * @method Phaser.LinkedList#reset
+    */
+    reset: function () {
+
+        this.first = null;
+        this.last = null;
+        this.next = null;
+        this.prev = null;
+        this.total = 0;
+
+    },
+
+    /**
     * Removes the given element from this linked list if it exists.
     *
     * @method Phaser.LinkedList#remove
@@ -13908,12 +14640,19 @@ Phaser.LinkedList.prototype = {
     */
     remove: function (child) {
 
-        if (child == this.first)
+        if (this.total === 1)
+        {
+            this.reset();
+            child.next = child.prev = null;
+            return;
+        }
+
+        if (child === this.first)
         {
             // It was 'first', make 'first' point to first.next
             this.first = this.first.next;
         }
-        else if (child == this.last)
+        else if (child === this.last)
         {
             // It was 'last', make 'last' point to last.prev
             this.last = this.last.prev;
@@ -13933,7 +14672,7 @@ Phaser.LinkedList.prototype = {
 
         child.next = child.prev = null;
 
-        if (this.first == null )
+        if (this.first === null )
         {
             this.last = null;
         }
@@ -13975,6 +14714,196 @@ Phaser.LinkedList.prototype = {
 };
 
 Phaser.LinkedList.prototype.constructor = Phaser.LinkedList;
+
+/**
+* @author       Richard Davey <rich@photonstorm.com>
+* @copyright    2014 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
+/**
+* A set data structure. Allows items to add themselves to and remove themselves from the set. Items can only exist once in the set.
+*
+* @class Phaser.ArrayList
+* @constructor
+*/
+Phaser.ArrayList = function () {
+
+    /**
+    * @property {number} total - Number of objects in the list.
+    * @default
+    */
+    this.total = 0;
+
+    /**
+    * @property {number} position - Current cursor position.
+    * @default
+    */
+    this.position = 0;
+
+    /**
+    * @property {array} list - The list.
+    */
+    this.list = [];
+
+};
+
+Phaser.ArrayList.prototype = {
+
+    /**
+    * Adds a new element to this list. The item can only exist in the list once.
+    *
+    * @method Phaser.ArrayList#add
+    * @param {object} child - The element to add to this list. Can be a Phaser.Sprite or any other object you need to quickly iterate through.
+    * @return {object} The child that was added.
+    */
+    add: function (child) {
+
+        if (!this.exists(child))
+        {
+            this.list.push(child);
+            this.total++;
+        }
+
+        return child;
+
+    },
+
+    /**
+    * Gets the index of the child in the list, or -1 if it isn't in the list.
+    *
+    * @method Phaser.ArrayList#getIndex
+    * @param {object} child - The element to get the list index for.
+    * @return {number} The index of the child or -1 if not found.
+    */
+    getIndex: function (child) {
+
+        return this.list.indexOf(child);
+
+    },
+
+    /**
+    * Checks for the child within this list.
+    *
+    * @method Phaser.ArrayList#exists
+    * @param {object} child - The element to get the list index for.
+    * @return {boolean} True if the child is found in the list, otherwise false.
+    */
+    exists: function (child) {
+
+        return (this.list.indexOf(child) > -1);
+
+    },
+
+    /**
+    * Resets the list length and drops all items in the list.
+    *
+    * @method Phaser.ArrayList#reset
+    */
+    reset: function () {
+
+        this.list.length = 0;
+        this.total = 0;
+
+    },
+
+    /**
+    * Removes the given element from this list if it exists.
+    *
+    * @method Phaser.ArrayList#remove
+    * @param {object} child - The child to be removed from the list.
+    * @return {object} child - The child that was removed.
+    */
+    remove: function (child) {
+
+        var idx = this.list.indexOf(child);
+
+        if (idx > -1)
+        {
+            this.list.splice(idx, 1);
+            this.total--;
+            return child;
+        }
+
+    },
+
+    /**
+    * Calls a function on all members of this list, using the member as the context for the callback.
+    * The function must exist on the member.
+    *
+    * @method Phaser.ArrayList#callAll
+    * @param {function} callback - The function to call.
+    * @param {...*} parameter - Additional parameters that will be passed to the callback.
+    */
+    callAll: function (callback) {
+
+        var args = Array.prototype.splice.call(arguments, 1);
+
+        var i = this.list.length;
+
+        while (i--)
+        {
+            if (this.list[i] && this.list[i][callback])
+            {
+                this.list[i][callback].apply(this.list[i], args);
+            }
+        }
+
+    }
+
+};
+
+/**
+* Resets the cursor to the first item in the list and returns it.
+*
+* @name Phaser.ArrayList#first
+* @property {object} first - The first item in the list.
+*/
+Object.defineProperty(Phaser.ArrayList.prototype, "first", {
+
+    get: function () {
+
+        this.position = 0;
+
+        if (this.total > 0)
+        {
+            return this.list[0];
+        }
+        else
+        {
+            return null;
+        }
+
+    }
+
+});
+
+/**
+* Gets the next item in the list and returns it, advancing the cursor.
+*
+* @name Phaser.ArrayList#next
+* @property {object} next - Advanced the cursor and return.
+*/
+Object.defineProperty(Phaser.ArrayList.prototype, "next", {
+
+    get: function () {
+
+        if (this.position < this.total)
+        {
+            this.position++;
+
+            return this.list[this.position];
+        }
+        else
+        {
+            return null;
+        }
+
+    }
+
+});
+
+Phaser.ArrayList.prototype.constructor = Phaser.ArrayList;
 
 /**
 * @author       Richard Davey <rich@photonstorm.com>
@@ -14288,17 +15217,13 @@ Phaser.Signal.prototype.constructor = Phaser.Signal;
 */
 
 /**
-* Phaser.SignalBinding
-*
-* Object that represents a binding between a Signal and a listener function.
+* @class Phaser.SignalBinding
+* @classdesc Object that represents a binding between a Signal and a listener function.
 * This is an internal constructor and shouldn't be called by regular users.
 * Inspired by Joa Ebert AS3 SignalBinding and Robert Penner's Slot classes.
 *
-* @class Phaser.SignalBinding
-* @name SignalBinding
 * @author Miller Medeiros http://millermedeiros.github.com/js-signals/
 * @constructor
-* @inner
 * @param {Phaser.Signal} signal - Reference to Signal object that listener is currently bound to.
 * @param {function} listener - Handler function bound to the signal.
 * @param {boolean} isOnce - If binding should be executed just once.
@@ -14321,7 +15246,6 @@ Phaser.SignalBinding = function (signal, listener, isOnce, listenerContext, prio
 
     /**
     * @property {object|undefined|null} context - Context on which listener will be executed (object that should represent the `this` variable inside listener function).
-    * @memberof SignalBinding.prototype
     */
     this.context = listenerContext;
 
@@ -14751,9 +15675,8 @@ Phaser.Plugin.prototype.constructor = Phaser.Plugin;
 * @classdesc Phaser - PluginManager
 * @constructor
 * @param {Phaser.Game} game - A reference to the currently running game.
-* @param {Description} parent - Description.
 */
-Phaser.PluginManager = function(game, parent) {
+Phaser.PluginManager = function(game) {
 
     /**
     * @property {Phaser.Game} game - A reference to the currently running game.
@@ -14761,33 +15684,33 @@ Phaser.PluginManager = function(game, parent) {
     this.game = game;
 
     /**
-    * @property {Description} _parent - Description.
-    * @private
-    */
-    this._parent = parent;
-
-    /**
-    * @property {array} plugins - Description.
+    * @property {array} plugins - An array of all the plugins being managed by this PluginManager.
     */
     this.plugins = [];
 
     /**
-    * @property {array} _pluginsLength - Description.
+    * @property {number} _len - Internal cache var.
     * @private
-    * @default
     */
-    this._pluginsLength = 0;
+    this._len = 0;
+
+    /**
+    * @property {number} _i - Internal cache var.
+    * @private
+    */
+    this._i = 0;
 
 };
 
 Phaser.PluginManager.prototype = {
 
     /**
-    * Add a new Plugin to the PluginManager.
-    * The plugin's game and parent reference are set to this game and pluginmanager parent.
+    * Add a new Plugin into the PluginManager.
+    * The Plugin must have 2 properties: game and parent. Plugin.game is set to ths game reference the PluginManager uses, and parent is set to the PluginManager.
+    *
     * @method Phaser.PluginManager#add
-    * @param {Phaser.Plugin} plugin - Description.
-    * @return {Phaser.Plugin} Description.
+    * @param {object|Phaser.Plugin} plugin - The Plugin to add into the PluginManager. This can be a function or an existing object.
+    * @return {Phaser.Plugin} The Plugin that was added to the manager.
     */
     add: function (plugin) {
 
@@ -14801,7 +15724,7 @@ Phaser.PluginManager.prototype = {
         else
         {
             plugin.game = this.game;
-            plugin.parent = this._parent;
+            plugin.parent = this;
         }
 
         //  Check for methods now to avoid having to do this every loop
@@ -14848,7 +15771,7 @@ Phaser.PluginManager.prototype = {
                 plugin.visible = true;
             }
 
-            this._pluginsLength = this.plugins.push(plugin);
+            this._len = this.plugins.push(plugin);
 
             // Allows plugins to run potentially destructive code outside of the constructor, and only if being added to the PluginManager
             if (typeof plugin['init'] === 'function')
@@ -14865,41 +15788,45 @@ Phaser.PluginManager.prototype = {
     },
 
     /**
-    * Remove a Plugin from the PluginManager.
+    * Remove a Plugin from the PluginManager. It calls Plugin.destroy on the plugin before removing it from the manager.
+    *
     * @method Phaser.PluginManager#remove
     * @param {Phaser.Plugin} plugin - The plugin to be removed.
     */
     remove: function (plugin) {
 
-        if (this._pluginsLength === 0)
-        {
-            return;
-        }
+        this._i = this._len;
 
-        for (this._p = 0; this._p < this._pluginsLength; this._p++)
+        while (this._i--)
         {
-            if (this.plugins[this._p] === plugin)
+            if (this.plugins[this._i] === plugin)
             {
                 plugin.destroy();
-                this.plugins.splice(this._p, 1);
-                this._pluginsLength--;
+                this.plugins.splice(this._i, 1);
+                this._len--;
                 return;
             }
         }
+
     },
 
     /**
-    * Removes all Plugins from the PluginManager.
+    * Remove all Plugins from the PluginManager. It calls Plugin.destroy on every plugin before removing it from the manager.
+    *
     * @method Phaser.PluginManager#removeAll
     */
     removeAll: function() {
 
-        for (this._p = 0; this._p < this._pluginsLength; this._p++)
+        this._i = this._len;
+
+        while (this._i--)
         {
-            this.plugins[this._p].destroy();
+            this.plugins[this._i].destroy();
         }
+
         this.plugins.length = 0;
-        this._pluginsLength = 0;
+        this._len = 0;
+
     },
 
     /**
@@ -14910,16 +15837,13 @@ Phaser.PluginManager.prototype = {
     */
     preUpdate: function () {
 
-        if (this._pluginsLength === 0)
-        {
-            return;
-        }
+        this._i = this._len;
 
-        for (this._p = 0; this._p < this._pluginsLength; this._p++)
+        while (this._i--)
         {
-            if (this.plugins[this._p].active && this.plugins[this._p].hasPreUpdate)
+            if (this.plugins[this._i].active && this.plugins[this._i].hasPreUpdate)
             {
-                this.plugins[this._p].preUpdate();
+                this.plugins[this._i].preUpdate();
             }
         }
 
@@ -14933,16 +15857,13 @@ Phaser.PluginManager.prototype = {
     */
     update: function () {
 
-        if (this._pluginsLength === 0)
-        {
-            return;
-        }
+        this._i = this._len;
 
-        for (this._p = 0; this._p < this._pluginsLength; this._p++)
+        while (this._i--)
         {
-            if (this.plugins[this._p].active && this.plugins[this._p].hasUpdate)
+            if (this.plugins[this._i].active && this.plugins[this._i].hasUpdate)
             {
-                this.plugins[this._p].update();
+                this.plugins[this._i].update();
             }
         }
 
@@ -14957,16 +15878,13 @@ Phaser.PluginManager.prototype = {
     */
     postUpdate: function () {
 
-        if (this._pluginsLength === 0)
-        {
-            return;
-        }
+        this._i = this._len;
 
-        for (this._p = 0; this._p < this._pluginsLength; this._p++)
+        while (this._i--)
         {
-            if (this.plugins[this._p].active && this.plugins[this._p].hasPostUpdate)
+            if (this.plugins[this._i].active && this.plugins[this._i].hasPostUpdate)
             {
-                this.plugins[this._p].postUpdate();
+                this.plugins[this._i].postUpdate();
             }
         }
 
@@ -14980,16 +15898,13 @@ Phaser.PluginManager.prototype = {
     */
     render: function () {
 
-        if (this._pluginsLength === 0)
-        {
-            return;
-        }
+        this._i = this._len;
 
-        for (this._p = 0; this._p < this._pluginsLength; this._p++)
+        while (this._i--)
         {
-            if (this.plugins[this._p].visible && this.plugins[this._p].hasRender)
+            if (this.plugins[this._i].visible && this.plugins[this._i].hasRender)
             {
-                this.plugins[this._p].render();
+                this.plugins[this._i].render();
             }
         }
 
@@ -15003,32 +15918,28 @@ Phaser.PluginManager.prototype = {
     */
     postRender: function () {
 
-        if (this._pluginsLength === 0)
-        {
-            return;
-        }
+        this._i = this._len;
 
-        for (this._p = 0; this._p < this._pluginsLength; this._p++)
+        while (this._i--)
         {
-            if (this.plugins[this._p].visible && this.plugins[this._p].hasPostRender)
+            if (this.plugins[this._i].visible && this.plugins[this._i].hasPostRender)
             {
-                this.plugins[this._p].postRender();
+                this.plugins[this._i].postRender();
             }
         }
 
     },
 
     /**
-    * Clear down this PluginManager and null out references
+    * Clear down this PluginManager, calls destroy on every plugin and nulls out references.
     *
     * @method Phaser.PluginManager#destroy
     */
     destroy: function () {
 
-        this.plugins.length = 0;
-        this._pluginsLength = 0;
+        this.removeAll();
+
         this.game = null;
-        this._parent = null;
 
     }
 
@@ -15519,6 +16430,14 @@ Phaser.Group = function (game, parent, name, addToStage, enableBody, physicsBody
     this.exists = true;
 
     /**
+    * The type of objects that will be created when you use Group.create or Group.createMultiple. Defaults to Phaser.Sprite.
+    * When a new object is created it is passed the following parameters to its constructor: game, x, y, key, frame.
+    * @property {object} classType
+    * @default
+    */
+    this.classType = Phaser.Sprite;
+
+    /**
     * @property {Phaser.Group|Phaser.Sprite} parent - The parent of this Group.
     */
 
@@ -15715,7 +16634,7 @@ Phaser.Group.prototype.getAt = function (index) {
 
 /**
 * Automatically creates a new Phaser.Sprite object and adds it to the top of this Group.
-* Useful if you don't need to create the Sprite instances before-hand.
+* You can change Group.classType to any object and this call will create an object of that type instead, but it should extend either Sprite or Image.
 *
 * @method Phaser.Group#create
 * @param {number} x - The x coordinate to display the newly created Sprite at. The value is in relation to the Group.x point.
@@ -15723,13 +16642,13 @@ Phaser.Group.prototype.getAt = function (index) {
 * @param {string} key - The Game.cache key of the image that this Sprite will use.
 * @param {number|string} [frame] - If the Sprite image contains multiple frames you can specify which one to use here.
 * @param {boolean} [exists=true] - The default exists state of the Sprite.
-* @return {Phaser.Sprite} The child that was created.
+* @return {Phaser.Sprite|object} The child that was created. Will be a Phaser.Sprite unless Group.classType has been changed.
 */
 Phaser.Group.prototype.create = function (x, y, key, frame, exists) {
 
     if (typeof exists === 'undefined') { exists = true; }
 
-    var child = new Phaser.Sprite(this.game, x, y, key, frame);
+    var child = new this.classType(this.game, x, y, key, frame);
 
     if (this.enableBody)
     {
@@ -15762,6 +16681,7 @@ Phaser.Group.prototype.create = function (x, y, key, frame, exists) {
 * Automatically creates multiple Phaser.Sprite objects and adds them to the top of this Group.
 * Useful if you need to quickly generate a pool of identical sprites, such as bullets. By default the sprites will be set to not exist
 * and will be positioned at 0, 0 (relative to the Group.x/y)
+* You can change Group.classType to any object and this call will create an object of that type instead, but it should extend either Sprite or Image.
 *
 * @method Phaser.Group#createMultiple
 * @param {number} quantity - The number of Sprites to create.
@@ -15798,16 +16718,42 @@ Phaser.Group.prototype.updateZ = function () {
 };
 
 /**
+* Sets the Group cursor to the first object in the Group. If the optional index parameter is given it sets the cursor to the object at that index instead.
+*
+* @method Phaser.Group#resetCursor
+* @param {number} [index=0] - Set the cursor to point to a specific index.
+* @return {*} The child the cursor now points to.
+*/
+Phaser.Group.prototype.resetCursor = function (index) {
+
+    if (typeof index === 'undefined') { index = 0; }
+
+    if (index > this.children.length - 1)
+    {
+        index = 0;
+    }
+
+    if (this.cursor)
+    {
+        this._cache[8] = index;
+        this.cursor = this.children[this._cache[8]];
+        return this.cursor;
+    }
+
+};
+
+/**
 * Advances the Group cursor to the next object in the Group. If it's at the end of the Group it wraps around to the first object.
 *
 * @method Phaser.Group#next
+* @return {*} The child the cursor now points to.
 */
 Phaser.Group.prototype.next = function () {
 
     if (this.cursor)
     {
         //  Wrap the cursor?
-        if (this._cache[8] === this.children.length)
+        if (this._cache[8] >= this.children.length - 1)
         {
             this._cache[8] = 0;
         }
@@ -15817,6 +16763,8 @@ Phaser.Group.prototype.next = function () {
         }
 
         this.cursor = this.children[this._cache[8]];
+
+        return this.cursor;
     }
 
 };
@@ -15825,6 +16773,7 @@ Phaser.Group.prototype.next = function () {
 * Moves the Group cursor to the previous object in the Group. If it's at the start of the Group it wraps around to the last object.
 *
 * @method Phaser.Group#previous
+* @return {*} The child the cursor now points to.
 */
 Phaser.Group.prototype.previous = function () {
 
@@ -15841,6 +16790,8 @@ Phaser.Group.prototype.previous = function () {
         }
 
         this.cursor = this.children[this._cache[8]];
+
+        return this.cursor;
     }
 
 };
@@ -15920,7 +16871,7 @@ Phaser.Group.prototype.moveUp = function (child) {
 
         if (b)
         {
-            this.swap(a, b);
+            this.swap(child, b);
         }
     }
 
@@ -15944,7 +16895,7 @@ Phaser.Group.prototype.moveDown = function (child) {
 
         if (b)
         {
-            this.swap(a, b);
+            this.swap(child, b);
         }
     }
 
@@ -16048,9 +16999,7 @@ Phaser.Group.prototype.setProperty = function (child, key, value, operation) {
 
     operation = operation || 0;
 
-    //  As ugly as this approach looks, and although it's limited to a depth of only 4, it's extremely fast.
-    //  Much faster than a for loop or object iteration. There are no checks, so if the key isn't valid then it'll fail
-    //  but as you are likely to call this from inner loops that have to perform well, I'll take that trade off.
+    //  As ugly as this approach looks, and although it's limited to a depth of only 4, it's much faster than a for loop or object iteration.
 
     //  0 = Equals
     //  1 = Add
@@ -16060,7 +17009,7 @@ Phaser.Group.prototype.setProperty = function (child, key, value, operation) {
 
     var len = key.length;
 
-    if (len == 1)
+    if (len === 1 && child.hasOwnProperty(key[0]))
     {
         if (operation === 0) { child[key[0]] = value; }
         else if (operation == 1) { child[key[0]] += value; }
@@ -16068,7 +17017,7 @@ Phaser.Group.prototype.setProperty = function (child, key, value, operation) {
         else if (operation == 3) { child[key[0]] *= value; }
         else if (operation == 4) { child[key[0]] /= value; }
     }
-    else if (len == 2)
+    else if (len === 2 && child.hasOwnProperty(key[0]) && child[key[0]].hasOwnProperty(key[1]))
     {
         if (operation === 0) { child[key[0]][key[1]] = value; }
         else if (operation == 1) { child[key[0]][key[1]] += value; }
@@ -16076,7 +17025,7 @@ Phaser.Group.prototype.setProperty = function (child, key, value, operation) {
         else if (operation == 3) { child[key[0]][key[1]] *= value; }
         else if (operation == 4) { child[key[0]][key[1]] /= value; }
     }
-    else if (len == 3)
+    else if (len === 3 && child.hasOwnProperty(key[0]) && child[key[0]].hasOwnProperty(key[1]) && child[key[0]][key[1]].hasOwnProperty(key[2]))
     {
         if (operation === 0) { child[key[0]][key[1]][key[2]] = value; }
         else if (operation == 1) { child[key[0]][key[1]][key[2]] += value; }
@@ -16084,7 +17033,7 @@ Phaser.Group.prototype.setProperty = function (child, key, value, operation) {
         else if (operation == 3) { child[key[0]][key[1]][key[2]] *= value; }
         else if (operation == 4) { child[key[0]][key[1]][key[2]] /= value; }
     }
-    else if (len == 4)
+    else if (len === 4 && child.hasOwnProperty(key[0]) && child[key[0]].hasOwnProperty(key[1]) && child[key[0]][key[1]].hasOwnProperty(key[2]) && child[key[0]][key[1]][key[2]].hasOwnProperty(key[3]))
     {
         if (operation === 0) { child[key[0]][key[1]][key[2]][key[3]] = value; }
         else if (operation == 1) { child[key[0]][key[1]][key[2]][key[3]] += value; }
@@ -16574,6 +17523,28 @@ Phaser.Group.prototype.sort = function (index, order) {
 };
 
 /**
+* This allows you to use your own sort handler function.
+* It will be sent two parameters: the two children involved in the comparison (a and b). It should return -1 if a > b, 1 if a < b or 0 if a === b.
+*
+* @method Phaser.Group#customSort
+* @param {function} sortHandler - Your sort handler function. It will be sent two parameters: the two children involved in the comparison. It must return -1, 1 or 0.
+* @param {object} context - The scope in which the sortHandler is called.
+*/
+Phaser.Group.prototype.customSort = function (sortHandler, context) {
+
+    if (this.children.length < 2)
+    {
+        //  Nothing to swap
+        return;
+    }
+
+    this.children.sort(sortHandler.bind(context));
+
+    this.updateZ();
+
+};
+
+/**
 * An internal helper function for the sort process.
 *
 * @method Phaser.Group#ascendingSortHandler
@@ -16806,31 +17777,40 @@ Phaser.Group.prototype.getRandom = function (startIndex, length) {
 };
 
 /**
-* Removes the given child from this Group and sets its group property to null.
+* Removes the given child from this Group. This will dispatch an onRemovedFromGroup event from the child (if it has one),
+* reset the Group cursor and optionally destroy the child.
 *
 * @method Phaser.Group#remove
 * @param {Any} child - The child to remove.
+* @param {boolean} [destroy=false] - You can optionally call destroy on the child that was removed.
 * @return {boolean} true if the child was removed from this Group, otherwise false.
 */
-Phaser.Group.prototype.remove = function (child) {
+Phaser.Group.prototype.remove = function (child, destroy) {
 
-    if (this.children.length === 0)
+    if (typeof destroy === 'undefined') { destroy = false; }
+
+    if (this.children.length === 0 || this.children.indexOf(child) === -1)
     {
-        return;
+        return false;
     }
 
-    if (child.events)
+    if (child.events && !child.destroyPhase)
     {
         child.events.onRemovedFromGroup.dispatch(child, this);
     }
 
-    this.removeChild(child);
+    var removed = this.removeChild(child);
 
     this.updateZ();
 
     if (this.cursor === child)
     {
         this.next();
+    }
+
+    if (destroy && removed)
+    {
+        removed.destroy(true);
     }
 
     return true;
@@ -16842,8 +17822,11 @@ Phaser.Group.prototype.remove = function (child) {
 * The Group container remains on the display list.
 *
 * @method Phaser.Group#removeAll
+* @param {boolean} [destroy=false] - You can optionally call destroy on the child that was removed.
 */
-Phaser.Group.prototype.removeAll = function () {
+Phaser.Group.prototype.removeAll = function (destroy) {
+
+    if (typeof destroy === 'undefined') { destroy = false; }
 
     if (this.children.length === 0)
     {
@@ -16857,7 +17840,12 @@ Phaser.Group.prototype.removeAll = function () {
             this.children[0].events.onRemovedFromGroup.dispatch(this.children[0], this);
         }
 
-        this.removeChild(this.children[0]);
+        var removed = this.removeChild(this.children[0]);
+
+        if (destroy && removed)
+        {
+            removed.destroy(true);
+        }
     }
     while (this.children.length > 0);
 
@@ -16870,9 +17858,13 @@ Phaser.Group.prototype.removeAll = function () {
 *
 * @method Phaser.Group#removeBetween
 * @param {number} startIndex - The index to start removing children from.
-* @param {number} endIndex - The index to stop removing children from. Must be higher than startIndex and less than the length of the Group.
+* @param {number} [endIndex] - The index to stop removing children at. Must be higher than startIndex. If undefined this method will remove all children between startIndex and the end of the Group.
+* @param {boolean} [destroy=false] - You can optionally call destroy on the child that was removed.
 */
-Phaser.Group.prototype.removeBetween = function (startIndex, endIndex) {
+Phaser.Group.prototype.removeBetween = function (startIndex, endIndex, destroy) {
+
+    if (typeof endIndex === 'undefined') { endIndex = this.children.length; }
+    if (typeof destroy === 'undefined') { destroy = false; }
 
     if (this.children.length === 0)
     {
@@ -16884,19 +17876,28 @@ Phaser.Group.prototype.removeBetween = function (startIndex, endIndex) {
         return false;
     }
 
-    for (var i = startIndex; i < endIndex; i++)
+    var i = endIndex;
+
+    while (i >= startIndex)
     {
         if (this.children[i].events)
         {
             this.children[i].events.onRemovedFromGroup.dispatch(this.children[i], this);
         }
 
-        this.removeChild(this.children[i]);
+        var removed = this.removeChild(this.children[i]);
+
+        if (destroy && removed)
+        {
+            removed.destroy(true);
+        }
 
         if (this.cursor === this.children[i])
         {
             this.cursor = null;
         }
+
+        i--;
     }
 
     this.updateZ();
@@ -16917,33 +17918,18 @@ Phaser.Group.prototype.destroy = function (destroyChildren, soft) {
     if (typeof destroyChildren === 'undefined') { destroyChildren = true; }
     if (typeof soft === 'undefined') { soft = false; }
 
-    if (destroyChildren)
-    {
-        if (this.children.length > 0)
-        {
-            do
-            {
-                if (this.children[0].parent)
-                {
-                    this.children[0].destroy(destroyChildren);
-                }
-            }
-            while (this.children.length > 0);
-        }
-    }
-    else
-    {
-        this.removeAll();
-    }
+    this.removeAll(destroyChildren);
 
     this.cursor = null;
 
     if (!soft)
     {
-        this.parent.removeChild(this);
+        if (this.parent)
+        {
+            this.parent.removeChild(this);
+        }
 
         this.game = null;
-
         this.exists = false;
     }
 
@@ -17164,6 +18150,65 @@ Phaser.World.prototype.shutdown = function () {
 
     //  World is a Group, so run a soft destruction on this and all children.
     this.destroy(true, true);
+
+};
+
+/**
+* This will take the given game object and check if its x/y coordinates fall outside of the world bounds.
+* If they do it will reposition the object to the opposite side of the world, creating a wrap-around effect.
+*
+* @method Phaser.World#wrap
+* @param {Phaser.Sprite|Phaser.Image|Phaser.TileSprite|Phaser.Text} sprite - The object you wish to wrap around the world bounds.
+* @param {number} [padding=0] - Extra padding added equally to the sprite.x and y coordinates before checking if within the world bounds. Ignored if useBounds is true.
+* @param {boolean} [useBounds=false] - If useBounds is false wrap checks the object.x/y coordinates. If true it does a more accurate bounds check, which is more expensive.
+*/
+Phaser.World.prototype.wrap = function (sprite, padding, useBounds) {
+
+    if (typeof padding === 'undefined') { padding = 0; }
+    if (typeof useBounds === 'undefined') { useBounds = false; }
+
+    if (!useBounds)
+    {
+        if (sprite.x + padding < this.bounds.x)
+        {
+            sprite.x = this.bounds.right + padding;
+        }
+        else if (sprite.x - padding > this.bounds.right)
+        {
+            sprite.x = this.bounds.left - padding;
+        }
+
+        if (sprite.y + padding < this.bounds.top)
+        {
+            sprite.y = this.bounds.bottom + padding;
+        }
+        else if (sprite.y - padding > this.bounds.bottom)
+        {
+            sprite.y = this.bounds.top - padding;
+        }
+    }
+    else
+    {
+        sprite.getBounds();
+
+        if (sprite._currentBounds.right < this.bounds.x)
+        {
+            sprite.x = this.bounds.right;
+        }
+        else if (sprite._currentBounds.x > this.bounds.right)
+        {
+            sprite.x = this.bounds.left;
+        }
+
+        if (sprite._currentBounds.bottom < this.bounds.top)
+        {
+            sprite.y = this.bounds.bottom;
+        }
+        else if (sprite._currentBounds.top > this.bounds.bottom)
+        {
+            sprite.y = this.bounds.top;
+        }
+    }
 
 };
 
@@ -17439,7 +18484,7 @@ Phaser.ScaleManager = function (game, width, height) {
     this.scaleFactorInversed = new Phaser.Point(1, 1);
 
     /**
-    * @property {Phaser.Point} margin - If the game canvas is seto to align by adjusting the margin, the margin calculation values are stored in this Point.
+    * @property {Phaser.Point} margin - If the game canvas is set to align by adjusting the margin, the margin calculation values are stored in this Point.
     * @readonly
     */
     this.margin = new Phaser.Point(0, 0);
@@ -17488,6 +18533,12 @@ Phaser.ScaleManager = function (game, width, height) {
     * @private
     */
     this._height = 0;
+
+    /**
+    * @property {number} _check - Cached size interval var.
+    * @private
+    */
+    this._check = null;
 
     var _this = this;
 
@@ -17647,7 +18698,7 @@ Phaser.ScaleManager.prototype = {
 
         if (typeof orientationImage !== 'undefined')
         {
-            if (orientationImage == null || this.game.cache.checkImageKey(orientationImage) === false)
+            if (orientationImage === null || this.game.cache.checkImageKey(orientationImage) === false)
             {
                 orientationImage = '__default';
             }
@@ -17792,9 +18843,12 @@ Phaser.ScaleManager.prototype = {
     refresh: function () {
 
         //  We can't do anything about the status bars in iPads, web apps or desktops
-        if (this.game.device.iPad === false && this.game.device.webApp === false && this.game.device.desktop === false)
+        if (!this.game.device.iPad && !this.game.device.webApp && !this.game.device.desktop)
         {
-            if (this.game.device.android && this.game.device.chrome === false)
+            //  TODO - Test this
+            // this._startHeight = window.innerHeight;
+
+            if (this.game.device.android && !this.game.device.chrome)
             {
                 window.scrollTo(0, 1);
             }
@@ -17804,7 +18858,7 @@ Phaser.ScaleManager.prototype = {
             }
         }
 
-        if (this._check == null && this.maxIterations > 0)
+        if (this._check === null && this.maxIterations > 0)
         {
             this._iterations = this.maxIterations;
 
@@ -17825,14 +18879,14 @@ Phaser.ScaleManager.prototype = {
     */
     setScreenSize: function (force) {
 
-        if (typeof force == 'undefined')
+        if (typeof force === 'undefined')
         {
             force = false;
         }
 
-        if (this.game.device.iPad === false && this.game.device.webApp === false && this.game.device.desktop === false)
+        if (!this.game.device.iPad && !this.game.device.webApp && !this.game.device.desktop)
         {
-            if (this.game.device.android && this.game.device.chrome === false)
+            if (this.game.device.android && !this.game.device.chrome)
             {
                 window.scrollTo(0, 1);
             }
@@ -17849,28 +18903,28 @@ Phaser.ScaleManager.prototype = {
             // Set minimum height of content to new window height
             document.documentElement['style'].minHeight = window.innerHeight + 'px';
 
-            if (this.incorrectOrientation === true)
+            if (this.incorrectOrientation)
             {
                 this.setMaximum();
             }
             else if (!this.isFullScreen)
             {
-                if (this.scaleMode == Phaser.ScaleManager.EXACT_FIT)
+                if (this.scaleMode === Phaser.ScaleManager.EXACT_FIT)
                 {
                     this.setExactFit();
                 }
-                else if (this.scaleMode == Phaser.ScaleManager.SHOW_ALL)
+                else if (this.scaleMode === Phaser.ScaleManager.SHOW_ALL)
                 {
                     this.setShowAll();
                 }
             }
             else
             {
-                if (this.fullScreenScaleMode == Phaser.ScaleManager.EXACT_FIT)
+                if (this.fullScreenScaleMode === Phaser.ScaleManager.EXACT_FIT)
                 {
                     this.setExactFit();
                 }
-                else if (this.fullScreenScaleMode == Phaser.ScaleManager.SHOW_ALL)
+                else if (this.fullScreenScaleMode === Phaser.ScaleManager.SHOW_ALL)
                 {
                     this.setShowAll();
                 }
@@ -17889,7 +18943,7 @@ Phaser.ScaleManager.prototype = {
     */
     setSize: function () {
 
-        if (this.incorrectOrientation === false)
+        if (!this.incorrectOrientation)
         {
             if (this.maxWidth && this.width > this.maxWidth)
             {
@@ -17919,7 +18973,7 @@ Phaser.ScaleManager.prototype = {
 
         if (this.pageAlignHorizontally)
         {
-            if (this.width < window.innerWidth && this.incorrectOrientation === false)
+            if (this.width < window.innerWidth && !this.incorrectOrientation)
             {
                 this.margin.x = Math.round((window.innerWidth - this.width) / 2);
                 this.game.canvas.style.marginLeft = this.margin.x + 'px';
@@ -17933,7 +18987,7 @@ Phaser.ScaleManager.prototype = {
 
         if (this.pageAlignVertically)
         {
-            if (this.height < window.innerHeight && this.incorrectOrientation === false)
+            if (this.height < window.innerHeight && !this.incorrectOrientation)
             {
                 this.margin.y = Math.round((window.innerHeight - this.height) / 2);
                 this.game.canvas.style.marginTop = this.margin.y + 'px';
@@ -18041,7 +19095,7 @@ Object.defineProperty(Phaser.ScaleManager.prototype, "isFullScreen", {
 Object.defineProperty(Phaser.ScaleManager.prototype, "isPortrait", {
 
     get: function () {
-        return this.orientation === 0 || this.orientation == 180;
+        return (this.orientation === 0 || this.orientation === 180);
     }
 
 });
@@ -18054,7 +19108,7 @@ Object.defineProperty(Phaser.ScaleManager.prototype, "isPortrait", {
 Object.defineProperty(Phaser.ScaleManager.prototype, "isLandscape", {
 
     get: function () {
-        return this.orientation === 90 || this.orientation === -90;
+        return (this.orientation === 90 || this.orientation === -90);
     }
 
 });
@@ -18102,7 +19156,7 @@ Phaser.Game = function (width, height, renderer, parent, state, transparent, ant
     this.physicsConfig = physicsConfig;
 
     /**
-    * @property {HTMLElement} parent - The Games DOM parent.
+    * @property {string|HTMLElement} parent - The Games DOM parent.
     * @default
     */
     this.parent = '';
@@ -18132,10 +19186,9 @@ Phaser.Game = function (width, height, renderer, parent, state, transparent, ant
     this.antialias = true;
 
     /**
-    * @property {number} renderer - The Pixi Renderer
-    * @default
+    * @property {PIXI.CanvasRenderer|PIXI.WebGLRenderer} renderer - The Pixi Renderer.
     */
-    this.renderer = Phaser.AUTO;
+    this.renderer = null;
 
     /**
     * @property {number} renderType - The Renderer this game will use. Either Phaser.AUTO, Phaser.CANVAS or Phaser.WEBGL.
@@ -18143,7 +19196,7 @@ Phaser.Game = function (width, height, renderer, parent, state, transparent, ant
     this.renderType = Phaser.AUTO;
 
     /**
-    * @property {number} state - The StateManager.
+    * @property {Phaser.StateManager} state - The StateManager.
     */
     this.state = null;
 
@@ -18176,19 +19229,16 @@ Phaser.Game = function (width, height, renderer, parent, state, transparent, ant
 
     /**
     * @property {Phaser.Cache} cache - Reference to the assets cache.
-    * @default
     */
     this.cache = null;
 
     /**
     * @property {Phaser.Input} input - Reference to the input manager
-    * @default
     */
     this.input = null;
 
     /**
     * @property {Phaser.Loader} load - Reference to the assets loader.
-    * @default
     */
     this.load = null;
 
@@ -18218,7 +19268,7 @@ Phaser.Game = function (width, height, renderer, parent, state, transparent, ant
     this.stage = null;
 
     /**
-    * @property {Phaser.TimeManager} time - Reference to game clock.
+    * @property {Phaser.Time} time - Reference to the core game clock.
     */
     this.time = null;
 
@@ -18248,7 +19298,7 @@ Phaser.Game = function (width, height, renderer, parent, state, transparent, ant
     this.device = null;
 
     /**
-    * @property {Phaser.Physics.PhysicsManager} camera - A handy reference to world.camera.
+    * @property {Phaser.Camera} camera - A handy reference to world.camera.
     */
     this.camera = null;
 
@@ -18280,7 +19330,7 @@ Phaser.Game = function (width, height, renderer, parent, state, transparent, ant
     this.stepping = false;
 
     /**
-    * @property {boolean} stepping - An internal property used by enableStep, but also useful to query from your own game objects.
+    * @property {boolean} pendingStep - An internal property used by enableStep, but also useful to query from your own game objects.
     * @default
     * @readonly
     */
@@ -18316,14 +19366,12 @@ Phaser.Game = function (width, height, renderer, parent, state, transparent, ant
     /**
     * @property {boolean} _paused - Is game paused?
     * @private
-    * @default
     */
     this._paused = false;
 
     /**
     * @property {boolean} _codePaused - Was the game paused via code or a visibility change?
     * @private
-    * @default
     */
     this._codePaused = false;
 
@@ -18509,9 +19557,10 @@ Phaser.Game.prototype = {
             this.sound = new Phaser.SoundManager(this);
             this.physics = new Phaser.Physics(this, this.physicsConfig);
             this.particles = new Phaser.Particles(this);
-            this.plugins = new Phaser.PluginManager(this, this);
+            this.plugins = new Phaser.PluginManager(this);
             this.net = new Phaser.Net(this);
             this.debug = new Phaser.Utils.Debug(this);
+            this.scratch = new Phaser.BitmapData(this, '__root', 1024, 1024);
 
             this.time.boot();
             this.stage.boot();
@@ -18547,7 +19596,7 @@ Phaser.Game.prototype = {
     */
     showDebugHeader: function () {
 
-        var v = Phaser.DEV_VERSION;
+        var v = Phaser.VERSION;
         var r = 'Canvas';
         var a = 'HTML Audio';
         var c = 1;
@@ -18594,7 +19643,7 @@ Phaser.Game.prototype = {
 
             console.log.apply(console, args);
         }
-        else
+        else if (window['console'])
         {
             console.log('Phaser v' + v + ' - Renderer: ' + r + ' - Audio: ' + a + ' - http://phaser.io');
         }
@@ -18675,11 +19724,11 @@ Phaser.Game.prototype = {
             this.plugins.preUpdate();
             this.stage.preUpdate();
 
+            this.state.update();
             this.stage.update();
             this.tweens.update();
             this.sound.update();
             this.input.update();
-            this.state.update();
             this.physics.update();
             this.particles.update();
             this.plugins.update();
@@ -18689,6 +19738,8 @@ Phaser.Game.prototype = {
         }
         else
         {
+            this.state.pauseUpdate();
+            // this.input.update();
             this.debug.preUpdate();
         }
 
@@ -18861,7 +19912,7 @@ Object.defineProperty(Phaser.Game.prototype, "paused", {
             {
                 this._paused = true;
                 this._codePaused = true;
-                this.sound.mute = true;
+                this.sound.setMute();
                 this.time.gamePaused();
                 this.onPause.dispatch(this);
             }
@@ -18873,7 +19924,7 @@ Object.defineProperty(Phaser.Game.prototype, "paused", {
                 this._paused = false;
                 this._codePaused = false;
                 this.input.reset();
-                this.sound.mute = false;
+                this.sound.unsetMute();
                 this.time.gameResumed();
                 this.onResume.dispatch(this);
             }
@@ -19131,6 +20182,12 @@ Phaser.Input = function (game) {
     // this.gestures = null;
 
     /**
+    * @property {boolean} resetLocked - If the Input Manager has been reset locked then all calls made to InputManager.reset, such as from a State change, are ignored.
+    * @default
+    */
+    this.resetLocked = false;
+
+    /**
     * @property {Phaser.Signal} onDown - A Signal that is dispatched each time a pointer is pressed down.
     */
     this.onDown = null;
@@ -19151,10 +20208,10 @@ Phaser.Input = function (game) {
     this.onHold = null;
 
     /**
-    * A linked list of interactive objects; the InputHandler components (belonging to Sprites) register themselves with this.
-    * @property {Phaser.LinkedList} interactiveItems
+    * A list of interactive objects. Te InputHandler components add and remove themselves from this.
+    * @property {Phaser.ArrayList} interactiveItems
     */
-    this.interactiveItems = new Phaser.LinkedList();
+    this.interactiveItems = new Phaser.ArrayList();
 
     /**
     * @property {Phaser.Point} _localPoint - Internal cache var.
@@ -19359,20 +20416,23 @@ Phaser.Input.prototype = {
     },
 
     /**
-    * Reset all of the Pointers and Input states
+    * Reset all of the Pointers and Input states. The optional `hard` parameter will reset any events or callbacks that may be bound.
+    * Input.reset is called automatically during a State change or if a game loses focus / visibility. If you wish to control the reset
+    * directly yourself then set InputManager.resetLocked to `true`.
+    *
     * @method Phaser.Input#reset
-    * @param {boolean} hard - A soft reset (hard = false) won't reset any Signals that might be bound. A hard reset will.
+    * @param {boolean} [hard=false] - A soft reset won't reset any events or callbacks that are bound. A hard reset will.
     */
     reset: function (hard) {
 
-        if (this.game.isBooted === false)
+        if (!this.game.isBooted || this.resetLocked)
         {
             return;
         }
 
-        if (typeof hard == 'undefined') { hard = false; }
+        if (typeof hard === 'undefined') { hard = false; }
 
-        this.keyboard.reset();
+        this.keyboard.reset(hard);
         this.mousePointer.reset();
         this.gamepad.reset();
 
@@ -19391,7 +20451,7 @@ Phaser.Input.prototype = {
             this.game.canvas.style.cursor = 'inherit';
         }
 
-        if (hard === true)
+        if (hard)
         {
             this.onDown.dispose();
             this.onUp.dispose();
@@ -19401,8 +20461,6 @@ Phaser.Input.prototype = {
             this.onUp = new Phaser.Signal();
             this.onTap = new Phaser.Signal();
             this.onHold = new Phaser.Signal();
-
-            this.interactiveItems.callAll('reset');
         }
 
         this._pollCounter = 0;
@@ -19815,6 +20873,12 @@ Phaser.Key = function (game, keycode) {
     this.game = game;
 
     /**
+    * @property {boolean} enabled - An enabled key processes its update and dispatches events. You can toggle this at run-time to disable a key without deleting it.
+    * @default
+    */
+    this.enabled = true;
+
+    /**
     * @property {object} event - Stores the most recent DOM event.
     * @readonly
     */
@@ -19906,6 +20970,8 @@ Phaser.Key.prototype = {
 
     update: function () {
 
+        if (!this.enabled) { return; }
+
         if (this.isDown)
         {
             this.duration = this.game.time.now - this.timeDown;
@@ -19926,6 +20992,8 @@ Phaser.Key.prototype = {
     * @protected
     */
     processKeyDown: function (event) {
+
+        if (!this.enabled) { return; }
 
         this.event = event;
 
@@ -19956,6 +21024,8 @@ Phaser.Key.prototype = {
     */
     processKeyUp: function (event) {
 
+        if (!this.enabled) { return; }
+
         this.event = event;
 
         if (this.isUp)
@@ -19973,16 +21043,29 @@ Phaser.Key.prototype = {
     },
 
     /**
-    * Resets the state of this Key.
+    * Resets the state of this Key. This sets isDown to false, isUp to true, resets the time to be the current time and clears any callbacks
+    * associated with the onDown and onUp events and nulls the onHoldCallback if set.
     *
     * @method Phaser.Key#reset
+    * @param {boolean} [hard=true] - A soft reset won't reset any events or callbacks that are bound to this Key. A hard reset will.
     */
-    reset: function () {
+    reset: function (hard) {
+
+        if (typeof hard === 'undefined') { hard = true; }
 
         this.isDown = false;
         this.isUp = true;
         this.timeUp = this.game.time.now;
         this.duration = this.game.time.now - this.timeDown;
+        this.enabled = true;
+
+        if (hard)
+        {
+            this.onDown.removeAll();
+            this.onUp.removeAll();
+            this.onHoldCallback = null;
+            this.onHoldContext = null;
+        }
 
     },
 
@@ -20025,7 +21108,10 @@ Phaser.Key.prototype.constructor = Phaser.Key;
 */
 
 /**
-* The Keyboard class handles looking after keyboard input for your game. It will recognise and respond to key presses and dispatch the required events.
+* The Keyboard class handles looking after keyboard input for your game.
+* It will recognise and respond to key presses and dispatch the required events.
+* Please be aware that lots of keyboards are unable to process certain combinations of keys due to hardware
+* limitations known as ghosting. Full details here: http://www.html5gamedevs.com/topic/4876-impossible-to-use-more-than-2-keyboard-input-buttons-at-the-same-time/
 *
 * @class Phaser.Keyboard
 * @constructor
@@ -20212,11 +21298,11 @@ Phaser.Keyboard.prototype = {
     */
     stop: function () {
 
-        this._onKeyDown = null;
-        this._onKeyUp = null;
-
         window.removeEventListener('keydown', this._onKeyDown);
         window.removeEventListener('keyup', this._onKeyUp);
+
+        this._onKeyDown = null;
+        this._onKeyUp = null;
 
     },
 
@@ -20378,8 +21464,11 @@ Phaser.Keyboard.prototype = {
     * Resets all Keys.
     *
     * @method Phaser.Keyboard#reset
+    * @param {boolean} [hard=true] - A soft reset won't reset any events or callbacks that are bound to the Keys. A hard reset will.
     */
-    reset: function () {
+    reset: function (hard) {
+
+        if (typeof hard === 'undefined') { hard = true; }
 
         this.event = null;
 
@@ -20389,7 +21478,7 @@ Phaser.Keyboard.prototype = {
         {
             if (this._keys[i])
             {
-                this._keys[i].reset();
+                this._keys[i].reset(hard);
             }
         }
 
@@ -21249,6 +22338,11 @@ Phaser.Pointer = function (game, id) {
     * @property {Phaser.Point} positionDown - A Phaser.Point object containing the x/y values of the pointer when it was last in a down state on the display.
     */
     this.positionDown = new Phaser.Point();
+    
+    /**
+    * @property {Phaser.Point} positionUp - A Phaser.Point object containing the x/y values of the pointer when it was last released.
+    */
+    this.positionUp = new Phaser.Point();
 
     /**
     * A Phaser.Circle that is centered on the x/y coordinates of this pointer, useful for hit detection.
@@ -21281,7 +22375,7 @@ Phaser.Pointer.prototype = {
             this.button = event.button;
         }
 
-        this._history.length = 0;
+        this._history = [];
         this.active = true;
         this.withinGame = true;
         this.isDown = true;
@@ -21434,15 +22528,15 @@ Phaser.Pointer.prototype = {
         this._highestRenderObject = null;
         this._highestInputPriorityID = -1;
 
-        //  Just run through the linked list
+        //  Run through the list
         if (this.game.input.interactiveItems.total > 0)
         {
-            var currentNode = this.game.input.interactiveItems.next;
+            var currentNode = this.game.input.interactiveItems.first;
 
             do
             {
                 //  If the object is using pixelPerfect checks, or has a higher InputManager.PriorityID OR if the priority ID is the same as the current highest AND it has a higher renderOrderID, then set it to the top
-                if (currentNode.validForInput(this._highestInputPriorityID, this._highestRenderOrderID))
+                if (currentNode && currentNode.validForInput(this._highestInputPriorityID, this._highestRenderOrderID))
                 {
                     if ((!fromClick && currentNode.checkPointerOver(this)) || (fromClick && currentNode.checkPointerDown(this)))
                     {
@@ -21451,9 +22545,9 @@ Phaser.Pointer.prototype = {
                         this._highestRenderObject = currentNode;
                     }
                 }
-                currentNode = currentNode.next;
+                currentNode = this.game.input.interactiveItems.next;
             }
-            while (currentNode != null);
+            while (currentNode !== null);
         }
 
         if (this._highestRenderObject === null)
@@ -21564,34 +22658,18 @@ Phaser.Pointer.prototype = {
         this.withinGame = false;
         this.isDown = false;
         this.isUp = true;
-
+        
+        this.positionUp.setTo(this.x, this.y);
+        
         if (this.isMouse === false)
         {
             this.game.input.currentPointers--;
         }
 
-        if (this.game.input.interactiveItems.total > 0)
-        {
-            var currentNode = this.game.input.interactiveItems.next;
-
-            do
-            {
-                if (currentNode)
-                {
-                    currentNode._releasedHandler(this);
-                }
-
-                currentNode = currentNode.next;
-            }
-            while (currentNode != null);
-        }
-
-        if (this.targetObject)
-        {
-            this.targetObject._releasedHandler(this);
-        }
+        this.game.input.interactiveItems.callAll('_releasedHandler', this);
 
         this.targetObject = null;
+
         return this;
 
     },
@@ -23454,7 +24532,10 @@ Phaser.InputHandler = function (sprite) {
     this.enabled = false;
 
     /**
-    * @property {number} priorityID - The PriorityID controls which Sprite receives an Input event first if they should overlap.
+    * The priorityID is used to determine which game objects should get priority when input events occur. For example if you have
+    * several Sprites that overlap, by default the one at the top of the display list is given priority for input events. You can
+    * stop this from happening by controlling the priorityID value. The higher the value, the more important they are considered to the Input events.
+    * @property {number} priorityID
     * @default
     */
     this.priorityID = 0;
@@ -23588,6 +24669,12 @@ Phaser.InputHandler = function (sprite) {
     this.consumePointerEvent = false;
 
     /**
+    * @property {boolean} _wasEnabled - Internal cache var.
+    * @private
+    */
+    this._wasEnabled = false;
+
+    /**
     * @property {Phaser.Point} _tempPoint - Internal cache var.
     * @private
     */
@@ -23629,7 +24716,7 @@ Phaser.InputHandler.prototype = {
     start: function (priority, useHandCursor) {
 
         priority = priority || 0;
-        if (typeof useHandCursor == 'undefined') { useHandCursor = false; }
+        if (typeof useHandCursor === 'undefined') { useHandCursor = false; }
 
         //  Turning on
         if (this.enabled === false)
@@ -23660,6 +24747,7 @@ Phaser.InputHandler.prototype = {
 
             this.snapOffset = new Phaser.Point();
             this.enabled = true;
+            this._wasEnabled = true;
 
             //  Create the signals the Input component will emit
             if (this.sprite.events && this.sprite.events.onInputOver === null)
@@ -23673,7 +24761,45 @@ Phaser.InputHandler.prototype = {
             }
         }
 
+        this.sprite.events.onAddedToGroup.add(this.addedToGroup, this);
+        this.sprite.events.onRemovedFromGroup.add(this.removedFromGroup, this);
+
         return this.sprite;
+
+    },
+
+    /**
+    * Handles when the parent Sprite is added to a new Group.
+    *
+    * @method Phaser.InputHandler#addedToGroup
+    * @private
+    */
+    addedToGroup: function () {
+
+        if (this._wasEnabled && !this.enabled)
+        {
+            this.start();
+        }
+
+    },
+
+    /**
+    * Handles when the parent Sprite is removed from a Group.
+    *
+    * @method Phaser.InputHandler#removedFromGroup
+    * @private
+    */
+    removedFromGroup: function () {
+
+        if (this.enabled)
+        {
+            this._wasEnabled = true;
+            this.stop();
+        }
+        else
+        {
+            this._wasEnabled = false;
+        }
 
     },
 
@@ -23731,7 +24857,7 @@ Phaser.InputHandler.prototype = {
     */
     destroy: function () {
 
-        if (this.enabled)
+        if (this.sprite)
         {
             if (this._setHandCursor)
             {
@@ -23978,7 +25104,7 @@ Phaser.InputHandler.prototype = {
     */
     checkPointerDown: function (pointer) {
 
-        if (this.enabled === false || this.sprite.visible === false || this.sprite.parent.visible === false)
+        if (!this.enabled || !this.sprite || !this.sprite.parent || !this.sprite.visible || !this.sprite.parent.visible)
         {
             return false;
         }
@@ -24008,7 +25134,7 @@ Phaser.InputHandler.prototype = {
     */
     checkPointerOver: function (pointer) {
 
-        if (this.enabled === false || this.sprite.visible === false || this.sprite.parent.visible === false)
+        if (!this.enabled || !this.sprite || !this.sprite.parent || !this.sprite.visible || !this.sprite.parent.visible)
         {
             return false;
         }
@@ -24090,7 +25216,7 @@ Phaser.InputHandler.prototype = {
     */
     update: function (pointer) {
 
-        if (this.sprite === null)
+        if (this.sprite === null || this.sprite.parent === undefined)
         {
             //  Abort. We've been destroyed.
             return;
@@ -24147,10 +25273,13 @@ Phaser.InputHandler.prototype = {
             if (this.useHandCursor && this._pointerData[pointer.id].isDragged === false)
             {
                 this.game.canvas.style.cursor = "pointer";
-                this._setHandCursor = false;
+                this._setHandCursor = true;
             }
 
-            this.sprite.events.onInputOver.dispatch(this.sprite, pointer);
+            if (this.sprite && this.sprite.events)
+            {
+                this.sprite.events.onInputOver.dispatch(this.sprite, pointer);
+            }
         }
 
     },
@@ -24210,7 +25339,11 @@ Phaser.InputHandler.prototype = {
             this._pointerData[pointer.id].isDown = true;
             this._pointerData[pointer.id].isUp = false;
             this._pointerData[pointer.id].timeDown = this.game.time.now;
-            this.sprite.events.onInputDown.dispatch(this.sprite, pointer);
+    
+            if (this.sprite && this.sprite.events)
+            {
+                this.sprite.events.onInputDown.dispatch(this.sprite, pointer);
+            }
 
             //  Start drag
             if (this.draggable && this.isDragged === false)
@@ -24255,12 +25388,18 @@ Phaser.InputHandler.prototype = {
             if (this.checkPointerOver(pointer))
             {
                 //  Release the inputUp signal and provide optional parameter if pointer is still over the sprite or not
-                this.sprite.events.onInputUp.dispatch(this.sprite, pointer, true);
+                if (this.sprite && this.sprite.events)
+                {
+                    this.sprite.events.onInputUp.dispatch(this.sprite, pointer, true);
+                }
             }
             else
             {
                 //  Release the inputUp signal and provide optional parameter if pointer is still over the sprite or not
-                this.sprite.events.onInputUp.dispatch(this.sprite, pointer, false);
+                if (this.sprite && this.sprite.events)
+                {
+                    this.sprite.events.onInputUp.dispatch(this.sprite, pointer, false);
+                }
 
                 //  Pointer outside the sprite? Reset the cursor
                 if (this.useHandCursor)
@@ -25685,20 +26824,39 @@ Phaser.BitmapData = function (game, key, width, height) {
     this.ctx = this.context;
 
     /**
-    * @property {array} imageData - The canvas image data.
+    * @property {ImageData} imageData - The context image data.
     */
     this.imageData = this.context.getImageData(0, 0, width, height);
 
     /**
-    * @property {UInt8Clamped} pixels - A reference to the context imageData buffer.
+    * @property {Uint8ClampedArray} data - A Uint8ClampedArray view into BitmapData.buffer.
+    */
+    this.data = this.imageData.data;
+
+    /**
+    * @property {Uint32Array} pixels - An Uint32Array view into BitmapData.buffer.
+    */
+    this.pixels = null;
+
+    /**
+    * @property {ArrayBuffer} buffer - An ArrayBuffer the same size as the context ImageData.
     */
     if (this.imageData.data.buffer)
     {
-        this.pixels = this.imageData.data.buffer;
+        this.buffer = this.imageData.data.buffer;
+        this.pixels = new Uint32Array(this.buffer);
     }
     else
     {
-        this.pixels = this.imageData.data;
+        if (window['ArrayBuffer'])
+        {
+            this.buffer = new ArrayBuffer(this.imageData.data.length);
+            this.pixels = new Uint32Array(this.buffer);
+        }
+        else
+        {
+            this.pixels = this.imageData.data;
+        }
     }
 
     /**
@@ -25726,9 +26884,36 @@ Phaser.BitmapData = function (game, key, width, height) {
     this.type = Phaser.BITMAPDATA;
 
     /**
+    * @property {boolean} disableTextureUpload - If disableTextureUpload is true this BitmapData will never send its image data to the GPU when its dirty flag is true.
+    */
+    this.disableTextureUpload = false;
+
+    /**
     * @property {boolean} dirty - If dirty this BitmapData will be re-rendered.
     */
     this.dirty = false;
+
+    //  Aliases
+    this.cls = this.clear;
+    this.update = this.refreshBuffer;
+
+    /**
+    * @property {number} _tempR - Internal cache var.
+    * @private
+    */
+    this._tempR = 0;
+
+    /**
+    * @property {number} _tempG - Internal cache var.
+    * @private
+    */
+    this._tempG = 0;
+
+    /**
+    * @property {number} _tempB - Internal cache var.
+    * @private
+    */
+    this._tempB = 0;
 
 };
 
@@ -25760,7 +26945,14 @@ Phaser.BitmapData.prototype = {
     },
 
     /**
-    * Clears the BitmapData.
+    * Clears the BitmapData context using a clearRect.
+    *
+    * @method Phaser.BitmapData#cls
+    */
+
+    /**
+    * Clears the BitmapData context using a clearRect.
+    *
     * @method Phaser.BitmapData#clear
     */
     clear: function () {
@@ -25772,7 +26964,27 @@ Phaser.BitmapData.prototype = {
     },
 
     /**
-    * Resizes the BitmapData.
+    * Fills the BitmapData with the given color.
+    *
+    * @method Phaser.BitmapData#fill
+    * @param {number} r - The red color value, between 0 and 0xFF (255).
+    * @param {number} g - The green color value, between 0 and 0xFF (255).
+    * @param {number} b - The blue color value, between 0 and 0xFF (255).
+    * @param {number} [a=1] - The alpha color value, between 0 and 1.
+    */
+    fill: function (r, g, b, a) {
+
+        if (typeof a === 'undefined') { a = 1; }
+
+        this.context.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+        this.context.fillRect(0, 0, this.width, this.height);
+        this.dirty = true;
+
+    },
+
+    /**
+    * Resizes the BitmapData. This changes the size of the underlying canvas and refreshes the buffer.
+    *
     * @method Phaser.BitmapData#resize
     */
     resize: function (width, height) {
@@ -25785,7 +26997,7 @@ Phaser.BitmapData.prototype = {
             this.canvas.height = height;
             this.textureFrame.width = width;
             this.textureFrame.height = height;
-            this.imageData = this.context.getImageData(0, 0, width, height);
+            this.refreshBuffer();
         }
 
         this.dirty = true;
@@ -25793,50 +27005,363 @@ Phaser.BitmapData.prototype = {
     },
 
     /**
-    * @method Phaser.BitmapData#refreshBuffer
+    * This re-creates the BitmapData.imageData from the current context.
+    * It then re-builds the ArrayBuffer, the data Uint8ClampedArray reference and the pixels Int32Array.
+    * If not given the dimensions defaults to the full size of the context.
+    *
+    * @method Phaser.BitmapData#update
+    * @param {number} [x=0] - The x coordinate of the top-left of the image data area to grab from.
+    * @param {number} [y=0] - The y coordinate of the top-left of the image data area to grab from.
+    * @param {number} [width] - The width of the image data area.
+    * @param {number} [height] - The height of the image data area.
     */
-    refreshBuffer: function () {
 
-        this.imageData = this.context.getImageData(0, 0, this.width, this.height);
-        this.pixels = new Int32Array(this.imageData.data.buffer);
+    /**
+    * DEPRECATED: This method will be removed in Phaser 2.1. Please use BitmapData.update instead.
+    *
+    * This re-creates the BitmapData.imageData from the current context.
+    * It then re-builds the ArrayBuffer, the data Uint8ClampedArray reference and the pixels Int32Array.
+    * If not given the dimensions defaults to the full size of the context.
+    *
+    * @method Phaser.BitmapData#refreshBuffer
+    * @param {number} [x=0] - The x coordinate of the top-left of the image data area to grab from.
+    * @param {number} [y=0] - The y coordinate of the top-left of the image data area to grab from.
+    * @param {number} [width] - The width of the image data area.
+    * @param {number} [height] - The height of the image data area.
+    */
+    refreshBuffer: function (x, y, width, height) {
 
-        // this.data8 = new Uint8ClampedArray(this.imageData.buffer);
-        // this.data32 = new Uint32Array(this.imageData.buffer);
+        if (typeof x === 'undefined') { x = 0; }
+        if (typeof y === 'undefined') { y = 0; }
+        if (typeof width === 'undefined') { width = this.width; }
+        if (typeof height === 'undefined') { height = this.height; }
+
+        this.imageData = this.context.getImageData(x, y, width, height);
+        this.data = this.imageData.data;
+
+        if (this.imageData.data.buffer)
+        {
+            this.buffer = this.imageData.data.buffer;
+            this.pixels = new Uint32Array(this.buffer);
+        }
+        else
+        {
+            if (window['ArrayBuffer'])
+            {
+                this.buffer = new ArrayBuffer(this.imageData.data.length);
+                this.pixels = new Uint32Array(this.buffer);
+            }
+            else
+            {
+                this.pixels = this.imageData.data;
+            }
+        }
+
+    },
+
+    /**
+    * Scans through the area specified in this BitmapData and sends a color object for every pixel to the given callback.
+    * The callback will be sent a color object with 6 properties: `{ r: number, g: number, b: number, a: number, color: number, rgba: string }`.
+    * Where r, g, b and a are integers between 0 and 255 representing the color component values for red, green, blue and alpha.
+    * The `color` property is an Int32 of the full color. Note the endianess of this will change per system.
+    * The `rgba` property is a CSS style rgba() string which can be used with context.fillStyle calls, among others.
+    * The callback will also be sent the pixels x and y coordinates respectively.
+    * The callback must return either `false`, in which case no change will be made to the pixel, or a new color object.
+    * If a new color object is returned the pixel will be set to the r, g, b and a color values given within it.
+    *
+    * @method Phaser.BitmapData#processPixelRGB
+    * @param {function} callback - The callback that will be sent each pixel color object to be processed.
+    * @param {object} callbackContext - The context under which the callback will be called.
+    * @param {number} [x=0] - The x coordinate of the top-left of the region to process from.
+    * @param {number} [y=0] - The y coordinate of the top-left of the region to process from.
+    * @param {number} [width] - The width of the region to process.
+    * @param {number} [height] - The height of the region to process.
+    */
+    processPixelRGB: function (callback, callbackContext, x, y, width, height) {
+
+        if (typeof x === 'undefined') { x = 0; }
+        if (typeof y === 'undefined') { y = 0; }
+        if (typeof width === 'undefined') { width = this.width; }
+        if (typeof height === 'undefined') { height = this.height; }
+
+        var w = x + width;
+        var h = y + height;
+        var pixel = Phaser.Color.createColor();
+        var result = { r: 0, g: 0, b: 0, a: 0 };
+        var dirty = false;
+
+        for (var ty = y; ty < h; ty++)
+        {
+            for (var tx = x; tx < w; tx++)
+            {
+                Phaser.Color.unpackPixel(this.getPixel32(tx, ty), pixel);
+
+                result = callback.call(callbackContext, pixel, tx, ty);
+
+                if (result !== false && result !== null)
+                {
+                    this.setPixel32(tx, ty, result.r, result.g, result.b, result.a, false);
+                    dirty = true;
+                }
+            }
+        }
+
+        if (dirty)
+        {
+            this.context.putImageData(this.imageData, 0, 0);
+            this.dirty = true;
+        }
+
+    },
+
+    /**
+    * Scans through the area specified in this BitmapData and sends the color for every pixel to the given callback along with its x and y coordinates.
+    * Whatever value the callback returns is set as the new color for that pixel, unless it returns the same color, in which case it's skipped.
+    * Note that the format of the color received will be different depending on if the system is big or little endian.
+    * It is expected that your callback will deal with endianess. If you'd rather Phaser did it then use processPixelRGB instead.
+    * The callback will also be sent the pixels x and y coordinates respectively.
+    *
+    * @method Phaser.BitmapData#processPixel
+    * @param {function} callback - The callback that will be sent each pixel color to be processed.
+    * @param {object} callbackContext - The context under which the callback will be called.
+    * @param {number} [x=0] - The x coordinate of the top-left of the region to process from.
+    * @param {number} [y=0] - The y coordinate of the top-left of the region to process from.
+    * @param {number} [width] - The width of the region to process.
+    * @param {number} [height] - The height of the region to process.
+    */
+    processPixel: function (callback, callbackContext, x, y, width, height) {
+
+        if (typeof x === 'undefined') { x = 0; }
+        if (typeof y === 'undefined') { y = 0; }
+        if (typeof width === 'undefined') { width = this.width; }
+        if (typeof height === 'undefined') { height = this.height; }
+
+        var w = x + width;
+        var h = y + height;
+        var pixel = 0;
+        var result = 0;
+        var dirty = false;
+
+        for (var ty = y; ty < h; ty++)
+        {
+            for (var tx = x; tx < w; tx++)
+            {
+                pixel = this.getPixel32(tx, ty);
+                result = callback.call(callbackContext, pixel, tx, ty);
+
+                if (result !== pixel)
+                {
+                    this.pixels[ty * this.width + tx] = result;
+                    dirty = true;
+                }
+            }
+        }
+
+        if (dirty)
+        {
+            this.context.putImageData(this.imageData, 0, 0);
+            this.dirty = true;
+        }
+
+    },
+
+    /**
+    * Replaces all pixels matching one color with another. The color values are given as two sets of RGBA values.
+    * An optional region parameter controls if the replacement happens in just a specific area of the BitmapData or the entire thing. 
+    *
+    * @method Phaser.BitmapData#replaceRGB
+    * @param {number} r1 - The red color value to be replaced. Between 0 and 255.
+    * @param {number} g1 - The green color value to be replaced. Between 0 and 255.
+    * @param {number} b1 - The blue color value to be replaced. Between 0 and 255.
+    * @param {number} a1 - The alpha color value to be replaced. Between 0 and 255.
+    * @param {number} r2 - The red color value that is the replacement color. Between 0 and 255.
+    * @param {number} g2 - The green color value that is the replacement color. Between 0 and 255.
+    * @param {number} b2 - The blue color value that is the replacement color. Between 0 and 255.
+    * @param {number} a2 - The alpha color value that is the replacement color. Between 0 and 255.
+    * @param {Phaser.Rectangle} [region] - The area to perform the search over. If not given it will replace over the whole BitmapData.
+    */
+    replaceRGB: function (r1, g1, b1, a1, r2, g2, b2, a2, region) {
+
+        var sx = 0;
+        var sy = 0;
+        var w = this.width;
+        var h = this.height;
+        var source = Phaser.Color.packPixel(r1, g1, b1, a1);
+
+        if (region !== undefined && region instanceof Phaser.Rectangle)
+        {
+            sx = region.x;
+            sy = region.y;
+            w = region.width;
+            h = region.height;
+        }
+
+        for (var y = 0; y < h; y++)
+        {
+            for (var x = 0; x < w; x++)
+            {
+                if (this.getPixel32(sx + x, sy + y) === source)
+                {
+                    this.setPixel32(sx + x, sy + y, r2, g2, b2, a2, false);
+                }
+            }
+        }
+
+        this.context.putImageData(this.imageData, 0, 0);
+        this.dirty = true;
+
+    },
+
+    /**
+    * Sets the hue, saturation and lightness values on every pixel in the given region, or the whole BitmapData if no region was specified.
+    *
+    * @method Phaser.BitmapData#setHSL
+    * @param {number} [h=null] - The hue, in the range 0 - 1.
+    * @param {number} [s=null] - The saturation, in the range 0 - 1.
+    * @param {number} [l=null] - The lightness, in the range 0 - 1.
+    * @param {Phaser.Rectangle} [region] - The area to perform the operation on. If not given it will run over the whole BitmapData.
+    */
+    setHSL: function (h, s, l, region) {
+
+        if (typeof h === 'undefined' || h === null) { h = false; }
+        if (typeof s === 'undefined' || s === null) { s = false; }
+        if (typeof l === 'undefined' || l === null) { l = false; }
+
+        if (!h && !s && !l)
+        {
+            return;
+        }
+
+        if (typeof region === 'undefined')
+        {
+            region = new Phaser.Rectangle(0, 0, this.width, this.height);
+        }
+
+        var pixel = Phaser.Color.createColor();
+
+        for (var y = region.y; y < region.bottom; y++)
+        {
+            for (var x = region.x; x < region.right; x++)
+            {
+                Phaser.Color.unpackPixel(this.getPixel32(x, y), pixel, true);
+
+                if (h)
+                {
+                    pixel.h = h;
+                }
+
+                if (s)
+                {
+                    pixel.s = s;
+                }
+
+                if (l)
+                {
+                    pixel.l = l;
+                }
+
+                Phaser.Color.HSLtoRGB(pixel.h, pixel.s, pixel.l, pixel);
+                this.setPixel32(x, y, pixel.r, pixel.g, pixel.b, pixel.a, false);
+            }
+        }
+
+        this.context.putImageData(this.imageData, 0, 0);
+        this.dirty = true;
+
+    },
+
+    /**
+    * Shifts any or all of the hue, saturation and lightness values on every pixel in the given region, or the whole BitmapData if no region was specified.
+    * Shifting will add the given value onto the current h, s and l values, not replace them.
+    * The hue is wrapped to keep it within the range 0 to 1. Saturation and lightness are clamped to not exceed 1.
+    *
+    * @method Phaser.BitmapData#shiftHSL
+    * @param {number} [h=null] - The amount to shift the hue by.
+    * @param {number} [s=null] - The amount to shift the saturation by.
+    * @param {number} [l=null] - The amount to shift the lightness by.
+    * @param {Phaser.Rectangle} [region] - The area to perform the operation on. If not given it will run over the whole BitmapData.
+    */
+    shiftHSL: function (h, s, l, region) {
+
+        if (typeof h === 'undefined' || h === null) { h = false; }
+        if (typeof s === 'undefined' || s === null) { s = false; }
+        if (typeof l === 'undefined' || l === null) { l = false; }
+
+        if (!h && !s && !l)
+        {
+            return;
+        }
+
+        if (typeof region === 'undefined')
+        {
+            region = new Phaser.Rectangle(0, 0, this.width, this.height);
+        }
+
+        var pixel = Phaser.Color.createColor();
+
+        for (var y = region.y; y < region.bottom; y++)
+        {
+            for (var x = region.x; x < region.right; x++)
+            {
+                Phaser.Color.unpackPixel(this.getPixel32(x, y), pixel, true);
+
+                if (h)
+                {
+                    pixel.h = this.game.math.wrap(pixel.h + h, 0, 1);
+                }
+
+                if (s)
+                {
+                    pixel.s = this.game.math.limitValue(pixel.s + s, 0, 1);
+                }
+
+                if (l)
+                {
+                    pixel.l = this.game.math.limitValue(pixel.l + l, 0, 1);
+                }
+
+                Phaser.Color.HSLtoRGB(pixel.h, pixel.s, pixel.l, pixel);
+                this.setPixel32(x, y, pixel.r, pixel.g, pixel.b, pixel.a, false);
+            }
+        }
+
+        this.context.putImageData(this.imageData, 0, 0);
+        this.dirty = true;
 
     },
 
     /**
     * Sets the color of the given pixel to the specified red, green, blue and alpha values.
+    *
     * @method Phaser.BitmapData#setPixel32
-    * @param {number} x - The X coordinate of the pixel to be set.
-    * @param {number} y - The Y coordinate of the pixel to be set.
+    * @param {number} x - The x coordinate of the pixel to be set. Must lay within the dimensions of this BitmapData.
+    * @param {number} y - The y coordinate of the pixel to be set. Must lay within the dimensions of this BitmapData.
     * @param {number} red - The red color value, between 0 and 0xFF (255).
     * @param {number} green - The green color value, between 0 and 0xFF (255).
     * @param {number} blue - The blue color value, between 0 and 0xFF (255).
     * @param {number} alpha - The alpha color value, between 0 and 0xFF (255).
+    * @param {boolean} [immediate=true] - If `true` the context.putImageData will be called and the dirty flag set.
     */
-    setPixel32: function (x, y, red, green, blue, alpha) {
+    setPixel32: function (x, y, red, green, blue, alpha, immediate) {
+
+        if (typeof immediate === 'undefined') { immediate = true; }
 
         if (x >= 0 && x <= this.width && y >= 0 && y <= this.height)
         {
-            this.pixels[y * this.width + x] = (alpha << 24) | (blue << 16) | (green << 8) | red;
-
-            /*
-            if (this.isLittleEndian)
+            if (Phaser.Device.LITTLE_ENDIAN)
             {
-                this.data32[y * this.width + x] = (alpha << 24) | (blue << 16) | (green << 8) | red;
+                this.pixels[y * this.width + x] = (alpha << 24) | (blue << 16) | (green << 8) | red;
             }
             else
             {
-                this.data32[y * this.width + x] = (red << 24) | (green << 16) | (blue << 8) | alpha;
+                this.pixels[y * this.width + x] = (red << 24) | (green << 16) | (blue << 8) | alpha;
             }
-           */
 
-            // this.imageData.data.set(this.data8);
-
-            this.context.putImageData(this.imageData, 0, 0);
-
-            this.dirty = true;
+            if (immediate)
+            {
+                this.context.putImageData(this.imageData, 0, 0);
+                this.dirty = true;
+            }
         }
 
     },
@@ -25845,55 +27370,93 @@ Phaser.BitmapData.prototype = {
     * Sets the color of the given pixel to the specified red, green and blue values.
     *
     * @method Phaser.BitmapData#setPixel
-    * @param {number} x - The X coordinate of the pixel to be set.
-    * @param {number} y - The Y coordinate of the pixel to be set.
-    * @param {number} red - The red color value (between 0 and 255)
-    * @param {number} green - The green color value (between 0 and 255)
-    * @param {number} blue - The blue color value (between 0 and 255)
+    * @param {number} x - The x coordinate of the pixel to be set. Must lay within the dimensions of this BitmapData.
+    * @param {number} y - The y coordinate of the pixel to be set. Must lay within the dimensions of this BitmapData.
+    * @param {number} red - The red color value, between 0 and 0xFF (255).
+    * @param {number} green - The green color value, between 0 and 0xFF (255).
+    * @param {number} blue - The blue color value, between 0 and 0xFF (255).
+    * @param {number} alpha - The alpha color value, between 0 and 0xFF (255).
+    * @param {boolean} [immediate=true] - If `true` the context.putImageData will be called and the dirty flag set.
     */
-    setPixel: function (x, y, red, green, blue) {
+    setPixel: function (x, y, red, green, blue, immediate) {
 
-        this.setPixel32(x, y, red, green, blue, 255);
+        this.setPixel32(x, y, red, green, blue, 255, immediate);
 
     },
 
     /**
-    * Get the color of a specific pixel.
+    * Get the color of a specific pixel in the context into a color object.
     *
-    * @param {number} x - The X coordinate of the pixel to get.
-    * @param {number} y - The Y coordinate of the pixel to get.
-    * @return {number} A native color value integer (format: 0xRRGGBB)
+    * @method Phaser.BitmapData#getPixel
+    * @param {number} x - The x coordinate of the pixel to be set. Must lay within the dimensions of this BitmapData.
+    * @param {number} y - The y coordinate of the pixel to be set. Must lay within the dimensions of this BitmapData.
+    * @param {object} [out] - An object into which 4 properties will be created: r, g, b and a. If not provided a new object will be created.
+    * @return {object} An object with the red, green, blue and alpha values set in the r, g, b and a properties.
     */
-    getPixel: function (x, y) {
+    getPixel: function (x, y, out) {
 
-        if (x >= 0 && x <= this.width && y >= 0 && y <= this.height)
+        if (!out)
         {
-            return this.data32[y * this.width + x];
+            out = Phaser.Color.createColor();
         }
+
+        var index = ~~(x + (y * this.width));
+
+        index *= 4;
+
+        if (this.data[index])
+        {
+            out.r = this.data[index];
+            out.g = this.data[++index];
+            out.b = this.data[++index];
+            out.a = this.data[++index];
+        }
+
+        return out;
 
     },
 
     /**
     * Get the color of a specific pixel including its alpha value.
+    * Note that on little-endian systems the format is 0xAABBGGRR and on big-endian the format is 0xRRGGBBAA.
     *
-    * @param {number} x - The X coordinate of the pixel to get.
-    * @param {number} y - The Y coordinate of the pixel to get.
+    * @method Phaser.BitmapData#getPixel32
+    * @param {number} x - The x coordinate of the pixel to be set. Must lay within the dimensions of this BitmapData.
+    * @param {number} y - The y coordinate of the pixel to be set. Must lay within the dimensions of this BitmapData.
     * @return {number} A native color value integer (format: 0xAARRGGBB)
     */
     getPixel32: function (x, y) {
 
         if (x >= 0 && x <= this.width && y >= 0 && y <= this.height)
         {
-            return this.data32[y * this.width + x];
+            return this.pixels[y * this.width + x];
         }
+
+    },
+
+    /**
+    * Get the color of a specific pixel including its alpha value as a color object containing r,g,b,a and rgba properties.
+    *
+    * @method Phaser.BitmapData#getPixelRGB
+    * @param {number} x - The x coordinate of the pixel to be set. Must lay within the dimensions of this BitmapData.
+    * @param {number} y - The y coordinate of the pixel to be set. Must lay within the dimensions of this BitmapData.
+    * @param {object} [out] - An object into which 3 properties will be created: r, g and b. If not provided a new object will be created.
+    * @param {boolean} [hsl=false] - Also convert the rgb values into hsl?
+    * @param {boolean} [hsv=false] - Also convert the rgb values into hsv?
+    * @return {object} An object with the red, green and blue values set in the r, g and b properties.
+    */
+    getPixelRGB: function (x, y, out, hsl, hsv) {
+
+        return Phaser.Color.unpackPixel(this.getPixel32(x, y), out, hsl, hsv);
 
     },
 
     /**
     * Gets all the pixels from the region specified by the given Rectangle object.
     *
+    * @method Phaser.BitmapData#getPixels
     * @param {Phaser.Rectangle} rect - The Rectangle region to get.
-    * @return {array} CanvasPixelArray.
+    * @return {ImageData} Returns a ImageData object containing a Uint8ClampedArray data property.
     */
     getPixels: function (rect) {
 
@@ -25904,6 +27467,7 @@ Phaser.BitmapData.prototype = {
     /**
     * Copies the pixels from the source image to this BitmapData based on the given area and destination.
     *
+    * @method Phaser.BitmapData#copyPixels
     * @param {HTMLImage|string} source - The Image to draw. If you give a key it will try and find the Image in the Game.Cache.
     * @param {Phaser.Rectangle} area - The Rectangle region to copy from the source image.
     * @param {number} destX - The destination x coordinate to copy the image to.
@@ -25921,16 +27485,22 @@ Phaser.BitmapData.prototype = {
             this.context.drawImage(source, area.x, area.y, area.width, area.height, destX, destY, area.width, area.height);
         }
 
+        this.dirty = true;
+
     },
 
     /**
     * Draws the given image to this BitmapData at the coordinates specified. If you need to only draw a part of the image use BitmapData.copyPixels instead.
     *
-    * @param {HTMLImage|string} source - The Image to draw. If you give a key it will try and find the Image in the Game.Cache.
-    * @param {number} destX - The destination x coordinate to draw the image to.
-    * @param {number} destY - The destination y coordinate to draw the image to.
+    * @method Phaser.BitmapData#draw
+    * @param {HTMLImage|string} source - The Image to draw. If you give a string it will try and find the Image in the Game.Cache.
+    * @param {number} [x=0] - The x coordinate to draw the image to.
+    * @param {number} [y=0] - The y coordinate to draw the image to.
     */
-    draw: function (source, destX, destY) {
+    draw: function (source, x, y) {
+
+        if (typeof x === 'undefined') { x = 0; }
+        if (typeof y === 'undefined') { y = 0; }
 
         if (typeof source === 'string')
         {
@@ -25939,14 +27509,38 @@ Phaser.BitmapData.prototype = {
 
         if (source)
         {
-            this.context.drawImage(source, 0, 0, source.width, source.height, destX, destY, source.width, source.height);
+            this.context.drawImage(source, 0, 0, source.width, source.height, x, y, source.width, source.height);
         }
+
+        this.dirty = true;
+
+    },
+
+    /**
+    * Draws the given image to this BitmapData at the coordinates specified. If you need to only draw a part of the image use BitmapData.copyPixels instead.
+    *
+    * @method Phaser.BitmapData#drawSprite
+    * @param {Phaser.Sprite|Phaser.Image} sprite - The Sprite to draw. Must have a loaded texture and frame.
+    * @param {number} [x=0] - The x coordinate to draw the Sprite to.
+    * @param {number} [y=0] - The y coordinate to draw the Sprite to.
+    */
+    drawSprite: function (sprite, x, y) {
+
+        if (typeof x === 'undefined') { x = 0; }
+        if (typeof y === 'undefined') { y = 0; }
+
+        var frame = sprite.texture.frame;
+
+        this.context.drawImage(sprite.texture.baseTexture.source, frame.x, frame.y, frame.width, frame.height, x, y, frame.width, frame.height);
+
+        this.dirty = true;
 
     },
 
     /**
     * Draws the given image onto this BitmapData using an image as an alpha mask.
     *
+    * @method Phaser.BitmapData#alphaMask
     * @param {HTMLImage|string} source - The Image to draw. If you give a key it will try and find the Image in the Game.Cache.
     * @param {HTMLImage|string} mask - The Image to use as the alpha mask. If you give a key it will try and find the Image in the Game.Cache.
     */
@@ -25978,17 +27572,79 @@ Phaser.BitmapData.prototype = {
 
         this.context.globalCompositeOperation = temp;
 
+        this.dirty = true;
+
+    },
+
+    /**
+    * Scans this BitmapData for all pixels matching the given r,g,b values and then draws them into the given destination BitmapData.
+    * The destination BitmapData must be large enough to receive all of the pixels that are scanned.
+    * Although the destination BitmapData is returned from this method, it's actually modified directly in place, meaning this call is perfectly valid:
+    * `picture.extract(mask, r, g, b)`
+    *
+    * @method Phaser.BitmapData#extract
+    * @param {Phaser.BitmapData} destination - The BitmapData that the extracts pixels will be drawn to.
+    * @param {number} r - The red color component, in the range 0 - 255.
+    * @param {number} g - The green color component, in the range 0 - 255.
+    * @param {number} b - The blue color component, in the range 0 - 255.
+    * @param {number} [a=255] - The alpha color component, in the range 0 - 255.
+    * @returns {Phaser.BitmapData} The BitmapData that the extract pixels were drawn on.
+    */
+    extract: function (destination, r, g, b, a) {
+
+        if (typeof a === 'undefined') { a = 255; }
+
+        this.processPixelRGB(
+            function(pixel, x, y){
+                if (pixel.r === r && pixel.g === g && pixel.b === b)
+                {
+                    destination.setPixel32(x, y, r, g, b, a, false);
+                }
+                return false;
+            },
+            this);
+
+        destination.context.putImageData(destination.imageData, 0, 0);
+        destination.dirty = true;
+
+        return destination;
+
+    },
+
+    /**
+    * Draws a filled Circle to the BitmapData at the given x, y coordinates and radius in size.
+    *
+    * @method Phaser.BitmapData#circle
+    * @param {number} x - The x coordinate to draw the Circle at.
+    * @param {number} y - The y coordinate to draw the Circle at.
+    * @param {number} radius - The radius of the Circle.
+    * @param {string} [fillStyle] - If set the context fillStyle will be set to this value before the circle is drawn.
+    */
+    circle: function (x, y, radius, fillStyle) {
+
+        if (typeof fillStyle !== 'undefined')
+        {
+            this.context.fillStyle = fillStyle;
+        }
+
+        this.context.beginPath();
+        this.context.arc(x, y, radius, 0, Math.PI * 2, false);
+        this.context.closePath();
+
+        this.context.fill();
+
     },
 
     /**
     * If the game is running in WebGL this will push the texture up to the GPU if it's dirty.
     * This is called automatically if the BitmapData is being used by a Sprite, otherwise you need to remember to call it in your render function.
+    * If you wish to suppress this functionality set BitmapData.disableTextureUpload to `true`.
     *
     * @method Phaser.BitmapData#render
     */
     render: function () {
 
-        if (this.game.renderType === Phaser.WEBGL && this.dirty)
+        if (!this.disableTextureUpload && this.game.renderType === Phaser.WEBGL && this.dirty)
         {
             //  Only needed if running in WebGL, otherwise this array will never get cleared down
             //  should use the rendersession
@@ -26170,10 +27826,11 @@ Phaser.Sprite = function (game, x, y, key, frame) {
     * 5 = outOfBoundsFired (0 = no, 1 = yes)
     * 6 = exists (0 = no, 1 = yes)
     * 7 = fixed to camera (0 = no, 1 = yes)
+    * 8 = destroy phase? (0 = no, 1 = yes)
     * @property {Array} _cache
     * @private
     */
-    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0 ];
+    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0, 0 ];
 
     /**
     * @property {Phaser.Rectangle} _bounds - Internal cache var.
@@ -26521,9 +28178,11 @@ Phaser.Sprite.prototype.kill = function() {
 */
 Phaser.Sprite.prototype.destroy = function(destroyChildren) {
 
-    if (this.game === null) { return; }
+    if (this.game === null || this._cache[8] === 1) { return; }
 
     if (typeof destroyChildren === 'undefined') { destroyChildren = true; }
+
+    this._cache[8] = 1;
 
     if (this.parent)
     {
@@ -26581,6 +28240,8 @@ Phaser.Sprite.prototype.destroy = function(destroyChildren) {
     this.filters = null;
     this.mask = null;
     this.game = null;
+
+    this._cache[8] = 0;
 
 };
 
@@ -26883,6 +28544,10 @@ Object.defineProperty(Phaser.Sprite.prototype, "inputEnabled", {
                 this.input = new Phaser.InputHandler(this);
                 this.input.start();
             }
+            else if (this.input && !this.input.enabled)
+            {
+                this.input.start();
+            }
         }
         else
         {
@@ -26891,6 +28556,7 @@ Object.defineProperty(Phaser.Sprite.prototype, "inputEnabled", {
                 this.input.stop();
             }
         }
+
     }
 
 });
@@ -27062,6 +28728,20 @@ Object.defineProperty(Phaser.Sprite.prototype, "y", {
 });
 
 /**
+* @name Phaser.Sprite#destroyPhase
+* @property {boolean} destroyPhase - True if this object is currently being destroyed.
+*/
+Object.defineProperty(Phaser.Sprite.prototype, "destroyPhase", {
+
+    get: function () {
+
+        return !!this._cache[8];
+
+    }
+
+});
+
+/**
 * @author       Richard Davey <rich@photonstorm.com>
 * @copyright    2014 Photon Storm Ltd.
 * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
@@ -27178,10 +28858,11 @@ Phaser.Image = function (game, x, y, key, frame) {
     * 5 = outOfBoundsFired (0 = no, 1 = yes)
     * 6 = exists (0 = no, 1 = yes)
     * 7 = fixed to camera (0 = no, 1 = yes)
+    * 8 = destroy phase? (0 = no, 1 = yes)
     * @property {Array} _cache
     * @private
     */
-    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0 ];
+    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0, 0 ];
 
 };
 
@@ -27450,9 +29131,11 @@ Phaser.Image.prototype.kill = function() {
 */
 Phaser.Image.prototype.destroy = function(destroyChildren) {
 
-    if (this.game === null) { return; }
+    if (this.game === null || this.destroyPhase) { return; }
 
     if (typeof destroyChildren === 'undefined') { destroyChildren = true; }
+
+    this._cache[8] = 1;
 
     if (this.parent)
     {
@@ -27500,6 +29183,8 @@ Phaser.Image.prototype.destroy = function(destroyChildren) {
     this.filters = null;
     this.mask = null;
     this.game = null;
+
+    this._cache[8] = 0;
 
 };
 
@@ -27751,6 +29436,10 @@ Object.defineProperty(Phaser.Image.prototype, "inputEnabled", {
                 this.input = new Phaser.InputHandler(this);
                 this.input.start();
             }
+            else if (this.input && !this.input.enabled)
+            {
+                this.input.start();
+            }
         }
         else
         {
@@ -27824,6 +29513,20 @@ Object.defineProperty(Phaser.Image.prototype, "smoothed", {
                 this.texture.baseTexture.scaleMode = 1;
             }
         }
+    }
+
+});
+
+/**
+* @name Phaser.Image#destroyPhase
+* @property {boolean} destroyPhase - True if this object is currently being destroyed.
+*/
+Object.defineProperty(Phaser.Image.prototype, "destroyPhase", {
+
+    get: function () {
+
+        return !!this._cache[8];
+
     }
 
 });
@@ -27975,10 +29678,11 @@ Phaser.TileSprite = function (game, x, y, width, height, key, frame) {
     * 5 = outOfBoundsFired (0 = no, 1 = yes)
     * 6 = exists (0 = no, 1 = yes)
     * 7 = fixed to camera (0 = no, 1 = yes)
+    * 8 = destroy phase? (0 = no, 1 = yes)
     * @property {Array} _cache
     * @private
     */
-    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0 ];
+    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0, 0 ];
 
 };
 
@@ -28232,9 +29936,11 @@ Phaser.TileSprite.prototype.loadTexture = function (key, frame) {
 */
 Phaser.TileSprite.prototype.destroy = function(destroyChildren) {
 
-    if (this.game === null) { return; }
+    if (this.game === null || this.destroyPhase) { return; }
 
     if (typeof destroyChildren === 'undefined') { destroyChildren = true; }
+
+    this._cache[8] = 1;
 
     if (this.filters)
     {
@@ -28280,6 +29986,8 @@ Phaser.TileSprite.prototype.destroy = function(destroyChildren) {
     this.filters = null;
     this.mask = null;
     this.game = null;
+
+    this._cache[8] = 0;
 
 };
 
@@ -28505,6 +30213,10 @@ Object.defineProperty(Phaser.TileSprite.prototype, "inputEnabled", {
                 this.input = new Phaser.InputHandler(this);
                 this.input.start();
             }
+            else if (this.input && !this.input.enabled)
+            {
+                this.input.start();
+            }
         }
         else
         {
@@ -28513,6 +30225,7 @@ Object.defineProperty(Phaser.TileSprite.prototype, "inputEnabled", {
                 this.input.stop();
             }
         }
+
     }
 
 });
@@ -28566,6 +30279,20 @@ Object.defineProperty(Phaser.TileSprite.prototype, "y", {
         {
             this.body._reset = 1;
         }
+
+    }
+
+});
+
+/**
+* @name Phaser.TileSprite#destroyPhase
+* @property {boolean} destroyPhase - True if this object is currently being destroyed.
+*/
+Object.defineProperty(Phaser.TileSprite.prototype, "destroyPhase", {
+
+    get: function () {
+
+        return !!this._cache[8];
 
     }
 
@@ -28701,10 +30428,11 @@ Phaser.Text = function (game, x, y, text, style) {
     * 5 = outOfBoundsFired (0 = no, 1 = yes)
     * 6 = exists (0 = no, 1 = yes)
     * 7 = fixed to camera (0 = no, 1 = yes)
+    * 8 = destroy phase? (0 = no, 1 = yes)
     * @property {Array} _cache
     * @private
     */
-    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0 ];
+    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0, 0 ];
 
 };
 
@@ -28786,9 +30514,11 @@ Phaser.Text.prototype.postUpdate = function () {
 */
 Phaser.Text.prototype.destroy = function (destroyChildren) {
 
-    if (this.game === null) { return; }
+    if (this.game === null || this.destroyPhase) { return; }
 
     if (typeof destroyChildren === 'undefined') { destroyChildren = true; }
+
+    this._cache[8] = 1;
 
     if (this.parent)
     {
@@ -28837,6 +30567,8 @@ Phaser.Text.prototype.destroy = function (destroyChildren) {
     this.filters = null;
     this.mask = null;
     this.game = null;
+
+    this._cache[8] = 0;
 
 };
 
@@ -28948,6 +30680,8 @@ Phaser.Text.prototype.updateText = function () {
     this.context.shadowBlur = this.style.shadowBlur;
 
     this.context.textBaseline = 'top';
+    this.context.lineCap = 'round';
+    this.context.lineJoin = 'round';
 
     //draw lines line by line
     for (i = 0; i < lines.length; i++)
@@ -29411,6 +31145,10 @@ Object.defineProperty(Phaser.Text.prototype, "inputEnabled", {
                 this.input = new Phaser.InputHandler(this);
                 this.input.start();
             }
+            else if (this.input && !this.input.enabled)
+            {
+                this.input.start();
+            }
         }
         else
         {
@@ -29419,6 +31157,7 @@ Object.defineProperty(Phaser.Text.prototype, "inputEnabled", {
                 this.input.stop();
             }
         }
+
     }
 
 });
@@ -29450,6 +31189,20 @@ Object.defineProperty(Phaser.Text.prototype, "fixedToCamera", {
         {
             this._cache[7] = 0;
         }
+    }
+
+});
+
+/**
+* @name Phaser.Text#destroyPhase
+* @property {boolean} destroyPhase - True if this object is currently being destroyed.
+*/
+Object.defineProperty(Phaser.Text.prototype, "destroyPhase", {
+
+    get: function () {
+
+        return !!this._cache[8];
+
     }
 
 });
@@ -29579,10 +31332,11 @@ Phaser.BitmapText = function (game, x, y, font, text, size) {
     * 5 = outOfBoundsFired (0 = no, 1 = yes)
     * 6 = exists (0 = no, 1 = yes)
     * 7 = fixed to camera (0 = no, 1 = yes)
+    * 8 = destroy phase? (0 = no, 1 = yes)
     * @property {Array} _cache
     * @private
     */
-    this._cache = [0, 0, 0, 0, 1, 0, 1, 0];
+    this._cache = [0, 0, 0, 0, 1, 0, 1, 0, 0];
 
 };
 
@@ -29666,9 +31420,11 @@ Phaser.BitmapText.prototype.postUpdate = function () {
 */
 Phaser.BitmapText.prototype.destroy = function(destroyChildren) {
 
-    if (this.game === null) { return; }
+    if (this.game === null || this.destroyPhase) { return; }
 
     if (typeof destroyChildren === 'undefined') { destroyChildren = true; }
+
+    this._cache[8] = 1;
 
     if (this.parent)
     {
@@ -29712,6 +31468,8 @@ Phaser.BitmapText.prototype.destroy = function(destroyChildren) {
     this.filters = null;
     this.mask = null;
     this.game = null;
+
+    this._cache[8] = 0;
 
 };
 
@@ -29873,6 +31631,10 @@ Object.defineProperty(Phaser.BitmapText.prototype, "inputEnabled", {
                 this.input = new Phaser.InputHandler(this);
                 this.input.start();
             }
+            else if (this.input && !this.input.enabled)
+            {
+                this.input.start();
+            }
         }
         else
         {
@@ -29881,6 +31643,7 @@ Object.defineProperty(Phaser.BitmapText.prototype, "inputEnabled", {
                 this.input.stop();
             }
         }
+
     }
 
 });
@@ -29912,6 +31675,20 @@ Object.defineProperty(Phaser.BitmapText.prototype, "fixedToCamera", {
         {
             this._cache[7] = 0;
         }
+    }
+
+});
+
+/**
+* @name Phaser.BitmapText#destroyPhase
+* @property {boolean} destroyPhase - True if this object is currently being destroyed.
+*/
+Object.defineProperty(Phaser.BitmapText.prototype, "destroyPhase", {
+
+    get: function () {
+
+        return !!this._cache[8];
+
     }
 
 });
@@ -30627,10 +32404,11 @@ Phaser.Graphics = function (game, x, y) {
     * 5 = outOfBoundsFired (0 = no, 1 = yes)
     * 6 = exists (0 = no, 1 = yes)
     * 7 = fixed to camera (0 = no, 1 = yes)
+    * 8 = destroy phase? (0 = no, 1 = yes)
     * @property {Array} _cache
     * @private
     */
-    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0 ];
+    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0, 0 ];
 
 };
 
@@ -30703,7 +32481,11 @@ Phaser.Graphics.prototype.postUpdate = function () {
 */
 Phaser.Graphics.prototype.destroy = function(destroyChildren) {
 
+    if (this.game === null || this.destroyPhase) { return; }
+
     if (typeof destroyChildren === 'undefined') { destroyChildren = true; }
+
+    this._cache[8] = 1;
 
     this.clear();
 
@@ -30740,6 +32522,8 @@ Phaser.Graphics.prototype.destroy = function(destroyChildren) {
     this.visible = false;
 
     this.game = null;
+
+    this._cache[8] = 0;
 
 };
 
@@ -30807,6 +32591,20 @@ Object.defineProperty(Phaser.Graphics.prototype, "fixedToCamera", {
         {
             this._cache[7] = 0;
         }
+    }
+
+});
+
+/**
+* @name Phaser.Graphics#destroyPhase
+* @property {boolean} destroyPhase - True if this object is currently being destroyed.
+*/
+Object.defineProperty(Phaser.Graphics.prototype, "destroyPhase", {
+
+    get: function () {
+
+        return !!this._cache[8];
+
     }
 
 });
@@ -31508,6 +33306,191 @@ Object.defineProperty(Phaser.RetroFont.prototype, "text", {
 */
 
 /**
+* @class Phaser.Particle
+*
+* @classdesc Create a new `Particle` object. Particles are extended Sprites that are emitted by a particle emitter such as Phaser.Particles.Arcade.Emitter.
+*
+* @constructor
+* @extends Phaser.Sprite
+* @param {Phaser.Game} game - A reference to the currently running game.
+* @param {number} x - The x coordinate (in world space) to position the Particle at.
+* @param {number} y - The y coordinate (in world space) to position the Particle at.
+* @param {string|Phaser.RenderTexture|Phaser.BitmapData|PIXI.Texture} key - This is the image or texture used by the Particle during rendering. It can be a string which is a reference to the Cache entry, or an instance of a RenderTexture or PIXI.Texture.
+* @param {string|number} frame - If this Particle is using part of a sprite sheet or texture atlas you can specify the exact frame to use by giving a string or numeric index.
+*/
+Phaser.Particle = function (game, x, y, key, frame) {
+
+    Phaser.Sprite.call(this, game, x, y, key, frame);
+
+    /**
+    * @property {boolean} autoScale - If this Particle automatically scales this is set to true by Particle.setScaleData.
+    * @protected
+    */
+    this.autoScale = false;
+
+    /**
+    * @property {array} scaleData - A reference to the scaleData array owned by the Emitter that emitted this Particle.
+    * @protected
+    */
+    this.scaleData = null;
+
+    /**
+    * @property {number} _s - Internal cache var for tracking auto scale.
+    * @private
+    */
+    this._s = 0;
+
+    /**
+    * @property {boolean} autoAlpha - If this Particle automatically changes alpha this is set to true by Particle.setAlphaData.
+    * @protected
+    */
+    this.autoAlpha = false;
+
+    /**
+    * @property {array} alphaData - A reference to the alphaData array owned by the Emitter that emitted this Particle.
+    * @protected
+    */
+    this.alphaData = null;
+
+    /**
+    * @property {number} _a - Internal cache var for tracking auto alpha.
+    * @private
+    */
+    this._a = 0;
+
+};
+
+Phaser.Particle.prototype = Object.create(Phaser.Sprite.prototype);
+Phaser.Particle.prototype.constructor = Phaser.Particle;
+
+/**
+* Updates the Particle scale or alpha if autoScale and autoAlpha are set.
+*
+* @method Phaser.Particle#update
+* @memberof Phaser.Particle
+*/
+Phaser.Particle.prototype.update = function() {
+
+    if (this.autoScale)
+    {
+        this._s--;
+
+        if (this._s)
+        {
+            this.scale.set(this.scaleData[this._s].x, this.scaleData[this._s].y);
+        }
+        else
+        {
+            this.autoScale = false;
+        }
+    }
+
+    if (this.autoAlpha)
+    {
+        this._a--;
+
+        if (this._a)
+        {
+            this.alpha = this.alphaData[this._a].v;
+        }
+        else
+        {
+            this.autoAlpha = false;
+        }
+    }
+
+};
+
+/**
+* Called by the Emitter when this particle is emitted. Left empty for you to over-ride as required.
+*
+* @method Phaser.Particle#onEmit
+* @memberof Phaser.Particle
+*/
+Phaser.Particle.prototype.onEmit = function() {
+};
+
+/**
+* Called by the Emitter if autoAlpha has been enabled. Passes over the alpha ease data and resets the alpha counter.
+*
+* @method Phaser.Particle#setAlphaData
+* @memberof Phaser.Particle
+*/
+Phaser.Particle.prototype.setAlphaData = function(data) {
+
+    this.alphaData = data;
+    this._a = data.length - 1;
+    this.alpha = this.alphaData[this._a].v;
+    this.autoAlpha = true;
+
+};
+
+/**
+* Called by the Emitter if autoScale has been enabled. Passes over the scale ease data and resets the scale counter.
+*
+* @method Phaser.Particle#setScaleData
+* @memberof Phaser.Particle
+*/
+Phaser.Particle.prototype.setScaleData = function(data) {
+
+    this.scaleData = data;
+    this._s = data.length - 1;
+    this.scale.set(this.scaleData[this._s].x, this.scaleData[this._s].y);
+    this.autoScale = true;
+
+};
+
+/**
+* Resets the Particle. This places the Particle at the given x/y world coordinates and then
+* sets alive, exists, visible and renderable all to true. Also resets the outOfBounds state and health values.
+* If the Particle has a physics body that too is reset.
+*
+* @method Phaser.Particle#reset
+* @memberof Phaser.Particle
+* @param {number} x - The x coordinate (in world space) to position the Particle at.
+* @param {number} y - The y coordinate (in world space) to position the Particle at.
+* @param {number} [health=1] - The health to give the Particle.
+* @return (Phaser.Particle) This instance.
+*/
+Phaser.Particle.prototype.reset = function(x, y, health) {
+
+    if (typeof health === 'undefined') { health = 1; }
+
+    this.world.setTo(x, y);
+    this.position.x = x;
+    this.position.y = y;
+    this.alive = true;
+    this.exists = true;
+    this.visible = true;
+    this.renderable = true;
+    this._outOfBoundsFired = false;
+
+    this.health = health;
+
+    if (this.body)
+    {
+        this.body.reset(x, y, false, false);
+    }
+
+    this._cache[4] = 1;
+
+    this.alpha = 1;
+    this.scale.set(1);
+
+    this.autoScale = false;
+    this.autoAlpha = false;
+
+    return this;
+
+};
+
+/**
+* @author       Richard Davey <rich@photonstorm.com>
+* @copyright    2014 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
+/**
 * The Canvas class handles everything related to creating the `canvas` DOM tag that Phaser will use, including styles, offset and aspect ratio.
 *
 * @class Phaser.Canvas
@@ -31839,10 +33822,16 @@ Phaser.Device = function (game) {
     this.cocoonJS = false;
 
     /**
-     * @property {boolean} ejecta - Is the game running under Ejecta?
-     * @default
-     */
+    * @property {boolean} ejecta - Is the game running under Ejecta?
+    * @default
+    */
     this.ejecta = false;
+
+    /**
+    * @property {boolean} crosswalk - Is the game running under the Intel Crosswalk XDK?
+    * @default
+    */
+    this.crosswalk = false;
 
     /**
     * @property {boolean} android - Is running on android?
@@ -32136,6 +34125,12 @@ Phaser.Device = function (game) {
     this.littleEndian = false;
 
     /**
+    * @property {boolean} support32bit - Does the device context support 32bit pixel manipulation using array buffer views?
+    * @default
+    */
+    this.support32bit = false;
+
+    /**
     * @property {boolean} fullscreen - Does the browser support the Full Screen API?
     * @default
     */
@@ -32168,6 +34163,8 @@ Phaser.Device = function (game) {
     this._checkOS();
 
 };
+
+Phaser.Device.LITTLE_ENDIAN = false;
 
 Phaser.Device.prototype = {
 
@@ -32402,6 +34399,11 @@ Phaser.Device.prototype = {
             this.ejecta = true;
         }
 
+        if (/Crosswalk/.test(ua))
+        {
+            this.crosswalk = true;
+        }
+
     },
 
     /**
@@ -32452,7 +34454,7 @@ Phaser.Device.prototype = {
     },
 
     /**
-    * Check PixelRatio of devices.
+    * Check PixelRatio, iOS device, Vibration API, ArrayBuffers and endianess.
     * @method Phaser.Device#_checkDevice
     * @private
     */
@@ -32465,14 +34467,20 @@ Phaser.Device.prototype = {
 
         if (typeof Int8Array !== 'undefined')
         {
-            this.littleEndian = new Int8Array(new Int16Array([1]).buffer)[0] > 0;
             this.typedArray = true;
         }
         else
         {
-            this.littleEndian = false;
             this.typedArray = false;
         }
+
+        if (typeof ArrayBuffer !== 'undefined' && typeof Uint8Array !== 'undefined' && typeof Uint32Array !== 'undefined')
+        {
+            this.littleEndian = this._checkIsLittleEndian();
+            Phaser.Device.LITTLE_ENDIAN = this.littleEndian;
+        }
+
+        this.support32bit = (typeof ArrayBuffer !== "undefined" && typeof Uint8ClampedArray !== "undefined" && typeof Int32Array !== "undefined" && this.littleEndian !== null && this._checkIsUint8ClampedImageData());
 
         navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
 
@@ -32480,6 +34488,67 @@ Phaser.Device.prototype = {
         {
             this.vibration = true;
         }
+
+    },
+
+    /**
+    * Check Little or Big Endian system.
+    * @author Matt DesLauriers (@mattdesl)
+    * @method Phaser.Device#_checkIsLittleEndian
+    * @private
+    */
+    _checkIsLittleEndian: function () {
+
+        var a = new ArrayBuffer(4);
+        var b = new Uint8Array(a);
+        var c = new Uint32Array(a);
+
+        b[0] = 0xa1;
+        b[1] = 0xb2;
+        b[2] = 0xc3;
+        b[3] = 0xd4;
+
+        if (c[0] == 0xd4c3b2a1)
+        {
+            return true;
+        }
+
+        if (c[0] == 0xa1b2c3d4)
+        {
+            return false;
+        }
+        else
+        {
+            //  Could not determine endianness
+            return null;
+        }
+
+    },
+
+    /**
+    * Test to see if ImageData uses CanvasPixelArray or Uint8ClampedArray.
+    * @author Matt DesLauriers (@mattdesl)
+    * @method Phaser.Device#_checkIsUint8ClampedImageData
+    * @private
+    */
+    _checkIsUint8ClampedImageData: function () {
+
+        if (typeof Uint8ClampedArray === "undefined")
+        {
+            return false;
+        }
+
+        var elem = document.createElement('canvas');
+        var ctx = elem.getContext('2d');
+
+        if (!ctx)
+        {
+            return false;
+        }
+
+        var image = ctx.createImageData(1, 1);
+        
+        return image.data instanceof Uint8ClampedArray;
 
     },
 
@@ -33094,7 +35163,7 @@ Phaser.Math = {
     * @return {number}
     */
     angleBetween: function (x1, y1, x2, y2) {
-        return Math.atan2(x2 - x1, y2 - y1);
+        return Math.atan2(y2 - y1, x2 - x1);
     },
 
     /**
@@ -33105,7 +35174,7 @@ Phaser.Math = {
     * @return {number}
     */
     angleBetweenPoints: function (point1, point2) {
-        return Math.atan2(point2.x - point1.x, point2.y - point1.y);
+        return Math.atan2(point2.y - point1.y, point2.x - point1.x);
     },
 
     /**
@@ -33365,13 +35434,30 @@ Phaser.Math = {
     },
 
     /**
+    * Ensures the given value is between min and max inclusive.
+    *
+    * @method Phaser.Math#limitValue
+    * @param {number} value - The value to limit.
+    * @param {number} min - The minimum the value can be.
+    * @param {number} max - The maximum the value can be.
+    * @return {number} The limited value.
+    */
+    limitValue: function(value, min, max) {
+
+        return value < min ? min : value > max ? max : value;
+
+    },
+
+    /**
     * Randomly returns either a 1 or -1.
     *
     * @method Phaser.Math#randomSign
     * @return {number}  1 or -1
     */
     randomSign: function () {
+
         return (Math.random() > 0.5) ? 1 : -1;
+
     },
 
     /**
@@ -33527,15 +35613,15 @@ Phaser.Math = {
     },
 
     /**
-    * Keeps an angle value between -180 and +180<br>
-    * Should be called whenever the angle is updated on the Sprite to stop it from going insane.
+    * Keeps an angle value between -180 and +180.
     *
     * @method Phaser.Math#wrapAngle
     * @param {number} angle - The angle value to check
-    * @param {boolean} radians - True if angle sizes are expressed in radians.
+    * @param {boolean} radians - True if angle is given in radians.
     * @return {number} The new angle value, returns the same as the input angle if it was within bounds.
     */
     wrapAngle: function (angle, radians) {
+
         var radianFactor = (radians) ? Math.PI / 180 : 1;
         return this.wrap(angle, -180 * radianFactor, 180 * radianFactor);
 
@@ -34006,18 +36092,7 @@ Phaser.Math = {
     */
     smoothstep: function ( x, min, max ) {
 
-        if (x <= min)
-        {
-            return 0;
-        }
-
-        if (x >= max)
-        {
-            return 1;
-        }
-
-        x = (x - min) / (max - min);
-
+        x = Math.max(0, Math.min(1, (x - min) / (max - min)));
         return x * x * (3 - 2 * x);
 
     },
@@ -34033,18 +36108,7 @@ Phaser.Math = {
     */
     smootherstep: function ( x, min, max ) {
 
-        if (x <= min)
-        {
-            return 0;
-        }
-
-        if (x >= max)
-        {
-            return 1;
-        }
-
-        x = (x - min) / (max - min);
-
+        x = Math.max(0, Math.min(1, (x - min) / (max - min)));
         return x * x * x * (x * (x * 6 - 15) + 10);
 
     },
@@ -34156,6 +36220,7 @@ Phaser.RandomDataGenerator.prototype = {
 
     /**
     * Private random helper.
+    *
     * @method Phaser.RandomDataGenerator#rnd
     * @private
     * @return {number}
@@ -34203,9 +36268,10 @@ Phaser.RandomDataGenerator.prototype = {
 
     /**
     * Internal method that creates a seed hash.
+    *
     * @method Phaser.RandomDataGenerator#hash
-    * @param {Any} data
     * @private
+    * @param {Any} data
     * @return {number} hashed value.
     */
     hash: function (data) {
@@ -34231,29 +36297,38 @@ Phaser.RandomDataGenerator.prototype = {
 
     /**
     * Returns a random integer between 0 and 2^32.
+    *
     * @method Phaser.RandomDataGenerator#integer
     * @return {number} A random integer between 0 and 2^32.
     */
     integer: function() {
+
         return this.rnd.apply(this) * 0x100000000;// 2^32
+
     },
 
     /**
     * Returns a random real number between 0 and 1.
+    *
     * @method Phaser.RandomDataGenerator#frac
     * @return {number} A random real number between 0 and 1.
     */
     frac: function() {
-        return this.rnd.apply(this) + (this.rnd.apply(this) * 0x200000 | 0) * 1.1102230246251565e-16;// 2^-53
+
+        return this.rnd.apply(this) + (this.rnd.apply(this) * 0x200000 | 0) * 1.1102230246251565e-16;   // 2^-53
+
     },
 
     /**
     * Returns a random real number between 0 and 2^32.
+    *
     * @method Phaser.RandomDataGenerator#real
     * @return {number} A random real number between 0 and 2^32.
     */
     real: function() {
+
         return this.integer() + this.frac();
+
     },
 
     /**
@@ -34265,11 +36340,14 @@ Phaser.RandomDataGenerator.prototype = {
     * @return {number} A random number between min and max.
     */
     integerInRange: function (min, max) {
-        return Math.round(this.realInRange(min, max));
+
+        return Math.floor(this.realInRange(0, max - min + 1)) + min;
+
     },
 
     /**
     * Returns a random real number between min and max.
+    *
     * @method Phaser.RandomDataGenerator#realInRange
     * @param {number} min - The minimum value in the range.
     * @param {number} max - The maximum value in the range.
@@ -34283,15 +36361,19 @@ Phaser.RandomDataGenerator.prototype = {
 
     /**
     * Returns a random real number between -1 and 1.
+    *
     * @method Phaser.RandomDataGenerator#normal
     * @return {number} A random real number between -1 and 1.
     */
     normal: function () {
+
         return 1 - 2 * this.frac();
+
     },
 
     /**
     * Returns a valid RFC4122 version4 ID hex string from https://gist.github.com/1308368
+    *
     * @method Phaser.RandomDataGenerator#uuid
     * @return {string} A valid RFC4122 version4 ID hex string
     */
@@ -34310,42 +36392,54 @@ Phaser.RandomDataGenerator.prototype = {
 
     /**
     * Returns a random member of `array`.
+    *
     * @method Phaser.RandomDataGenerator#pick
     * @param {Array} ary - An Array to pick a random member of.
     * @return {any} A random member of the array.
     */
     pick: function (ary) {
+
         return ary[this.integerInRange(0, ary.length - 1)];
+
     },
 
     /**
     * Returns a random member of `array`, favoring the earlier entries.
+    *
     * @method Phaser.RandomDataGenerator#weightedPick
     * @param {Array} ary - An Array to pick a random member of.
     * @return {any} A random member of the array.
     */
     weightedPick: function (ary) {
+
         return ary[~~(Math.pow(this.frac(), 2) * (ary.length - 1))];
+
     },
 
     /**
     * Returns a random timestamp between min and max, or between the beginning of 2000 and the end of 2020 if min and max aren't specified.
+    *
     * @method Phaser.RandomDataGenerator#timestamp
     * @param {number} min - The minimum value in the range.
     * @param {number} max - The maximum value in the range.
     * @return {number} A random timestamp between min and max.
     */
     timestamp: function (min, max) {
+
         return this.realInRange(min || 946684800000, max || 1577862000000);
+
     },
 
     /**
     * Returns a random angle between -180 and 180.
+    *
     * @method Phaser.RandomDataGenerator#angle
     * @return {number} A random number between -180 and 180.
     */
     angle: function() {
+
         return this.integerInRange(-180, 180);
+
     }
 
 };
@@ -34444,6 +36538,12 @@ Phaser.QuadTree = function(x, y, width, height, maxObjects, maxLevels, level) {
     * @property {array} nodes - Array of associated child nodes.
     */
     this.nodes = [];
+
+    /**
+    * @property {array} _empty - Internal empty array.
+    * @private
+    */
+    this._empty = [];
 
     this.reset(x, y, width, height, maxObjects, maxLevels, level);
 
@@ -34640,9 +36740,13 @@ Phaser.QuadTree.prototype = {
     */
     retrieve: function (sprite) {
 
+        if (!sprite.body)
+        {
+            return this._empty;
+        }
+
         var returnObjects = this.objects;
 
-        // sprite.body.quadTreeIndex = this.getIndex(sprite.body);
         var index = this.getIndex(sprite.body);
 
         if (this.nodes[0])
@@ -35294,7 +37398,7 @@ Phaser.Tween.prototype = {
     * @param {boolean} [autoStart=false] - Whether this tween will start automatically or not.
     * @param {number} [delay=0] - Delay before this tween will start, defaults to 0 (no delay). Value given is in ms.
     * @param {number} [repeat=0] - Should the tween automatically restart once complete? If you want it to run forever set as Number.MAX_VALUE. This ignores any chained tweens.
-    * @param {boolean} [yoyo=false] - A tween that yoyos will reverse itself when it completes.
+    * @param {boolean} [yoyo=false] - A tween that yoyos will reverse itself and play backwards automatically. A yoyo'd tween doesn't fire the Tween.onComplete event, so listen for Tween.onLoop instead.
     * @return {Phaser.Tween} This Tween object.
     */
     to: function (properties, duration, ease, autoStart, delay, repeat, yoyo) {
@@ -35305,6 +37409,11 @@ Phaser.Tween.prototype = {
         delay = delay || 0;
         repeat = repeat || 0;
         yoyo = yoyo || false;
+
+        if (yoyo && repeat === 0)
+        {
+            repeat = 1;
+        }
 
         var self;
 
@@ -35550,6 +37659,7 @@ Phaser.Tween.prototype = {
     repeat: function (times) {
 
         this._repeat = times;
+
         return this;
 
     },
@@ -35565,6 +37675,12 @@ Phaser.Tween.prototype = {
     yoyo: function(yoyo) {
 
         this._yoyo = yoyo;
+
+        if (yoyo && this._repeat === 0)
+        {
+            this._repeat = 1;
+        }
+
         return this;
 
     },
@@ -35811,7 +37927,6 @@ Phaser.Tween.prototype = {
                 this.onLoop.dispatch(this._object);
 
                 return true;
-
             }
             else
             {
@@ -36479,14 +38594,19 @@ Phaser.Time = function (game) {
     this.msMax = 0;
 
     /**
-    * @property {number} physicsElapsed - The elapsed time calculated for the physics motion updates.
+    * @property {number} physicsElapsed - The elapsed time calculated for the physics motion updates. In a stable 60fps system this will be 0.016 every frame.
     */
     this.physicsElapsed = 0;
 
     /**
-    * @property {number} deltaCap - If you need to cap the delta timer, set the value here.
+    * @property {number} deltaCap - If you need to cap the delta timer, set the value here. For 60fps the delta should be 0.016, so try variances just above this.
     */
     this.deltaCap = 0;
+
+    /**
+    * @property {number} timeCap - If the difference in time between two frame updates exceeds this value, the frame time is reset to avoid huge elapsed counts.
+    */
+    this.timeCap = 1000;
 
     /**
     * @property {number} frames - The number of frames record in the last second. Only calculated if Time.advancedTiming is true.
@@ -36614,29 +38734,27 @@ Phaser.Time.prototype = {
     *
     * @method Phaser.Time#update
     * @protected
-    * @param {number} time - The current timestamp, either performance.now or Date.now depending on the browser.
+    * @param {number} time - The current timestamp.
     */
     update: function (time) {
 
         this.now = time;
 
-        if (this._justResumed)
-        {
-            this.time = this.now;
-            this._justResumed = false;
-
-            this.events.resume();
-
-            for (var i = 0; i < this._timers.length; i++)
-            {
-                this._timers[i]._resume();
-            }
-        }
-
         this.timeToCall = this.game.math.max(0, 16 - (time - this.lastTime));
 
         this.elapsed = this.now - this.time;
-        this.physicsElapsed = this.elapsed / 1000;
+
+        //  spike-dislike
+        if (this.elapsed > this.timeCap)
+        {
+            //  For some reason the time between now and the last time the game was updated was larger than our timeCap
+            //  This can happen if the Stage.disableVisibilityChange is true and you swap tabs, which makes the raf pause.
+            //  In this case we'll drop to some default values to stop the game timers going nuts.
+            this.elapsed = 1 / 60;
+        }
+
+        //  Calculate physics elapsed, ensure it's > 0, use 1/60 as a fallback
+        this.physicsElapsed = this.elapsed / 1000 || 1 / 60;
 
         if (this.deltaCap > 0 && this.physicsElapsed > this.deltaCap)
         {
@@ -36719,12 +38837,19 @@ Phaser.Time.prototype = {
     */
     gameResumed: function () {
 
-        this.pauseDuration = Date.now() - this._pauseStarted;
-
         //  Level out the elapsed timer to avoid spikes
-        this.time = Date.now();
+        this.time = this.now = Date.now();
 
-        this._justResumed = true;
+        this.pauseDuration = this.time - this._pauseStarted;
+
+        this.events.resume();
+
+        var i = this._timers.length;
+
+        while (i--)
+        {
+            this._timers[i]._resume();
+        }
 
     },
 
@@ -36821,6 +38946,12 @@ Phaser.Timer = function (game, autoDestroy) {
     this.expired = false;
 
     /**
+    * @property {number} elapsed - Elapsed time since the last frame (in ms).
+    * @protected
+    */
+    this.elapsed = 0;
+
+    /**
     * @property {array<Phaser.TimerEvent>} events - An array holding all of this timers Phaser.TimerEvent objects. Use the methods add, repeat and loop to populate it.
     */
     this.events = [];
@@ -36836,6 +38967,11 @@ Phaser.Timer = function (game, autoDestroy) {
     * @protected
     */
     this.nextTick = 0;
+
+    /**
+    * @property {number} timeCap - If the difference in time between two frame updates exceeds this value, the event times are reset to avoid catch-up situations.
+    */
+    this.timeCap = 1000;
 
     /**
     * @property {boolean} paused - The paused state of the Timer. You can pause the timer by calling Timer.pause() and Timer.resume() or by the game pausing.
@@ -36873,7 +39009,7 @@ Phaser.Timer = function (game, autoDestroy) {
     * @property {number} _now - The current start-time adjusted time.
     * @private
     */
-    this._now = 0;
+    this._now = Date.now();
 
     /**
     * @property {number} _len - Temp. array length variable.
@@ -36882,10 +39018,28 @@ Phaser.Timer = function (game, autoDestroy) {
     this._len = 0;
 
     /**
+    * @property {number} _marked - Temp. counter variable.
+    * @private
+    */
+    this._marked = 0;
+
+    /**
     * @property {number} _i - Temp. array counter variable.
     * @private
     */
     this._i = 0;
+
+    /**
+    * @property {number} _diff - Internal cache var.
+    * @private
+    */
+    this._diff = 0;
+
+    /**
+    * @property {number} _newTick - Internal cache var.
+    * @private
+    */
+    this._newTick = 0;
 
 };
 
@@ -36956,6 +39110,7 @@ Phaser.Timer.prototype = {
     * Adds a new Event to this Timer. The event will fire after the given amount of 'delay' in milliseconds has passed, once the Timer has started running.
     * Call Timer.start() once you have added all of the Events you require for this Timer. The delay is in relation to when the Timer starts, not the time it was added.
     * If the Timer is already running the delay will be calculated based on the timers current time.
+    *
     * @method Phaser.Timer#add
     * @param {number} delay - The number of milliseconds that should elapse before the Timer will call the given callback.
     * @param {function} callback - The callback that will be called when the Timer event occurs.
@@ -36970,13 +39125,14 @@ Phaser.Timer.prototype = {
     },
 
     /**
-    * Adds a new Event to this Timer that will repeat for the given number of iterations.
+    * Adds a new TimerEvent that will always play through once and then repeat for the given number of iterations.
     * The event will fire after the given amount of 'delay' milliseconds has passed once the Timer has started running.
     * Call Timer.start() once you have added all of the Events you require for this Timer. The delay is in relation to when the Timer starts, not the time it was added.
     * If the Timer is already running the delay will be calculated based on the timers current time.
+    *
     * @method Phaser.Timer#repeat
     * @param {number} delay - The number of milliseconds that should elapse before the Timer will call the given callback.
-    * @param {number} repeatCount - The number of times the event will repeat.
+    * @param {number} repeatCount - The number of times the event will repeat once is has finished playback. A repeatCount of 1 means it will repeat itself once, playing the event twice in total.
     * @param {function} callback - The callback that will be called when the Timer event occurs.
     * @param {object} callbackContext - The context in which the callback will be called.
     * @param {...*} arguments - The values to be sent to your callback function when it is called.
@@ -36993,6 +39149,7 @@ Phaser.Timer.prototype = {
     * The event will fire after the given amount of 'delay' milliseconds has passed once the Timer has started running.
     * Call Timer.start() once you have added all of the Events you require for this Timer. The delay is in relation to when the Timer starts, not the time it was added.
     * If the Timer is already running the delay will be calculated based on the timers current time.
+    *
     * @method Phaser.Timer#loop
     * @param {number} delay - The number of milliseconds that should elapse before the Timer will call the given callback.
     * @param {function} callback - The callback that will be called when the Timer event occurs.
@@ -37009,15 +39166,16 @@ Phaser.Timer.prototype = {
     /**
     * Starts this Timer running.
     * @method Phaser.Timer#start
+    * @param {number} [delay=0] - The number of milliseconds that should elapse before the Timer will start.
     */
-    start: function () {
+    start: function (delay) {
 
         if (this.running)
         {
             return;
         }
 
-        this._started = this.game.time.now;
+        this._started = this.game.time.now + (delay || 0);
 
         this.running = true;
 
@@ -37103,7 +39261,30 @@ Phaser.Timer.prototype = {
     },
 
     /**
-    * The main Timer update event, called automatically by the Game clock.
+    * Clears any events from the Timer which have pendingDelete set to true and then resets the private _len and _i values.
+    *
+    * @method Phaser.Timer#clearPendingEvents
+    */
+    clearPendingEvents: function () {
+
+        this._i = this.events.length;
+
+        while (this._i--)
+        {
+            if (this.events[this._i].pendingDelete)
+            {
+                this.events.splice(this._i, 1);
+            }
+        }
+
+        this._len = this.events.length;
+        this._i = 0;
+
+    },
+
+    /**
+    * The main Timer update event, called automatically by Phaser.Time.update.
+    *
     * @method Phaser.Timer#update
     * @protected
     * @param {number} time - The time from the core game clock.
@@ -37116,57 +39297,53 @@ Phaser.Timer.prototype = {
             return true;
         }
 
+        this.elapsed = time - this._now;
         this._now = time;
 
-        this._len = this.events.length;
-
-        this._i = 0;
-
-        while (this._i < this._len)
+        //  spike-dislike
+        if (this.elapsed > this.timeCap)
         {
-            if (this.events[this._i].pendingDelete)
-            {
-                this.events.splice(this._i, 1);
-                this._len--;
-            }
-
-            this._i++;
+            //  For some reason the time between now and the last time the game was updated was larger than our timeCap.
+            //  This can happen if the Stage.disableVisibilityChange is true and you swap tabs, which makes the raf pause.
+            //  In this case we need to adjust the TimerEvents and nextTick.
+            this.adjustEvents(time - this.elapsed);
         }
 
-        this._len = this.events.length;
+        this._marked = 0;
+
+        //  Clears events marked for deletion and resets _len and _i to 0.
+        this.clearPendingEvents();
 
         if (this.running && this._now >= this.nextTick && this._len > 0)
         {
-            this._i = 0;
-
             while (this._i < this._len && this.running)
             {
                 if (this._now >= this.events[this._i].tick)
                 {
-                    var diff = this._now - this.events[this._i].tick;
-                    var newTick = (this._now + this.events[this._i].delay) - diff;
+                    //  (now + delay) - (time difference from last tick to now)
+                    this._newTick = (this._now + this.events[this._i].delay) - (this._now - this.events[this._i].tick);
 
-                    if (newTick < 0)
+                    if (this._newTick < 0)
                     {
-                        newTick = this._now + this.events[this._i].delay;
+                        this._newTick = this._now + this.events[this._i].delay;
                     }
 
                     if (this.events[this._i].loop === true)
                     {
-                        this.events[this._i].tick = newTick;
+                        this.events[this._i].tick = this._newTick;
                         this.events[this._i].callback.apply(this.events[this._i].callbackContext, this.events[this._i].args);
                     }
                     else if (this.events[this._i].repeatCount > 0)
                     {
                         this.events[this._i].repeatCount--;
-                        this.events[this._i].tick = newTick;
+                        this.events[this._i].tick = this._newTick;
                         this.events[this._i].callback.apply(this.events[this._i].callbackContext, this.events[this._i].args);
                     }
                     else
                     {
+                        this._marked++;
+                        this.events[this._i].pendingDelete = true;
                         this.events[this._i].callback.apply(this.events[this._i].callbackContext, this.events[this._i].args);
-                        this.events.splice(this._i, 1);
-                        this._len--;
                     }
 
                     this._i++;
@@ -37178,7 +39355,7 @@ Phaser.Timer.prototype = {
             }
 
             //  Are there any events left?
-            if (this.events.length > 0)
+            if (this.events.length > this._marked)
             {
                 this.order();
             }
@@ -37206,13 +39383,15 @@ Phaser.Timer.prototype = {
     */
     pause: function () {
 
-        if (this.running && !this.expired)
+        if (this.paused)
         {
-            this._pauseStarted = this.game.time.now;
-
-            this.paused = true;
-            this._codePaused = true;
+            return;
         }
+
+        this._pauseStarted = this.game.time.now;
+
+        this.paused = true;
+        this._codePaused = true;
 
     },
 
@@ -37223,37 +39402,73 @@ Phaser.Timer.prototype = {
     */
     _pause: function () {
 
-        if (this.running && !this.expired)
+        if (this.paused)
         {
-            this._pauseStarted = this.game.time.now;
+            return;
+        }
 
-            this.paused = true;
+        this._pauseStarted = this.game.time.now;
+
+        this.paused = true;
+
+    },
+
+    /**
+    * Adjusts the time of all pending events and the nextTick by the given baseTime.
+    *
+    * @method Phaser.Timer#adjustEvents
+    */
+    adjustEvents: function (baseTime) {
+
+        for (var i = 0; i < this.events.length; i++)
+        {
+            if (!this.events[i].pendingDelete)
+            {
+                //  Work out how long there would have been from when the game paused until the events next tick
+                var t = this.events[i].tick - baseTime;
+
+                if (t < 0)
+                {
+                    t = 0;
+                }
+
+                //  Add the difference on to the time now
+                this.events[i].tick = this._now + t;
+            }
+        }
+
+        var d = this.nextTick - baseTime;
+
+        if (d < 0)
+        {
+            this.nextTick = this._now;
+        }
+        else
+        {
+            this.nextTick = this._now + d;
         }
 
     },
 
     /**
     * Resumes the Timer and updates all pending events.
+    *
     * @method Phaser.Timer#resume
     */
     resume: function () {
 
-        if (this.running && !this.expired)
+        if (!this.paused)
         {
-            var pauseDuration = this.game.time.now - this._pauseStarted;
-
-            this._pauseTotal += pauseDuration;
-
-            for (var i = 0; i < this.events.length; i++)
-            {
-                this.events[i].tick += pauseDuration;
-            }
-
-            this.nextTick += pauseDuration;
-
-            this.paused = false;
-            this._codePaused = false;
+            return;
         }
+
+        this._pauseTotal += this.game.time.pauseDuration;
+        this._now = this.game.time.now;
+
+        this.adjustEvents(this._pauseStarted);
+
+        this.paused = false;
+        this._codePaused = false;
 
     },
 
@@ -37491,6 +39706,12 @@ Phaser.AnimationManager = function (sprite) {
     this.currentFrame = null;
 
     /**
+    * @property {Phaser.Animation} currentAnim - The currently displayed animation, if any.
+    * @default
+    */
+    this.currentAnim = null;
+
+    /**
     * @property {boolean} updateIfVisible - Should the animation data continue to update even if the Sprite.visible is set to false.
     * @default
     */
@@ -37655,7 +39876,7 @@ Phaser.AnimationManager.prototype = {
 
         if (this._anims[name])
         {
-            if (this.currentAnim == this._anims[name])
+            if (this.currentAnim === this._anims[name])
             {
                 if (this.currentAnim.isPlaying === false)
                 {
@@ -37665,6 +39886,11 @@ Phaser.AnimationManager.prototype = {
             }
             else
             {
+                if (this.currentAnim && this.currentAnim.isPlaying)
+                {
+                    this.currentAnim.stop();
+                }
+
                 this.currentAnim = this._anims[name];
                 this.currentAnim.paused = false;
                 return this.currentAnim.play(frameRate, loop, killOnComplete);
@@ -37766,11 +39992,22 @@ Phaser.AnimationManager.prototype = {
     },
 
     /**
-    * Destroys all references this AnimationManager contains. Sets the _anims to a new object and nulls the current animation.
+    * Destroys all references this AnimationManager contains.
+    * Iterates through the list of animations stored in this manager and calls destroy on each of them.
     *
     * @method Phaser.AnimationManager#destroy
     */
     destroy: function () {
+
+        var anim = null;
+
+        for (var anim in this._anims)
+        {
+            if (this._anims.hasOwnProperty(anim))
+            {
+                this._anims[anim].destroy();
+            }
+        }
 
         this._anims = {};
         this._frameData = null;
@@ -38067,7 +40304,6 @@ Phaser.Animation.prototype = {
     * Plays this animation.
     *
     * @method Phaser.Animation#play
-    * @memberof Phaser.Animation
     * @param {number} [frameRate=null] - The framerate to play the animation at. The speed is given in frames per second. If not provided the previously set frameRate of the Animation is used.
     * @param {boolean} [loop=false] - Should the animation be looped after playback. If not provided the previously set loop value of the Animation is used.
     * @param {boolean} [killOnComplete=false] - If set to true when the animation completes (only happens if loop=false) the parent Sprite will be killed.
@@ -38124,7 +40360,6 @@ Phaser.Animation.prototype = {
     * Sets this animation back to the first frame and restarts the animation.
     *
     * @method Phaser.Animation#restart
-    * @memberof Phaser.Animation
     */
     restart: function () {
 
@@ -38145,11 +40380,68 @@ Phaser.Animation.prototype = {
     },
 
     /**
+    * Sets this animations playback to a given frame with the given ID.
+    *
+    * @method Phaser.Animation#setFrame
+    * @param {string|number} [frameId] - The identifier of the frame to set. Can be the name of the frame, the sprite index of the frame, or the animation-local frame index.
+    * @param {boolean} [useLocalFrameIndex=false] - If you provide a number for frameId, should it use the numeric indexes of the frameData, or the 0-indexed frame index local to the animation.
+    */
+    setFrame: function(frameId, useLocalFrameIndex) {
+
+        var frameIndex;
+
+        if (typeof useLocalFrameIndex === 'undefined')
+        {
+            useLocalFrameIndex = false;
+        }
+
+        //  Find the index to the desired frame.
+        if (typeof frameId === "string")
+        {
+            for (var i = 0; i < this._frames.length; i++)
+            {
+                if (this._frameData.getFrame(this._frames[i]).name === frameId)
+                {
+                    frameIndex = i;
+                }
+            }
+        }
+        else if (typeof frameId === "number")
+        {
+            if (useLocalFrameIndex)
+            {
+                frameIndex = frameId;
+            }
+            else
+            {
+                for (var i = 0; i < this._frames.length; i++)
+                {
+                    if (this.frames[i] === frameIndex)
+                    {
+                        frameIndex = i;
+                    }
+                }
+            }
+        }
+
+        if (frameIndex)
+        {
+            //  Set the current frame index to the found index. Subtract 1 so that it animates to the desired frame on update.
+            this._frameIndex = frameIndex - 1;
+
+            //  Make the animation update at next update
+            this._timeNextFrame = this.game.time.now;
+
+            this.update();
+        }
+
+    },
+
+    /**
     * Stops playback of this animation and set it to a finished state. If a resetFrame is provided it will stop playback and set frame to the first in the animation.
     * If `dispatchComplete` is true it will dispatch the complete events, otherwise they'll be ignored.
     *
     * @method Phaser.Animation#stop
-    * @memberof Phaser.Animation
     * @param {boolean} [resetFrame=false] - If true after the animation stops the currentFrame value will be set to the first frame in this animation.
     * @param {boolean} [dispatchComplete=false] - Dispatch the Animation.onComplete and parent.onAnimationComplete events?
     */
@@ -38179,7 +40471,6 @@ Phaser.Animation.prototype = {
     * Called when the Game enters a paused state.
     *
     * @method Phaser.Animation#onPause
-    * @memberof Phaser.Animation
     */
     onPause: function () {
 
@@ -38194,7 +40485,6 @@ Phaser.Animation.prototype = {
     * Called when the Game resumes from a paused state.
     *
     * @method Phaser.Animation#onResume
-    * @memberof Phaser.Animation
     */
     onResume: function () {
 
@@ -38209,7 +40499,6 @@ Phaser.Animation.prototype = {
     * Updates this animation. Called automatically by the AnimationManager.
     *
     * @method Phaser.Animation#update
-    * @memberof Phaser.Animation
     */
     update: function () {
 
@@ -38294,10 +40583,11 @@ Phaser.Animation.prototype = {
     * Cleans up this animation ready for deletion. Nulls all values and references.
     *
     * @method Phaser.Animation#destroy
-    * @memberof Phaser.Animation
     */
     destroy: function () {
-
+        this.game.onPause.remove(this.onPause, this);
+        this.game.onResume.remove(this.onResume, this);
+        
         this.game = null;
         this._parent = null;
         this._frames = null;
@@ -38305,12 +40595,9 @@ Phaser.Animation.prototype = {
         this.currentFrame = null;
         this.isPlaying = false;
 
-        this.onStart.destroy();
-        this.onLoop.destroy();
-        this.onComplete.destroy();
-
-        this.game.onPause.remove(this.onPause, this);
-        this.game.onResume.remove(this.onResume, this);
+        this.onStart.dispose();
+        this.onLoop.dispose();
+        this.onComplete.dispose();
 
     },
 
@@ -38319,7 +40606,6 @@ Phaser.Animation.prototype = {
     * Sets the isPlaying and isFinished states and dispatches the onAnimationComplete event if it exists on the parent and local onComplete event.
     *
     * @method Phaser.Animation#complete
-    * @memberof Phaser.Animation
     */
     complete: function () {
 
@@ -38456,6 +40742,7 @@ Object.defineProperty(Phaser.Animation.prototype, 'speed', {
 * @param {number} stop - The number to count to. If your frames are named 'explosion_0001' to 'explosion_0034' the stop value is 34.
 * @param {string} [suffix=''] - The end of the filename. If the filename was 'explosion_0001-large' the prefix would be '-large'.
 * @param {number} [zeroPad=0] - The number of zeroes to pad the min and max values with. If your frames are named 'explosion_0001' to 'explosion_0034' then the zeroPad is 4.
+* @return {array} An array of framenames.
 */
 Phaser.Animation.generateFrameNames = function (prefix, start, stop, suffix, zeroPad) {
 
@@ -39819,14 +42106,15 @@ Phaser.Cache.prototype = {
     },
 
     /**
-    * Get a physics data object from the cache by its key. You can get either the entire data set or just a single object from it.
+    * Get a physics data object from the cache by its key. You can get either the entire data set, a single object or a single fixture of an object from it.
     *
     * @method Phaser.Cache#getPhysicsData
     * @param {string} key - Asset key of the physics data object to retrieve from the Cache.
     * @param {string} [object=null] - If specified it will return just the physics object that is part of the given key, if null it will return them all.
+    * @param {string} fixtureKey - Fixture key of fixture inside an object. This key can be set per fixture with the Phaser Exporter.
     * @return {object} The requested physics object data if found.
     */
-    getPhysicsData: function (key, object) {
+    getPhysicsData: function (key, object, fixtureKey) {
 
         if (typeof object === 'undefined' || object === null)
         {
@@ -39844,7 +42132,31 @@ Phaser.Cache.prototype = {
         {
             if (this._physics[key] && this._physics[key].data[object])
             {
-                return this._physics[key].data[object];
+                var fixtures = this._physics[key].data[object];
+
+                //try to find a fixture by it's fixture key if given
+                if (fixtures && fixtureKey)
+                {
+                    for (var fixture in fixtures)
+                    {
+                        //  This contains the fixture data of a polygon or a circle
+                        fixture = fixtures[fixture];
+
+                        //  Test the key
+                        if (fixture.fixtureKey === fixtureKey)
+                        {
+                            return fixture;
+                        }
+
+                    }
+                    
+                    //  We did not find the requested fixture
+                    console.warn('Phaser.Cache.getPhysicsData: Could not find given fixtureKey: "' + fixtureKey + ' in ' + key + '"');
+                }
+                else
+                {
+                    return fixtures;
+                }
             }
             else
             {
@@ -40481,6 +42793,12 @@ Phaser.Loader = function (game) {
     this._xhr = new XMLHttpRequest();
 
     /**
+    * @property {XDomainRequest} - An ajax request used specifically by IE9 for CORs loading issues.
+    * @private
+    */
+    this._ajax = null;
+
+    /**
     * @property {boolean} isLoading - True if the Loader is in the process of loading the queue.
     * @default
     */
@@ -40513,7 +42831,7 @@ Phaser.Loader = function (game) {
     this.preloadSprite = null;
 
     /**
-    * @property {boolean|string} crossOrigin - The crossOrigin value applied to loaded images.
+    * @property {boolean|string} crossOrigin - The crossOrigin value applied to loaded images. Very often this needs to be set to 'anonymous'.
     * @default
     */
     this.crossOrigin = false;
@@ -40528,22 +42846,27 @@ Phaser.Loader = function (game) {
     this.baseURL = '';
 
     /**
-    * @property {Phaser.Signal} onFileComplete - Event signal.
-    */
-    this.onFileComplete = new Phaser.Signal();
-
-    /**
-    * @property {Phaser.Signal} onFileError - Event signal.
-    */
-    this.onFileError = new Phaser.Signal();
-
-    /**
-    * @property {Phaser.Signal} onLoadStart - Event signal.
+    * @property {Phaser.Signal} onLoadStart - This event is dispatched when the loading process starts, before the first file has been requested.
     */
     this.onLoadStart = new Phaser.Signal();
 
     /**
-    * @property {Phaser.Signal} onLoadComplete - Event signal.
+    * @property {Phaser.Signal} onFileStart - This event is dispatched immediately before a file starts loading. It's possible the file may still error (404, etc) after this event is sent.
+    */
+    this.onFileStart = new Phaser.Signal();
+
+    /**
+    * @property {Phaser.Signal} onFileComplete - This event is dispatched when a file completes loading successfully.
+    */
+    this.onFileComplete = new Phaser.Signal();
+
+    /**
+    * @property {Phaser.Signal} onFileError - This event is dispatched when a file errors as a result of the load request.
+    */
+    this.onFileError = new Phaser.Signal();
+
+    /**
+    * @property {Phaser.Signal} onLoadComplete - This event is dispatched when the final file in the load queue has either loaded or failed.
     */
     this.onLoadComplete = new Phaser.Signal();
 
@@ -40571,7 +42894,13 @@ Phaser.Loader.TEXTURE_ATLAS_XML_STARLING = 2;
 * @constant
 * @type {number}
 */
-Phaser.Loader.PHYSICS_LIME_CORONA = 3;
+Phaser.Loader.PHYSICS_LIME_CORONA_JSON = 3;
+
+/**
+* @constant
+* @type {number}
+*/
+Phaser.Loader.PHYSICS_PHASER_JSON = 4;
 
 Phaser.Loader.prototype = {
 
@@ -41306,9 +43635,11 @@ Phaser.Loader.prototype = {
             console.warn('Phaser.Loader loadFile invalid index ' + this._fileIndex);
             return;
         }
-
+        
         var file = this._fileList[this._fileIndex];
         var _this = this;
+
+        this.onFileStart.dispatch(this.progress, file.key);
 
         //  Image or Data?
         switch (file.type)
@@ -41383,12 +43714,50 @@ Phaser.Loader.prototype = {
                 break;
 
             case 'json':
-                this._xhr.open("GET", this.baseURL + file.url, true);
-                this._xhr.responseType = "text";
-                this._xhr.onload = function () {
-                    return _this.jsonLoadComplete(_this._fileIndex);
-                };
-                this._xhr.send();
+
+                if (window.XDomainRequest)
+                {
+                    this._ajax = new window.XDomainRequest();
+
+                    // XDomainRequest has a few querks. Occasionally it will abort requests
+                    // A way to avoid this is to make sure ALL callbacks are set even if not used
+                    // More info here: http://stackoverflow.com/questions/15786966/xdomainrequest-aborts-post-on-ie-9
+                    this._ajax.timeout = 3000;
+
+                    this._ajax.onerror = function () {
+                        return _this.dataLoadError(_this._fileIndex);
+                    };
+                       
+                    this._ajax.ontimeout = function () {
+                        return _this.dataLoadError(_this._fileIndex);
+                    };
+
+                    this._ajax.onprogress = function() {};
+
+                    this._ajax.onload = function(){
+                        return _this.jsonLoadComplete(_this._fileIndex);
+                    };
+
+                    this._ajax.open('GET', this.baseURL + file.url, true);
+
+                    this._ajax.send();
+                }
+                else
+                {
+                    this._xhr.open("GET", this.baseURL + file.url, true);
+                    this._xhr.responseType = "text";
+    
+                    this._xhr.onload = function () {
+                        return _this.jsonLoadComplete(_this._fileIndex);
+                    };
+    
+                    this._xhr.onerror = function () {
+                        return _this.dataLoadError(_this._fileIndex);
+                    };
+    
+                    this._xhr.send();
+                }
+
                 break;
 
             case 'tilemap':
@@ -41912,21 +44281,6 @@ Phaser.LoaderParser = {
     */
     bitmapFont: function (game, xml, cacheKey, xSpacing, ySpacing) {
 
-        if (!xml || /MSIE 9/i.test(navigator.userAgent))
-        {
-            if (typeof(window.DOMParser) === 'function')
-            {
-                var domparser = new DOMParser();
-                xml = domparser.parseFromString(this.ajaxRequest.responseText, 'text/xml');
-            }
-            else
-            {
-                var div = document.createElement('div');
-                div.innerHTML = this.ajaxRequest.responseText;
-                xml = div;
-            }
-        }
-
         var data = {};
         var info = xml.getElementsByTagName('info')[0];
         var common = xml.getElementsByTagName('common')[0];
@@ -42016,15 +44370,14 @@ Phaser.Sound = function (game, key, volume, loop, connect) {
     this.key = key;
 
     /**
-    * @property {boolean} loop - Whether or not the sound will loop.
+    * @property {boolean} loop - Whether or not the sound or current sound marker will loop.
     */
     this.loop = loop;
 
     /**
-    * @property {number} _volume - The global audio volume. A value between 0 (silence) and 1 (full volume).
-    * @private
+    * @property {number} volume - The sound or sound marker volume. A value between 0 (silence) and 1 (full volume).
     */
-    this._volume = volume;
+    this.volume = volume;
 
     /**
     * @property {object} markers - The sound markers.
@@ -42037,25 +44390,12 @@ Phaser.Sound = function (game, key, volume, loop, connect) {
     this.context = null;
 
     /**
-    * @property {Description} _buffer - Decoded data buffer / Audio tag.
-    * @private
-    */
-    this._buffer = null;
-
-    /**
-    * @property {boolean} _muted - Boolean indicating whether the sound is muted or not.
-    * @private
-    * @default
-    */
-    this._muted = false;
-
-    /**
     * @property {boolean} autoplay - Boolean indicating whether the sound should start automatically.
     */
     this.autoplay = false;
 
     /**
-    * @property {number} totalDuration - The total duration of the sound, in milliseconds
+    * @property {number} totalDuration - The total duration of the sound in seconds.
     */
     this.totalDuration = 0;
 
@@ -42071,9 +44411,19 @@ Phaser.Sound = function (game, key, volume, loop, connect) {
     this.currentTime = 0;
 
     /**
-    * @property {number} duration - The duration of the sound.
+    * @property {number} duration - The duration of the current sound marker in seconds.
     */
     this.duration = 0;
+
+    /**
+    * @property {number} durationMS - The duration of the current sound marker in ms.
+    */
+    this.durationMS = 0;
+
+    /**
+    * @property {number} position - The position of the current sound marker.
+    */
+    this.position = 0;
 
     /**
     * @property {number} stopTime - The time the sound stopped.
@@ -42135,6 +44485,16 @@ Phaser.Sound = function (game, key, volume, loop, connect) {
     * @property {object} externalNode - If defined this Sound won't connect to the SoundManager master gain node, but will instead connect to externalNode.input.
     */
     this.externalNode = null;
+
+    /**
+    * @property {object} masterGainNode - The master gain node in a Web Audio system.
+    */
+    this.masterGainNode = null;
+
+    /**
+    * @property {object} gainNode - The gain node in a Web Audio system.
+    */
+    this.gainNode = null;
 
     if (this.usingWebAudio)
     {
@@ -42215,6 +44575,54 @@ Phaser.Sound = function (game, key, volume, loop, connect) {
     */
     this.onMarkerComplete = new Phaser.Signal();
 
+    /**
+    * @property {number} _volume - The global audio volume. A value between 0 (silence) and 1 (full volume).
+    * @private
+    */
+    this._volume = volume;
+
+    /**
+    * @property {any} _buffer - Decoded data buffer / Audio tag.
+    * @private
+    */
+    this._buffer = null;
+
+    /**
+    * @property {boolean} _muted - Boolean indicating whether the sound is muted or not.
+    * @private
+    */
+    this._muted = false;
+
+    /**
+    * @property {number} _tempMarker - Internal marker var.
+    * @private
+    */
+    this._tempMarker = 0;
+
+    /**
+    * @property {number} _tempPosition - Internal marker var.
+    * @private
+    */
+    this._tempPosition = 0;
+
+    /**
+    * @property {number} _tempVolume - Internal marker var.
+    * @private
+    */
+    this._tempVolume = 0;
+
+    /**
+    * @property {boolean} _tempLoop - Internal marker var.
+    * @private
+    */
+    this._tempLoop = 0;
+
+    /**
+    * @property {boolean} _paused - Was this sound paused via code or a game event?
+    * @private
+    */
+    this._paused = false;
+
 };
 
 Phaser.Sound.prototype = {
@@ -42235,31 +44643,6 @@ Phaser.Sound.prototype = {
         }
 
     },
-
-    /**
-     * Description.
-     * @method Phaser.Sound#addMarker
-     * @param {string} name - Description.
-     * @param {Description} start - Description.
-     * @param {Description} stop - Description.
-     * @param {Description} volume - Description.
-     * @param {Description} loop - Description.
-    addMarker: function (name, start, stop, volume, loop) {
-
-        volume = volume || 1;
-        if (typeof loop == 'undefined') { loop = false; }
-
-        this.markers[name] = {
-            name: name,
-            start: start,
-            stop: stop,
-            volume: volume,
-            duration: stop - start,
-            loop: loop
-        };
-
-    },
-    */
 
     /**
     * Adds a marker into the current Sound. A marker is represented by a unique key and a start time and duration.
@@ -42576,6 +44959,7 @@ Phaser.Sound.prototype = {
 
     /**
     * Restart the sound, or a marked section of it.
+    *
     * @method Phaser.Sound#restart
     * @param {string} [marker=''] - If you want to play a marker then give the key here, otherwise leave blank to play the full sound.
     * @param {number} [position=0] - The starting position to play the sound from - this is ignored if you provide a marker.
@@ -42594,7 +44978,8 @@ Phaser.Sound.prototype = {
     },
 
     /**
-    * Pauses the sound
+    * Pauses the sound.
+    *
     * @method Phaser.Sound#pause
     */
     pause: function () {
@@ -42612,7 +44997,8 @@ Phaser.Sound.prototype = {
     },
 
     /**
-    * Resumes the sound
+    * Resumes the sound.
+    *
     * @method Phaser.Sound#resume
     */
     resume: function () {
@@ -42665,6 +45051,7 @@ Phaser.Sound.prototype = {
 
     /**
     * Stop playing this sound.
+    *
     * @method Phaser.Sound#stop
     */
     stop: function () {
@@ -42699,6 +45086,38 @@ Phaser.Sound.prototype = {
 
         this.currentMarker = '';
         this.onStop.dispatch(this, prevMarker);
+
+    },
+
+    /**
+    * Destroys this sound and all associated events and removes it from the SoundManager.
+    *
+    * @method Phaser.Sound#destroy
+    * @param {boolean} [remove=true] - If true this Sound is automatically removed from the SoundManager.
+    */
+    destroy: function (remove) {
+
+        if (typeof remove === 'undefined') { remove = true; }
+
+        this.stop();
+
+        if (remove)
+        {
+            this.game.sound.remove(this);
+        }
+
+        this.markers = {};
+        this.context = null;
+        this._buffer = null;
+        this.externalNode = null;
+        this.onDecoded.dispose();
+        this.onPlay.dispose();
+        this.onPause.dispose();
+        this.onResume.dispose();
+        this.onLoop.dispose();
+        this.onStop.dispose();
+        this.onMute.dispose();
+        this.onMarkerComplete.dispose();
 
     }
 
@@ -42739,7 +45158,9 @@ Object.defineProperty(Phaser.Sound.prototype, "isDecoded", {
 Object.defineProperty(Phaser.Sound.prototype, "mute", {
 
     get: function () {
-        return this._muted;
+
+        return (this._muted || this.game.sound.mute);
+
     },
 
     set: function (value) {
@@ -42871,7 +45292,6 @@ Phaser.SoundManager = function (game) {
     /**
     * @property {array} _sounds - An array containing all the sounds
     * @private
-    * @default The empty array.
     */
     this._sounds = [];
 
@@ -42969,21 +45389,30 @@ Phaser.SoundManager.prototype = {
 
         if (!!window['AudioContext'])
         {
-            this.context = new window['AudioContext']();
+            try {
+                this.context = new window['AudioContext']();
+            } catch (error) {
+                this.context = null;
+                this.usingWebAudio = false;
+                this.noAudio = true;
+            }
         }
         else if (!!window['webkitAudioContext'])
         {
-            this.context = new window['webkitAudioContext']();
+            try {
+                this.context = new window['webkitAudioContext']();
+            } catch (error) {
+                this.context = null;
+                this.usingWebAudio = false;
+                this.noAudio = true;
+            }
         }
-        else if (!!window['Audio'])
+
+        if (!!window['Audio'] && this.context === null)
         {
             this.usingWebAudio = false;
             this.usingAudioTag = true;
-        }
-        else
-        {
-            this.usingWebAudio = false;
-            this.noAudio = true;
+            this.noAudio = false;
         }
 
         if (this.context !== null)
@@ -43039,6 +45468,7 @@ Phaser.SoundManager.prototype = {
 
     /**
     * Stops all the sounds in the game.
+    *
     * @method Phaser.SoundManager#stopAll
     */
     stopAll: function () {
@@ -43055,6 +45485,7 @@ Phaser.SoundManager.prototype = {
 
     /**
     * Pauses all the sounds in the game.
+    *
     * @method Phaser.SoundManager#pauseAll
     */
     pauseAll: function () {
@@ -43070,7 +45501,8 @@ Phaser.SoundManager.prototype = {
     },
 
     /**
-    * resumes every sound in the game.
+    * Resumes every sound in the game.
+    *
     * @method Phaser.SoundManager#resumeAll
     */
     resumeAll: function () {
@@ -43087,6 +45519,7 @@ Phaser.SoundManager.prototype = {
 
     /**
     * Decode a sound by its assets key.
+    *
     * @method Phaser.SoundManager#decode
     * @param {string} key - Assets key of the sound to be decoded.
     * @param {Phaser.Sound} [sound] - Its buffer will be set to decoded data.
@@ -43119,6 +45552,7 @@ Phaser.SoundManager.prototype = {
 
     /**
     * Updates every sound in the game.
+    *
     * @method Phaser.SoundManager#update
     */
     update: function () {
@@ -43146,6 +45580,7 @@ Phaser.SoundManager.prototype = {
 
     /**
     * Adds a new Sound into the SoundManager.
+    *
     * @method Phaser.SoundManager#add
     * @param {string} key - Asset key for the sound.
     * @param {number} [volume=1] - Default value for the volume.
@@ -43168,7 +45603,60 @@ Phaser.SoundManager.prototype = {
     },
 
     /**
+    * Removes a Sound from the SoundManager. The removed Sound is destroyed before removal.
+    *
+    * @method Phaser.SoundManager#remove
+    * @param {Phaser.Sound} sound - The sound object to remove.
+    * @return {boolean} True if the sound was removed successfully, otherwise false.
+    */
+    remove: function (sound) {
+
+        var i = this._sounds.length;
+
+        while (i--)
+        {
+            if (this._sounds[i] === sound)
+            {
+                this._sounds[i].destroy(false);
+                this._sounds.splice(i, 1);
+                return true;
+            }
+        }
+
+        return false;
+
+    },
+
+    /**
+    * Removes all Sounds from the SoundManager that have an asset key matching the given value.
+    * The removed Sounds are destroyed before removal.
+    *
+    * @method Phaser.SoundManager#removeByKey
+    * @param {string} key - The key to match when removing sound objects.
+    * @return {number} The number of matching sound objects that were removed.
+    */
+    removeByKey: function (key) {
+
+        var i = this._sounds.length;
+        var removed = 0;
+
+        while (i--)
+        {
+            if (this._sounds[i].key === key)
+            {
+                this._sounds[i].destroy(false);
+                this._sounds.splice(i, 1);
+                removed++;
+            }
+        }
+
+        return removed;
+
+    },
+
+    /**
     * Adds a new Sound into the SoundManager and starts it playing.
+    *
     * @method Phaser.SoundManager#play
     * @param {string} key - Asset key for the sound.
     * @param {number} [volume=1] - Default value for the volume.
@@ -43280,7 +45768,7 @@ Object.defineProperty(Phaser.SoundManager.prototype, "mute", {
         }
         else
         {
-            if (this._muted === false)
+            if (!this._muted)
             {
                 return;
             }
@@ -43581,7 +46069,7 @@ Phaser.Utils.Debug.prototype = {
 
         if (sound.currentMarker !== '')
         {
-            this.line('Marker: ' + sound.currentMarker + ' Duration: ' + sound.duration);
+            this.line('Marker: ' + sound.currentMarker + ' Duration: ' + sound.duration + ' (ms: ' + sound.durationMS + ')');
             this.line('Start: ' + sound.markers[sound.currentMarker].start + ' Stop: ' + sound.markers[sound.currentMarker].stop);
             this.line('Position: ' + sound.position);
         }
@@ -43606,6 +46094,25 @@ Phaser.Utils.Debug.prototype = {
         this.line('X: ' + camera.x + ' Y: ' + camera.y);
         this.line('Bounds x: ' + camera.bounds.x + ' Y: ' + camera.bounds.y + ' w: ' + camera.bounds.width + ' h: ' + camera.bounds.height);
         this.line('View x: ' + camera.view.x + ' Y: ' + camera.view.y + ' w: ' + camera.view.width + ' h: ' + camera.view.height);
+        this.stop();
+
+    },
+
+    /**
+    * Render Timer information.
+    *
+    * @method Phaser.Utils.Debug#timer
+    * @param {Phaser.Timer} timer - The Phaser.Timer to show the debug information for.
+    * @param {number} x - X position of the debug info to be rendered.
+    * @param {number} y - Y position of the debug info to be rendered.
+    * @param {string} [color='rgb(255,255,255)'] - color of the debug info to be rendered. (format is css color string).
+    */
+    timer: function (timer, x, y, color) {
+
+        this.start(x, y, color);
+        this.line('Timer (running: ' + timer.running + ' expired: ' + timer.expired + ')');
+        this.line('Next Tick: ' + timer.next + ' Duration: ' + timer.duration);
+        this.line('Paused: ' + timer.paused + ' Length: ' + timer.length);
         this.stop();
 
     },
@@ -44062,25 +46569,479 @@ Phaser.Utils.Debug.prototype.constructor = Phaser.Utils.Debug;
 */
 
 /**
-* A collection of methods useful for manipulating and comparing colors.
+* The Phaser.Color class is a set of static methods that assist in color manipulation and conversion.
 *
 * @class Phaser.Color
 */
 Phaser.Color = {
 
     /**
+    * Packs the r, g, b, a components into a single integer, for use with Int32Array.
+    * If device is little endian then ABGR order is used. Otherwise RGBA order is used.
+    *
+    * @author Matt DesLauriers (@mattdesl)
+    * @method Phaser.Color.packPixel
+    * @static
+    * @param {number} r - The red color component, in the range 0 - 255.
+    * @param {number} g - The green color component, in the range 0 - 255.
+    * @param {number} b - The blue color component, in the range 0 - 255.
+    * @param {number} a - The alpha color component, in the range 0 - 255.
+    * @return {number} The packed color
+    */
+    packPixel: function (r, g, b, a) {
+
+        if (Phaser.Device.LITTLE_ENDIAN)
+        {
+            return (a << 24) | (b << 16) | (g <<  8) | r;
+        }
+        else
+        {
+            return (r << 24) | (g << 16) | (b <<  8) | a;
+        }
+
+    },
+
+    /**
+    * Unpacks the r, g, b, a components into the specified color object, or a new
+    * object, for use with Int32Array. If little endian, then ABGR order is used when 
+    * unpacking, otherwise, RGBA order is used. The resulting color object has the
+    * `r, g, b, a` properties which are unrelated to endianness.
+    *
+    * Note that the integer is assumed to be packed in the correct endianness. On little-endian
+    * the format is 0xAABBGGRR and on big-endian the format is 0xRRGGBBAA. If you want a
+    * endian-independent method, use fromRGBA(rgba) and toRGBA(r, g, b, a).
+    * 
+    * @author Matt DesLauriers (@mattdesl)
+    * @method Phaser.Color.unpackPixel
+    * @static
+    * @param {number} rgba - The integer, packed in endian order by packPixel.
+    * @param {object} [out] - An object into which 3 properties will be created: r, g and b. If not provided a new object will be created.
+    * @param {boolean} [hsl=false] - Also convert the rgb values into hsl?
+    * @param {boolean} [hsv=false] - Also convert the rgb values into hsv?
+    * @return {object} An object with the red, green and blue values set in the r, g and b properties.
+    */
+    unpackPixel: function (rgba, out, hsl, hsv) {
+
+        if (typeof out === 'undefined' || out === null) { out = Phaser.Color.createColor(); }
+        if (typeof hsl === 'undefined' || hsl === null) { hsl = false; }
+        if (typeof hsv === 'undefined' || hsv === null) { hsv = false; }
+
+        if (Phaser.Device.LITTLE_ENDIAN)
+        {
+            out.a = ((rgba & 0xff000000) >>> 24);
+            out.b = ((rgba & 0x00ff0000) >>> 16);
+            out.g = ((rgba & 0x0000ff00) >>> 8);
+            out.r = ((rgba & 0x000000ff));
+        }
+        else
+        {
+            out.r = ((rgba & 0xff000000) >>> 24);
+            out.g = ((rgba & 0x00ff0000) >>> 16);
+            out.b = ((rgba & 0x0000ff00) >>> 8);
+            out.a = ((rgba & 0x000000ff));
+        }
+        
+        out.color = rgba;
+        out.rgba = 'rgba(' + out.r + ',' + out.g + ',' + out.b + ',' + (out.a / 255) + ')';
+
+        if (hsl)
+        {
+            Phaser.Color.RGBtoHSL(out.r, out.g, out.b, out);
+        }
+
+        if (hsv)
+        {
+            Phaser.Color.RGBtoHSV(out.r, out.g, out.b, out);
+        }
+
+        return out;
+
+    },
+
+    /**
+    * A utility to convert an integer in 0xRRGGBBAA format to a color object.
+    * This does not rely on endianness.
+    *
+    * @author Matt DesLauriers (@mattdesl)
+    * @method Phaser.Color.fromRGBA
+    * @static
+    * @param {number} rgba - An RGBA hex
+    * @param {object} [out] - The object to use, optional.
+    * @return {object} A color object.
+    */
+    fromRGBA: function (rgba, out) {
+
+        if (!out)
+        {
+            out = Phaser.Color.createColor();
+        }
+
+        out.r = ((rgba & 0xff000000) >>> 24);
+        out.g = ((rgba & 0x00ff0000) >>> 16);
+        out.b = ((rgba & 0x0000ff00) >>> 8);
+        out.a = ((rgba & 0x000000ff));
+
+        out.rgba = 'rgba(' + out.r + ',' + out.g + ',' + out.b + ',' + out.a + ')';
+
+        return out;
+
+    },
+
+    /**
+    * A utility to convert RGBA components to a 32 bit integer in RRGGBBAA format.
+    *
+    * @author Matt DesLauriers (@mattdesl)
+    * @method Phaser.Color.toRGBA
+    * @static
+    * @param {number} r - The red color component, in the range 0 - 255.
+    * @param {number} g - The green color component, in the range 0 - 255.
+    * @param {number} b - The blue color component, in the range 0 - 255.
+    * @param {number} a - The alpha color component, in the range 0 - 255.
+    * @return {number} A RGBA-packed 32 bit integer
+    */
+    toRGBA: function (r, g, b, a) {
+
+        return (r << 24) | (g << 16) | (b <<  8) | a;
+
+    },
+
+    /**
+    * Converts an RGB color value to HSL (hue, saturation and lightness).
+    * Conversion forumla from http://en.wikipedia.org/wiki/HSL_color_space.
+    * Assumes RGB values are contained in the set [0, 255] and returns h, s and l in the set [0, 1].
+    * Based on code by Michael Jackson (https://github.com/mjijackson)
+    *
+    * @method Phaser.Color.RGBtoHSL
+    * @static
+    * @param {number} r - The red color component, in the range 0 - 255.
+    * @param {number} g - The green color component, in the range 0 - 255.
+    * @param {number} b - The blue color component, in the range 0 - 255.
+    * @param {object} [out] - An object into which 3 properties will be created, h, s and l. If not provided a new object will be created.
+    * @return {object} An object with the hue, saturation and lightness values set in the h, s and l properties.
+    */
+    RGBtoHSL: function (r, g, b, out) {
+
+        if (!out)
+        {
+            out = Phaser.Color.createColor(r, g, b, 1);
+        }
+
+        r /= 255;
+        g /= 255;
+        b /= 255;
+
+        var min = Math.min(r, g, b);
+        var max = Math.max(r, g, b);
+
+        // achromatic by default
+        out.h = 0;
+        out.s = 0;
+        out.l = (max + min) / 2;
+
+        if (max !== min)
+        {
+            var d = max - min;
+
+            out.s = out.l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+            if (max === r)
+            {
+                out.h = (g - b) / d + (g < b ? 6 : 0);
+            }
+            else if (max === g)
+            {
+                out.h = (b - r) / d + 2;
+            }
+            else if (max === b)
+            {
+                out.h = (r - g) / d + 4;
+            }
+
+            out.h /= 6;
+        }
+
+        return out;
+
+    },
+
+    /**
+    * Converts an HSL (hue, saturation and lightness) color value to RGB.
+    * Conversion forumla from http://en.wikipedia.org/wiki/HSL_color_space.
+    * Assumes HSL values are contained in the set [0, 1] and returns r, g and b values in the set [0, 255].
+    * Based on code by Michael Jackson (https://github.com/mjijackson)
+    *
+    * @method Phaser.Color.HSLtoRGB
+    * @static
+    * @param {number} h - The hue, in the range 0 - 1.
+    * @param {number} s - The saturation, in the range 0 - 1.
+    * @param {number} l - The lightness, in the range 0 - 1.
+    * @param {object} [out] - An object into which 3 properties will be created: r, g and b. If not provided a new object will be created.
+    * @return {object} An object with the red, green and blue values set in the r, g and b properties.
+    */
+    HSLtoRGB: function (h, s, l, out) {
+
+        if (!out)
+        {
+            out = Phaser.Color.createColor(l, l, l);
+        }
+        else
+        {
+            // achromatic by default
+            out.r = l;
+            out.g = l;
+            out.b = l;
+        }
+
+        if (s !== 0)
+        {
+            var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            var p = 2 * l - q;
+            out.r = Phaser.Color.hueToColor(p, q, h + 1 / 3);
+            out.g = Phaser.Color.hueToColor(p, q, h);
+            out.b = Phaser.Color.hueToColor(p, q, h - 1 / 3);
+        }
+
+        // out.r = (out.r * 255 | 0);
+        // out.g = (out.g * 255 | 0);
+        // out.b = (out.b * 255 | 0);
+
+        out.r = Math.floor((out.r * 255 | 0));
+        out.g = Math.floor((out.g * 255 | 0));
+        out.b = Math.floor((out.b * 255 | 0));
+
+        Phaser.Color.updateColor(out);
+
+        return out;
+
+    },
+
+    /**
+    * Converts an RGB color value to HSV (hue, saturation and value).
+    * Conversion forumla from http://en.wikipedia.org/wiki/HSL_color_space.
+    * Assumes RGB values are contained in the set [0, 255] and returns h, s and v in the set [0, 1].
+    * Based on code by Michael Jackson (https://github.com/mjijackson)
+    *
+    * @method Phaser.Color.RGBtoHSV
+    * @static
+    * @param {number} r - The red color component, in the range 0 - 255.
+    * @param {number} g - The green color component, in the range 0 - 255.
+    * @param {number} b - The blue color component, in the range 0 - 255.
+    * @param {object} [out] - An object into which 3 properties will be created, h, s and v. If not provided a new object will be created.
+    * @return {object} An object with the hue, saturation and value set in the h, s and v properties.
+    */
+    RGBtoHSV: function (r, g, b, out) {
+
+        if (!out)
+        {
+            out = Phaser.Color.createColor(r, g, b, 255);
+        }
+
+        r /= 255;
+        g /= 255;
+        b /= 255;
+
+        var min = Math.min(r, g, b);
+        var max = Math.max(r, g, b);
+        var d = max - min;
+
+        // achromatic by default
+        out.h = 0;
+        out.s = max === 0 ? 0 : d / max;
+        out.v = max;
+
+        if (max !== min)
+        {
+            if (max === r)
+            {
+                out.h = (g - b) / d + (g < b ? 6 : 0);
+            }
+            else if (max === g)
+            {
+                out.h = (b - r) / d + 2;
+            }
+            else if (max === b)
+            {
+                out.h = (r - g) / d + 4;
+            }
+
+            out.h /= 6;
+        }
+
+        return out;
+
+    },
+
+    /**
+    * Converts an HSV (hue, saturation and value) color value to RGB.
+    * Conversion forumla from http://en.wikipedia.org/wiki/HSL_color_space.
+    * Assumes HSV values are contained in the set [0, 1] and returns r, g and b values in the set [0, 255].
+    * Based on code by Michael Jackson (https://github.com/mjijackson)
+    *
+    * @method Phaser.Color.HSVtoRGB
+    * @static
+    * @param {number} h - The hue, in the range 0 - 1.
+    * @param {number} s - The saturation, in the range 0 - 1.
+    * @param {number} v - The value, in the range 0 - 1.
+    * @param {object} [out] - An object into which 3 properties will be created: r, g and b. If not provided a new object will be created.
+    * @return {object} An object with the red, green and blue values set in the r, g and b properties.
+    */
+    HSVtoRGB: function (h, s, v, out) {
+
+        if (typeof out === 'undefined') { out = Phaser.Color.createColor(0, 0, 0, 1, h, s, 0, v); }
+
+        var r, g, b;
+        var i = Math.floor(h * 6);
+        var f = h * 6 - i;
+        var p = v * (1 - s);
+        var q = v * (1 - f * s);
+        var t = v * (1 - (1 - f) * s);
+
+        switch (i % 6)
+        {
+            case 0:
+                r = v;
+                g = t;
+                b = p;
+                break;
+            case 1:
+                r = q;
+                g = v;
+                b = p;
+                break;
+            case 2:
+                r = p;
+                g = v;
+                b = t;
+                break;
+            case 3:
+                r = p;
+                g = q;
+                b = v;
+                break;
+            case 4:
+                r = t;
+                g = p;
+                b = v;
+                break;
+            case 5:
+                r = v;
+                g = p;
+                b = q;
+                break;
+        }
+
+        out.r = Math.floor(r * 255);
+        out.g = Math.floor(g * 255);
+        out.b = Math.floor(b * 255);
+
+        Phaser.Color.updateColor(out);
+
+        return out;
+
+    },
+
+    /**
+    * Converts a hue to an RGB color.
+    * Based on code by Michael Jackson (https://github.com/mjijackson)
+    *
+    * @method Phaser.Color.hueToColor
+    * @static
+    * @param {number} p
+    * @param {number} q
+    * @param {number} t
+    * @return {number} The color component value.
+    */
+    hueToColor: function (p, q, t) {
+
+        if (t < 0)
+        {
+            t += 1;
+        }
+
+        if (t > 1)
+        {
+            t -= 1;
+        }
+
+        if (t < 1 / 6)
+        {
+            return p + (q - p) * 6 * t;
+        }
+
+        if (t < 1 / 2)
+        {
+            return q;
+        }
+
+        if (t < 2 / 3)
+        {
+            return p + (q - p) * (2 / 3 - t) * 6;
+        }
+
+        return p;
+
+    },
+
+    /**
+    * A utility function to create a lightweight 'color' object with the default components.
+    * Any components that are not specified will default to zero.
+    *
+    * This is useful when you want to use a shared color object for the getPixel and getPixelAt methods.
+    *
+    * @author Matt DesLauriers (@mattdesl)
+    * @method Phaser.Color.createColor
+    * @static
+    * @param {number} [r=0] - The red color component, in the range 0 - 255.
+    * @param {number} [g=0] - The green color component, in the range 0 - 255.
+    * @param {number} [b=0] - The blue color component, in the range 0 - 255.
+    * @param {number} [a=1] - The alpha color component, in the range 0 - 1.
+    * @param {number} [h=0] - The hue, in the range 0 - 1.
+    * @param {number} [s=0] - The saturation, in the range 0 - 1.
+    * @param {number} [l=0] - The lightness, in the range 0 - 1.
+    * @param {number} [v=0] - The value, in the range 0 - 1.
+    * @return {object} The resulting object with r, g, b, a properties and h, s, l and v.
+    */
+    createColor: function (r, g, b, a, h, s, l, v) {
+
+        var out = { r: r || 0, g: g || 0, b: b || 0, a: a || 1, h: h || 0, s: s || 0, l: l || 0, v: v || 0, color: 0 };
+
+        out.rgba = 'rgba(' + out.r + ',' + out.g + ',' + out.b + ',' + out.a + ')';
+
+        return out;
+
+    },
+
+    /**
+    * Takes a color object and updates the rgba property.
+    *
+    * @method Phaser.Color.updateColor
+    * @static
+    * @param {object} out - The color object to update.
+    * @returns {number} A native color value integer (format: 0xAARRGGBB).
+    */
+    updateColor: function (out) {
+
+        out.rgba = 'rgba(' + out.r + ',' + out.g + ',' + out.b + ',' + out.a + ')';
+
+        return out;
+
+    },
+
+    /**
     * Given an alpha and 3 color values this will return an integer representation of it.
     *
     * @method Phaser.Color.getColor32
     * @static
-    * @param {number} alpha - The Alpha value (between 0 and 255).
-    * @param {number} red - The Red channel value (between 0 and 255).
-    * @param {number} green - The Green channel value (between 0 and 255).
-    * @param {number} blue - The Blue channel value (between 0 and 255).
+    * @param {number} a - The alpha color component, in the range 0 - 255.
+    * @param {number} r - The red color component, in the range 0 - 255.
+    * @param {number} g - The green color component, in the range 0 - 255.
+    * @param {number} b - The blue color component, in the range 0 - 255.
     * @returns {number} A native color value integer (format: 0xAARRGGBB).
     */
-    getColor32: function (alpha, red, green, blue) {
-        return alpha << 24 | red << 16 | green << 8 | blue;
+    getColor32: function (a, r, g, b) {
+
+        return a << 24 | r << 16 | g << 8 | b;
+
     },
 
     /**
@@ -44088,119 +47049,169 @@ Phaser.Color = {
     *
     * @method Phaser.Color.getColor
     * @static
-    * @param {number} red - The Red channel value (between 0 and 255).
-    * @param {number} green - The Green channel value (between 0 and 255).
-    * @param {number} blue - The Blue channel value (between 0 and 255).
+    * @param {number} r - The red color component, in the range 0 - 255.
+    * @param {number} g - The green color component, in the range 0 - 255.
+    * @param {number} b - The blue color component, in the range 0 - 255.
     * @returns {number} A native color value integer (format: 0xRRGGBB).
     */
-    getColor: function (red, green, blue) {
-        return red << 16 | green << 8 | blue;
+    getColor: function (r, g, b) {
+
+        return r << 16 | g << 8 | b;
+
     },
 
     /**
-    * Converts the given hex string into an integer color value.
+    * Converts the given color values into a string.
+    * If prefix was '#' it will be in the format `#RRGGBB` otherwise `0xAARRGGBB`.
+    *
+    * @method Phaser.Color.RGBtoString
+    * @static
+    * @param {number} r - The red color component, in the range 0 - 255.
+    * @param {number} g - The green color component, in the range 0 - 255.
+    * @param {number} b - The blue color component, in the range 0 - 255.
+    * @param {number} [a=255] - The alpha color component, in the range 0 - 255.
+    * @param {string} [prefix='#'] - The prefix used in the return string. If '#' it will return `#RRGGBB`, else `0xAARRGGBB`.
+    * @return {string} A string containing the color values. If prefix was '#' it will be in the format `#RRGGBB` otherwise `0xAARRGGBB`.
+    */
+    RGBtoString: function (r, g, b, a, prefix) {
+
+        if (typeof a === 'undefined') { a = 255; }
+        if (typeof prefix === 'undefined') { prefix = '#'; }
+
+        if (prefix === '#')
+        {
+            return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+        else
+        {
+            return '0x' + Phaser.Color.componentToHex(a) + Phaser.Color.componentToHex(r) + Phaser.Color.componentToHex(g) + Phaser.Color.componentToHex(b);
+        }
+
+    },
+
+    /**
+    * Converts a hex string into an integer color value.
     *
     * @method Phaser.Color.hexToRGB
     * @static
-    * @param {string} h - The string hex color to convert.
-    * @returns {number} The rgb color value.
+    * @param {string} hex - The hex string to convert. Can be in the short-hand format `#03f` or `#0033ff`.
+    * @return {number} The rgb color value in the format 0xAARRGGBB.
     */
-    hexToRGB: function (h) {
+    hexToRGB: function (hex) {
 
-        var hex16 = (h.charAt(0) == "#") ? h.substring(1, 7) : h;
+        var rgb = Phaser.Color.hexToColor(hex);
 
-        if (hex16.length == 3)
+        if (rgb)
         {
-            hex16 = hex16.charAt(0) + hex16.charAt(0) + hex16.charAt(1) + hex16.charAt(1) + hex16.charAt(2) + hex16.charAt(2);
+            return Phaser.Color.getColor32(rgb.a, rgb.r, rgb.g, rgb.b);
         }
 
-        var red = parseInt(hex16.substring(0, 2), 16);
-        var green = parseInt(hex16.substring(2, 4), 16);
-        var blue = parseInt(hex16.substring(4, 6), 16);
+    },
 
-        return red << 16 | green << 8 | blue;
+    /**
+    * Converts a hex string into a Phaser Color object.
+    *
+    * @method Phaser.Color.hexToColor
+    * @static
+    * @param {string} hex - The hex string to convert. Can be in the short-hand format `#03f` or `#0033ff`.
+    * @param {object} [out] - An object into which 3 properties will be created: r, g and b. If not provided a new object will be created.
+    * @return {object} An object with the red, green and blue values set in the r, g and b properties.
+    */
+    hexToColor: function (hex, out) {
+
+        if (!out)
+        {
+            out = Phaser.Color.createColor();
+        }
+
+        // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+        var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+
+        hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+            return r + r + g + g + b + b;
+        });
+
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+
+        if (result)
+        {
+            out.r = parseInt(result[1], 16);
+            out.g = parseInt(result[2], 16);
+            out.b = parseInt(result[3], 16);
+        }
+
+        return out;
 
     },
 
     /**
-    * Returns a string containing handy information about the given color including string hex value,
-    * RGB format information and HSL information. Each section starts on a newline, 3 lines in total.
+    * Return a string containing a hex representation of the given color component.
     *
-    * @method Phaser.Color.getColorInfo
+    * @method Phaser.Color.componentToHex
     * @static
-    * @param {number} color - A color value in the format 0xAARRGGBB.
-    * @returns {string} String containing the 3 lines of information.
+    * @param {number} color - The color channel to get the hex value for, must be a value between 0 and 255.
+    * @returns {string} A string of length 2 characters, i.e. 255 = ff, 100 = 64.
     */
-    getColorInfo: function (color) {
+    componentToHex: function (color) {
 
-        var argb = Phaser.Color.getRGB(color);
-        var hsl = Phaser.Color.RGBtoHSV(color);
-
-        //  Hex format
-        var result = Phaser.Color.RGBtoHexstring(color) + "\n";
-
-        //  RGB format
-        result = result.concat("Alpha: " + argb.alpha + " Red: " + argb.red + " Green: " + argb.green + " Blue: " + argb.blue) + "\n";
-
-        //  HSL info
-        result = result.concat("Hue: " + hsl.hue + " Saturation: " + hsl.saturation + " Lightnes: " + hsl.lightness);
-
-        return result;
+        var hex = color.toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
 
     },
 
     /**
-    * Return a string representation of the color in the format 0xAARRGGBB.
+    * Get HSV color wheel values in an array which will be 360 elements in size.
     *
-    * @method Phaser.Color.RGBtoHexstring
+    * @method Phaser.Color.HSVColorWheel
     * @static
-    * @param {number} color - The color to get the string representation for
-    * @returns {string} A string of length 10 characters in the format 0xAARRGGBB
+    * @param {number} [s=1] - The saturation, in the range 0 - 1.
+    * @param {number} [v=1] - The value, in the range 0 - 1.
+    * @return {array} An array containing 360 elements corresponding to the HSV color wheel.
     */
-    RGBtoHexstring: function (color) {
+    HSVColorWheel: function (s, v) {
 
-        var argb = Phaser.Color.getRGB(color);
+        if (typeof s === 'undefined') { s = 1.0; }
+        if (typeof v === 'undefined') { v = 1.0; }
 
-        return "0x" + Phaser.Color.colorToHexstring(argb.alpha) + Phaser.Color.colorToHexstring(argb.red) + Phaser.Color.colorToHexstring(argb.green) + Phaser.Color.colorToHexstring(argb.blue);
+        var colors = [];
+
+        for (var c = 0; c <= 359; c++)
+        {
+            colors.push(Phaser.Color.HSVtoRGB(c / 359, s, v));
+        }
+
+        return colors;
 
     },
 
     /**
-    * Return a string representation of the color in the format #RRGGBB.
+    * Get HSL color wheel values in an array which will be 360 elements in size.
     *
-    * @method Phaser.Color.RGBtoWebstring
+    * @method Phaser.Color.HSLColorWheel
     * @static
-    * @param {number} color - The color to get the string representation for.
-    * @returns {string} A string of length 10 characters in the format 0xAARRGGBB.
+    * @param {number} [s=0.5] - The saturation, in the range 0 - 1.
+    * @param {number} [l=0.5] - The lightness, in the range 0 - 1.
+    * @return {array} An array containing 360 elements corresponding to the HSL color wheel.
     */
-    RGBtoWebstring: function (color) {
+    HSLColorWheel: function (s, l) {
 
-        var argb = Phaser.Color.getRGB(color);
+        if (typeof s === 'undefined') { s = 0.5; }
+        if (typeof l === 'undefined') { l = 0.5; }
 
-        return "#" + Phaser.Color.colorToHexstring(argb.red) + Phaser.Color.colorToHexstring(argb.green) + Phaser.Color.colorToHexstring(argb.blue);
+        var colors = [];
 
-    },
+        for (var c = 0; c <= 359; c++)
+        {
+            colors.push(Phaser.Color.HSLtoRGB(c / 359, s, l));
+        }
 
-    /**
-    * Return a string containing a hex representation of the given color.
-    *
-    * @method Phaser.Color.colorToHexstring
-    * @static
-    * @param {number} color - The color channel to get the hex value for, must be a value between 0 and 255).
-    * @returns {string} A string of length 2 characters, i.e. 255 = FF, 0 = 00.
-    */
-    colorToHexstring: function (color) {
-
-        var digits = "0123456789ABCDEF";
-        var lsd = color % 16;
-        var msd = (color - lsd) / 16;
-        var hexified = digits.charAt(msd) + digits.charAt(lsd);
-        return hexified;
+        return colors;
 
     },
 
     /**
     * Interpolates the two given colours based on the supplied step and currentStep properties.
+    *
     * @method Phaser.Color.interpolateColor
     * @static
     * @param {number} color1 - The first color value.
@@ -44290,11 +47301,8 @@ Phaser.Color = {
         if (typeof alpha === "undefined") { alpha = 255; }
 
         //  Sanity checks
-        if (max > 255) {
-            return Phaser.Color.getColor(255, 255, 255);
-        }
-
-        if (min > max) {
+        if (max > 255 || min > max)
+        {
             return Phaser.Color.getColor(255, 255, 255);
         }
 
@@ -44403,6 +47411,85 @@ Phaser.Color = {
     */
     getBlue: function (color) {
         return color & 0xFF;
+    },
+
+    //   The following are all DEPRECATED
+
+    /**
+    * DEPRECATED: This method will be removed in Phaser 2.1.
+    * Returns a string containing handy information about the given color including string hex value,
+    * RGB format information. Each section starts on a newline, 3 lines in total.
+    *
+    * @method Phaser.Color.getColorInfo
+    * @static
+    * @param {number} color - A color value in the format 0xAARRGGBB.
+    * @returns {string} String containing the 3 lines of information.
+    */
+    getColorInfo: function (color) {
+
+        var argb = Phaser.Color.getRGB(color);
+
+        //  Hex format
+        var result = Phaser.Color.RGBtoHexstring(color) + "\n";
+
+        //  RGB format
+        result = result.concat("Alpha: " + argb.alpha + " Red: " + argb.red + " Green: " + argb.green + " Blue: " + argb.blue) + "\n";
+
+        return result;
+
+    },
+
+    /**
+    * DEPRECATED: This method will be removed in Phaser 2.1. Please use Phaser.Color.RGBtoString instead.
+    * Return a string representation of the color in the format 0xAARRGGBB.
+    *
+    * @method Phaser.Color.RGBtoHexstring
+    * @static
+    * @param {number} color - The color to get the string representation for
+    * @returns {string} A string of length 10 characters in the format 0xAARRGGBB
+    */
+    RGBtoHexstring: function (color) {
+
+        var argb = Phaser.Color.getRGB(color);
+
+        return "0x" + Phaser.Color.colorToHexstring(argb.alpha) + Phaser.Color.colorToHexstring(argb.red) + Phaser.Color.colorToHexstring(argb.green) + Phaser.Color.colorToHexstring(argb.blue);
+
+    },
+
+    /**
+    * DEPRECATED: This method will be removed in Phaser 2.1. Please use Phaser.Color.RGBtoString instead.
+    * Return a string representation of the color in the format #RRGGBB.
+    *
+    * @method Phaser.Color.RGBtoWebstring
+    * @static
+    * @param {number} color - The color to get the string representation for.
+    * @returns {string} A string of length 10 characters in the format 0xAARRGGBB.
+    */
+    RGBtoWebstring: function (color) {
+
+        var argb = Phaser.Color.getRGB(color);
+
+        return "#" + Phaser.Color.colorToHexstring(argb.red) + Phaser.Color.colorToHexstring(argb.green) + Phaser.Color.colorToHexstring(argb.blue);
+
+    },
+
+    /**
+    * DEPRECATED: This method will be removed in Phaser 2.1. Please use Phaser.Color.componentToHex instead.
+    * Return a string containing a hex representation of the given color.
+    *
+    * @method Phaser.Color.colorToHexstring
+    * @static
+    * @param {number} color - The color channel to get the hex value for, must be a value between 0 and 255).
+    * @returns {string} A string of length 2 characters, i.e. 255 = FF, 0 = 00.
+    */
+    colorToHexstring: function (color) {
+
+        var digits = "0123456789ABCDEF";
+        var lsd = color % 16;
+        var msd = (color - lsd) / 16;
+        var hexified = digits.charAt(msd) + digits.charAt(lsd);
+        return hexified;
+
     }
 
 };
@@ -45078,7 +48165,7 @@ Phaser.Physics.Arcade.prototype = {
     * @method Phaser.Physics.Arcade#collide
     * @param {Phaser.Sprite|Phaser.Group|Phaser.Particles.Emitter|Phaser.Tilemap} object1 - The first object to check. Can be an instance of Phaser.Sprite, Phaser.Group, Phaser.Particles.Emitter, or Phaser.Tilemap.
     * @param {Phaser.Sprite|Phaser.Group|Phaser.Particles.Emitter|Phaser.Tilemap|array} object2 - The second object or array of objects to check. Can be Phaser.Sprite, Phaser.Group, Phaser.Particles.Emitter or Phaser.Tilemap.
-    * @param {function} [collideCallback=null] - An optional callback function that is called if the objects collide. The two objects will be passed to this function in the same order in which you specified them.
+    * @param {function} [collideCallback=null] - An optional callback function that is called if the objects collide. The two objects will be passed to this function in the same order in which you specified them, unless you are colliding Group vs. Sprite, in which case Sprite will always be the first parameter.
     * @param {function} [processCallback=null] - A callback function that lets you perform additional checks against the two objects if they overlap. If this is set then collision will only happen if processCallback returns true. The two objects will be passed to this function in the same order in which you specified them.
     * @param {object} [callbackContext] - The context in which to run the callbacks.
     * @return {boolean} True if a collision occured otherwise false.
@@ -45243,7 +48330,7 @@ Phaser.Physics.Arcade.prototype = {
     */
     collideSpriteVsGroup: function (sprite, group, collideCallback, processCallback, callbackContext, overlapOnly) {
 
-        if (group.length === 0)
+        if (group.length === 0 || !sprite.body)
         {
             return;
         }
@@ -45349,6 +48436,11 @@ Phaser.Physics.Arcade.prototype = {
     * @param {boolean} overlapOnly - Just run an overlap or a full collision.
     */
     collideSpriteVsTilemapLayer: function (sprite, tilemapLayer, collideCallback, processCallback, callbackContext) {
+
+        if (!sprite.body)
+        {
+            return;
+        }
 
         this._mapData = tilemapLayer.getTiles(
             sprite.body.position.x - sprite.body.tilePadding.x,
@@ -46668,7 +49760,7 @@ Phaser.Physics.Arcade.Body = function (sprite) {
     this.tilePadding = new Phaser.Point();
 
     /**
-    * @property {number} phaser - Is this Body in a preUpdate or postUpdate state?
+    * @property {number} phaser - Is this Body in a preUpdate (1) or postUpdate (2) state?
     */
     this.phase = 0;
 
@@ -46709,7 +49801,7 @@ Phaser.Physics.Arcade.Body.prototype = {
     /**
     * Internal method.
     *
-    * @method Phaser.Physics.Arcade#updateBounds
+    * @method Phaser.Physics.Arcade.Body#updateBounds
     * @protected
     */
     updateBounds: function () {
@@ -46735,7 +49827,7 @@ Phaser.Physics.Arcade.Body.prototype = {
     /**
     * Internal method.
     *
-    * @method Phaser.Physics.Arcade#preUpdate
+    * @method Phaser.Physics.Arcade.Body#preUpdate
     * @protected
     */
     preUpdate: function () {
@@ -46810,10 +49902,16 @@ Phaser.Physics.Arcade.Body.prototype = {
     /**
     * Internal method.
     *
-    * @method Phaser.Physics.Arcade#postUpdate
+    * @method Phaser.Physics.Arcade.Body#postUpdate
     * @protected
     */
     postUpdate: function () {
+
+        //  Only allow postUpdate to be called once per frame
+        if (this.phase === 2)
+        {
+            return;
+        }
 
         this.phase = 2;
 
@@ -46883,7 +49981,7 @@ Phaser.Physics.Arcade.Body.prototype = {
     /**
     * Removes this bodies reference to its parent sprite, freeing it up for gc.
     *
-    * @method Phaser.Physics.Arcade#destroy
+    * @method Phaser.Physics.Arcade.Body#destroy
     */
     destroy: function () {
 
@@ -46894,7 +49992,7 @@ Phaser.Physics.Arcade.Body.prototype = {
     /**
     * Internal method.
     *
-    * @method Phaser.Physics.Arcade#checkWorldBounds
+    * @method Phaser.Physics.Arcade.Body#checkWorldBounds
     * @protected
     */
     checkWorldBounds: function () {
@@ -46932,7 +50030,7 @@ Phaser.Physics.Arcade.Body.prototype = {
     * So it could be smaller or larger than the parent Sprite. You can also control the x and y offset, which
     * is the position of the Body relative to the top-left of the Sprite.
     *
-    * @method Phaser.Physics.Arcade#setSize
+    * @method Phaser.Physics.Arcade.Body#setSize
     * @param {number} width - The width of the Body.
     * @param {number} height - The height of the Body.
     * @param {number} offsetX - The X offset of the Body from the Sprite position.
@@ -46958,9 +50056,9 @@ Phaser.Physics.Arcade.Body.prototype = {
     /**
     * Resets all Body values (velocity, acceleration, rotation, etc)
     *
-    * @method Phaser.Physics.Arcade#reset
+    * @method Phaser.Physics.Arcade.Body#reset
     * @param {number} x - The new x position of the Body.
-    * @param {number} y - The new x position of the Body.
+    * @param {number} y - The new y position of the Body.
     */
     reset: function (x, y) {
 
@@ -46983,6 +50081,20 @@ Phaser.Physics.Arcade.Body.prototype = {
         this._sy = this.sprite.scale.y;
         
         this.center.setTo(this.position.x + this.halfWidth, this.position.y + this.halfHeight);
+
+    },
+
+    /**
+    * Tests if a world point lies within this Body.
+    *
+    * @method Phaser.Physics.Arcade.Body#hitTest
+    * @param {number} x - The world x coordinate to test.
+    * @param {number} y - The world y coordinate to test.
+    * @return {boolean} True if the given coordinates are inside this Body, otherwise false.
+    */
+    hitTest: function (x, y) {
+
+        return Phaser.Rectangle.contains(this, x, y);
 
     },
 
@@ -47285,7 +50397,7 @@ Phaser.Particles.Arcade.Emitter = function (game, x, y, maxParticles) {
     Phaser.Group.call(this, game);
 
     /**
-    * @property {string} name - Description.
+    * @property {string} name - A handy string name for this emitter. Can be set to anything.
     */
     this.name = 'emitter' + this.game.particles.ID++;
 
@@ -47294,18 +50406,6 @@ Phaser.Particles.Arcade.Emitter = function (game, x, y, maxParticles) {
     * @protected
     */
     this.type = Phaser.EMITTER;
-
-    /**
-    * @property {number} x - The X position of the top left corner of the emitter in world space.
-    * @default
-    */
-    this.x = 0;
-
-    /**
-    * @property {number} y - The Y position of the top left corner of emitter in world space.
-    * @default
-    */
-    this.y = 0;
 
     /**
     * @property {number} width - The width of the emitter.  Particles can be randomly generated from anywhere within this box.
@@ -47332,16 +50432,21 @@ Phaser.Particles.Arcade.Emitter = function (game, x, y, maxParticles) {
     this.maxParticleSpeed = new Phaser.Point(100, 100);
 
     /**
-    * @property {number} minParticleScale - The minimum possible scale of a particle.
+    * @property {number} minParticleScale - The minimum possible scale of a particle. This is applied to the X and Y axis. If you need to control each axis see minParticleScaleX.
     * @default
     */
     this.minParticleScale = 1;
 
     /**
-    * @property {number} maxParticleScale - The maximum possible scale of a particle.
+    * @property {number} maxParticleScale - The maximum possible scale of a particle. This is applied to the X and Y axis. If you need to control each axis see maxParticleScaleX.
     * @default
     */
     this.maxParticleScale = 1;
+
+    /**
+    * @property {array} scaleData - An array of the calculated scale easing data applied to particles with scaleRates > 0.
+    */
+    this.scaleData = null;
 
     /**
     * @property {number} minRotation - The minimum possible angular velocity of a particle.
@@ -47356,16 +50461,33 @@ Phaser.Particles.Arcade.Emitter = function (game, x, y, maxParticles) {
     this.maxRotation = 360;
 
     /**
+    * @property {number} minParticleAlpha - The minimum possible alpha value of a particle.
+    * @default
+    */
+    this.minParticleAlpha = 1;
+
+    /**
+    * @property {number} maxParticleAlpha - The maximum possible alpha value of a particle.
+    * @default
+    */
+    this.maxParticleAlpha = 1;
+
+    /**
+    * @property {array} alphaData - An array of the calculated alpha easing data applied to particles with alphaRates > 0.
+    */
+    this.alphaData = null;
+
+    /**
     * @property {number} gravity - Sets the `body.gravity.y` of each particle sprite to this value on launch.
     * @default
     */
     this.gravity = 100;
 
     /**
-    * @property {any} particleClass - For emitting your own particle class types. They must extend Phaser.Sprite.
+    * @property {any} particleClass - For emitting your own particle class types. They must extend Phaser.Particle.
     * @default
     */
-    this.particleClass = Phaser.Sprite;
+    this.particleClass = Phaser.Particle;
 
     /**
     * @property {Phaser.Point} particleDrag - The X and Y drag component of particles launched from the emitter.
@@ -47391,9 +50513,77 @@ Phaser.Particles.Arcade.Emitter = function (game, x, y, maxParticles) {
     this.lifespan = 2000;
 
     /**
-    * @property {Phaser.Point} bounce - How much each particle should bounce on each axis.  1 = full bounce, 0 = no bounce.
+    * @property {Phaser.Point} bounce - How much each particle should bounce on each axis. 1 = full bounce, 0 = no bounce.
     */
     this.bounce = new Phaser.Point();
+
+    /**
+    * @property {boolean} on - Determines whether the emitter is currently emitting particles. It is totally safe to directly toggle this.
+    * @default
+    */
+    this.on = false;
+
+    /**
+    * @property {Phaser.Point} particleAnchor - When a particle is created its anchor will be set to match this Point object (defaults to x/y: 0.5 to aid in rotation)
+    * @default
+    */
+    this.particleAnchor = new Phaser.Point(0.5, 0.5);
+
+    /**
+    * @property {number} blendMode - The blendMode as set on the particle when emitted from the Emitter. Defaults to NORMAL. Needs browser capable of supporting canvas blend-modes (most not available in WebGL)
+    * @default
+    */
+    this.blendMode = Phaser.blendModes.NORMAL;
+
+    /**
+    * The point the particles are emitted from.
+    * Emitter.x and Emitter.y control the containers location, which updates all current particles
+    * Emitter.emitX and Emitter.emitY control the emission location relative to the x/y position.
+    * @property {number} emitX
+    */
+    this.emitX = x;
+
+    /**
+    * The point the particles are emitted from.
+    * Emitter.x and Emitter.y control the containers location, which updates all current particles
+    * Emitter.emitX and Emitter.emitY control the emission location relative to the x/y position.
+    * @property {number} emitY
+    */
+    this.emitY = y;
+
+    /**
+    * @property {boolean} autoScale - When a new Particle is emitted this controls if it will automatically scale in size. Use Emitter.setScale to configure.
+    */
+    this.autoScale = false;
+
+    /**
+    * @property {boolean} autoAlpha - When a new Particle is emitted this controls if it will automatically change alpha. Use Emitter.setAlpha to configure.
+    */
+    this.autoAlpha = false;
+
+    /**
+    * @property {boolean} particleBringToTop - If this is `true` then when the Particle is emitted it will be bought to the top of the Emitters display list.
+    * @default
+    */
+    this.particleBringToTop = false;
+
+    /**
+    * @property {boolean} particleSendToBack - If this is `true` then when the Particle is emitted it will be sent to the back of the Emitters display list.
+    * @default
+    */
+    this.particleSendToBack = false;
+
+    /**
+    * @property {Phaser.Point} _minParticleScale - Internal particle scale var.
+    * @private
+    */
+    this._minParticleScale = new Phaser.Point(1, 1);
+
+    /**
+    * @property {Phaser.Point} _maxParticleScale - Internal particle scale var.
+    * @private
+    */
+    this._maxParticleScale = new Phaser.Point(1, 1);
 
     /**
     * @property {number} _quantity - Internal helper for deciding how many particles to launch.
@@ -47424,34 +50614,6 @@ Phaser.Particles.Arcade.Emitter = function (game, x, y, maxParticles) {
     * @private
     */
     this._frames = null;
-
-    /**
-    * @property {boolean} on - Determines whether the emitter is currently emitting particles. It is totally safe to directly toggle this.
-    * @default
-    */
-    this.on = false;
-
-    /**
-    * @property {boolean} exists - Determines whether the emitter is being updated by the core game loop.
-    * @default
-    */
-    this.exists = true;
-
-    /**
-    * The point the particles are emitted from.
-    * Emitter.x and Emitter.y control the containers location, which updates all current particles
-    * Emitter.emitX and Emitter.emitY control the emission location relative to the x/y position.
-    * @property {boolean} emitX
-    */
-    this.emitX = x;
-
-    /**
-    * The point the particles are emitted from.
-    * Emitter.x and Emitter.y control the containers location, which updates all current particles
-    * Emitter.emitX and Emitter.emitY control the emission location relative to the x/y position.
-    * @property {boolean} emitY
-    */
-    this.emitY = y;
 
 };
 
@@ -47500,16 +50662,27 @@ Phaser.Particles.Arcade.Emitter.prototype.update = function () {
         }
     }
 
+    var i = this.children.length;
+
+    while (i--)
+    {
+        if (this.children[i].exists)
+        {
+            this.children[i].update();
+        }
+    }
+
 };
 
 /**
-* This function generates a new array of particle sprites to attach to the emitter.
+* This function generates a new set of particles for use by this emitter.
+* The particles are stored internally waiting to be emitted via Emitter.start.
 *
 * @method Phaser.Particles.Arcade.Emitter#makeParticles
 * @param {array|string} keys - A string or an array of strings that the particle sprites will use as their texture. If an array one is picked at random.
-* @param {array|number} frames - A frame number, or array of frames that the sprite will use. If an array one is picked at random.
-* @param {number} quantity - The number of particles to generate.
-* @param {boolean} [collide=false] - Sets the checkCollision.none flag on the particle sprites body.
+* @param {array|number} [frames=0] - A frame number, or array of frames that the sprite will use. If an array one is picked at random.
+* @param {number} [quantity] - The number of particles to generate. If not given it will use the value of Emitter.maxParticles.
+* @param {boolean} [collide=false] - If you want the particles to be able to collide with other Arcade Physics bodies then set this to true.
 * @param {boolean} [collideWorldBounds=false] - A particle can be set to collide against the World bounds automatically and rebound back into the World if this is set to true. Otherwise it will leave the World.
 * @return {Phaser.Particles.Arcade.Emitter} This Emitter instance.
 */
@@ -47556,9 +50729,7 @@ Phaser.Particles.Arcade.Emitter.prototype.makeParticles = function (keys, frames
 
         particle.exists = false;
         particle.visible = false;
-
-        //  Center the origin for rotation assistance
-        particle.anchor.set(0.5);
+        particle.anchor.copyFrom(this.particleAnchor);
 
         this.add(particle);
 
@@ -47571,6 +50742,7 @@ Phaser.Particles.Arcade.Emitter.prototype.makeParticles = function (keys, frames
 
 /**
 * Call this function to turn off all the particles and the emitter.
+*
 * @method Phaser.Particles.Arcade.Emitter#kill
 */
 Phaser.Particles.Arcade.Emitter.prototype.kill = function () {
@@ -47583,6 +50755,7 @@ Phaser.Particles.Arcade.Emitter.prototype.kill = function () {
 
 /**
 * Handy for bringing game objects "back to life". Just sets alive and exists back to true.
+*
 * @method Phaser.Particles.Arcade.Emitter#revive
 */
 Phaser.Particles.Arcade.Emitter.prototype.revive = function () {
@@ -47595,16 +50768,16 @@ Phaser.Particles.Arcade.Emitter.prototype.revive = function () {
 /**
 * Call this function to start emitting particles.
 * @method Phaser.Particles.Arcade.Emitter#start
-* @param {boolean} [explode=true] - Whether the particles should all burst out at once.
-* @param {number} [lifespan=0] - How long each particle lives once emitted. 0 = forever.
-* @param {number} [frequency=250] - Ignored if Explode is set to true. Frequency is how often to emit a particle in ms.
+* @param {boolean} [explode=true] - Whether the particles should all burst out at once (true) or at the frequency given (false).
+* @param {number} [lifespan=0] - How long each particle lives once emitted in ms. 0 = forever.
+* @param {number} [frequency=250] - Ignored if Explode is set to true. Frequency is how often to emit 1 particle. Value given in ms.
 * @param {number} [quantity=0] - How many particles to launch. 0 = "all of the particles".
 */
 Phaser.Particles.Arcade.Emitter.prototype.start = function (explode, lifespan, frequency, quantity) {
 
     if (typeof explode === 'undefined') { explode = true; }
     if (typeof lifespan === 'undefined') { lifespan = 0; }
-    if (typeof frequency === 'undefined') { frequency = 250; }
+    if (typeof frequency === 'undefined' || frequency === null) { frequency = 250; }
     if (typeof quantity === 'undefined') { quantity = 0; }
 
     this.revive();
@@ -47631,24 +50804,17 @@ Phaser.Particles.Arcade.Emitter.prototype.start = function (explode, lifespan, f
 };
 
 /**
-* This function can be used both internally and externally to emit the next particle.
+* This function can be used both internally and externally to emit the next particle in the queue.
+*
 * @method Phaser.Particles.Arcade.Emitter#emitParticle
 */
 Phaser.Particles.Arcade.Emitter.prototype.emitParticle = function () {
 
     var particle = this.getFirstExists(false);
 
-    if (particle == null)
+    if (particle === null)
     {
         return;
-    }
-
-    particle.angle = 0;
-    particle.bringToTop();
-
-    if (this.minParticleScale !== 1 || this.maxParticleScale !== 1)
-    {
-        particle.scale.set(this.game.rnd.realInRange(this.minParticleScale, this.maxParticleScale));
     }
 
     if (this.width > 1 || this.height > 1)
@@ -47660,38 +50826,32 @@ Phaser.Particles.Arcade.Emitter.prototype.emitParticle = function () {
         particle.reset(this.emitX, this.emitY);
     }
 
+    particle.angle = 0;
     particle.lifespan = this.lifespan;
 
-    particle.body.bounce.setTo(this.bounce.x, this.bounce.y);
-
-    if (this.minParticleSpeed.x !== this.maxParticleSpeed.x)
+    if (this.particleBringToTop)
     {
-        particle.body.velocity.x = this.game.rnd.integerInRange(this.minParticleSpeed.x, this.maxParticleSpeed.x);
+        this.bringToTop(particle);
     }
-    else
+    else if (this.particleSendToBack)
     {
-        particle.body.velocity.x = this.minParticleSpeed.x;
+        this.sendToBack(particle);
     }
 
-    if (this.minParticleSpeed.y !== this.maxParticleSpeed.y)
+    if (this.autoScale)
     {
-        particle.body.velocity.y = this.game.rnd.integerInRange(this.minParticleSpeed.y, this.maxParticleSpeed.y);
+        particle.setScaleData(this.scaleData);
     }
-    else
+    else if (this.minParticleScale !== 1 || this.maxParticleScale !== 1)
     {
-        particle.body.velocity.y = this.minParticleSpeed.y;
+        particle.scale.set(this.game.rnd.realInRange(this.minParticleScale, this.maxParticleScale));
     }
-
-    if (this.minRotation !== this.maxRotation)
+    else if ((this._minParticleScale.x !== this._maxParticleScale.x) || (this._minParticleScale.y !== this._maxParticleScale.y))
     {
-        particle.body.angularVelocity = this.game.rnd.integerInRange(this.minRotation, this.maxRotation);
-    }
-    else if (this.minRotation !== 0)
-    {
-        particle.body.angularVelocity = this.minRotation;
+        particle.scale.set(this.game.rnd.realInRange(this._minParticleScale.x, this._maxParticleScale.x), this.game.rnd.realInRange(this._minParticleScale.y, this._maxParticleScale.y));
     }
 
-    if (typeof this._frames === 'object')
+    if (Array.isArray(this._frames === 'object'))
     {
         particle.frame = this.game.rnd.pick(this._frames);
     }
@@ -47700,10 +50860,33 @@ Phaser.Particles.Arcade.Emitter.prototype.emitParticle = function () {
         particle.frame = this._frames;
     }
 
+    if (this.autoAlpha)
+    {
+        particle.setAlphaData(this.alphaData);
+    }
+    else
+    {
+        particle.alpha = this.game.rnd.realInRange(this.minParticleAlpha, this.maxParticleAlpha);
+    }
+
+    particle.blendMode = this.blendMode;
+
+    particle.body.updateBounds();
+
+    particle.body.bounce.setTo(this.bounce.x, this.bounce.y);
+
+    particle.body.velocity.x = this.game.rnd.integerInRange(this.minParticleSpeed.x, this.maxParticleSpeed.x);
+    particle.body.velocity.y = this.game.rnd.integerInRange(this.minParticleSpeed.y, this.maxParticleSpeed.y);
+    particle.body.angularVelocity = this.game.rnd.integerInRange(this.minRotation, this.maxRotation);
+
     particle.body.gravity.y = this.gravity;
+
     particle.body.drag.x = this.particleDrag.x;
     particle.body.drag.y = this.particleDrag.y;
+
     particle.body.angularDrag = this.angularDrag;
+
+    particle.onEmit();
 
 };
 
@@ -47753,7 +50936,8 @@ Phaser.Particles.Arcade.Emitter.prototype.setYSpeed = function (min, max) {
 };
 
 /**
-* A more compact way of setting the angular velocity constraints of the emitter.
+* A more compact way of setting the angular velocity constraints of the particles.
+*
 * @method Phaser.Particles.Arcade.Emitter#setRotation
 * @param {number} [min=0] - The minimum value for this range.
 * @param {number} [max=0] - The maximum value for this range.
@@ -47769,9 +50953,98 @@ Phaser.Particles.Arcade.Emitter.prototype.setRotation = function (min, max) {
 };
 
 /**
+* A more compact way of setting the alpha constraints of the particles.
+* The rate parameter, if set to a value above zero, lets you set the speed at which the Particle change in alpha from min to max.
+* If rate is zero, which is the default, the particle won't change alpha - instead it will pick a random alpha between min and max on emit.
+*
+* @method Phaser.Particles.Arcade.Emitter#setAlpha
+* @param {number} [min=1] - The minimum value for this range.
+* @param {number} [max=1] - The maximum value for this range.
+* @param {number} [rate=0] - The rate (in ms) at which the particles will change in alpha from min to max, or set to zero to pick a random alpha between the two.
+* @param {number} [ease=Phaser.Easing.Linear.None] - If you've set a rate > 0 this is the easing formula applied between the min and max values.
+* @param {boolean} [yoyo=false] - If you've set a rate > 0 you can set if the ease will yoyo or not (i.e. ease back to its original values)
+*/
+Phaser.Particles.Arcade.Emitter.prototype.setAlpha = function (min, max, rate, ease, yoyo) {
+
+    if (typeof min === 'undefined') { min = 1; }
+    if (typeof max === 'undefined') { max = 1; }
+    if (typeof rate === 'undefined') { rate = 0; }
+    if (typeof ease === 'undefined') { ease = Phaser.Easing.Linear.None; }
+    if (typeof yoyo === 'undefined') { yoyo = false; }
+
+    this.minParticleAlpha = min;
+    this.maxParticleAlpha = max;
+    this.autoAlpha = false;
+
+    if (rate > 0 && min !== max)
+    {
+        var tweenData = { v: min };
+        var tween = this.game.make.tween(tweenData).to( { v: max }, rate, ease);
+        tween.yoyo(yoyo);
+
+        this.alphaData = tween.generateData(60);
+
+        //  Inverse it so we don't have to do array length look-ups in Particle update loops
+        this.alphaData.reverse();
+        this.autoAlpha = true;
+    }
+
+};
+
+/**
+* A more compact way of setting the scale constraints of the particles.
+* The rate parameter, if set to a value above zero, lets you set the speed and ease which the Particle uses to change in scale from min to max across both axis.
+* If rate is zero, which is the default, the particle won't change scale during update, instead it will pick a random scale between min and max on emit.
+*
+* @method Phaser.Particles.Arcade.Emitter#setScale
+* @param {number} [minX=1] - The minimum value of Particle.scale.x.
+* @param {number} [maxX=1] - The maximum value of Particle.scale.x.
+* @param {number} [minY=1] - The minimum value of Particle.scale.y.
+* @param {number} [maxY=1] - The maximum value of Particle.scale.y.
+* @param {number} [rate=0] - The rate (in ms) at which the particles will change in scale from min to max, or set to zero to pick a random size between the two.
+* @param {number} [ease=Phaser.Easing.Linear.None] - If you've set a rate > 0 this is the easing formula applied between the min and max values.
+* @param {boolean} [yoyo=false] - If you've set a rate > 0 you can set if the ease will yoyo or not (i.e. ease back to its original values)
+*/
+Phaser.Particles.Arcade.Emitter.prototype.setScale = function (minX, maxX, minY, maxY, rate, ease, yoyo) {
+
+    if (typeof minX === 'undefined') { minX = 1; }
+    if (typeof maxX === 'undefined') { maxX = 1; }
+    if (typeof minY === 'undefined') { minY = 1; }
+    if (typeof maxY === 'undefined') { maxY = 1; }
+    if (typeof rate === 'undefined') { rate = 0; }
+    if (typeof ease === 'undefined') { ease = Phaser.Easing.Linear.None; }
+    if (typeof yoyo === 'undefined') { yoyo = false; }
+
+    //  Reset these
+    this.minParticleScale = 1;
+    this.maxParticleScale = 1;
+
+    this._minParticleScale.set(minX, minY);
+    this._maxParticleScale.set(maxX, maxY);
+
+    this.autoScale = false;
+
+    if (rate > 0 && (minX !== maxX) || (minY !== maxY))
+    {
+        var tweenData = { x: minX, y: minY };
+        var tween = this.game.make.tween(tweenData).to( { x: maxX, y: maxY }, rate, ease);
+        tween.yoyo(yoyo);
+
+        this.scaleData = tween.generateData(60);
+
+        //  Inverse it so we don't have to do array length look-ups in Particle update loops
+        this.scaleData.reverse();
+        this.autoScale = true;
+    }
+
+};
+
+/**
 * Change the emitters center to match the center of any object with a `center` property, such as a Sprite.
+* If the object doesn't have a center property it will be set to object.x + object.width / 2
+*
 * @method Phaser.Particles.Arcade.Emitter#at
-* @param {object|Phaser.Sprite} object - The object that you wish to match the center with.
+* @param {object|Phaser.Sprite|Phaser.Image|Phaser.TileSprite|Phaser.Text|PIXI.DisplayObject} object - The object that you wish to match the center with.
 */
 Phaser.Particles.Arcade.Emitter.prototype.at = function (object) {
 
@@ -47779,6 +51052,11 @@ Phaser.Particles.Arcade.Emitter.prototype.at = function (object) {
     {
         this.emitX = object.center.x;
         this.emitY = object.center.y;
+    }
+    else
+    {
+        this.emitX = object.world.x + (object.anchor.x * object.width);
+        this.emitY = object.world.y + (object.anchor.y * object.height);
     }
 
 };
@@ -47894,7 +51172,7 @@ Phaser.Tile = function (layer, index, x, y, width, height) {
     this.layer = layer;
 
     /**
-    * @property {number} index - The index of this tile within the map data corresponding to the tileset.
+    * @property {number} index - The index of this tile within the map data corresponding to the tileset, or -1 if this represents a blank/null tile.
     */
     this.index = index;
 
@@ -48184,8 +51462,8 @@ Phaser.Tile.prototype = {
 Phaser.Tile.prototype.constructor = Phaser.Tile;
 
 /**
-* @name Phaser.Tile#canCollide
-* @property {boolean} canCollide - True if this tile can collide or has a collision callback.
+* @name Phaser.Tile#collides
+* @property {boolean} collides - True if this tile can collide on any of its faces.
 * @readonly
 */
 Object.defineProperty(Phaser.Tile.prototype, "collides", {
@@ -48198,7 +51476,7 @@ Object.defineProperty(Phaser.Tile.prototype, "collides", {
 
 /**
 * @name Phaser.Tile#canCollide
-* @property {boolean} canCollide - True if this tile can collide or has a collision callback.
+* @property {boolean} canCollide - True if this tile can collide on any of its faces or has a collision callback set.
 * @readonly
 */
 Object.defineProperty(Phaser.Tile.prototype, "canCollide", {
@@ -48328,6 +51606,11 @@ Phaser.Tilemap = function (game, key, tileWidth, tileHeight, width, height) {
     * @property {string} orientation - The orientation of the map data (as specified in Tiled), usually 'orthogonal'.
     */
     this.orientation = data.orientation;
+
+    /**
+    * @property {number} format - The format of the map data, either Phaser.Tilemap.CSV or Phaser.Tilemap.TILED_JSON.
+    */
+    this.format = data.format;
 
     /**
     * @property {number} version - The version of the map data (as specified in Tiled, usually 1).
@@ -48509,6 +51792,12 @@ Phaser.Tilemap.prototype = {
             if (typeof tileset === 'string')
             {
                 key = tileset;
+
+                if (!this.game.cache.checkImageKey(key))
+                {
+                    console.warn('Phaser.Tilemap.addTilesetImage: Invalid image key given: "' + key + '"');
+                    return null;
+                }
             }
             else
             {
@@ -48519,6 +51808,12 @@ Phaser.Tilemap.prototype = {
         if (typeof tileset === 'string')
         {
             tileset = this.getTilesetIndex(tileset);
+
+            if (tileset === null && this.format === Phaser.Tilemap.TILED_JSON)
+            {
+                console.warn('Phaser.Tilemap.addTilesetImage: No data found in the JSON matching the tileset name: "' + key + '"');
+                return null;
+            }
         }
 
         if (this.tilesets[tileset])
@@ -48700,21 +51995,6 @@ Phaser.Tilemap.prototype = {
             return;
         }
 
-        var row;
-        var output = [];
-
-        for (var y = 0; y < height; y++)
-        {
-            row = [];
-
-            for (var x = 0; x < width; x++)
-            {
-                row.push(null);
-            }
-
-            output.push(row);
-        }
-
         var layer = {
 
             name: name,
@@ -48730,9 +52010,27 @@ Phaser.Tilemap.prototype = {
             indexes: [],
             callbacks: [],
             bodies: [],
-            data: output
+            data: null
 
         };
+
+        var row;
+        var output = [];
+
+        for (var y = 0; y < height; y++)
+        {
+            row = [];
+
+            for (var x = 0; x < width; x++)
+            {
+                // row.push(null);
+                row.push(new Phaser.Tile(layer, -1, x, y, tileWidth, tileHeight));
+            }
+
+            output.push(row);
+        }
+
+        layer.data = output;
 
         this.layers.push(layer);
 
@@ -49259,21 +52557,82 @@ Phaser.Tilemap.prototype = {
     */
     hasTile: function (x, y, layer) {
 
+        layer = this.getLayer(layer);
+
         return (this.layers[layer].data[y] !== null && this.layers[layer].data[y][x] !== null);
 
     },
 
     /**
+    * Removes the tile located at the given coordinates and updates the collision data.
+    *
+    * @method Phaser.Tilemap#removeTile
+    * @param {number} x - X position to place the tile (given in tile units, not pixels)
+    * @param {number} y - Y position to place the tile (given in tile units, not pixels)
+    * @param {number|string|Phaser.TilemapLayer} [layer] - The layer to modify.
+    * @return {Phaser.Tile} The Tile object that was removed from this map.
+    */
+    removeTile: function (x, y, layer) {
+
+        layer = this.getLayer(layer);
+
+        if (x >= 0 && x < this.layers[layer].width && y >= 0 && y < this.layers[layer].height)
+        {
+            if (this.hasTile(x, y, layer))
+            {
+                var tile = this.layers[layer].data[y][x];
+
+                this.layers[layer].data[y][x] = null;
+
+                this.layers[layer].dirty = true;
+
+                this.calculateFaces(layer);
+
+                return tile;
+            }
+        }
+
+    },
+
+    /**
+    * Removes the tile located at the given coordinates and updates the collision data. The coordinates are given in pixel values.
+    *
+    * @method Phaser.Tilemap#removeTileWorldXY
+    * @param {number} x - X position to insert the tile (given in pixels)
+    * @param {number} y - Y position to insert the tile (given in pixels)
+    * @param {number} tileWidth - The width of the tile in pixels.
+    * @param {number} tileHeight - The height of the tile in pixels.
+    * @param {number|string|Phaser.TilemapLayer} [layer] - The layer to modify.
+    * @return {Phaser.Tile} The Tile object that was removed from this map.
+    */
+    removeTileWorldXY: function (x, y, tileWidth, tileHeight, layer) {
+
+        layer = this.getLayer(layer);
+
+        x = this.game.math.snapToFloor(x, tileWidth) / tileWidth;
+        y = this.game.math.snapToFloor(y, tileHeight) / tileHeight;
+
+        return this.removeTile(x, y, layer);
+
+    },
+
+    /**
     * Puts a tile of the given index value at the coordinate specified.
+    * If you pass `null` as the tile it will pass your call over to Tilemap.removeTile instead.
     *
     * @method Phaser.Tilemap#putTile
-    * @param {Phaser.Tile|number} tile - The index of this tile to set or a Phaser.Tile object.
+    * @param {Phaser.Tile|number|null} tile - The index of this tile to set or a Phaser.Tile object. If null the tile is removed from the map.
     * @param {number} x - X position to place the tile (given in tile units, not pixels)
     * @param {number} y - Y position to place the tile (given in tile units, not pixels)
     * @param {number|string|Phaser.TilemapLayer} [layer] - The layer to modify.
     * @return {Phaser.Tile} The Tile object that was created or added to this map.
     */
     putTile: function (tile, x, y, layer) {
+
+        if (tile === null)
+        {
+            return this.removeTile(x, y, layer);
+        }
 
         layer = this.getLayer(layer);
 
@@ -49338,6 +52697,7 @@ Phaser.Tilemap.prototype = {
     * @param {number} tileWidth - The width of the tile in pixels.
     * @param {number} tileHeight - The height of the tile in pixels.
     * @param {number|string|Phaser.TilemapLayer} [layer] - The layer to modify.
+    * @return {Phaser.Tile} The Tile object that was created or added to this map.
     */
     putTileWorldXY: function (tile, x, y, tileWidth, tileHeight, layer) {
 
@@ -49346,7 +52706,7 @@ Phaser.Tilemap.prototype = {
         x = this.game.math.snapToFloor(x, tileWidth) / tileWidth;
         y = this.game.math.snapToFloor(y, tileHeight) / tileHeight;
 
-        this.putTile(tile, x, y, layer);
+        return this.putTile(tile, x, y, layer);
 
     },
 
@@ -49365,7 +52725,14 @@ Phaser.Tilemap.prototype = {
 
         if (x >= 0 && x < this.layers[layer].width && y >= 0 && y < this.layers[layer].height)
         {
-            return this.layers[layer].data[y][x];
+            if (this.layers[layer].data[y][x].index === -1)
+            {
+                return null;
+            }
+            else
+            {
+                return this.layers[layer].data[y][x];
+            }
         }
 
     },
@@ -49781,7 +53148,8 @@ Phaser.Tilemap.prototype = {
     },
 
     /**
-    * Removes all layers from this tile map and nulls the game reference.
+    * Removes all layer data from this tile map and nulls the game reference.
+    * Note: You are responsible for destroying any TilemapLayer objects you generated yourself, as Tilemap doesn't keep a reference to them.
     *
     * @method Phaser.Tilemap#destroy
     */
@@ -50360,19 +53728,22 @@ Phaser.TilemapLayer.prototype.render = function () {
             {
                 tile = this._column[x];
 
-                set = this.map.tilesets[this.map.tiles[tile.index][2]];
-
-                if (this.debug === false && tile.alpha !== this.context.globalAlpha)
+                if (tile.index > -1)
                 {
-                    this.context.globalAlpha = tile.alpha;
-                }
+                    set = this.map.tilesets[this.map.tiles[tile.index][2]];
 
-                set.draw(this.context, Math.floor(this._mc.tx), Math.floor(this._mc.ty), tile.index);
+                    if (this.debug === false && tile.alpha !== this.context.globalAlpha)
+                    {
+                        this.context.globalAlpha = tile.alpha;
+                    }
 
-                if (tile.debug)
-                {
-                    this.context.fillStyle = 'rgba(0, 255, 0, 0.4)';
-                    this.context.fillRect(Math.floor(this._mc.tx), Math.floor(this._mc.ty), this.map.tileWidth, this.map.tileHeight);
+                    set.draw(this.context, Math.floor(this._mc.tx), Math.floor(this._mc.ty), tile.index);
+
+                    if (tile.debug)
+                    {
+                        this.context.fillStyle = 'rgba(0, 255, 0, 0.4)';
+                        this.context.fillRect(Math.floor(this._mc.tx), Math.floor(this._mc.ty), this.map.tileWidth, this.map.tileHeight);
+                    }
                 }
             }
 
@@ -50685,7 +54056,7 @@ Phaser.TilemapParser = {
 
             for (var x = 0; x < column.length; x++)
             {
-                output[y][x] = new Phaser.Tile(0, parseInt(column[x], 10), x, y, tileWidth, tileHeight);
+                output[y][x] = new Phaser.Tile(map.layers[0], parseInt(column[x], 10), x, y, tileWidth, tileHeight);
             }
 
             if (width === 0)
@@ -50694,6 +54065,7 @@ Phaser.TilemapParser = {
             }
         }
 
+        map.format = Phaser.Tilemap.CSV;
         map.name = key;
         map.width = width;
         map.height = height;
@@ -50714,6 +54086,7 @@ Phaser.TilemapParser = {
 
     /**
     * Returns an empty map data object.
+    *
     * @method Phaser.TilemapParser.getEmptyData
     * @return {object} Generated map data.
     */
@@ -50794,6 +54167,7 @@ Phaser.TilemapParser = {
         map.tileWidth = json.tilewidth;
         map.tileHeight = json.tileheight;
         map.orientation = json.orientation;
+        map.format = Phaser.Tilemap.TILED_JSON;
         map.version = json.version;
         map.properties = json.properties;
         map.widthInPixels = map.width * map.tileWidth;
@@ -50838,7 +54212,7 @@ Phaser.TilemapParser = {
 
             //  Loop through the data field in the JSON.
 
-            //  This is an array containing the tile indexes, one after the other. null = no tile, everything else = the tile index (starting at 1 for Tiled, 0 for CSV)
+            //  This is an array containing the tile indexes, one after the other. -1 = no tile, everything else = the tile index (starting at 1 for Tiled, 0 for CSV)
             //  If the map contains multiple tilesets then the indexes are relative to that which the set starts from.
             //  Need to set which tileset in the cache = which tileset in the JSON, if you do this manually it means you can use the same map data but a new tileset.
 
@@ -50851,7 +54225,7 @@ Phaser.TilemapParser = {
                 }
                 else
                 {
-                    row.push(null);
+                    row.push(new Phaser.Tile(layer, -1, x, output.length, json.tilewidth, json.tileheight));
                 }
 
                 x++;
@@ -51247,6 +54621,10 @@ Phaser.Tileset.prototype.constructor = Phaser.Tileset;
         root.Phaser = Phaser;
     }
 }).call(this);
+
+/*
+* "Don't follow strange women who lure you into woods with beautiful poetry." - @djfood
+*/
 
 /**
 * @author       Richard Davey <rich@photonstorm.com>
@@ -56813,19 +60191,19 @@ Phaser.Physics.Ninja.Circle.prototype = {
 
 /**
  * The MIT License (MIT)
- *
+ * 
  * Copyright (c) 2013 p2.js authors
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -56835,7 +60213,7 @@ Phaser.Physics.Ninja.Circle.prototype = {
  * THE SOFTWARE.
  */
 !function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define('p2', (function() { return this.p2 = e(); })()):"undefined"!=typeof window?window.p2=e():"undefined"!=typeof global?self.p2=e():"undefined"!=typeof self&&(self.p2=e())}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/* Copyright (c) 2012, Brandon Jones, Colin MacKenzie IV. All rights reserved.
+/* Copyright (c) 2013, Brandon Jones, Colin MacKenzie IV. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -56843,12 +60221,12 @@ are permitted provided that the following conditions are met:
   * Redistributions of source code must retain the above copyright notice, this
     list of conditions and the following disclaimer.
   * Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
+    this list of conditions and the following disclaimer in the documentation 
     and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
 DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
 ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
@@ -56857,228 +60235,33 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/**
- * @class 2x2 Matrix
- * @name mat2
- */
-var mat2 = {};
-
-var mat2Identity = new Float32Array([
-    1, 0,
-    0, 1
-]);
-
 if(!GLMAT_EPSILON) {
     var GLMAT_EPSILON = 0.000001;
 }
 
-/**
- * Creates a new identity mat2
- *
- * @returns {mat2} a new 2x2 matrix
- */
-mat2.create = function() {
-    return new Float32Array(mat2Identity);
-};
-
-/**
- * Creates a new mat2 initialized with values from an existing matrix
- *
- * @param {mat2} a matrix to clone
- * @returns {mat2} a new 2x2 matrix
- */
-mat2.clone = function(a) {
-    var out = new Float32Array(4);
-    out[0] = a[0];
-    out[1] = a[1];
-    out[2] = a[2];
-    out[3] = a[3];
-    return out;
-};
-
-/**
- * Copy the values from one mat2 to another
- *
- * @param {mat2} out the receiving matrix
- * @param {mat2} a the source matrix
- * @returns {mat2} out
- */
-mat2.copy = function(out, a) {
-    out[0] = a[0];
-    out[1] = a[1];
-    out[2] = a[2];
-    out[3] = a[3];
-    return out;
-};
-
-/**
- * Set a mat2 to the identity matrix
- *
- * @param {mat2} out the receiving matrix
- * @returns {mat2} out
- */
-mat2.identity = function(out) {
-    out[0] = 1;
-    out[1] = 0;
-    out[2] = 0;
-    out[3] = 1;
-    return out;
-};
-
-/**
- * Transpose the values of a mat2
- *
- * @param {mat2} out the receiving matrix
- * @param {mat2} a the source matrix
- * @returns {mat2} out
- */
-mat2.transpose = function(out, a) {
-    // If we are transposing ourselves we can skip a few steps but have to cache some values
-    if (out === a) {
-        var a1 = a[1];
-        out[1] = a[2];
-        out[2] = a1;
-    } else {
-        out[0] = a[0];
-        out[1] = a[2];
-        out[2] = a[1];
-        out[3] = a[3];
-    }
-
-    return out;
-};
-
-/**
- * Inverts a mat2
- *
- * @param {mat2} out the receiving matrix
- * @param {mat2} a the source matrix
- * @returns {mat2} out
- */
-mat2.invert = function(out, a) {
-    var a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3],
-
-        // Calculate the determinant
-        det = a0 * a3 - a2 * a1;
-
-    if (!det) {
-        return null;
-    }
-    det = 1.0 / det;
-
-    out[0] =  a3 * det;
-    out[1] = -a1 * det;
-    out[2] = -a2 * det;
-    out[3] =  a0 * det;
-
-    return out;
-};
-
-/**
- * Caclulates the adjugate of a mat2
- *
- * @param {mat2} out the receiving matrix
- * @param {mat2} a the source matrix
- * @returns {mat2} out
- */
-mat2.adjoint = function(out, a) {
-    // Caching this value is nessecary if out == a
-    var a0 = a[0];
-    out[0] =  a[3];
-    out[1] = -a[1];
-    out[2] = -a[2];
-    out[3] =  a0;
-
-    return out;
-};
-
-/**
- * Calculates the determinant of a mat2
- *
- * @param {mat2} a the source matrix
- * @returns {Number} determinant of a
- */
-mat2.determinant = function (a) {
-    return a[0] * a[3] - a[2] * a[1];
-};
-
-/**
- * Multiplies two mat2's
- *
- * @param {mat2} out the receiving matrix
- * @param {mat2} a the first operand
- * @param {mat2} b the second operand
- * @returns {mat2} out
- */
-mat2.multiply = function (out, a, b) {
-    var a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3];
-    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
-    out[0] = a0 * b0 + a1 * b2;
-    out[1] = a0 * b1 + a1 * b3;
-    out[2] = a2 * b0 + a3 * b2;
-    out[3] = a2 * b1 + a3 * b3;
-    return out;
-};
-
-/**
- * Alias for {@link mat2.multiply}
- * @function
- */
-mat2.mul = mat2.multiply;
-
-/**
- * Rotates a mat2 by the given angle
- *
- * @param {mat2} out the receiving matrix
- * @param {mat2} a the matrix to rotate
- * @param {mat2} rad the angle to rotate the matrix by
- * @returns {mat2} out
- */
-mat2.rotate = function (out, a, rad) {
-    var a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3],
-        s = Math.sin(rad),
-        c = Math.cos(rad);
-    out[0] = a0 *  c + a1 * s;
-    out[1] = a0 * -s + a1 * c;
-    out[2] = a2 *  c + a3 * s;
-    out[3] = a2 * -s + a3 * c;
-    return out;
-};
-
-/**
- * Scales the mat2 by the dimensions in the given vec2
- *
- * @param {mat2} out the receiving matrix
- * @param {mat2} a the matrix to rotate
- * @param {mat2} v the vec2 to scale the matrix by
- * @returns {mat2} out
- **/
-mat2.scale = function(out, a, v) {
-    var a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3],
-        v0 = v[0], v1 = v[1];
-    out[0] = a0 * v0;
-    out[1] = a1 * v1;
-    out[2] = a2 * v0;
-    out[3] = a3 * v1;
-    return out;
-};
-
-/**
- * Returns a string representation of a mat2
- *
- * @param {mat2} mat matrix to represent as a string
- * @returns {String} string representation of the matrix
- */
-mat2.str = function (a) {
-    return 'mat2(' + a[0] + ', ' + a[1] + ', ' + a[2] + ', ' + a[3] + ')';
-};
-
-if(typeof(exports) !== 'undefined') {
-    exports.mat2 = mat2;
+if(!GLMAT_ARRAY_TYPE) {
+    var GLMAT_ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array;
 }
 
-},{}],2:[function(require,module,exports){
-/* Copyright (c) 2012, Brandon Jones, Colin MacKenzie IV. All rights reserved.
+/**
+ * @class Common utilities
+ * @name glMatrix
+ */
+var glMatrix = {};
+
+/**
+ * Sets the type of array used when creating new vectors and matricies
+ *
+ * @param {Type} type Array type, such as Float32Array or Array
+ */
+glMatrix.setMatrixArrayType = function(type) {
+    GLMAT_ARRAY_TYPE = type;
+}
+
+if(typeof(exports) !== 'undefined') {
+    exports.glMatrix = glMatrix;
+}
+/* Copyright (c) 2013, Brandon Jones, Colin MacKenzie IV. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -57086,12 +60269,12 @@ are permitted provided that the following conditions are met:
   * Redistributions of source code must retain the above copyright notice, this
     list of conditions and the following disclaimer.
   * Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
+    this list of conditions and the following disclaimer in the documentation 
     and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
 DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
 ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
@@ -57106,17 +60289,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
  */
 var vec2 = {};
 
-if(!GLMAT_EPSILON) {
-    var GLMAT_EPSILON = 0.000001;
-}
-
 /**
  * Creates a new, empty vec2
  *
  * @returns {vec2} a new 2D vector
  */
 vec2.create = function() {
-    return new Float32Array(2);
+    var out = new GLMAT_ARRAY_TYPE(2);
+    out[0] = 0;
+    out[1] = 0;
+    return out;
 };
 
 /**
@@ -57126,7 +60308,7 @@ vec2.create = function() {
  * @returns {vec2} a new 2D vector
  */
 vec2.clone = function(a) {
-    var out = new Float32Array(2);
+    var out = new GLMAT_ARRAY_TYPE(2);
     out[0] = a[0];
     out[1] = a[1];
     return out;
@@ -57140,7 +60322,7 @@ vec2.clone = function(a) {
  * @returns {vec2} a new 2D vector
  */
 vec2.fromValues = function(x, y) {
-    var out = new Float32Array(2);
+    var out = new GLMAT_ARRAY_TYPE(2);
     out[0] = x;
     out[1] = y;
     return out;
@@ -57280,7 +60462,7 @@ vec2.max = function(out, a, b) {
  *
  * @param {vec2} out the receiving vector
  * @param {vec2} a the vector to scale
- * @param {vec2} b amount to scale the vector by
+ * @param {Number} b amount to scale the vector by
  * @returns {vec2} out
  */
 vec2.scale = function(out, a, b) {
@@ -57328,7 +60510,7 @@ vec2.squaredDistance = function(a, b) {
 vec2.sqrDist = vec2.squaredDistance;
 
 /**
- * Caclulates the length of a vec2
+ * Calculates the length of a vec2
  *
  * @param {vec2} a vector to calculate length of
  * @returns {Number} length of a
@@ -57346,7 +60528,7 @@ vec2.length = function (a) {
 vec2.len = vec2.length;
 
 /**
- * Caclulates the squared length of a vec2
+ * Calculates the squared length of a vec2
  *
  * @param {vec2} a vector to calculate squared length of
  * @returns {Number} squared length of a
@@ -57397,7 +60579,7 @@ vec2.normalize = function(out, a) {
 };
 
 /**
- * Caclulates the dot product of two vec2's
+ * Calculates the dot product of two vec2's
  *
  * @param {vec2} a the first operand
  * @param {vec2} b the second operand
@@ -57426,7 +60608,7 @@ vec2.cross = function(out, a, b) {
 /**
  * Performs a linear interpolation between two vec2's
  *
- * @param {vec3} out the receiving vector
+ * @param {vec2} out the receiving vector
  * @param {vec2} a the first operand
  * @param {vec2} b the second operand
  * @param {Number} t interpolation amount between the two inputs
@@ -57451,8 +60633,59 @@ vec2.lerp = function (out, a, b, t) {
 vec2.transformMat2 = function(out, a, m) {
     var x = a[0],
         y = a[1];
-    out[0] = x * m[0] + y * m[1];
-    out[1] = x * m[2] + y * m[3];
+    out[0] = m[0] * x + m[2] * y;
+    out[1] = m[1] * x + m[3] * y;
+    return out;
+};
+
+/**
+ * Transforms the vec2 with a mat2d
+ *
+ * @param {vec2} out the receiving vector
+ * @param {vec2} a the vector to transform
+ * @param {mat2d} m matrix to transform with
+ * @returns {vec2} out
+ */
+vec2.transformMat2d = function(out, a, m) {
+    var x = a[0],
+        y = a[1];
+    out[0] = m[0] * x + m[2] * y + m[4];
+    out[1] = m[1] * x + m[3] * y + m[5];
+    return out;
+};
+
+/**
+ * Transforms the vec2 with a mat3
+ * 3rd vector component is implicitly '1'
+ *
+ * @param {vec2} out the receiving vector
+ * @param {vec2} a the vector to transform
+ * @param {mat3} m matrix to transform with
+ * @returns {vec2} out
+ */
+vec2.transformMat3 = function(out, a, m) {
+    var x = a[0],
+        y = a[1];
+    out[0] = m[0] * x + m[3] * y + m[6];
+    out[1] = m[1] * x + m[4] * y + m[7];
+    return out;
+};
+
+/**
+ * Transforms the vec2 with a mat4
+ * 3rd vector component is implicitly '0'
+ * 4th vector component is implicitly '1'
+ *
+ * @param {vec2} out the receiving vector
+ * @param {vec2} a the vector to transform
+ * @param {mat4} m matrix to transform with
+ * @returns {vec2} out
+ */
+vec2.transformMat4 = function(out, a, m) {
+    var x = a[0], 
+        y = a[1];
+    out[0] = m[0] * x + m[4] * y + m[12];
+    out[1] = m[1] * x + m[5] * y + m[13];
     return out;
 };
 
@@ -57469,7 +60702,7 @@ vec2.transformMat2 = function(out, a, m) {
  * @function
  */
 vec2.forEach = (function() {
-    var vec = new Float32Array(2);
+    var vec = vec2.create();
 
     return function(a, stride, offset, count, fn, arg) {
         var i, l;
@@ -57480,7 +60713,7 @@ vec2.forEach = (function() {
         if(!offset) {
             offset = 0;
         }
-
+        
         if(count) {
             l = Math.min((count * stride) + offset, a.length);
         } else {
@@ -57492,7 +60725,7 @@ vec2.forEach = (function() {
             fn(vec, vec, arg);
             a[i] = vec[0]; a[i+1] = vec[1];
         }
-
+        
         return a;
     };
 })();
@@ -57511,7 +60744,7 @@ if(typeof(exports) !== 'undefined') {
     exports.vec2 = vec2;
 }
 
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 var Scalar = require('./Scalar');
 
 module.exports = Line;
@@ -57575,7 +60808,7 @@ Line.segmentsIntersect = function(p1, p2, q1, q2){
 };
 
 
-},{"./Scalar":6}],4:[function(require,module,exports){
+},{"./Scalar":5}],3:[function(require,module,exports){
 module.exports = Point;
 
 /**
@@ -57651,7 +60884,7 @@ Point.sqdist = function(a,b){
     return dx * dx + dy * dy;
 };
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var Line = require("./Line")
 ,   Point = require("./Point")
 ,   Scalar = require("./Scalar")
@@ -58147,7 +61380,7 @@ Polygon.prototype.removeCollinearPoints = function(precision){
     return num;
 };
 
-},{"./Line":3,"./Point":4,"./Scalar":6}],6:[function(require,module,exports){
+},{"./Line":2,"./Point":3,"./Scalar":5}],5:[function(require,module,exports){
 module.exports = Scalar;
 
 /**
@@ -58170,63 +61403,59 @@ Scalar.eq = function(a,b,precision){
     return Math.abs(a-b) < precision;
 };
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 module.exports = {
     Polygon : require("./Polygon"),
     Point : require("./Point"),
 };
 
-},{"./Point":4,"./Polygon":5}],8:[function(require,module,exports){
+},{"./Point":3,"./Polygon":4}],7:[function(require,module,exports){
 module.exports={
-    "name": "p2",
-    "version": "0.4.0",
-    "description": "A JavaScript 2D physics engine.",
-    "author": "Stefan Hedman <schteppe@gmail.com> (http://steffe.se)",
-    "keywords": [
-        "p2.js",
-        "p2",
-        "physics",
-        "engine",
-        "2d"
-    ],
-    "main": "./src/p2.js",
-    "engines": {
-        "node": "*"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/schteppe/p2.js.git"
-    },
-    "bugs": {
-        "url": "https://github.com/schteppe/p2.js/issues"
-    },
-    "licenses" : [
-        {
-            "type" : "MIT"
-        }
-    ],
-    "devDependencies" : {
-        "jshint"    : "latest",
-        "nodeunit"  : "latest",
-        "grunt": "~0.4.0",
-        "grunt-contrib-jshint": "~0.1.1",
-        "grunt-contrib-nodeunit": "~0.1.2",
-        "grunt-contrib-concat": "~0.1.3",
-        "grunt-contrib-uglify": "*",
-        "grunt-browserify" : "*",
-        "browserify":"*"
-    },
-    "dependencies" : {
-        "underscore":"*",
-        "poly-decomp" : "git://github.com/schteppe/poly-decomp.js",
-        "gl-matrix":"2.0.0",
-        "jsonschema":"*"
+  "name": "p2",
+  "version": "0.5.0",
+  "description": "A JavaScript 2D physics engine.",
+  "author": "Stefan Hedman <schteppe@gmail.com> (http://steffe.se)",
+  "keywords": [
+    "p2.js",
+    "p2",
+    "physics",
+    "engine",
+    "2d"
+  ],
+  "main": "./src/p2.js",
+  "engines": {
+    "node": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/schteppe/p2.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/schteppe/p2.js/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT"
     }
+  ],
+  "devDependencies": {
+    "grunt": "~0.4.0",
+    "grunt-contrib-jshint": "~0.9.2",
+    "grunt-contrib-nodeunit": "~0.1.2",
+    "grunt-contrib-uglify": "~0.4.0",
+    "grunt-contrib-watch": "~0.5.0",
+    "grunt-browserify": "~2.0.1",
+    "z-schema": "~2.4.6"
+  },
+  "dependencies": {
+    "poly-decomp": "0.1.0",
+    "gl-matrix": "2.1.0"
+  }
 }
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var vec2 = require('../math/vec2')
-,   Utils = require('../utils/Utils')
+,   Utils = require('../utils/Utils');
 
 module.exports = AABB;
 
@@ -58234,9 +61463,9 @@ module.exports = AABB;
  * Axis aligned bounding box class.
  * @class AABB
  * @constructor
- * @param {Object} options
- * @param {Array} upperBound
- * @param {Array} lowerBound
+ * @param {Object}  [options]
+ * @param {Array}   [options.upperBound]
+ * @param {Array}   [options.lowerBound]
  */
 function AABB(options){
 
@@ -58246,7 +61475,9 @@ function AABB(options){
      * @type {Array}
      */
     this.lowerBound = vec2.create();
-    if(options && options.lowerBound) vec2.copy(this.lowerBound, options.lowerBound);
+    if(options && options.lowerBound){
+        vec2.copy(this.lowerBound, options.lowerBound);
+    }
 
     /**
      * The upper bound of the bounding box.
@@ -58254,7 +61485,9 @@ function AABB(options){
      * @type {Array}
      */
     this.upperBound = vec2.create();
-    if(options && options.upperBound) vec2.copy(this.upperBound, options.upperBound);
+    if(options && options.upperBound){
+        vec2.copy(this.upperBound, options.upperBound);
+    }
 }
 
 var tmp = vec2.create();
@@ -58272,7 +61505,7 @@ AABB.prototype.setFromPoints = function(points,position,angle){
     for(var i=0; i<points.length; i++){
         var p = points[i];
 
-        if(typeof(angle) =="number"){
+        if(typeof(angle) === "number"){
             vec2.rotate(tmp,p,angle);
             p = tmp;
         }
@@ -58313,12 +61546,14 @@ AABB.prototype.extend = function(aabb){
     // Loop over x and y
     for(var i=0; i<2; i++){
         // Extend lower bound
-        if(aabb.lowerBound[i] < this.lowerBound[i])
+        if(aabb.lowerBound[i] < this.lowerBound[i]){
             this.lowerBound[i] = aabb.lowerBound[i];
+        }
 
         // Upper
-        if(aabb.upperBound[i] > this.upperBound[i])
+        if(aabb.upperBound[i] > this.upperBound[i]){
             this.upperBound[i] = aabb.upperBound[i];
+        }
     }
 };
 
@@ -58343,7 +61578,7 @@ AABB.prototype.overlaps = function(aabb){
            ((l2[1] <= u1[1] && u1[1] <= u2[1]) || (l1[1] <= u2[1] && u2[1] <= u1[1]));
 };
 
-},{"../math/vec2":33,"../utils/Utils":50}],10:[function(require,module,exports){
+},{"../math/vec2":30,"../utils/Utils":47}],9:[function(require,module,exports){
 var vec2 = require('../math/vec2')
 var Body = require('../objects/Body')
 
@@ -58369,9 +61604,30 @@ function Broadphase(type){
      * The world to search for collision pairs in. To change it, use .setWorld()
      * @property world
      * @type {World}
+     * @readOnly
      */
     this.world = null;
-};
+
+    /**
+     * The bounding volume type to use in the broadphase algorithms.
+     * @property {Number} boundingVolumeType
+     */
+    this.boundingVolumeType = Broadphase.AABB;
+}
+
+/**
+ * Axis aligned bounding box type.
+ * @static
+ * @property {Number} AABB
+ */
+Broadphase.AABB = 1;
+
+/**
+ * Bounding circle type.
+ * @static
+ * @property {Number} BOUNDING_CIRCLE
+ */
+Broadphase.BOUNDING_CIRCLE = 2;
 
 /**
  * Set the world that we are searching for collision pairs in
@@ -58416,9 +61672,36 @@ Broadphase.boundingRadiusCheck = function(bodyA, bodyB){
  * @return {Boolean}
  */
 Broadphase.aabbCheck = function(bodyA, bodyB){
-    if(bodyA.aabbNeedsUpdate) bodyA.updateAABB();
-    if(bodyB.aabbNeedsUpdate) bodyB.updateAABB();
+    if(bodyA.aabbNeedsUpdate){
+        bodyA.updateAABB();
+    }
+    if(bodyB.aabbNeedsUpdate){
+        bodyB.updateAABB();
+    }
     return bodyA.aabb.overlaps(bodyB.aabb);
+};
+
+/**
+ * Check whether the bounding radius of two bodies overlap.
+ * @method  boundingRadiusCheck
+ * @param  {Body} bodyA
+ * @param  {Body} bodyB
+ * @return {Boolean}
+ */
+Broadphase.prototype.boundingVolumeCheck = function(bodyA, bodyB){
+    var result;
+
+    switch(this.boundingVolumeType){
+    case Broadphase.BOUNDING_CIRCLE:
+        result =  Broadphase.boundingRadiusCheck(bodyA,bodyB);
+        break;
+    case Broadphase.AABB:
+        result = Broadphase.aabbCheck(bodyA,bodyB);
+        break;
+    default:
+        throw new Error('Bounding volume type not recognized: '+this.boundingVolumeType);
+    }
+    return result;
 };
 
 /**
@@ -58431,21 +61714,31 @@ Broadphase.aabbCheck = function(bodyA, bodyB){
 Broadphase.canCollide = function(bodyA, bodyB){
 
     // Cannot collide static bodies
-    if(bodyA.motionState == Body.STATIC && bodyB.motionState == Body.STATIC)
+    if(bodyA.motionState === Body.STATIC && bodyB.motionState === Body.STATIC){
         return false;
+    }
 
     // Cannot collide static vs kinematic bodies
-    if( (bodyA.motionState == Body.KINEMATIC && bodyB.motionState == Body.STATIC) ||
-        (bodyA.motionState == Body.STATIC    && bodyB.motionState == Body.KINEMATIC))
+    if( (bodyA.motionState === Body.KINEMATIC && bodyB.motionState === Body.STATIC) ||
+        (bodyA.motionState === Body.STATIC    && bodyB.motionState === Body.KINEMATIC)){
         return false;
+    }
 
     // Cannot collide kinematic vs kinematic
-    if(bodyA.motionState == Body.KINEMATIC && bodyB.motionState == Body.KINEMATIC)
+    if(bodyA.motionState === Body.KINEMATIC && bodyB.motionState === Body.KINEMATIC){
         return false;
+    }
 
     // Cannot collide both sleeping bodies
-    if(bodyA.sleepState == Body.SLEEPING && bodyB.sleepState == Body.SLEEPING)
+    if(bodyA.sleepState === Body.SLEEPING && bodyB.sleepState === Body.SLEEPING){
         return false;
+    }
+
+    // Cannot collide if one is static and the other is sleeping
+    if( (bodyA.sleepState === Body.SLEEPING && bodyB.motionState === Body.STATIC) ||
+        (bodyB.sleepState === Body.SLEEPING && bodyA.motionState === Body.STATIC)){
+        return false;
+    }
 
     return true;
 };
@@ -58453,12 +61746,13 @@ Broadphase.canCollide = function(bodyA, bodyB){
 Broadphase.NAIVE = 1;
 Broadphase.SAP = 2;
 
-},{"../math/vec2":33,"../objects/Body":34}],11:[function(require,module,exports){
+},{"../math/vec2":30,"../objects/Body":31}],10:[function(require,module,exports){
 var Circle = require('../shapes/Circle')
 ,   Plane = require('../shapes/Plane')
 ,   Particle = require('../shapes/Particle')
 ,   Broadphase = require('../collision/Broadphase')
 ,   vec2 = require('../math/vec2')
+,   Utils = require('../utils/Utils')
 
 module.exports = GridBroadphase;
 
@@ -58467,50 +61761,38 @@ module.exports = GridBroadphase;
  * @class GridBroadphase
  * @constructor
  * @extends Broadphase
- * @param {number} xmin Lower x bound of the grid
- * @param {number} xmax Upper x bound
- * @param {number} ymin Lower y bound
- * @param {number} ymax Upper y bound
- * @param {number} nx Number of bins along x axis
- * @param {number} ny Number of bins along y axis
- * @todo test
+ * @param {object} [options]
+ * @param {number} [options.xmin]   Lower x bound of the grid
+ * @param {number} [options.xmax]   Upper x bound
+ * @param {number} [options.ymin]   Lower y bound
+ * @param {number} [options.ymax]   Upper y bound
+ * @param {number} [options.nx]     Number of bins along x axis
+ * @param {number} [options.ny]     Number of bins along y axis
+ * @todo Should have an option for dynamic scene size
  */
-function GridBroadphase(xmin,xmax,ymin,ymax,nx,ny){
+function GridBroadphase(options){
     Broadphase.apply(this);
 
-    nx = nx || 10;
-    ny = ny || 10;
+    options = Utils.defaults(options,{
+        xmin:   -100,
+        xmax:   100,
+        ymin:   -100,
+        ymax:   100,
+        nx:     10,
+        ny:     10
+    });
 
-    this.binsizeX = (xmax-xmin) / nx;
-    this.binsizeY = (ymax-ymin) / ny;
-    this.nx = nx;
-    this.ny = ny;
-    this.xmin = xmin;
-    this.ymin = ymin;
-    this.xmax = xmax;
-    this.ymax = ymax;
-};
-GridBroadphase.prototype = new Broadphase();
+    this.xmin = options.xmin;
+    this.ymin = options.ymin;
+    this.xmax = options.xmax;
+    this.ymax = options.ymax;
+    this.nx = options.nx;
+    this.ny = options.ny;
 
-/**
- * Get a bin index given a world coordinate
- * @method getBinIndex
- * @param  {Number} x
- * @param  {Number} y
- * @return {Number} Integer index
- */
-GridBroadphase.prototype.getBinIndex = function(x,y){
-    var nx = this.nx,
-        ny = this.ny,
-        xmin = this.xmin,
-        ymin = this.ymin,
-        xmax = this.xmax,
-        ymax = this.ymax;
-
-    var xi = Math.floor(nx * (x - xmin) / (xmax-xmin));
-    var yi = Math.floor(ny * (y - ymin) / (ymax-ymin));
-    return xi*ny + yi;
+    this.binsizeX = (this.xmax-this.xmin) / this.nx;
+    this.binsizeY = (this.ymax-this.ymin) / this.ny;
 }
+GridBroadphase.prototype = new Broadphase();
 
 /**
  * Get collision pairs.
@@ -58520,70 +61802,49 @@ GridBroadphase.prototype.getBinIndex = function(x,y){
  */
 GridBroadphase.prototype.getCollisionPairs = function(world){
     var result = [],
-        collidingBodies = world.bodies,
-        Ncolliding = Ncolliding=collidingBodies.length,
+        bodies = world.bodies,
+        Ncolliding = bodies.length,
         binsizeX = this.binsizeX,
-        binsizeY = this.binsizeY;
+        binsizeY = this.binsizeY,
+        nx = this.nx,
+        ny = this.ny,
+        xmin = this.xmin,
+        ymin = this.ymin,
+        xmax = this.xmax,
+        ymax = this.ymax;
 
+    // Todo: make garbage free
     var bins=[], Nbins=nx*ny;
-    for(var i=0; i<Nbins; i++)
+    for(var i=0; i<Nbins; i++){
         bins.push([]);
+    }
 
     var xmult = nx / (xmax-xmin);
     var ymult = ny / (ymax-ymin);
 
     // Put all bodies into bins
     for(var i=0; i!==Ncolliding; i++){
-        var bi = collidingBodies[i];
-        var si = bi.shape;
-        if (si === undefined) {
-            continue;
-        } else if(si instanceof Circle){
-            // Put in bin
-            // check if overlap with other bins
-            var x = bi.position[0];
-            var y = bi.position[1];
-            var r = si.radius;
+        var bi = bodies[i];
+        var aabb = bi.aabb;
+        var lowerX = Math.max(aabb.lowerBound[0], xmin);
+        var lowerY = Math.max(aabb.lowerBound[1], ymin);
+        var upperX = Math.min(aabb.upperBound[0], xmax);
+        var upperY = Math.min(aabb.upperBound[1], ymax);
+        var xi1 = Math.floor(xmult * (lowerX - xmin));
+        var yi1 = Math.floor(ymult * (lowerY - ymin));
+        var xi2 = Math.floor(xmult * (upperX - xmin));
+        var yi2 = Math.floor(ymult * (upperY - ymin));
 
-            var xi1 = Math.floor(xmult * (x-r - xmin));
-            var yi1 = Math.floor(ymult * (y-r - ymin));
-            var xi2 = Math.floor(xmult * (x+r - xmin));
-            var yi2 = Math.floor(ymult * (y+r - ymin));
-
-            for(var j=xi1; j<=xi2; j++){
-                for(var k=yi1; k<=yi2; k++){
-                    var xi = j;
-                    var yi = k;
-                    if(xi*(ny-1) + yi >= 0 && xi*(ny-1) + yi < Nbins)
-                        bins[ xi*(ny-1) + yi ].push(bi);
+        // Put in bin
+        for(var j=xi1; j<=xi2; j++){
+            for(var k=yi1; k<=yi2; k++){
+                var xi = j;
+                var yi = k;
+                var idx = xi*(ny-1) + yi;
+                if(idx >= 0 && idx < Nbins){
+                    bins[ idx ].push(bi);
                 }
             }
-        } else if(si instanceof Plane){
-            // Put in all bins for now
-            if(bi.angle == 0){
-                var y = bi.position[1];
-                for(var j=0; j!==Nbins && ymin+binsizeY*(j-1)<y; j++){
-                    for(var k=0; k<nx; k++){
-                        var xi = k;
-                        var yi = Math.floor(ymult * (binsizeY*j - ymin));
-                        bins[ xi*(ny-1) + yi ].push(bi);
-                    }
-                }
-            } else if(bi.angle == Math.PI*0.5){
-                var x = bi.position[0];
-                for(var j=0; j!==Nbins && xmin+binsizeX*(j-1)<x; j++){
-                    for(var k=0; k<ny; k++){
-                        var yi = k;
-                        var xi = Math.floor(xmult * (binsizeX*j - xmin));
-                        bins[ xi*(ny-1) + yi ].push(bi);
-                    }
-                }
-            } else {
-                for(var j=0; j!==Nbins; j++)
-                    bins[j].push(bi);
-            }
-        } else {
-            throw new Error("Shape not supported in GridBroadphase!");
         }
     }
 
@@ -58593,20 +61854,10 @@ GridBroadphase.prototype.getCollisionPairs = function(world){
 
         for(var j=0, NbodiesInBin=bin.length; j!==NbodiesInBin; j++){
             var bi = bin[j];
-            var si = bi.shape;
-
             for(var k=0; k!==j; k++){
                 var bj = bin[k];
-                var sj = bj.shape;
-
-                if(si instanceof Circle){
-                         if(sj instanceof Circle)   c=Broadphase.circleCircle  (bi,bj);
-                    else if(sj instanceof Particle) c=Broadphase.circleParticle(bi,bj);
-                    else if(sj instanceof Plane)    c=Broadphase.circlePlane   (bi,bj);
-                } else if(si instanceof Particle){
-                         if(sj instanceof Circle)   c=Broadphase.circleParticle(bj,bi);
-                } else if(si instanceof Plane){
-                         if(sj instanceof Circle)   c=Broadphase.circlePlane   (bj,bi);
+                if(Broadphase.canCollide(bi,bj) && this.boundingVolumeCheck(bi,bj)){
+                    result.push(bi,bj);
                 }
             }
         }
@@ -58614,13 +61865,13 @@ GridBroadphase.prototype.getCollisionPairs = function(world){
     return result;
 };
 
-},{"../collision/Broadphase":10,"../math/vec2":33,"../shapes/Circle":38,"../shapes/Particle":42,"../shapes/Plane":43}],12:[function(require,module,exports){
-var Circle = require('../shapes/Circle')
-,   Plane = require('../shapes/Plane')
-,   Shape = require('../shapes/Shape')
-,   Particle = require('../shapes/Particle')
-,   Broadphase = require('../collision/Broadphase')
-,   vec2 = require('../math/vec2')
+},{"../collision/Broadphase":9,"../math/vec2":30,"../shapes/Circle":35,"../shapes/Particle":39,"../shapes/Plane":40,"../utils/Utils":47}],11:[function(require,module,exports){
+var Circle = require('../shapes/Circle'),
+    Plane = require('../shapes/Plane'),
+    Shape = require('../shapes/Shape'),
+    Particle = require('../shapes/Particle'),
+    Broadphase = require('../collision/Broadphase'),
+    vec2 = require('../math/vec2');
 
 module.exports = NaiveBroadphase;
 
@@ -58632,15 +61883,8 @@ module.exports = NaiveBroadphase;
  * @extends Broadphase
  */
 function NaiveBroadphase(){
-    Broadphase.call(this,Broadphase.NAIVE);
-
-    /**
-     * Set to true to use bounding box checks instead of bounding radius.
-     * @property useBoundingBoxes
-     * @type {Boolean}
-     */
-    this.useBoundingBoxes = false;
-};
+    Broadphase.call(this, Broadphase.NAIVE);
+}
 NaiveBroadphase.prototype = new Broadphase();
 
 /**
@@ -58651,38 +61895,40 @@ NaiveBroadphase.prototype = new Broadphase();
  */
 NaiveBroadphase.prototype.getCollisionPairs = function(world){
     var bodies = world.bodies,
-        result = this.result,
-        i, j, bi, bj,
-        check = this.useBoundingBoxes ? Broadphase.aabbCheck : Broadphase.boundingRadiusCheck;
+        result = this.result;
 
     result.length = 0;
 
-    for(i=0, Ncolliding=bodies.length; i!==Ncolliding; i++){
-        bi = bodies[i];
+    for(var i=0, Ncolliding=bodies.length; i!==Ncolliding; i++){
+        var bi = bodies[i];
 
-        for(j=0; j<i; j++){
-            bj = bodies[j];
+        for(var j=0; j<i; j++){
+            var bj = bodies[j];
 
-            if(Broadphase.canCollide(bi,bj) && check(bi,bj))
+            if(Broadphase.canCollide(bi,bj) && this.boundingVolumeCheck(bi,bj)){
                 result.push(bi,bj);
+            }
         }
     }
 
     return result;
 };
 
-},{"../collision/Broadphase":10,"../math/vec2":33,"../shapes/Circle":38,"../shapes/Particle":42,"../shapes/Plane":43,"../shapes/Shape":45}],13:[function(require,module,exports){
+},{"../collision/Broadphase":9,"../math/vec2":30,"../shapes/Circle":35,"../shapes/Particle":39,"../shapes/Plane":40,"../shapes/Shape":42}],12:[function(require,module,exports){
 var vec2 = require('../math/vec2')
 ,   sub = vec2.sub
 ,   add = vec2.add
 ,   dot = vec2.dot
 ,   Utils = require('../utils/Utils')
+,   TupleDictionary = require('../utils/TupleDictionary')
+,   Equation = require('../equations/Equation')
 ,   ContactEquation = require('../equations/ContactEquation')
 ,   FrictionEquation = require('../equations/FrictionEquation')
 ,   Circle = require('../shapes/Circle')
+,   Convex = require('../shapes/Convex')
 ,   Shape = require('../shapes/Shape')
 ,   Body = require('../objects/Body')
-,   Rectangle = require('../shapes/Rectangle')
+,   Rectangle = require('../shapes/Rectangle');
 
 module.exports = Narrowphase;
 
@@ -58707,7 +61953,7 @@ var tmp1 = vec2.fromValues(0,0)
 ,   tmp16 = vec2.fromValues(0,0)
 ,   tmp17 = vec2.fromValues(0,0)
 ,   tmp18 = vec2.fromValues(0,0)
-,   tmpArray = []
+,   tmpArray = [];
 
 /**
  * Narrowphase. Creates contacts and friction given shapes and transforms.
@@ -58770,32 +62016,32 @@ function Narrowphase(){
      * The stiffness value to use in the next contact equations.
      * @property {Number} stiffness
      */
-    this.stiffness = 1e7;
+    this.stiffness = Equation.DEFAULT_STIFFNESS;
 
     /**
      * The stiffness value to use in the next contact equations.
      * @property {Number} stiffness
      */
-    this.relaxation = 3;
+    this.relaxation = Equation.DEFAULT_RELAXATION;
 
     /**
      * The stiffness value to use in the next friction equations.
      * @property frictionStiffness
      * @type {Number}
      */
-    this.frictionStiffness = 1e7;
+    this.frictionStiffness = Equation.DEFAULT_STIFFNESS;
 
     /**
      * The relaxation value to use in the next friction equations.
      * @property frictionRelaxation
      * @type {Number}
      */
-    this.frictionRelaxation = 3;
+    this.frictionRelaxation = Equation.DEFAULT_RELAXATION;
 
 
     // Keep track of the colliding bodies last step
-    this.collidingBodiesLastStep = { keys:[] };
-};
+    this.collidingBodiesLastStep = new TupleDictionary();
+}
 
 /**
  * Check if the bodies were in contact since the last reset().
@@ -58805,27 +62051,19 @@ function Narrowphase(){
  * @return {Boolean}
  */
 Narrowphase.prototype.collidedLastStep = function(bi,bj){
-    var id1 = bi.id,
-        id2 = bj.id;
-    if(id1 > id2){
-        var tmp = id1;
-        id1 = id2;
-        id2 = tmp;
-    }
-    return !!this.collidingBodiesLastStep[id1 + " " + id2];
+    var id1 = bi.id|0,
+        id2 = bj.id|0;
+    return !!this.collidingBodiesLastStep.get(id1, id2);
 };
 
 // "for in" loops aren't optimised in chrome... is there a better way to handle last-step collision memory?
 // Maybe do this: http://jsperf.com/reflection-vs-array-of-keys
 function clearObject(obj){
-    for(var i = 0, l = obj.keys.length; i < l; i++) {
-        delete obj[obj.keys[i]];
+    var l = obj.keys.length;
+    while(l--){
+        delete obj[obj.keys[l]];
     }
     obj.keys.length = 0;
-    /*
-    for(var key in this.collidingBodiesLastStep)
-        delete this.collidingBodiesLastStep[key];
-    */
 }
 
 /**
@@ -58834,23 +62072,12 @@ function clearObject(obj){
  * @param {World} world
  */
 Narrowphase.prototype.reset = function(world){
-
-    // Save the colliding bodies data
-    clearObject(this.collidingBodiesLastStep);
+    this.collidingBodiesLastStep.reset();
     for(var i=0; i!==this.contactEquations.length; i++){
         var eq = this.contactEquations[i],
-            id1 = eq.bi.id,
-            id2 = eq.bj.id;
-        if(id1 > id2){
-            var tmp = id1;
-            id1 = id2;
-            id2 = tmp;
-        }
-        var key = id1 + " " + id2;
-        if(!this.collidingBodiesLastStep[key]){
-            this.collidingBodiesLastStep[key] = true;
-            this.collidingBodiesLastStep.keys.push(key);
-        }
+            id1 = eq.bodyA.id|0,
+            id2 = eq.bodyB.id|0;
+        this.collidingBodiesLastStep.set(id1, id2, true);
     }
 
     if(this.reuseObjects){
@@ -58875,20 +62102,16 @@ Narrowphase.prototype.reset = function(world){
  */
 Narrowphase.prototype.createContactEquation = function(bodyA,bodyB,shapeA,shapeB){
     var c = this.reusableContactEquations.length ? this.reusableContactEquations.pop() : new ContactEquation(bodyA,bodyB);
-    c.bi = bodyA;
-    c.bj = bodyB;
+    c.bodyA = bodyA;
+    c.bodyB = bodyB;
     c.shapeA = shapeA;
     c.shapeB = shapeB;
     c.restitution = this.restitution;
     c.firstImpact = !this.collidedLastStep(bodyA,bodyB);
     c.stiffness = this.stiffness;
     c.relaxation = this.relaxation;
+    c.needsUpdate = true;
     c.enabled = true;
-
-    if(bodyA.allowSleep && (bodyA.motionState == Body.DYNAMIC) && !(bodyB.motionState == Body.STATIC || bodyB.sleepState === Body.SLEEPY))
-        bodyA.wakeUp();
-    if(bodyB.allowSleep && (bodyB.motionState == Body.DYNAMIC) && !(bodyA.motionState == Body.STATIC || bodyA.sleepState === Body.SLEEPY))
-        bodyB.wakeUp();
 
     return c;
 };
@@ -58902,16 +62125,17 @@ Narrowphase.prototype.createContactEquation = function(bodyA,bodyB,shapeA,shapeB
  */
 Narrowphase.prototype.createFrictionEquation = function(bodyA,bodyB,shapeA,shapeB){
     var c = this.reusableFrictionEquations.length ? this.reusableFrictionEquations.pop() : new FrictionEquation(bodyA,bodyB);
-    c.bi = bodyA;
-    c.bj = bodyB;
+    c.bodyA = bodyA;
+    c.bodyB = bodyB;
     c.shapeA = shapeA;
     c.shapeB = shapeB;
     c.setSlipForce(this.slipForce);
     c.frictionCoefficient = this.frictionCoefficient;
     c.relativeVelocity = this.surfaceVelocity;
     c.enabled = true;
-    c.frictionStiffness = this.frictionStiffness;
-    c.frictionRelaxation = this.frictionRelaxation;
+    c.needsUpdate = true;
+    c.stiffness = this.frictionStiffness;
+    c.relaxation = this.frictionRelaxation;
     return c;
 };
 
@@ -58922,13 +62146,13 @@ Narrowphase.prototype.createFrictionEquation = function(bodyA,bodyB,shapeA,shape
  * @return {FrictionEquation}
  */
 Narrowphase.prototype.createFrictionFromContact = function(c){
-    var eq = this.createFrictionEquation(c.bi,c.bj,c.shapeA,c.shapeB);
-    vec2.copy(eq.ri, c.ri);
-    vec2.copy(eq.rj, c.rj);
-    vec2.rotate(eq.t, c.ni, -Math.PI / 2);
+    var eq = this.createFrictionEquation(c.bodyA, c.bodyB, c.shapeA, c.shapeB);
+    vec2.copy(eq.contactPointA, c.contactPointA);
+    vec2.copy(eq.contactPointB, c.contactPointB);
+    vec2.rotate90cw(eq.t, c.normalA);
     eq.contactEquation = c;
     return eq;
-}
+};
 
 /**
  * Convex/line narrowphase
@@ -59181,7 +62405,7 @@ Narrowphase.prototype.planeLine = function(planeBody, planeShape, planeOffset, p
     vec2.normalize(worldEdgeUnit, worldEdge);
 
     // Get tangent to the edge.
-    vec2.rotate(worldTangent, worldEdgeUnit, -Math.PI/2);
+    vec2.rotate90cw(worldTangent, worldEdgeUnit);
 
     vec2.rotate(worldNormal, yAxis, planeAngle);
 
@@ -59203,20 +62427,20 @@ Narrowphase.prototype.planeLine = function(planeBody, planeShape, planeOffset, p
             var c = this.createContactEquation(planeBody,lineBody,planeShape,lineShape);
             numContacts++;
 
-            vec2.copy(c.ni, worldNormal);
-            vec2.normalize(c.ni,c.ni);
+            vec2.copy(c.normalA, worldNormal);
+            vec2.normalize(c.normalA,c.normalA);
 
             // distance vector along plane normal
             vec2.scale(dist, worldNormal, d);
 
             // Vector from plane center to contact
-            sub(c.ri, v, dist);
-            sub(c.ri, c.ri, planeBody.position);
+            sub(c.contactPointA, v, dist);
+            sub(c.contactPointA, c.contactPointA, planeBody.position);
 
             // From line center to contact
-            sub(c.rj, v,    lineOffset);
-            add(c.rj, c.rj, lineOffset);
-            sub(c.rj, c.rj, lineBody.position);
+            sub(c.contactPointB, v,    lineOffset);
+            add(c.contactPointB, c.contactPointB, lineOffset);
+            sub(c.contactPointB, c.contactPointB, lineBody.position);
 
             this.contactEquations.push(c);
 
@@ -59299,7 +62523,7 @@ Narrowphase.prototype.circleLine = function(bi,si,xi,ai, bj,sj,xj,aj, justTest, 
     vec2.normalize(worldEdgeUnit, worldEdge);
 
     // Get tangent to the edge.
-    vec2.rotate(worldTangent, worldEdgeUnit, -Math.PI/2);
+    vec2.rotate90cw(worldTangent, worldEdgeUnit);
 
     // Check distance from the plane spanned by the edge vs the circle
     sub(dist, circleOffset, worldVertex0);
@@ -59332,16 +62556,16 @@ Narrowphase.prototype.circleLine = function(bi,si,xi,ai, bj,sj,xj,aj, justTest, 
 
             var c = this.createContactEquation(circleBody,lineBody,si,sj);
 
-            vec2.scale(c.ni, orthoDist, -1);
-            vec2.normalize(c.ni, c.ni);
+            vec2.scale(c.normalA, orthoDist, -1);
+            vec2.normalize(c.normalA, c.normalA);
 
-            vec2.scale( c.ri, c.ni,  circleRadius);
-            add(c.ri, c.ri, circleOffset);
-            sub(c.ri, c.ri, circleBody.position);
+            vec2.scale( c.contactPointA, c.normalA,  circleRadius);
+            add(c.contactPointA, c.contactPointA, circleOffset);
+            sub(c.contactPointA, c.contactPointA, circleBody.position);
 
-            sub(c.rj, projectedPoint, lineOffset);
-            add(c.rj, c.rj, lineOffset);
-            sub(c.rj, c.rj, lineBody.position);
+            sub(c.contactPointB, projectedPoint, lineOffset);
+            add(c.contactPointB, c.contactPointB, lineOffset);
+            sub(c.contactPointB, c.contactPointB, lineBody.position);
 
             this.contactEquations.push(c);
 
@@ -59369,19 +62593,19 @@ Narrowphase.prototype.circleLine = function(bi,si,xi,ai, bj,sj,xj,aj, justTest, 
 
             var c = this.createContactEquation(circleBody,lineBody,si,sj);
 
-            vec2.copy(c.ni, dist);
-            vec2.normalize(c.ni,c.ni);
+            vec2.copy(c.normalA, dist);
+            vec2.normalize(c.normalA,c.normalA);
 
             // Vector from circle to contact point is the normal times the circle radius
-            vec2.scale(c.ri, c.ni, circleRadius);
-            add(c.ri, c.ri, circleOffset);
-            sub(c.ri, c.ri, circleBody.position);
+            vec2.scale(c.contactPointA, c.normalA, circleRadius);
+            add(c.contactPointA, c.contactPointA, circleOffset);
+            sub(c.contactPointA, c.contactPointA, circleBody.position);
 
-            sub(c.rj, v, lineOffset);
-            vec2.scale(lineEndToLineRadius, c.ni, -lineRadius);
-            add(c.rj, c.rj, lineEndToLineRadius);
-            add(c.rj, c.rj, lineOffset);
-            sub(c.rj, c.rj, lineBody.position);
+            sub(c.contactPointB, v, lineOffset);
+            vec2.scale(lineEndToLineRadius, c.normalA, -lineRadius);
+            add(c.contactPointB, c.contactPointB, lineEndToLineRadius);
+            add(c.contactPointB, c.contactPointB, lineOffset);
+            sub(c.contactPointB, c.contactPointB, lineBody.position);
 
             this.contactEquations.push(c);
 
@@ -59484,7 +62708,7 @@ Narrowphase.prototype.circleConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
         vec2.normalize(worldEdgeUnit, worldEdge);
 
         // Get tangent to the edge. Points out of the Convex
-        vec2.rotate(worldTangent, worldEdgeUnit, -Math.PI/2);
+        vec2.rotate90cw(worldTangent, worldEdgeUnit);
 
         // Get point on circle, closest to the polygon
         vec2.scale(candidate,worldTangent,-circleShape.radius);
@@ -59546,16 +62770,16 @@ Narrowphase.prototype.circleConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
             return true;
 
         var c = this.createContactEquation(circleBody,convexBody,si,sj);
-        vec2.sub(c.ni, minCandidate, circleOffset)
-        vec2.normalize(c.ni, c.ni);
+        vec2.sub(c.normalA, minCandidate, circleOffset)
+        vec2.normalize(c.normalA, c.normalA);
 
-        vec2.scale(c.ri,  c.ni, circleRadius);
-        add(c.ri, c.ri, circleOffset);
-        sub(c.ri, c.ri, circleBody.position);
+        vec2.scale(c.contactPointA,  c.normalA, circleRadius);
+        add(c.contactPointA, c.contactPointA, circleOffset);
+        sub(c.contactPointA, c.contactPointA, circleBody.position);
 
-        sub(c.rj, closestEdgeProjectedPoint, convexOffset);
-        add(c.rj, c.rj, convexOffset);
-        sub(c.rj, c.rj, convexBody.position);
+        sub(c.contactPointB, closestEdgeProjectedPoint, convexOffset);
+        add(c.contactPointB, c.contactPointB, convexOffset);
+        sub(c.contactPointB, c.contactPointB, convexBody.position);
 
         this.contactEquations.push(c);
 
@@ -59569,16 +62793,16 @@ Narrowphase.prototype.circleConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
     if(closestEdge != -1){
         var c = this.createContactEquation(circleBody,convexBody);
 
-        vec2.scale(c.ni, closestEdgeOrthoDist, -1);
-        vec2.normalize(c.ni, c.ni);
+        vec2.scale(c.normalA, closestEdgeOrthoDist, -1);
+        vec2.normalize(c.normalA, c.normalA);
 
-        vec2.scale(c.ri,  c.ni, circleRadius);
-        add(c.ri, c.ri, circleOffset);
-        sub(c.ri, c.ri, circleBody.position);
+        vec2.scale(c.contactPointA,  c.normalA, circleRadius);
+        add(c.contactPointA, c.contactPointA, circleOffset);
+        sub(c.contactPointA, c.contactPointA, circleBody.position);
 
-        sub(c.rj, closestEdgeProjectedPoint, convexOffset);
-        add(c.rj, c.rj, convexOffset);
-        sub(c.rj, c.rj, convexBody.position);
+        sub(c.contactPointB, closestEdgeProjectedPoint, convexOffset);
+        add(c.contactPointB, c.contactPointB, convexOffset);
+        sub(c.contactPointB, c.contactPointB, convexBody.position);
 
         this.contactEquations.push(c);
 
@@ -59603,17 +62827,17 @@ Narrowphase.prototype.circleConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
 
                 var c = this.createContactEquation(circleBody,convexBody,si,sj);
 
-                vec2.copy(c.ni, dist);
-                vec2.normalize(c.ni,c.ni);
+                vec2.copy(c.normalA, dist);
+                vec2.normalize(c.normalA,c.normalA);
 
                 // Vector from circle to contact point is the normal times the circle radius
-                vec2.scale(c.ri, c.ni, circleRadius);
-                add(c.ri, c.ri, circleOffset);
-                sub(c.ri, c.ri, circleBody.position);
+                vec2.scale(c.contactPointA, c.normalA, circleRadius);
+                add(c.contactPointA, c.contactPointA, circleOffset);
+                sub(c.contactPointA, c.contactPointA, circleBody.position);
 
-                sub(c.rj, worldVertex, convexOffset);
-                add(c.rj, c.rj, convexOffset);
-                sub(c.rj, c.rj, convexBody.position);
+                sub(c.contactPointB, worldVertex, convexOffset);
+                add(c.contactPointB, c.contactPointB, convexOffset);
+                sub(c.contactPointB, c.contactPointB, convexBody.position);
 
                 this.contactEquations.push(c);
 
@@ -59718,8 +62942,9 @@ Narrowphase.prototype.particleConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, just
         verts = convexShape.vertices;
 
     // Check if the particle is in the polygon at all
-    if(!pointInConvex(particleOffset,convexShape,convexOffset,convexAngle))
+    if(!pointInConvex(particleOffset,convexShape,convexOffset,convexAngle)){
         return 0;
+    }
 
     if(justTest) return true;
 
@@ -59740,7 +62965,7 @@ Narrowphase.prototype.particleConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, just
         vec2.normalize(worldEdgeUnit, worldEdge);
 
         // Get tangent to the edge. Points out of the Convex
-        vec2.rotate(worldTangent, worldEdgeUnit, -Math.PI/2);
+        vec2.rotate90cw(worldTangent, worldEdgeUnit);
 
         // Check distance from the infinite line (spanned by the edge) to the particle
         sub(dist, particleOffset, worldVertex0);
@@ -59791,18 +63016,18 @@ Narrowphase.prototype.particleConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, just
     if(found){
         var c = this.createContactEquation(particleBody,convexBody,si,sj);
 
-        vec2.scale(c.ni, minEdgeNormal, -1);
-        vec2.normalize(c.ni, c.ni);
+        vec2.scale(c.normalA, minEdgeNormal, -1);
+        vec2.normalize(c.normalA, c.normalA);
 
         // Particle has no extent to the contact point
-        vec2.set(c.ri,  0, 0);
-        add(c.ri, c.ri, particleOffset);
-        sub(c.ri, c.ri, particleBody.position);
+        vec2.set(c.contactPointA,  0, 0);
+        add(c.contactPointA, c.contactPointA, particleOffset);
+        sub(c.contactPointA, c.contactPointA, particleBody.position);
 
         // From convex center to point
-        sub(c.rj, closestEdgeProjectedPoint, convexOffset);
-        add(c.rj, c.rj, convexOffset);
-        sub(c.rj, c.rj, convexBody.position);
+        sub(c.contactPointB, closestEdgeProjectedPoint, convexOffset);
+        add(c.contactPointB, c.contactPointB, convexOffset);
+        sub(c.contactPointB, c.contactPointB, convexBody.position);
 
         this.contactEquations.push(c);
 
@@ -59842,23 +63067,26 @@ Narrowphase.prototype.circleCircle = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
 
     sub(dist,xi,xj);
     var r = radiusA + radiusB;
-    if(vec2.squaredLength(dist) > r*r)
+    if(vec2.squaredLength(dist) > r*r){
         return 0;
+    }
 
-    if(justTest) return true;
+    if(justTest){
+        return true;
+    }
 
     var c = this.createContactEquation(bodyA,bodyB,si,sj);
-    sub(c.ni, offsetB, offsetA);
-    vec2.normalize(c.ni,c.ni);
+    sub(c.normalA, offsetB, offsetA);
+    vec2.normalize(c.normalA,c.normalA);
 
-    vec2.scale( c.ri, c.ni,  radiusA);
-    vec2.scale( c.rj, c.ni, -radiusB);
+    vec2.scale( c.contactPointA, c.normalA,  radiusA);
+    vec2.scale( c.contactPointB, c.normalA, -radiusB);
 
-    add(c.ri, c.ri, offsetA);
-    sub(c.ri, c.ri, bodyA.position);
+    add(c.contactPointA, c.contactPointA, offsetA);
+    sub(c.contactPointA, c.contactPointA, bodyA.position);
 
-    add(c.rj, c.rj, offsetB);
-    sub(c.rj, c.rj, bodyB.position);
+    add(c.contactPointB, c.contactPointB, offsetB);
+    sub(c.contactPointB, c.contactPointB, bodyB.position);
 
     this.contactEquations.push(c);
 
@@ -59906,9 +63134,11 @@ Narrowphase.prototype.planeConvex = function( bi,si,xi,ai, bj,sj,xj,aj, justTest
 
         sub(dist, worldVertex, planeOffset);
 
-        if(dot(dist,worldNormal) < 0){
+        if(dot(dist,worldNormal) <= Narrowphase.convexPrecision){
 
-            if(justTest) return true;
+            if(justTest){
+                return true;
+            }
 
             // Found vertex
             numReported++;
@@ -59917,29 +63147,23 @@ Narrowphase.prototype.planeConvex = function( bi,si,xi,ai, bj,sj,xj,aj, justTest
 
             sub(dist, worldVertex, planeOffset);
 
-            vec2.copy(c.ni, worldNormal);
+            vec2.copy(c.normalA, worldNormal);
 
-            var d = dot(dist, c.ni);
-            vec2.scale(dist, c.ni, d);
+            var d = dot(dist, c.normalA);
+            vec2.scale(dist, c.normalA, d);
 
             // rj is from convex center to contact
-            sub(c.rj, worldVertex, convexBody.position);
+            sub(c.contactPointB, worldVertex, convexBody.position);
 
 
             // ri is from plane center to contact
-            sub( c.ri, worldVertex, dist);
-            sub( c.ri, c.ri, planeBody.position);
+            sub( c.contactPointA, worldVertex, dist);
+            sub( c.contactPointA, c.contactPointA, planeBody.position);
 
             this.contactEquations.push(c);
-
-            // TODO: if we have 2 contacts, we do only need 1 friction equation
-
             if(this.enableFriction){
                 this.frictionEquations.push(this.createFrictionFromContact(c));
             }
-
-            if(numReported >= 2)
-                break;
         }
     }
 
@@ -59992,16 +63216,16 @@ Narrowphase.prototype.particlePlane = function( bi,si,xi,ai, bj,sj,xj,aj, justTe
 
     var c = this.createContactEquation(planeBody,particleBody,sj,si);
 
-    vec2.copy(c.ni, worldNormal);
-    vec2.scale( dist, c.ni, d );
+    vec2.copy(c.normalA, worldNormal);
+    vec2.scale( dist, c.normalA, d );
     // dist is now the distance vector in the normal direction
 
     // ri is the particle position projected down onto the plane, from the plane center
-    sub( c.ri, particleOffset, dist);
-    sub( c.ri, c.ri, planeBody.position);
+    sub( c.contactPointA, particleOffset, dist);
+    sub( c.contactPointA, c.contactPointA, planeBody.position);
 
     // rj is from the body center to the particle center
-    sub( c.rj, particleOffset, particleBody.position );
+    sub( c.contactPointB, particleOffset, particleBody.position );
 
     this.contactEquations.push(c);
 
@@ -60038,16 +63262,16 @@ Narrowphase.prototype.circleParticle = function(   bi,si,xi,ai, bj,sj,xj,aj, jus
     if(justTest) return true;
 
     var c = this.createContactEquation(circleBody,particleBody,si,sj);
-    vec2.copy(c.ni, dist);
-    vec2.normalize(c.ni,c.ni);
+    vec2.copy(c.normalA, dist);
+    vec2.normalize(c.normalA,c.normalA);
 
     // Vector from circle to contact point is the normal times the circle radius
-    vec2.scale(c.ri, c.ni, circleShape.radius);
-    add(c.ri, c.ri, circleOffset);
-    sub(c.ri, c.ri, circleBody.position);
+    vec2.scale(c.contactPointA, c.normalA, circleShape.radius);
+    add(c.contactPointA, c.contactPointA, circleOffset);
+    sub(c.contactPointA, c.contactPointA, circleBody.position);
 
     // Vector from particle center to contact point is zero
-    sub(c.rj, particleOffset, particleBody.position);
+    sub(c.contactPointB, particleOffset, particleBody.position);
 
     this.contactEquations.push(c);
 
@@ -60136,26 +63360,30 @@ Narrowphase.prototype.circlePlane = function(   bi,si,xi,ai, bj,sj,xj,aj, justTe
     // Normal direction distance
     var d = dot(worldNormal, planeToCircle);
 
-    if(d > circleShape.radius) return 0; // No overlap. Abort.
+    if(d > circleShape.radius){
+        return 0; // No overlap. Abort.
+    }
 
-    if(justTest) return true;
+    if(justTest){
+        return true;
+    }
 
     // Create contact
     var contact = this.createContactEquation(planeBody,circleBody,sj,si);
 
     // ni is the plane world normal
-    vec2.copy(contact.ni, worldNormal);
+    vec2.copy(contact.normalA, worldNormal);
 
     // rj is the vector from circle center to the contact point
-    vec2.scale(contact.rj, contact.ni, -circleShape.radius);
-    add(contact.rj, contact.rj, circleOffset);
-    sub(contact.rj, contact.rj, circleBody.position);
+    vec2.scale(contact.contactPointB, contact.normalA, -circleShape.radius);
+    add(contact.contactPointB, contact.contactPointB, circleOffset);
+    sub(contact.contactPointB, contact.contactPointB, circleBody.position);
 
     // ri is the distance from plane center to contact.
-    vec2.scale(temp, contact.ni, d);
-    sub(contact.ri, planeToCircle, temp ); // Subtract normal distance vector from the distance vector
-    add(contact.ri, contact.ri, planeOffset);
-    sub(contact.ri, contact.ri, planeBody.position);
+    vec2.scale(temp, contact.normalA, d);
+    sub(contact.contactPointA, planeToCircle, temp ); // Subtract normal distance vector from the distance vector
+    add(contact.contactPointA, contact.contactPointA, planeOffset);
+    sub(contact.contactPointA, contact.contactPointA, planeBody.position);
 
     this.contactEquations.push(contact);
 
@@ -60166,7 +63394,7 @@ Narrowphase.prototype.circlePlane = function(   bi,si,xi,ai, bj,sj,xj,aj, justTe
     return 1;
 };
 
-Narrowphase.convexPrecision = 1e-10;
+Narrowphase.convexPrecision = 1e-7;
 
 /**
  * Convex/convex Narrowphase.See <a href="http://www.altdevblogaday.com/2011/05/13/contact-generation-between-3d-convex-meshes/">this article</a> for more info.
@@ -60197,7 +63425,9 @@ Narrowphase.prototype.convexConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
         precision = precision || Narrowphase.convexPrecision;
 
     var found = Narrowphase.findSeparatingAxis(si,xi,ai,sj,xj,aj,sepAxis);
-    if(!found) return 0;
+    if(!found){
+        return 0;
+    }
 
     // Make sure the separating axis is directed from shape i to shape j
     sub(dist,xj,xi);
@@ -60209,7 +63439,9 @@ Narrowphase.prototype.convexConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
     var closestEdge1 = Narrowphase.getClosestEdge(si,ai,sepAxis,true), // Flipped axis
         closestEdge2 = Narrowphase.getClosestEdge(sj,aj,sepAxis);
 
-    if(closestEdge1==-1 || closestEdge2==-1) return 0;
+    if(closestEdge1 === -1 || closestEdge2 === -1){
+        return 0;
+    }
 
     // Loop over the shapes
     for(var k=0; k<2; k++){
@@ -60221,7 +63453,7 @@ Narrowphase.prototype.convexConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
             angleA = ai, angleB = aj,
             bodyA = bi, bodyB = bj;
 
-        if(k==0){
+        if(k === 0){
             // Swap!
             var tmp;
             tmp = closestEdgeA; closestEdgeA = closestEdgeB;    closestEdgeB = tmp;
@@ -60255,7 +63487,7 @@ Narrowphase.prototype.convexConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
 
                 sub(worldEdge, worldPoint1, worldPoint0);
 
-                vec2.rotate(worldNormal, worldEdge, -Math.PI/2); // Normal points out of convex 1
+                vec2.rotate90cw(worldNormal, worldEdge); // Normal points out of convex 1
                 vec2.normalize(worldNormal,worldNormal);
 
                 sub(dist, worldPoint, worldPoint0);
@@ -60267,9 +63499,11 @@ Narrowphase.prototype.convexConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
                 }
             }
 
-            if(insideNumEdges == 3){
+            if(insideNumEdges >= 3){
 
-                if(justTest) return true;
+                if(justTest){
+                    return true;
+                }
 
                 // worldPoint was on the "inside" side of each of the 3 checked edges.
                 // Project it to the center edge and use the projection direction as normal
@@ -60290,21 +63524,21 @@ Narrowphase.prototype.convexConvex = function(  bi,si,xi,ai, bj,sj,xj,aj, justTe
 
                 sub(worldEdge, worldPoint1, worldPoint0);
 
-                vec2.rotate(c.ni, worldEdge, -Math.PI/2); // Normal points out of convex A
-                vec2.normalize(c.ni,c.ni);
+                vec2.rotate90cw(c.normalA, worldEdge); // Normal points out of convex A
+                vec2.normalize(c.normalA,c.normalA);
 
                 sub(dist, worldPoint, worldPoint0); // From edge point to the penetrating point
-                var d = dot(c.ni,dist);             // Penetration
-                vec2.scale(penetrationVec, c.ni, d);     // Vector penetration
+                var d = dot(c.normalA,dist);             // Penetration
+                vec2.scale(penetrationVec, c.normalA, d);     // Vector penetration
 
-                sub(c.ri, worldPoint, offsetA);
-                sub(c.ri, c.ri, penetrationVec);
-                add(c.ri, c.ri, offsetA);
-                sub(c.ri, c.ri, bodyA.position);
+                sub(c.contactPointA, worldPoint, offsetA);
+                sub(c.contactPointA, c.contactPointA, penetrationVec);
+                add(c.contactPointA, c.contactPointA, offsetA);
+                sub(c.contactPointA, c.contactPointA, bodyA.position);
 
-                sub(c.rj, worldPoint, offsetB);
-                add(c.rj, c.rj, offsetB);
-                sub(c.rj, c.rj, bodyB.position);
+                sub(c.contactPointB, worldPoint, offsetB);
+                add(c.contactPointB, c.contactPointB, offsetB);
+                sub(c.contactPointB, c.contactPointB, bodyB.position);
 
                 this.contactEquations.push(c);
 
@@ -60409,7 +63643,7 @@ Narrowphase.findSeparatingAxis = function(c1,offset1,angle1,c2,offset2,angle2,se
             sub(edge, worldPoint1, worldPoint0);
 
             // Get normal - just rotate 90 degrees since vertices are given in CCW
-            vec2.rotate(normal, edge, -Math.PI / 2);
+            vec2.rotate90cw(normal, edge);
             vec2.normalize(normal,normal);
 
             // Project hulls onto that normal
@@ -60428,7 +63662,7 @@ Narrowphase.findSeparatingAxis = function(c1,offset1,angle1,c2,offset2,angle2,se
 
             // Get separating distance
             var dist = b[0] - a[1];
-            overlap = dist < 0;
+            overlap = (dist <= Narrowphase.convexPrecision);
 
             if(maxDist===null || dist > maxDist){
                 vec2.copy(sepAxis, normal);
@@ -60468,14 +63702,13 @@ Narrowphase.getClosestEdge = function(c,angle,axis,flip){
     }
 
     var closestEdge = -1,
-        N = c.vertices.length,
-        halfPi = Math.PI / 2;
+        N = c.vertices.length;
     for(var i=0; i!==N; i++){
         // Get the edge
         sub(edge, c.vertices[(i+1)%N], c.vertices[i%N]);
 
         // Get normal - just rotate 90 degrees since vertices are given in CCW
-        vec2.rotate(normal, edge, -halfPi);
+        vec2.rotate90cw(normal, edge);
         vec2.normalize(normal,normal);
 
         var d = dot(normal,localAxis);
@@ -60551,8 +63784,7 @@ Narrowphase.prototype.circleHeightfield = function( circleBody,circleShape,circl
     // 2. 1. Get point on circle that is closest to the edge (scale normal with -radius)
     // 2. 2. Check if point is inside.
 
-    var found = false,
-        minDist = false;
+    var found = false;
 
     // Check all edges first
     for(var i=idxA; i<idxB; i++){
@@ -60579,48 +63811,40 @@ Narrowphase.prototype.circleHeightfield = function( circleBody,circleShape,circl
         var d = vec2.dot(dist,worldNormal);
         if(candidate[0] >= v0[0] && candidate[0] < v1[0] && d <= 0){
 
-            if(minDist === false || Math.abs(d) < minDist){
+            if(justTest){
+                return true;
+            }
 
-                // Store the candidate point, projected to the edge
-                vec2.scale(dist,worldNormal,-d);
-                vec2.add(minCandidate,candidate,dist);
-                vec2.copy(minCandidateNormal,worldNormal);
+            found = true;
 
-                found = true;
-                minDist = Math.abs(d);
+            // Store the candidate point, projected to the edge
+            vec2.scale(dist,worldNormal,-d);
+            vec2.add(minCandidate,candidate,dist);
+            vec2.copy(minCandidateNormal,worldNormal);
 
-                if(justTest)
-                    return true;
+            var c = this.createContactEquation(hfBody,circleBody,hfShape,circleShape);
+
+            // Normal is out of the heightfield
+            vec2.copy(c.normalA, minCandidateNormal);
+
+            // Vector from circle to heightfield
+            vec2.scale(c.contactPointB,  c.normalA, -radius);
+            add(c.contactPointB, c.contactPointB, circlePos);
+            sub(c.contactPointB, c.contactPointB, circleBody.position);
+
+            vec2.copy(c.contactPointA, minCandidate);
+            vec2.sub(c.contactPointA, c.contactPointA, hfBody.position);
+
+            this.contactEquations.push(c);
+
+            if(this.enableFriction){
+                this.frictionEquations.push( this.createFrictionFromContact(c) );
             }
         }
     }
 
-    if(found){
-
-        var c = this.createContactEquation(hfBody,circleBody,hfShape,circleShape);
-
-        // Normal is out of the heightfield
-        vec2.copy(c.ni, minCandidateNormal);
-
-        // Vector from circle to heightfield
-        vec2.scale(c.rj,  c.ni, -radius);
-        add(c.rj, c.rj, circlePos);
-        sub(c.rj, c.rj, circleBody.position);
-
-        vec2.copy(c.ri, minCandidate);
-        //vec2.sub(c.ri, c.ri, hfPos);
-        vec2.sub(c.ri, c.ri, hfBody.position);
-
-        this.contactEquations.push(c);
-
-        if(this.enableFriction)
-            this.frictionEquations.push( this.createFrictionFromContact(c) );
-
-        return 1;
-    }
-
-
     // Check all vertices
+    found = false;
     if(radius > 0){
         for(var i=idxA; i<=idxB; i++){
 
@@ -60634,421 +63858,116 @@ Narrowphase.prototype.circleHeightfield = function( circleBody,circleShape,circl
 
                 if(justTest) return true;
 
+                found = true;
+
                 var c = this.createContactEquation(hfBody,circleBody,hfShape,circleShape);
 
                 // Construct normal - out of heightfield
-                vec2.copy(c.ni, dist);
-                vec2.normalize(c.ni,c.ni);
+                vec2.copy(c.normalA, dist);
+                vec2.normalize(c.normalA,c.normalA);
 
-                vec2.scale(c.rj, c.ni, -radius);
-                add(c.rj, c.rj, circlePos);
-                sub(c.rj, c.rj, circleBody.position);
+                vec2.scale(c.contactPointB, c.normalA, -radius);
+                add(c.contactPointB, c.contactPointB, circlePos);
+                sub(c.contactPointB, c.contactPointB, circleBody.position);
 
-                sub(c.ri, v0, hfPos);
-                add(c.ri, c.ri, hfPos);
-                sub(c.ri, c.ri, hfBody.position);
+                sub(c.contactPointA, v0, hfPos);
+                add(c.contactPointA, c.contactPointA, hfPos);
+                sub(c.contactPointA, c.contactPointA, hfBody.position);
 
                 this.contactEquations.push(c);
 
                 if(this.enableFriction){
                     this.frictionEquations.push(this.createFrictionFromContact(c));
                 }
-
-                return 1;
             }
         }
+    }
+
+    if(found){
+        return 1;
     }
 
     return 0;
 
 };
 
-},{"../equations/ContactEquation":23,"../equations/FrictionEquation":25,"../math/vec2":33,"../objects/Body":34,"../shapes/Circle":38,"../shapes/Rectangle":44,"../shapes/Shape":45,"../utils/Utils":50}],14:[function(require,module,exports){
-var Plane = require("../shapes/Plane");
-var Broadphase = require("../collision/Broadphase");
+var convexHeightfield_v0 = vec2.create(),
+    convexHeightfield_v1 = vec2.create(),
+    convexHeightfield_tilePos = vec2.create(),
+    convexHeightfield_tempConvexShape = new Convex([vec2.create(),vec2.create(),vec2.create(),vec2.create()]);
+/**
+ * @method circleHeightfield
+ * @param  {Body}           bi
+ * @param  {Circle}         si
+ * @param  {Array}          xi
+ * @param  {Body}           bj
+ * @param  {Heightfield}    sj
+ * @param  {Array}          xj
+ * @param  {Number}         aj
+ */
+Narrowphase.prototype[Shape.RECTANGLE | Shape.HEIGHTFIELD] =
+Narrowphase.prototype[Shape.CONVEX | Shape.HEIGHTFIELD] =
+Narrowphase.prototype.convexHeightfield = function( convexBody,convexShape,convexPos,convexAngle,
+                                                    hfBody,hfShape,hfPos,hfAngle, justTest ){
+    var data = hfShape.data,
+        w = hfShape.elementWidth,
+        v0 = convexHeightfield_v0,
+        v1 = convexHeightfield_v1,
+        tilePos = convexHeightfield_tilePos,
+        tileConvex = convexHeightfield_tempConvexShape;
 
-module.exports = {
-    QuadTree : QuadTree,
-    Node : Node,
-    BoundsNode : BoundsNode,
+    // Get the index of the points to test against
+    var idxA = Math.floor( (convexBody.aabb.lowerBound[0] - hfPos[0]) / w ),
+        idxB = Math.ceil(  (convexBody.aabb.upperBound[0] - hfPos[0]) / w );
+
+    if(idxA < 0) idxA = 0;
+    if(idxB >= data.length) idxB = data.length-1;
+
+    // Get max and min
+    var max = data[idxA],
+        min = data[idxB];
+    for(var i=idxA; i<idxB; i++){
+        if(data[i] < min) min = data[i];
+        if(data[i] > max) max = data[i];
+    }
+
+    if(convexBody.aabb.lowerBound[1] > max){
+        return justTest ? false : 0;
+    }
+
+    var found = false;
+    var numContacts = 0;
+
+    // Loop over all edges
+    for(var i=idxA; i<idxB; i++){
+
+        // Get points
+        vec2.set(v0,     i*w, data[i]  );
+        vec2.set(v1, (i+1)*w, data[i+1]);
+        vec2.add(v0,v0,hfPos);
+        vec2.add(v1,v1,hfPos);
+
+        // Construct a convex
+        var tileHeight = 100; // todo
+        vec2.set(tilePos, (v1[0] + v0[0])*0.5, (v1[1] + v0[1] - tileHeight)*0.5);
+
+        vec2.sub(tileConvex.vertices[0], v1, tilePos);
+        vec2.sub(tileConvex.vertices[1], v0, tilePos);
+        vec2.copy(tileConvex.vertices[2], tileConvex.vertices[1]);
+        vec2.copy(tileConvex.vertices[3], tileConvex.vertices[0]);
+        tileConvex.vertices[2][1] -= tileHeight;
+        tileConvex.vertices[3][1] -= tileHeight;
+
+        // Do convex collision
+        numContacts += this.convexConvex(   convexBody, convexShape, convexPos, convexAngle,
+                                            hfBody, tileConvex, tilePos, 0, justTest);
+    }
+
+    return numContacts;
 };
-
-/**
- * QuadTree data structure. See https://github.com/mikechambers/ExamplesByMesh/tree/master/JavaScript/QuadTree
- * @class QuadTree
- * @constructor
- * @param {Object} An object representing the bounds of the top level of the QuadTree. The object
- * should contain the following properties : x, y, width, height
- * @param {Boolean} pointQuad Whether the QuadTree will contain points (true), or items with bounds
- * (width / height)(false). Default value is false.
- * @param {Number} maxDepth The maximum number of levels that the quadtree will create. Default is 4.
- * @param {Number} maxChildren The maximum number of children that a node can contain before it is split into sub-nodes.
- */
-function QuadTree(bounds, pointQuad, maxDepth, maxChildren){
-    var node;
-    if(pointQuad){
-        node = new Node(bounds, 0, maxDepth, maxChildren);
-    } else {
-        node = new BoundsNode(bounds, 0, maxDepth, maxChildren);
-    }
-
-    /**
-     * The root node of the QuadTree which covers the entire area being segmented.
-     * @property root
-     * @type Node
-     */
-    this.root = node;
-}
-
-/**
- * Inserts an item into the QuadTree.
- * @method insert
- * @param {Object|Array} item The item or Array of items to be inserted into the QuadTree. The item should expose x, y
- * properties that represents its position in 2D space.
- */
-QuadTree.prototype.insert = function(item){
-    if(item instanceof Array){
-        var len = item.length;
-        for(var i = 0; i < len; i++){
-            this.root.insert(item[i]);
-        }
-    } else {
-        this.root.insert(item);
-    }
-}
-
-/**
- * Clears all nodes and children from the QuadTree
- * @method clear
- */
-QuadTree.prototype.clear = function(){
-    this.root.clear();
-}
-
-/**
- * Retrieves all items / points in the same node as the specified item / point. If the specified item
- * overlaps the bounds of a node, then all children in both nodes will be returned.
- * @method retrieve
- * @param {Object} item An object representing a 2D coordinate point (with x, y properties), or a shape
- * with dimensions (x, y, width, height) properties.
- */
-QuadTree.prototype.retrieve = function(item){
-    //get a copy of the array of items
-    var out = this.root.retrieve(item).slice(0);
-    return out;
-}
-
-QuadTree.prototype.getCollisionPairs = function(world){
-
-    var result = [];
-
-    // Add all bodies
-    this.insert(world.bodies);
-
-    /*
-    console.log("bodies",world.bodies.length);
-    console.log("maxDepth",this.root.maxDepth,"maxChildren",this.root.maxChildren);
-    */
-
-    for(var i=0; i!==world.bodies.length; i++){
-        var b = world.bodies[i],
-            items = this.retrieve(b);
-
-        //console.log("items",items.length);
-
-        // Check results
-        for(var j=0, len=items.length; j!==len; j++){
-            var item = items[j];
-
-            if(b === item) continue; // Do not add self
-
-            // Check if they were already added
-            var found = false;
-            for(var k=0, numAdded=result.length; k<numAdded; k+=2){
-                var r1 = result[k],
-                    r2 = result[k+1];
-                if( (r1==item && r2==b) || (r2==item && r1==b) ){
-                    found = true;
-                    break;
-                }
-            }
-            if(!found && Broadphase.boundingRadiusCheck(b,item)){
-                result.push(b,item);
-            }
-        }
-    }
-
-    //console.log("results",result.length);
-
-    // Clear until next
-    this.clear();
-
-    return result;
-};
-
-function Node(bounds, depth, maxDepth, maxChildren){
-    this.bounds = bounds;
-    this.children = [];
-    this.nodes = [];
-
-    if(maxChildren){
-        this.maxChildren = maxChildren;
-    }
-
-    if(maxDepth){
-        this.maxDepth = maxDepth;
-    }
-
-    if(depth){
-        this.depth = depth;
-    }
-}
-
-//subnodes
-Node.prototype.classConstructor = Node;
-
-//children contained directly in the node
-Node.prototype.children = null;
-
-//read only
-Node.prototype.depth = 0;
-
-Node.prototype.maxChildren = 4;
-Node.prototype.maxDepth = 4;
-
-Node.TOP_LEFT = 0;
-Node.TOP_RIGHT = 1;
-Node.BOTTOM_LEFT = 2;
-Node.BOTTOM_RIGHT = 3;
-
-Node.prototype.insert = function(item){
-    if(this.nodes.length){
-        var index = this.findIndex(item);
-        this.nodes[index].insert(item);
-        return;
-    }
-
-    this.children.push(item);
-
-    var len = this.children.length;
-    if(!(this.depth >= this.maxDepth) && len > this.maxChildren) {
-        this.subdivide();
-
-        for(var i = 0; i < len; i++){
-            this.insert(this.children[i]);
-        }
-
-        this.children.length = 0;
-    }
-}
-
-Node.prototype.retrieve = function(item){
-    if(this.nodes.length){
-        var index = this.findIndex(item);
-        return this.nodes[index].retrieve(item);
-    }
-
-    return this.children;
-}
-
-Node.prototype.findIndex = function(item){
-    var b = this.bounds;
-    var left = (item.position[0]-item.boundingRadius > b.x + b.width  / 2) ? false : true;
-    var top =  (item.position[1]-item.boundingRadius > b.y + b.height / 2) ? false : true;
-
-    if(item instanceof Plane){
-        left = top = false; // Will overlap the left/top boundary since it is infinite
-    }
-
-    //top left
-    var index = Node.TOP_LEFT;
-    if(left){
-        if(!top){
-            index = Node.BOTTOM_LEFT;
-        }
-    } else {
-        if(top){
-            index = Node.TOP_RIGHT;
-        } else {
-            index = Node.BOTTOM_RIGHT;
-        }
-    }
-
-    return index;
-}
-
-
-Node.prototype.subdivide = function(){
-    var depth = this.depth + 1;
-
-    var bx = this.bounds.x;
-    var by = this.bounds.y;
-
-    //floor the values
-    var b_w_h = (this.bounds.width / 2);
-    var b_h_h = (this.bounds.height / 2);
-    var bx_b_w_h = bx + b_w_h;
-    var by_b_h_h = by + b_h_h;
-
-    //top left
-    this.nodes[Node.TOP_LEFT] = new this.classConstructor({
-        x:bx,
-        y:by,
-        width:b_w_h,
-        height:b_h_h
-    },
-    depth);
-
-    //top right
-    this.nodes[Node.TOP_RIGHT] = new this.classConstructor({
-        x:bx_b_w_h,
-        y:by,
-        width:b_w_h,
-        height:b_h_h
-    },
-    depth);
-
-    //bottom left
-    this.nodes[Node.BOTTOM_LEFT] = new this.classConstructor({
-        x:bx,
-        y:by_b_h_h,
-        width:b_w_h,
-        height:b_h_h
-    },
-    depth);
-
-
-    //bottom right
-    this.nodes[Node.BOTTOM_RIGHT] = new this.classConstructor({
-        x:bx_b_w_h,
-        y:by_b_h_h,
-        width:b_w_h,
-        height:b_h_h
-    },
-    depth);
-}
-
-Node.prototype.clear = function(){
-    this.children.length = 0;
-
-    var len = this.nodes.length;
-    for(var i = 0; i < len; i++){
-        this.nodes[i].clear();
-    }
-
-    this.nodes.length = 0;
-}
-
-
-// BoundsQuadTree
-
-function BoundsNode(bounds, depth, maxChildren, maxDepth){
-    Node.call(this, bounds, depth, maxChildren, maxDepth);
-    this.stuckChildren = [];
-}
-
-BoundsNode.prototype = new Node();
-BoundsNode.prototype.classConstructor = BoundsNode;
-BoundsNode.prototype.stuckChildren = null;
-
-//we use this to collect and conctenate items being retrieved. This way
-//we dont have to continuously create new Array instances.
-//Note, when returned from QuadTree.retrieve, we then copy the array
-BoundsNode.prototype.out = [];
-
-BoundsNode.prototype.insert = function(item){
-    if(this.nodes.length){
-        var index = this.findIndex(item);
-        var node = this.nodes[index];
-
-        /*
-        console.log("radius:",item.boundingRadius);
-        console.log("item x:",item.position[0] - item.boundingRadius,"x range:",node.bounds.x,node.bounds.x+node.bounds.width);
-        console.log("item y:",item.position[1] - item.boundingRadius,"y range:",node.bounds.y,node.bounds.y+node.bounds.height);
-        */
-
-        //todo: make _bounds bounds
-        if( !(item instanceof Plane) && // Plane is infinite.. Make it a "stuck" child
-            item.position[0] - item.boundingRadius >= node.bounds.x &&
-            item.position[0] + item.boundingRadius <= node.bounds.x + node.bounds.width &&
-            item.position[1] - item.boundingRadius >= node.bounds.y &&
-            item.position[1] + item.boundingRadius <= node.bounds.y + node.bounds.height){
-            this.nodes[index].insert(item);
-        } else {
-            this.stuckChildren.push(item);
-        }
-
-        return;
-    }
-
-    this.children.push(item);
-
-    var len = this.children.length;
-
-    if(this.depth < this.maxDepth && len > this.maxChildren){
-        this.subdivide();
-
-        for(var i=0; i<len; i++){
-            this.insert(this.children[i]);
-        }
-
-        this.children.length = 0;
-    }
-}
-
-BoundsNode.prototype.getChildren = function(){
-    return this.children.concat(this.stuckChildren);
-}
-
-BoundsNode.prototype.retrieve = function(item){
-    var out = this.out;
-    out.length = 0;
-
-    if(this.nodes.length){
-        var index = this.findIndex(item);
-        out.push.apply(out, this.nodes[index].retrieve(item));
-    }
-
-    out.push.apply(out, this.stuckChildren);
-    out.push.apply(out, this.children);
-
-    return out;
-}
-
-BoundsNode.prototype.clear = function(){
-
-    this.stuckChildren.length = 0;
-
-    //array
-    this.children.length = 0;
-
-    var len = this.nodes.length;
-
-    if(!len){
-        return;
-    }
-
-    for(var i = 0; i < len; i++){
-        this.nodes[i].clear();
-    }
-
-    //array
-    this.nodes.length = 0;
-
-    //we could call the super clear function but for now, im just going to inline it
-    //call the hidden super.clear, and make sure its called with this = this instance
-    //Object.getPrototypeOf(BoundsNode.prototype).clear.call(this);
-}
-
-
-},{"../collision/Broadphase":10,"../shapes/Plane":43}],15:[function(require,module,exports){
-var Circle = require('../shapes/Circle')
-,   Plane = require('../shapes/Plane')
-,   Shape = require('../shapes/Shape')
-,   Particle = require('../shapes/Particle')
-,   Utils = require('../utils/Utils')
-,   Broadphase = require('../collision/Broadphase')
-,   vec2 = require('../math/vec2')
+},{"../equations/ContactEquation":21,"../equations/Equation":22,"../equations/FrictionEquation":23,"../math/vec2":30,"../objects/Body":31,"../shapes/Circle":35,"../shapes/Convex":36,"../shapes/Rectangle":41,"../shapes/Shape":42,"../utils/TupleDictionary":46,"../utils/Utils":47}],13:[function(require,module,exports){
+var Utils = require('../utils/Utils')
+,   Broadphase = require('../collision/Broadphase');
 
 module.exports = SAPBroadphase;
 
@@ -61064,17 +63983,10 @@ function SAPBroadphase(){
 
     /**
      * List of bodies currently in the broadphase.
-     * @property axisListX
+     * @property axisList
      * @type {Array}
      */
-    this.axisListX = [];
-
-    /**
-     * List of bodies currently in the broadphase.
-     * @property axisListY
-     * @type {Array}
-     */
-    this.axisListY = [];
+    this.axisList = [];
 
     /**
      * The world to search in.
@@ -61083,24 +63995,27 @@ function SAPBroadphase(){
      */
     this.world = null;
 
-    var axisListX = this.axisListX,
-        axisListY = this.axisListY;
+    /**
+     * The axis to sort along.
+     * @property axisIndex
+     * @type {Number}
+     */
+    this.axisIndex = 0;
+
+    var axisList = this.axisList;
 
     this._addBodyHandler = function(e){
-        axisListX.push(e.body);
-        axisListY.push(e.body);
+        axisList.push(e.body);
     };
 
     this._removeBodyHandler = function(e){
-        // Remove from X list
-        var idx = axisListX.indexOf(e.body);
-        if(idx !== -1) axisListX.splice(idx,1);
-
-        // Remove from Y list
-        idx = axisListY.indexOf(e.body);
-        if(idx !== -1) axisListY.splice(idx,1);
-    }
-};
+        // Remove from list
+        var idx = axisList.indexOf(e.body);
+        if(idx !== -1){
+            axisList.splice(idx,1);
+        }
+    };
+}
 SAPBroadphase.prototype = new Broadphase();
 
 /**
@@ -61110,11 +64025,10 @@ SAPBroadphase.prototype = new Broadphase();
  */
 SAPBroadphase.prototype.setWorld = function(world){
     // Clear the old axis array
-    this.axisListX.length = this.axisListY.length = 0;
+    this.axisList.length = 0;
 
     // Add all bodies from the new world
-    Utils.appendArray(this.axisListX,world.bodies);
-    Utils.appendArray(this.axisListY,world.bodies);
+    Utils.appendArray(this.axisList, world.bodies);
 
     // Remove old handlers, if any
     world
@@ -61128,44 +64042,26 @@ SAPBroadphase.prototype.setWorld = function(world){
 };
 
 /**
- * Sorts bodies along the X axis.
- * @method sortAxisListX
+ * Sorts bodies along an axis.
+ * @method sortAxisList
  * @param {Array} a
+ * @param {number} axisIndex
  * @return {Array}
  */
-SAPBroadphase.sortAxisListX = function(a){
-    for(var i=1,l=a.length;i<l;i++) {
+SAPBroadphase.sortAxisList = function(a, axisIndex){
+    axisIndex = axisIndex|0;
+    for(var i=1,l=a.length; i<l; i++) {
         var v = a[i];
         for(var j=i - 1;j>=0;j--) {
-            if(a[j].aabb.lowerBound[0] <= v.aabb.lowerBound[0])
+            if(a[j].aabb.lowerBound[axisIndex] <= v.aabb.lowerBound[axisIndex]){
                 break;
+            }
             a[j+1] = a[j];
         }
         a[j+1] = v;
     }
     return a;
 };
-
-/**
- * Sorts bodies along the Y axis.
- * @method sortAxisListY
- * @param {Array} a
- * @return {Array}
- */
-SAPBroadphase.sortAxisListY = function(a){
-    for(var i=1,l=a.length;i<l;i++) {
-        var v = a[i];
-        for(var j=i - 1;j>=0;j--) {
-            if(a[j].aabb.lowerBound[1] <= v.aabb.lowerBound[1])
-                break;
-            a[j+1] = a[j];
-        }
-        a[j+1] = v;
-    }
-    return a;
-};
-
-var preliminaryList = { keys:[] };
 
 /**
  * Get the colliding pairs
@@ -61174,100 +64070,51 @@ var preliminaryList = { keys:[] };
  * @return {Array}
  */
 SAPBroadphase.prototype.getCollisionPairs = function(world){
-    var bodiesX = this.axisListX,
-        bodiesY = this.axisListY,
+    var bodies = this.axisList,
         result = this.result,
-        axisIndex = this.axisIndex,
-        i,j;
+        axisIndex = this.axisIndex;
 
     result.length = 0;
 
     // Update all AABBs if needed
-    for(i=0; i!==bodiesX.length; i++){
-        var b = bodiesX[i];
-        if(b.aabbNeedsUpdate) b.updateAABB();
+    var l = bodies.length;
+    while(l--){
+        var b = bodies[l];
+        if(b.aabbNeedsUpdate){
+            b.updateAABB();
+        }
     }
 
     // Sort the lists
-    SAPBroadphase.sortAxisListX(bodiesX);
-    SAPBroadphase.sortAxisListY(bodiesY);
+    SAPBroadphase.sortAxisList(bodies, axisIndex);
 
     // Look through the X list
-    for(i=0, N=bodiesX.length; i!==N; i++){
-        var bi = bodiesX[i];
+    for(var i=0, N=bodies.length|0; i!==N; i++){
+        var bi = bodies[i];
 
-        for(j=i+1; j<N; j++){
-            var bj = bodiesX[j];
+        for(var j=i+1; j<N; j++){
+            var bj = bodies[j];
 
             // Bounds overlap?
-            if(!SAPBroadphase.checkBounds(bi,bj,0))
+            var overlaps = (bj.aabb.lowerBound[axisIndex] <= bi.aabb.upperBound[axisIndex]);
+            if(!overlaps){
                 break;
+            }
 
-            // add pair to preliminary list
-            if(Broadphase.canCollide(bi,bj)){
-                var key = bi.id < bj.id ? bi.id+' '+bj.id : bj.id+' '+bi.id;
-                preliminaryList[key] = true;
-                preliminaryList.keys.push(key);
+            if(Broadphase.canCollide(bi,bj) && this.boundingVolumeCheck(bi,bj)){
+                result.push(bi,bj);
             }
         }
     }
-
-    // Look through the Y list
-    for(i=0, N=bodiesY.length; i!==N; i++){
-        var bi = bodiesY[i];
-
-        for(j=i+1; j<N; j++){
-            var bj = bodiesY[j];
-
-            if(!SAPBroadphase.checkBounds(bi,bj,1))
-                break;
-
-            // If in preliminary list, add to final result
-            if(Broadphase.canCollide(bi,bj)){
-                var key = bi.id < bj.id ? bi.id+' '+bj.id : bj.id+' '+bi.id;
-                if(preliminaryList[key] && Broadphase.boundingRadiusCheck(bi,bj))
-                    result.push(bi,bj);
-            }
-        }
-    }
-
-    // Empty prel list
-    var keys = preliminaryList.keys;
-    for(i=0, N=keys.length; i!==N; i++){
-        delete preliminaryList[keys[i]];
-    }
-    keys.length = 0;
 
     return result;
 };
 
-/**
- * Check if the bounds of two bodies overlap, along the given SAP axis.
- * @static
- * @method checkBounds
- * @param  {Body} bi
- * @param  {Body} bj
- * @param  {Number} axisIndex
- * @return {Boolean}
- */
-SAPBroadphase.checkBounds = function(bi,bj,axisIndex){
-    /*
-    var biPos = bi.position[axisIndex],
-        ri = bi.boundingRadius,
-        bjPos = bj.position[axisIndex],
-        rj = bj.boundingRadius,
-        boundA1 = biPos-ri,
-        boundA2 = biPos+ri,
-        boundB1 = bjPos-rj,
-        boundB2 = bjPos+rj;
 
-    return boundB1 < boundA2;
-    */
-    return bj.aabb.lowerBound[axisIndex] < bi.aabb.upperBound[axisIndex];
-};
-
-},{"../collision/Broadphase":10,"../math/vec2":33,"../shapes/Circle":38,"../shapes/Particle":42,"../shapes/Plane":43,"../shapes/Shape":45,"../utils/Utils":50}],16:[function(require,module,exports){
+},{"../collision/Broadphase":9,"../utils/Utils":47}],14:[function(require,module,exports){
 module.exports = Constraint;
+
+var Utils = require('../utils/Utils');
 
 /**
  * Base constraint class.
@@ -61277,13 +64124,21 @@ module.exports = Constraint;
  * @author schteppe
  * @param {Body} bodyA
  * @param {Body} bodyB
+ * @param {Number} type
+ * @param {Object} [options]
+ * @param {Object} [options.collideConnected=true]
  */
-function Constraint(bodyA,bodyB,type){
-
+function Constraint(bodyA, bodyB, type, options){
     this.type = type;
+
+    options = Utils.defaults(options,{
+        collideConnected : true,
+        wakeUpBodies : true,
+    });
 
     /**
      * Equations to be solved in this constraint
+     *
      * @property equations
      * @type {Array}
      */
@@ -61303,17 +64158,32 @@ function Constraint(bodyA,bodyB,type){
      */
     this.bodyB = bodyB;
 
-    if(bodyA) bodyA.wakeUp();
-    if(bodyB) bodyB.wakeUp();
-};
+    /**
+     * Set to true if you want the connected bodies to collide.
+     * @property collideConnected
+     * @type {Boolean}
+     * @default true
+     */
+    this.collideConnected = options.collideConnected;
+
+    // Wake up bodies when connected
+    if(options.wakeUpBodies){
+        if(bodyA){
+            bodyA.wakeUp();
+        }
+        if(bodyB){
+            bodyB.wakeUp();
+        }
+    }
+}
 
 /**
- * To be implemented by subclasses. Should update the internal constraint parameters.
+ * Updates the internal constraint parameters before solve.
  * @method update
  */
-/*Constraint.prototype.update = function(){
+Constraint.prototype.update = function(){
     throw new Error("method update() not implmemented in this Constraint subclass!");
-};*/
+};
 
 Constraint.DISTANCE = 1;
 Constraint.GEAR = 2;
@@ -61321,7 +64191,35 @@ Constraint.LOCK = 3;
 Constraint.PRISMATIC = 4;
 Constraint.REVOLUTE = 5;
 
-},{}],17:[function(require,module,exports){
+/**
+ * Set stiffness for this constraint.
+ * @method setStiffness
+ * @param {Number} stiffness
+ */
+Constraint.prototype.setStiffness = function(stiffness){
+    var eqs = this.equations;
+    for(var i=0; i !== eqs.length; i++){
+        var eq = eqs[i];
+        eq.stiffness = stiffness;
+        eq.needsUpdate = true;
+    }
+};
+
+/**
+ * Set relaxation for this constraint.
+ * @method setRelaxation
+ * @param {Number} relaxation
+ */
+Constraint.prototype.setRelaxation = function(relaxation){
+    var eqs = this.equations;
+    for(var i=0; i !== eqs.length; i++){
+        var eq = eqs[i];
+        eq.relaxation = relaxation;
+        eq.needsUpdate = true;
+    }
+};
+
+},{"../utils/Utils":47}],15:[function(require,module,exports){
 var Constraint = require('./Constraint')
 ,   Equation = require('../equations/Equation')
 ,   vec2 = require('../math/vec2')
@@ -61336,12 +64234,15 @@ module.exports = DistanceConstraint;
  * @author schteppe
  * @param {Body} bodyA
  * @param {Body} bodyB
- * @param {number} dist The distance to keep between the bodies.
- * @param {number} maxForce
- * @extends {Constraint}
+ * @param {number} distance The distance to keep between the bodies.
+ * @param {object} [options]
+ * @param {object} [options.maxForce=Number.MAX_VALUE] Maximum force to apply.
+ * @extends Constraint
  */
-function DistanceConstraint(bodyA,bodyB,distance,maxForce){
-    Constraint.call(this,bodyA,bodyB,Constraint.DISTANCE);
+function DistanceConstraint(bodyA,bodyB,distance,options){
+    options = options || {};
+
+    Constraint.call(this,bodyA,bodyB,Constraint.DISTANCE,options);
 
     /**
      * The distance to keep.
@@ -61350,16 +64251,68 @@ function DistanceConstraint(bodyA,bodyB,distance,maxForce){
      */
     this.distance = distance;
 
-    if(typeof(maxForce)==="undefined" )
+    /**
+     * Local anchor in body A.
+     * @property localAnchorA
+     * @type {Array}
+     */
+    this.localAnchorA = vec2.create();
+
+    /**
+     * Local anchor in body B.
+     * @property localAnchorB
+     * @type {Array}
+     */
+    this.localAnchorB = vec2.create();
+
+    var localAnchorA = this.localAnchorA;
+    var localAnchorB = this.localAnchorB;
+
+    var maxForce;
+    if(typeof(options.maxForce)==="undefined" ){
         maxForce = Number.MAX_VALUE;
+    } else {
+        maxForce = options.maxForce;
+    }
 
     var normal = new Equation(bodyA,bodyB,-maxForce,maxForce); // Just in the normal direction
     this.equations = [ normal ];
 
+    // g = (xi - xj).dot(n)
+    // dg/dt = (vi - vj).dot(n) = G*W = [n 0 -n 0] * [vi wi vj wj]'
+
+    // ...and if we were to include offset points (TODO for now):
+    // g =
+    //      (xj + rj - xi - ri).dot(n) - distance
+    //
+    // dg/dt =
+    //      (vj + wj x rj - vi - wi x ri).dot(n) =
+    //      { term 2 is near zero } =
+    //      [-n   -ri x n   n   rj x n] * [vi wi vj wj]' =
+    //      G * W
+    //
+    // => G = [-n -rixn n rjxn]
+
     var r = vec2.create();
+    var ri = vec2.create(); // worldAnchorA
+    var rj = vec2.create(); // worldAnchorB
+    var that = this;
     normal.computeGq = function(){
+        var bodyA = this.bodyA,
+            bodyB = this.bodyB,
+            xi = bodyA.position,
+            xj = bodyB.position;
+
+        // Transform local anchors to world
+        vec2.rotate(ri, localAnchorA, bodyA.angle);
+        vec2.rotate(rj, localAnchorB, bodyB.angle);
+
+        vec2.add(r, xi, rj);
+        vec2.sub(r, r, ri);
+        vec2.sub(r, r, xi);
+
         vec2.sub(r, bodyB.position, bodyA.position);
-        return vec2.length(r)-distance;
+        return vec2.length(r) - that.distance;
     };
 
     // Make the contact constraint bilateral
@@ -61372,12 +64325,34 @@ DistanceConstraint.prototype = new Constraint();
  * @method update
  */
 var n = vec2.create();
+var ri = vec2.create(); // worldAnchorA
+var rj = vec2.create(); // worldAnchorB
 DistanceConstraint.prototype.update = function(){
     var normal = this.equations[0],
         bodyA = this.bodyA,
         bodyB = this.bodyB,
         distance = this.distance,
+        xi = bodyA.position,
+        xj = bodyB.position,
         G = normal.G;
+
+    // Transform local anchors to world
+    vec2.rotate(ri, this.localAnchorA, bodyA.angle);
+    vec2.rotate(rj, this.localAnchorB, bodyB.angle);
+
+    // Caluclate cross products
+    var rixn = vec2.crossLength(ri, n),
+        rjxn = vec2.crossLength(rj, n);
+
+    /*
+    // G = [-n -rixn n rjxn]
+    G[0] = -n[0];
+    G[1] = -n[1];
+    G[2] = -rixn;
+    G[3] = n[0];
+    G[4] = n[1];
+    G[5] = rjxn;
+    */
 
     vec2.sub(n, bodyB.position, bodyA.position);
     vec2.normalize(n,n);
@@ -61408,7 +64383,7 @@ DistanceConstraint.prototype.getMaxForce = function(f){
     return normal.maxForce;
 };
 
-},{"../equations/Equation":24,"../math/vec2":33,"./Constraint":16}],18:[function(require,module,exports){
+},{"../equations/Equation":22,"../math/vec2":30,"./Constraint":14}],16:[function(require,module,exports){
 var Constraint = require('./Constraint')
 ,   Equation = require('../equations/Equation')
 ,   AngleLockEquation = require('../equations/AngleLockEquation')
@@ -61423,15 +64398,19 @@ module.exports = GearConstraint;
  * @author schteppe
  * @param {Body}            bodyA
  * @param {Body}            bodyB
- * @param {Number}          maxForce The maximum force that should be applied to constrain the bodies.
- * @extends {Constraint}
+ * @param {Object}          [options]
+ * @param {Number}          [options.angle=0] Relative angle between the bodies.
+ * @param {Number}          [options.ratio=1] Gear ratio.
+ * @param {Number}          [options.maxTorque] Maximum torque to apply.
+ * @extends Constraint
  * @todo Ability to specify world points
  */
 function GearConstraint(bodyA, bodyB, options){
-    Constraint.call(this,bodyA,bodyB,Constraint.GEAR);
+    options = options || {};
 
-    // Equations to be fed to the solver
-    var eqs = this.equations = [
+    Constraint.call(this, bodyA, bodyB, Constraint.GEAR, options);
+
+    this.equations = [
         new AngleLockEquation(bodyA,bodyB,options),
     ];
 
@@ -61440,25 +64419,48 @@ function GearConstraint(bodyA, bodyB, options){
      * @property angle
      * @type {Number}
      */
-    this.angle = typeof(options.angle) == "number" ? options.angle : 0;
+    this.angle = typeof(options.angle) === "number" ? options.angle : 0;
 
     /**
-     * The gear ratio
+     * The gear ratio.
      * @property ratio
      * @type {Number}
      */
-    this.ratio = typeof(options.ratio) == "number" ? options.ratio : 1;
+    this.ratio = typeof(options.ratio) === "number" ? options.ratio : 1;
+
+    // Set max torque
+    if(typeof(options.maxTorque) === "number"){
+        this.setMaxTorque(options.maxTorque);
+    }
 }
 GearConstraint.prototype = new Constraint();
 
 GearConstraint.prototype.update = function(){
     var eq = this.equations[0];
-    if(eq.ratio != this.ratio)
+    if(eq.ratio !== this.ratio){
         eq.setRatio(this.ratio);
+    }
     eq.angle = this.angle;
 };
 
-},{"../equations/AngleLockEquation":22,"../equations/Equation":24,"../math/vec2":33,"./Constraint":16}],19:[function(require,module,exports){
+/**
+ * Set the max torque for the constraint.
+ * @method setMaxTorque
+ * @param {Number} torque
+ */
+GearConstraint.prototype.setMaxTorque = function(torque){
+    this.equations[0].setMaxTorque(torque);
+};
+
+/**
+ * Get the max torque for the constraint.
+ * @method getMaxTorque
+ * @return {Number}
+ */
+GearConstraint.prototype.getMaxTorque = function(torque){
+    return this.equations[0].maxForce;
+};
+},{"../equations/AngleLockEquation":20,"../equations/Equation":22,"../math/vec2":30,"./Constraint":14}],17:[function(require,module,exports){
 var Constraint = require('./Constraint')
 ,   vec2 = require('../math/vec2')
 ,   Equation = require('../equations/Equation')
@@ -61474,14 +64476,16 @@ module.exports = LockConstraint;
  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {Object} [options]
- * @param {Array}  [options.localOffsetB] The offset of bodyB in bodyA's frame.
- * @param {number} [options.localAngleB]  The angle of bodyB in bodyA's frame.
+ * @param {Array}  [options.localOffsetB] The offset of bodyB in bodyA's frame. Default is the zero vector.
+ * @param {number} [options.localAngleB=0]  The angle of bodyB in bodyA's frame.
  * @param {number} [options.maxForce]
- * @extends {Constraint}
+ * @extends Constraint
  */
-function LockConstraint(bodyA,bodyB,options){
-    Constraint.call(this,bodyA,bodyB,Constraint.LOCK);
-    var maxForce = ( typeof(options.maxForce)=="undefined" ? Number.MAX_VALUE : options.maxForce );
+function LockConstraint(bodyA, bodyB, options){
+    options = options || {};
+
+    Constraint.call(this,bodyA,bodyB,Constraint.LOCK,options);
+    var maxForce = ( typeof(options.maxForce)==="undefined" ? Number.MAX_VALUE : options.maxForce );
     var localOffsetB = options.localOffsetB || vec2.fromValues(0,0);
     localOffsetB = vec2.fromValues(localOffsetB[0],localOffsetB[1]);
 
@@ -61514,23 +64518,24 @@ function LockConstraint(bodyA,bodyB,options){
         rot =   new Equation(bodyA,bodyB,-maxForce,maxForce);
 
     var l = vec2.create(),
-        g = vec2.create();
+        g = vec2.create(),
+        that = this;
     x.computeGq = function(){
-        vec2.rotate(l,localOffsetB,bodyA.angle);
-        vec2.sub(g,bodyB.position,bodyA.position);
-        vec2.sub(g,g,l);
+        vec2.rotate(l, that.localOffsetB, bodyA.angle);
+        vec2.sub(g, bodyB.position, bodyA.position);
+        vec2.sub(g, g, l);
         return g[0];
-    }
+    };
     y.computeGq = function(){
-        vec2.rotate(l,localOffsetB,bodyA.angle);
-        vec2.sub(g,bodyB.position,bodyA.position);
-        vec2.sub(g,g,l);
+        vec2.rotate(l, that.localOffsetB, bodyA.angle);
+        vec2.sub(g, bodyB.position, bodyA.position);
+        vec2.sub(g, g, l);
         return g[1];
     };
     var r = vec2.create(),
         t = vec2.create();
     rot.computeGq = function(){
-        vec2.rotate(r,localOffsetB,bodyB.angle - localAngleB);
+        vec2.rotate(r, that.localOffsetB, bodyB.angle - that.localAngleB);
         vec2.scale(r,r,-1);
         vec2.sub(g,bodyA.position,bodyB.position);
         vec2.add(g,g,r);
@@ -61539,13 +64544,44 @@ function LockConstraint(bodyA,bodyB,options){
         return vec2.dot(g,t);
     };
 
+    /**
+     * The offset of bodyB in bodyA's frame.
+     * @property {Array} localOffsetB
+     */
     this.localOffsetB = localOffsetB;
-    this.localAngleB =  localAngleB;
-    this.maxForce = maxForce;
 
-    var eqs = this.equations = [ x, y, rot ];
+    /**
+     * The offset angle of bodyB in bodyA's frame.
+     * @property {Number} localAngleB
+     */
+    this.localAngleB =  localAngleB;
+
+    this.equations.push(x, y, rot);
+    this.setMaxForce(maxForce);
 }
 LockConstraint.prototype = new Constraint();
+
+/**
+ * Set the maximum force to be applied.
+ * @method setMaxForce
+ * @param {Number} force
+ */
+LockConstraint.prototype.setMaxForce = function(force){
+    var eqs = this.equations;
+    for(var i=0; i<this.equations.length; i++){
+        eqs[i].maxForce =  force;
+        eqs[i].minForce = -force;
+    }
+};
+
+/**
+ * Get the max force.
+ * @method getMaxForce
+ * @return {Number}
+ */
+LockConstraint.prototype.getMaxForce = function(){
+    return this.equations[0].maxForce;
+};
 
 var l = vec2.create();
 var r = vec2.create();
@@ -61583,7 +64619,7 @@ LockConstraint.prototype.update = function(){
     rot.G[5] =  vec2.crossLength(r,t);
 };
 
-},{"../equations/Equation":24,"../math/vec2":33,"./Constraint":16}],20:[function(require,module,exports){
+},{"../equations/Equation":22,"../math/vec2":30,"./Constraint":14}],18:[function(require,module,exports){
 var Constraint = require('./Constraint')
 ,   ContactEquation = require('../equations/ContactEquation')
 ,   Equation = require('../equations/Equation')
@@ -61597,20 +64633,22 @@ module.exports = PrismaticConstraint;
  *
  * @class PrismaticConstraint
  * @constructor
- * @extends {Constraint}
+ * @extends Constraint
  * @author schteppe
  * @param {Body}    bodyA
  * @param {Body}    bodyB
- * @param {Object}  options
- * @param {Number}  options.maxForce                Max force to be applied by the constraint
- * @param {Array}   options.localAnchorA            Body A's anchor point, defined in its own local frame.
- * @param {Array}   options.localAnchorB            Body B's anchor point, defined in its own local frame.
- * @param {Array}   options.localAxisA              An axis, defined in body A frame, that body B's anchor point may slide along.
- * @param {Boolean} options.disableRotationalLock   If set to true, bodyB will be free to rotate around its anchor point.
+ * @param {Object}  [options]
+ * @param {Number}  [options.maxForce]                Max force to be applied by the constraint
+ * @param {Array}   [options.localAnchorA]            Body A's anchor point, defined in its own local frame.
+ * @param {Array}   [options.localAnchorB]            Body B's anchor point, defined in its own local frame.
+ * @param {Array}   [options.localAxisA]              An axis, defined in body A frame, that body B's anchor point may slide along.
+ * @param {Boolean} [options.disableRotationalLock]   If set to true, bodyB will be free to rotate around its anchor point.
+ * @param {Number}  [options.upperLimit]
+ * @param {Number}  [options.lowerLimit]
  */
-function PrismaticConstraint(bodyA,bodyB,options){
+function PrismaticConstraint(bodyA, bodyB, options){
     options = options || {};
-    Constraint.call(this,bodyA,bodyB,Constraint.PRISMATIC);
+    Constraint.call(this,bodyA,bodyB,Constraint.PRISMATIC,options);
 
     // Get anchors
     var localAnchorA = vec2.fromValues(0,0),
@@ -61668,7 +64706,7 @@ function PrismaticConstraint(bodyA,bodyB,options){
         // g = ( xj + rj - xi - ri ) * t
         return vec2.dot(gg,t);
     };
-    trans.update = function(){
+    trans.updateJacobian = function(){
         var G = this.G,
             xi = bodyA.position,
             xj = bodyB.position;
@@ -61685,7 +64723,7 @@ function PrismaticConstraint(bodyA,bodyB,options){
         G[3] = t[0];
         G[4] = t[1];
         G[5] = vec2.crossLength(rj,t);
-    }
+    };
     this.equations.push(trans);
 
     // Rotational part
@@ -61708,28 +64746,28 @@ function PrismaticConstraint(bodyA,bodyB,options){
      * @property lowerLimitEnabled
      * @type {Boolean}
      */
-    this.lowerLimitEnabled = false;
+    this.lowerLimitEnabled = typeof(options.lowerLimit)!=="undefined" ? true : false;
 
     /**
      * Set to true to enable upper limit.
      * @property upperLimitEnabled
      * @type {Boolean}
      */
-    this.upperLimitEnabled = false;
+    this.upperLimitEnabled = typeof(options.upperLimit)!=="undefined" ? true : false;
 
     /**
      * Lower constraint limit. The constraint position is forced to be larger than this value.
      * @property lowerLimit
      * @type {Number}
      */
-    this.lowerLimit = 0;
+    this.lowerLimit = typeof(options.lowerLimit)!=="undefined" ? options.lowerLimit : 0;
 
     /**
      * Upper constraint limit. The constraint position is forced to be smaller than this value.
      * @property upperLimit
      * @type {Number}
      */
-    this.upperLimit = 1;
+    this.upperLimit = typeof(options.upperLimit)!=="undefined" ? options.upperLimit : 1;
 
     // Equations used for limits
     this.upperLimitEquation = new ContactEquation(bodyA,bodyB);
@@ -61766,8 +64804,8 @@ function PrismaticConstraint(bodyA,bodyB,options){
     motorEquation.computeGq = function(){ return 0; };
     motorEquation.computeGW = function(){
         var G = this.G,
-            bi = this.bi,
-            bj = this.bj,
+            bi = this.bodyA,
+            bj = this.bodyB,
             vi = bi.velocity,
             vj = bj.velocity,
             wi = bi.angularVelocity,
@@ -61802,7 +64840,7 @@ PrismaticConstraint.prototype.update = function(){
         localAnchorA = this.localAnchorA,
         localAnchorB = this.localAnchorB;
 
-    trans.update();
+    trans.updateJacobian();
 
     // Transform local things to world
     vec2.rotate(worldAxisA,      localAxisA,      bodyA.angle);
@@ -61829,7 +64867,7 @@ PrismaticConstraint.prototype.update = function(){
         Limits strategy:
         Add contact equation, with normal along the constraint axis.
         min/maxForce is set so the constraint is repulsive in the correct direction.
-        Some offset is added to either equation.ri or .rj to get the correct upper/lower limit.
+        Some offset is added to either equation.contactPointA or .contactPointB to get the correct upper/lower limit.
 
                  ^
                  |
@@ -61848,11 +64886,11 @@ PrismaticConstraint.prototype.update = function(){
 
     if(this.upperLimitEnabled && relPosition > upperLimit){
         // Update contact constraint normal, etc
-        vec2.scale(upperLimitEquation.ni, worldAxisA, -1);
-        vec2.sub(upperLimitEquation.ri, worldAnchorA, bodyA.position);
-        vec2.sub(upperLimitEquation.rj, worldAnchorB, bodyB.position);
+        vec2.scale(upperLimitEquation.normalA, worldAxisA, -1);
+        vec2.sub(upperLimitEquation.contactPointA, worldAnchorA, bodyA.position);
+        vec2.sub(upperLimitEquation.contactPointB, worldAnchorB, bodyB.position);
         vec2.scale(tmp,worldAxisA,upperLimit);
-        vec2.add(upperLimitEquation.ri,upperLimitEquation.ri,tmp);
+        vec2.add(upperLimitEquation.contactPointA,upperLimitEquation.contactPointA,tmp);
         if(eqs.indexOf(upperLimitEquation)==-1)
             eqs.push(upperLimitEquation);
     } else {
@@ -61862,11 +64900,11 @@ PrismaticConstraint.prototype.update = function(){
 
     if(this.lowerLimitEnabled && relPosition < lowerLimit){
         // Update contact constraint normal, etc
-        vec2.scale(lowerLimitEquation.ni, worldAxisA, 1);
-        vec2.sub(lowerLimitEquation.ri, worldAnchorA, bodyA.position);
-        vec2.sub(lowerLimitEquation.rj, worldAnchorB, bodyB.position);
+        vec2.scale(lowerLimitEquation.normalA, worldAxisA, 1);
+        vec2.sub(lowerLimitEquation.contactPointA, worldAnchorA, bodyA.position);
+        vec2.sub(lowerLimitEquation.contactPointB, worldAnchorB, bodyB.position);
         vec2.scale(tmp,worldAxisA,lowerLimit);
-        vec2.sub(lowerLimitEquation.rj,lowerLimitEquation.rj,tmp);
+        vec2.sub(lowerLimitEquation.contactPointB,lowerLimitEquation.contactPointB,tmp);
         if(eqs.indexOf(lowerLimitEquation)==-1)
             eqs.push(lowerLimitEquation);
     } else {
@@ -61896,7 +64934,7 @@ PrismaticConstraint.prototype.disableMotor = function(){
     this.motorEnabled = false;
 };
 
-},{"../equations/ContactEquation":23,"../equations/Equation":24,"../equations/RotationalLockEquation":26,"../math/vec2":33,"./Constraint":16}],21:[function(require,module,exports){
+},{"../equations/ContactEquation":21,"../equations/Equation":22,"../equations/RotationalLockEquation":24,"../math/vec2":30,"./Constraint":14}],19:[function(require,module,exports){
 var Constraint = require('./Constraint')
 ,   Equation = require('../equations/Equation')
 ,   RotationalVelocityEquation = require('../equations/RotationalVelocityEquation')
@@ -61916,21 +64954,31 @@ var worldPivotA = vec2.create(),
  * @class RevoluteConstraint
  * @constructor
  * @author schteppe
- * @param {Body}            bodyA
- * @param {Float32Array}    pivotA The point relative to the center of mass of bodyA which bodyA is constrained to.
- * @param {Body}            bodyB Body that will be constrained in a similar way to the same point as bodyA. We will therefore get sort of a link between bodyA and bodyB. If not specified, bodyA will be constrained to a static point.
- * @param {Float32Array}    pivotB See pivotA.
- * @param {Number}          maxForce The maximum force that should be applied to constrain the bodies.
- * @extends {Constraint}
+ * @param {Body}    bodyA
+ * @param {Array}   pivotA              The point relative to the center of mass of bodyA which bodyA is constrained to.
+ * @param {Body}    bodyB               Body that will be constrained in a similar way to the same point as bodyA. We will therefore get sort of a link between bodyA and bodyB. If not specified, bodyA will be constrained to a static point.
+ * @param {Array}   pivotB              See pivotA.
+ * @param {Object}  [options]
+ * @param {Number}  [options.maxForce]  The maximum force that should be applied to constrain the bodies.
+ * @extends Constraint
  * @todo Ability to specify world points
+ * @todo put pivot parameters in the options object?
  */
-function RevoluteConstraint(bodyA, pivotA, bodyB, pivotB, maxForce){
-    Constraint.call(this,bodyA,bodyB,Constraint.REVOLUTE);
+function RevoluteConstraint(bodyA, pivotA, bodyB, pivotB, options){
+    options = options || {};
+    Constraint.call(this,bodyA,bodyB,Constraint.REVOLUTE,options);
 
-    maxForce = this.maxForce = typeof(maxForce)!="undefined" ? maxForce : Number.MAX_VALUE;
+    var maxForce = this.maxForce = typeof(options.maxForce) !== "undefined" ? options.maxForce : Number.MAX_VALUE;
 
-    this.pivotA = pivotA;
-    this.pivotB = pivotB;
+    /**
+     * @property {Array} pivotA
+     */
+    this.pivotA = vec2.fromValues(pivotA[0],pivotA[1]);
+
+    /**
+     * @property {Array} pivotB
+     */
+    this.pivotB = vec2.fromValues(pivotB[0],pivotB[1]);
 
     // Equations to be fed to the solver
     var eqs = this.equations = [
@@ -61938,12 +64986,13 @@ function RevoluteConstraint(bodyA, pivotA, bodyB, pivotB, maxForce){
         new Equation(bodyA,bodyB,-maxForce,maxForce),
     ];
 
-    var x =  eqs[0];
+    var x = eqs[0];
     var y = eqs[1];
+    var that = this;
 
     x.computeGq = function(){
-        vec2.rotate(worldPivotA, pivotA, bodyA.angle);
-        vec2.rotate(worldPivotB, pivotB, bodyB.angle);
+        vec2.rotate(worldPivotA, that.pivotA, bodyA.angle);
+        vec2.rotate(worldPivotB, that.pivotB, bodyB.angle);
         vec2.add(g, bodyB.position, worldPivotB);
         vec2.sub(g, g, bodyA.position);
         vec2.sub(g, g, worldPivotA);
@@ -61951,8 +65000,8 @@ function RevoluteConstraint(bodyA, pivotA, bodyB, pivotB, maxForce){
     };
 
     y.computeGq = function(){
-        vec2.rotate(worldPivotA, pivotA, bodyA.angle);
-        vec2.rotate(worldPivotB, pivotB, bodyB.angle);
+        vec2.rotate(worldPivotA, that.pivotA, bodyA.angle);
+        vec2.rotate(worldPivotB, that.pivotB, bodyB.angle);
         vec2.add(g, bodyB.position, worldPivotB);
         vec2.sub(g, g, bodyA.position);
         vec2.sub(g, g, worldPivotA);
@@ -61963,12 +65012,19 @@ function RevoluteConstraint(bodyA, pivotA, bodyB, pivotB, maxForce){
     y.maxForce = x.maxForce =  maxForce;
 
     this.motorEquation = new RotationalVelocityEquation(bodyA,bodyB);
+
+    /**
+     * Indicates whether the motor is enabled. Use .enableMotor() to enable the constraint motor.
+     * @property {Boolean} motorEnabled
+     * @readOnly
+     */
     this.motorEnabled = false;
 
     /**
-     * The constraint position
+     * The constraint position.
      * @property angle
      * @type {Number}
+     * @readOnly
      */
     this.angle = 0;
 
@@ -62123,7 +65179,9 @@ RevoluteConstraint.prototype.motorIsEnabled = function(){
  * @param  {Number} speed
  */
 RevoluteConstraint.prototype.setMotorSpeed = function(speed){
-    if(!this.motorEnabled) return;
+    if(!this.motorEnabled){
+        return;
+    }
     var i = this.equations.indexOf(this.motorEquation);
     this.equations[i].relativeVelocity = speed;
 };
@@ -62138,7 +65196,7 @@ RevoluteConstraint.prototype.getMotorSpeed = function(){
     return this.motorEquation.relativeVelocity;
 };
 
-},{"../equations/Equation":24,"../equations/RotationalLockEquation":26,"../equations/RotationalVelocityEquation":27,"../math/vec2":33,"./Constraint":16}],22:[function(require,module,exports){
+},{"../equations/Equation":22,"../equations/RotationalLockEquation":24,"../equations/RotationalVelocityEquation":25,"../math/vec2":30,"./Constraint":14}],20:[function(require,module,exports){
 var Equation = require("./Equation"),
     vec2 = require('../math/vec2');
 
@@ -62150,26 +65208,39 @@ module.exports = AngleLockEquation;
  * @class AngleLockEquation
  * @constructor
  * @extends Equation
- * @param {Body} bi
- * @param {Body} bj
- * @param {Object} options
- * @param {Number} options.angle Angle to add to the local vector in body i.
- * @param {Number} options.ratio Gear ratio
+ * @param {Body} bodyA
+ * @param {Body} bodyB
+ * @param {Object} [options]
+ * @param {Number} [options.angle] Angle to add to the local vector in body A.
+ * @param {Number} [options.ratio] Gear ratio
  */
-function AngleLockEquation(bi,bj,options){
+function AngleLockEquation(bodyA, bodyB, options){
     options = options || {};
-    Equation.call(this,bi,bj,-Number.MAX_VALUE,Number.MAX_VALUE);
+    Equation.call(this,bodyA,bodyB,-Number.MAX_VALUE,Number.MAX_VALUE);
     this.angle = options.angle || 0;
-    this.ratio = typeof(options.ratio)=="number" ? options.ratio : 1;
+
+    /**
+     * The gear ratio.
+     * @property {Number} ratio
+     * @private
+     * @see setRatio
+     */
+    this.ratio = typeof(options.ratio)==="number" ? options.ratio : 1;
+
     this.setRatio(this.ratio);
-};
+}
 AngleLockEquation.prototype = new Equation();
 AngleLockEquation.prototype.constructor = AngleLockEquation;
 
 AngleLockEquation.prototype.computeGq = function(){
-    return this.ratio*this.bi.angle - this.bj.angle + this.angle;
+    return this.ratio * this.bodyA.angle - this.bodyB.angle + this.angle;
 };
 
+/**
+ * Set the gear ratio for this equation
+ * @method setRatio
+ * @param {Number} ratio
+ */
 AngleLockEquation.prototype.setRatio = function(ratio){
     var G = this.G;
     G[2] =  ratio;
@@ -62177,10 +65248,19 @@ AngleLockEquation.prototype.setRatio = function(ratio){
     this.ratio = ratio;
 };
 
-},{"../math/vec2":33,"./Equation":24}],23:[function(require,module,exports){
+/**
+ * Set the max force for the equation.
+ * @method setMaxTorque
+ * @param {Number} torque
+ */
+AngleLockEquation.prototype.setMaxTorque = function(torque){
+    this.maxForce =  torque;
+    this.minForce = -torque;
+};
+
+},{"../math/vec2":30,"./Equation":22}],21:[function(require,module,exports){
 var Equation = require("./Equation"),
-    vec2 = require('../math/vec2'),
-    mat2 = require('../math/mat2');
+    vec2 = require('../math/vec2');
 
 module.exports = ContactEquation;
 
@@ -62190,45 +65270,46 @@ module.exports = ContactEquation;
  * @class ContactEquation
  * @constructor
  * @extends Equation
- * @param {Body} bi
- * @param {Body} bj
+ * @param {Body} bodyA
+ * @param {Body} bodyB
  */
-function ContactEquation(bi,bj){
-    Equation.call(this,bi,bj,0,Number.MAX_VALUE);
+function ContactEquation(bodyA, bodyB){
+    Equation.call(this, bodyA, bodyB, 0, Number.MAX_VALUE);
 
     /**
      * Vector from body i center of mass to the contact point.
-     * @property ri
+     * @property contactPointA
      * @type {Array}
      */
-    this.ri = vec2.create();
+    this.contactPointA = vec2.create();
     this.penetrationVec = vec2.create();
 
     /**
-     * Vector from body j center of mass to the contact point.
-     * @property rj
+     * World-oriented vector from body A center of mass to the contact point.
+     * @property contactPointB
      * @type {Array}
      */
-    this.rj = vec2.create();
+    this.contactPointB = vec2.create();
 
     /**
      * The normal vector, pointing out of body i
-     * @property ni
+     * @property normalA
      * @type {Array}
      */
-    this.ni = vec2.create();
+    this.normalA = vec2.create();
 
     /**
-     * The restitution to use. 0=no bounciness, 1=max bounciness.
+     * The restitution to use (0=no bounciness, 1=max bounciness).
      * @property restitution
      * @type {Number}
      */
     this.restitution = 0;
 
     /**
-     * Set to true if this is the first impact between the bodies (not persistant contact).
+     * This property is set to true if this is the first impact between the bodies (not persistant contact).
      * @property firstImpact
      * @type {Boolean}
+     * @readOnly
      */
     this.firstImpact = false;
 
@@ -62245,19 +65326,19 @@ function ContactEquation(bi,bj){
      * @type {Shape}
      */
     this.shapeB = null;
-};
+}
 ContactEquation.prototype = new Equation();
 ContactEquation.prototype.constructor = ContactEquation;
 ContactEquation.prototype.computeB = function(a,b,h){
-    var bi = this.bi,
-        bj = this.bj,
-        ri = this.ri,
-        rj = this.rj,
+    var bi = this.bodyA,
+        bj = this.bodyB,
+        ri = this.contactPointA,
+        rj = this.contactPointB,
         xi = bi.position,
         xj = bj.position;
 
     var penetrationVec = this.penetrationVec,
-        n = this.ni,
+        n = this.normalA,
         G = this.G;
 
     // Caluclate cross products
@@ -62293,65 +65374,65 @@ ContactEquation.prototype.computeB = function(a,b,h){
     return B;
 };
 
-},{"../math/mat2":31,"../math/vec2":33,"./Equation":24}],24:[function(require,module,exports){
+},{"../math/vec2":30,"./Equation":22}],22:[function(require,module,exports){
 module.exports = Equation;
 
 var vec2 = require('../math/vec2'),
-    mat2 = require('../math/mat2'),
-    Utils = require('../utils/Utils');
+    Utils = require('../utils/Utils'),
+    Body = require('../objects/Body');
 
 /**
  * Base class for constraint equations.
  * @class Equation
  * @constructor
- * @param {Body} bi First body participating in the equation
- * @param {Body} bj Second body participating in the equation
- * @param {number} minForce Minimum force to apply. Default: -1e6
- * @param {number} maxForce Maximum force to apply. Default: 1e6
+ * @param {Body} bodyA First body participating in the equation
+ * @param {Body} bodyB Second body participating in the equation
+ * @param {number} minForce Minimum force to apply. Default: -Number.MAX_VALUE
+ * @param {number} maxForce Maximum force to apply. Default: Number.MAX_VALUE
  */
-function Equation(bi,bj,minForce,maxForce){
+function Equation(bodyA, bodyB, minForce, maxForce){
 
     /**
-     * Minimum force to apply when solving
+     * Minimum force to apply when solving.
      * @property minForce
      * @type {Number}
      */
-    this.minForce = typeof(minForce)=="undefined" ? -1e6 : minForce;
+    this.minForce = typeof(minForce)==="undefined" ? -Number.MAX_VALUE : minForce;
 
     /**
-     * Max force to apply when solving
+     * Max force to apply when solving.
      * @property maxForce
      * @type {Number}
      */
-    this.maxForce = typeof(maxForce)=="undefined" ? 1e6 : maxForce;
+    this.maxForce = typeof(maxForce)==="undefined" ? Number.MAX_VALUE : maxForce;
 
     /**
      * First body participating in the constraint
-     * @property bi
+     * @property bodyA
      * @type {Body}
      */
-    this.bi = bi;
+    this.bodyA = bodyA;
 
     /**
      * Second body participating in the constraint
-     * @property bj
+     * @property bodyB
      * @type {Body}
      */
-    this.bj = bj;
+    this.bodyB = bodyB;
 
     /**
      * The stiffness of this equation. Typically chosen to a large number (~1e7), but can be chosen somewhat freely to get a stable simulation.
      * @property stiffness
      * @type {Number}
      */
-    this.stiffness = 1e6;
+    this.stiffness = Equation.DEFAULT_STIFFNESS;
 
     /**
      * The number of time steps needed to stabilize the constraint equation. Typically between 3 and 5 time steps.
      * @property relaxation
      * @type {Number}
      */
-    this.relaxation = 4;
+    this.relaxation = Equation.DEFAULT_RELAXATION;
 
     /**
      * The Jacobian entry of this equation. 6 numbers, 3 per body (x,y,angle).
@@ -62359,7 +65440,9 @@ function Equation(bi,bj,minForce,maxForce){
      * @type {Array}
      */
     this.G = new Utils.ARRAY_TYPE(6);
-    for(var i=0; i<6; i++) this.G[i]=0;
+    for(var i=0; i<6; i++){
+        this.G[i]=0;
+    }
 
     // Constraint frames for body i and j
     /*
@@ -62372,9 +65455,14 @@ function Equation(bi,bj,minForce,maxForce){
 
     this.a = 0;
     this.b = 0;
-    this.eps = 0;
-    this.h = 0;
-    this.updateSpookParams(1/60);
+    this.epsilon = 0;
+    this.timeStep = 1/60;
+
+    /**
+     * Indicates if stiffness or relaxation was changed.
+     * @property {Boolean} needsUpdate
+     */
+    this.needsUpdate = true;
 
     /**
      * The resulting constraint multiplier from the last solve. This is mostly equivalent to the force produced by the constraint.
@@ -62394,22 +65482,39 @@ function Equation(bi,bj,minForce,maxForce){
      * @property {Boolean} enabled
      */
     this.enabled = true;
-};
+}
 Equation.prototype.constructor = Equation;
 
 /**
- * Update SPOOK parameters .a, .b and .eps according to the given time step. See equations 9, 10 and 11 in the <a href="http://www8.cs.umu.se/kurser/5DV058/VT09/lectures/spooknotes.pdf">SPOOK notes</a>.
- * @method updateSpookParams
- * @param  {number} timeStep
+ * The default stiffness when creating a new Equation.
+ * @static
+ * @property {Number} DEFAULT_STIFFNESS
+ * @default 1e6
  */
-Equation.prototype.updateSpookParams = function(timeStep){
+Equation.DEFAULT_STIFFNESS = 1e6;
+
+/**
+ * The default relaxation when creating a new Equation.
+ * @static
+ * @property {Number} DEFAULT_RELAXATION
+ * @default 4
+ */
+Equation.DEFAULT_RELAXATION = 4;
+
+/**
+ * Compute SPOOK parameters .a, .b and .epsilon according to the current parameters. See equations 9, 10 and 11 in the <a href="http://www8.cs.umu.se/kurser/5DV058/VT09/lectures/spooknotes.pdf">SPOOK notes</a>.
+ * @method update
+ */
+Equation.prototype.update = function(){
     var k = this.stiffness,
         d = this.relaxation,
-        h = timeStep;
+        h = this.timeStep;
+
     this.a = 4.0 / (h * (1 + 4 * d));
     this.b = (4.0 * d) / (1 + 4 * d);
-    this.eps = 4.0 / (h * h * k * (1 + 4 * d));
-    this.h = timeStep;
+    this.epsilon = 4.0 / (h * h * k * (1 + 4 * d));
+
+    this.needsUpdate = false;
 };
 
 function Gmult(G,vi,wi,vj,wj){
@@ -62442,40 +65547,14 @@ var qi = vec2.create(),
     qj = vec2.create();
 Equation.prototype.computeGq = function(){
     var G = this.G,
-        bi = this.bi,
-        bj = this.bj,
+        bi = this.bodyA,
+        bj = this.bodyB,
         xi = bi.position,
         xj = bj.position,
         ai = bi.angle,
         aj = bj.angle;
 
-    // Transform to the given body frames
-    /*
-    vec2.rotate(qi,this.xi,ai);
-    vec2.rotate(qj,this.xj,aj);
-    vec2.add(qi,qi,xi);
-    vec2.add(qj,qj,xj);
-    */
-
     return Gmult(G, qi, ai, qj, aj) + this.offset;
-};
-
-var tmp_i = vec2.create(),
-    tmp_j = vec2.create();
-Equation.prototype.transformedGmult = function(G,vi,wi,vj,wj){
-    // Transform velocity to the given body frames
-    // v_p = v + w x r
-    /*
-    vec2.rotate(tmp_i,this.xi,Math.PI / 2 + this.bi.angle); // Get r, and rotate 90 degrees. We get the "x r" part
-    vec2.rotate(tmp_j,this.xj,Math.PI / 2 + this.bj.angle);
-    vec2.scale(tmp_i,tmp_i,wi); // Temp vectors are now (w x r)
-    vec2.scale(tmp_j,tmp_j,wj);
-    vec2.add(tmp_i,tmp_i,vi);
-    vec2.add(tmp_j,tmp_j,vj);
-    */
-
-    // Note: angular velocity is same
-    return Gmult(G,vi,wi,vj,wj);
 };
 
 /**
@@ -62485,13 +65564,13 @@ Equation.prototype.transformedGmult = function(G,vi,wi,vj,wj){
  */
 Equation.prototype.computeGW = function(){
     var G = this.G,
-        bi = this.bi,
-        bj = this.bj,
+        bi = this.bodyA,
+        bj = this.bodyB,
         vi = bi.velocity,
         vj = bj.velocity,
         wi = bi.angularVelocity,
         wj = bj.angularVelocity;
-    return this.transformedGmult(G,vi,wi,vj,wj) + this.relativeVelocity;
+    return Gmult(G,vi,wi,vj,wj) + this.relativeVelocity;
 };
 
 /**
@@ -62501,8 +65580,8 @@ Equation.prototype.computeGW = function(){
  */
 Equation.prototype.computeGWlambda = function(){
     var G = this.G,
-        bi = this.bi,
-        bj = this.bj,
+        bi = this.bodyA,
+        bj = this.bodyB,
         vi = bi.vlambda,
         vj = bj.vlambda,
         wi = bi.wlambda,
@@ -62518,23 +65597,38 @@ Equation.prototype.computeGWlambda = function(){
 var iMfi = vec2.create(),
     iMfj = vec2.create();
 Equation.prototype.computeGiMf = function(){
-    var bi = this.bi,
-        bj = this.bj,
+    var bi = this.bodyA,
+        bj = this.bodyB,
         fi = bi.force,
         ti = bi.angularForce,
         fj = bj.force,
         tj = bj.angularForce,
-        invMassi = bi.invMass,
-        invMassj = bj.invMass,
-        invIi = bi.invInertia,
-        invIj = bj.invInertia,
+        invMassi = getBodyInvMass(bi),
+        invMassj = getBodyInvMass(bj),
+        invIi = getBodyInvInertia(bi),
+        invIj = getBodyInvInertia(bj),
         G = this.G;
 
     vec2.scale(iMfi, fi,invMassi);
     vec2.scale(iMfj, fj,invMassj);
 
-    return this.transformedGmult(G,iMfi,ti*invIi,iMfj,tj*invIj);
+    return Gmult(G,iMfi,ti*invIi,iMfj,tj*invIj);
 };
+
+function getBodyInvMass(body){
+    if(body.sleepState === Body.SLEEPING){
+        return 0;
+    } else {
+        return body.invMass;
+    }
+}
+function getBodyInvInertia(body){
+    if(body.sleepState === Body.SLEEPING){
+        return 0;
+    } else {
+        return body.invInertia;
+    }
+}
 
 /**
  * Computes G*inv(M)*G'
@@ -62542,12 +65636,12 @@ Equation.prototype.computeGiMf = function(){
  * @return {Number}
  */
 Equation.prototype.computeGiMGt = function(){
-    var bi = this.bi,
-        bj = this.bj,
-        invMassi = bi.invMass,
-        invMassj = bj.invMass,
-        invIi = bi.invInertia,
-        invIj = bj.invInertia,
+    var bi = this.bodyA,
+        bj = this.bodyB,
+        invMassi = getBodyInvMass(bi),
+        invMassj = getBodyInvMass(bj),
+        invIi = getBodyInvInertia(bi),
+        invIj = getBodyInvInertia(bj),
         G = this.G;
 
     return  G[0] * G[0] * invMassi +
@@ -62564,8 +65658,6 @@ var addToWlambda_temp = vec2.create(),
     addToWlambda_ri = vec2.create(),
     addToWlambda_rj = vec2.create(),
     addToWlambda_Mdiag = vec2.create();
-var tmpMat1 = mat2.create(),
-    tmpMat2 = mat2.create();
 
 /**
  * Add constraint velocity to the bodies.
@@ -62573,15 +65665,17 @@ var tmpMat1 = mat2.create(),
  * @param {Number} deltalambda
  */
 Equation.prototype.addToWlambda = function(deltalambda){
-    var bi = this.bi,
-        bj = this.bj,
+    var bi = this.bodyA,
+        bj = this.bodyB,
         temp = addToWlambda_temp,
-        imMat1 = tmpMat1,
-        imMat2 = tmpMat2,
         Gi = addToWlambda_Gi,
         Gj = addToWlambda_Gj,
         ri = addToWlambda_ri,
         rj = addToWlambda_rj,
+        invMassi = getBodyInvMass(bi),
+        invMassj = getBodyInvMass(bj),
+        invIi = getBodyInvInertia(bi),
+        invIj = getBodyInvInertia(bj),
         Mdiag = addToWlambda_Mdiag,
         G = this.G;
 
@@ -62590,45 +65684,21 @@ Equation.prototype.addToWlambda = function(deltalambda){
     Gj[0] = G[3];
     Gj[1] = G[4];
 
-    /*
-    mat2.identity(imMat1);
-    mat2.identity(imMat2);
-    imMat1[0] = imMat1[3] = bi.invMass;
-    imMat2[0] = imMat2[3] = bj.invMass;
-    */
-
-
-    /*
-    vec2.rotate(ri,this.xi,bi.angle);
-    vec2.rotate(rj,this.xj,bj.angle);
-    */
-
     // Add to linear velocity
     // v_lambda += inv(M) * delta_lamba * G
-    //vec2.set(Mdiag,bi.invMass,bi.invMass);
-    //vec2.scale(temp,vec2.transformMat2(temp,Gi,imMat1),deltalambda);
-    vec2.scale(temp,Gi,bi.invMass*deltalambda);
+    vec2.scale(temp, Gi, invMassi*deltalambda);
     vec2.add( bi.vlambda, bi.vlambda, temp);
     // This impulse is in the offset frame
     // Also add contribution to angular
     //bi.wlambda -= vec2.crossLength(temp,ri);
+    bi.wlambda += invIi * G[2] * deltalambda;
 
-    //vec2.set(Mdiag,bj.invMass,bj.invMass);
-    //vec2.scale(temp,vec2.transformMat2(temp,Gj,imMat2),deltalambda);
-    vec2.scale(temp,Gj,bj.invMass*deltalambda);
+
+    vec2.scale(temp, Gj, invMassj*deltalambda);
     vec2.add( bj.vlambda, bj.vlambda, temp);
     //bj.wlambda -= vec2.crossLength(temp,rj);
-
-    // Add to angular velocity
-    bi.wlambda += bi.invInertia * G[2] * deltalambda;
-    bj.wlambda += bj.invInertia * G[5] * deltalambda;
+    bj.wlambda += invIj * G[5] * deltalambda;
 };
-
-function massMatVecMultiply(out, m, v) {
-    out[0] = v[0] * m;
-    out[1] = v[1] * m;
-    return out;
-}
 
 /**
  * Compute the denominator part of the SPOOK equation: C = G*inv(M)*G' + eps
@@ -62640,11 +65710,10 @@ Equation.prototype.computeInvC = function(eps){
     return 1.0 / (this.computeGiMGt() + eps);
 };
 
-},{"../math/mat2":31,"../math/vec2":33,"../utils/Utils":50}],25:[function(require,module,exports){
-var mat2 = require('../math/mat2')
-,   vec2 = require('../math/vec2')
+},{"../math/vec2":30,"../objects/Body":31,"../utils/Utils":47}],23:[function(require,module,exports){
+var vec2 = require('../math/vec2')
 ,   Equation = require('./Equation')
-,   Utils = require('../utils/Utils')
+,   Utils = require('../utils/Utils');
 
 module.exports = FrictionEquation;
 
@@ -62653,32 +65722,32 @@ module.exports = FrictionEquation;
  *
  * @class FrictionEquation
  * @constructor
- * @param {Body} bi
- * @param {Body} bj
+ * @param {Body} bodyA
+ * @param {Body} bodyB
  * @param {Number} slipForce
- * @extends {Equation}
+ * @extends Equation
  */
-function FrictionEquation(bi,bj,slipForce){
-    Equation.call(this,bi,bj,-slipForce,slipForce);
+function FrictionEquation(bodyA, bodyB, slipForce){
+    Equation.call(this, bodyA, bodyB, -slipForce, slipForce);
 
     /**
-     * Relative vector from center of body i to the contact point, in world coords.
-     * @property ri
-     * @type {Float32Array}
+     * Relative vector from center of body A to the contact point, world oriented.
+     * @property contactPointA
+     * @type {Array}
      */
-    this.ri = vec2.create();
+    this.contactPointA = vec2.create();
 
     /**
-     * Relative vector from center of body j to the contact point, in world coords.
-     * @property rj
-     * @type {Float32Array}
+     * Relative vector from center of body B to the contact point, world oriented.
+     * @property contactPointB
+     * @type {Array}
      */
-    this.rj = vec2.create();
+    this.contactPointB = vec2.create();
 
     /**
-     * Tangent vector that the friction force will act along, in world coords.
+     * Tangent vector that the friction force will act along. World oriented.
      * @property t
-     * @type {Float32Array}
+     * @type {Array}
      */
     this.t = vec2.create();
 
@@ -62711,7 +65780,7 @@ function FrictionEquation(bi,bj,slipForce){
      * @type {Number}
      */
     this.frictionCoefficient = 0.3;
-};
+}
 FrictionEquation.prototype = new Equation();
 FrictionEquation.prototype.constructor = FrictionEquation;
 
@@ -62720,18 +65789,26 @@ FrictionEquation.prototype.constructor = FrictionEquation;
  * larger than this value.
  * @method setSlipForce
  * @param  {Number} slipForce
- * @deprecated Use .frictionCoefficient instead
  */
 FrictionEquation.prototype.setSlipForce = function(slipForce){
     this.maxForce = slipForce;
     this.minForce = -slipForce;
 };
 
+/**
+ * Get the max force for the constraint.
+ * @method getSlipForce
+ * @return {Number}
+ */
+FrictionEquation.prototype.getSlipForce = function(){
+    return this.maxForce;
+};
+
 FrictionEquation.prototype.computeB = function(a,b,h){
-    var bi = this.bi,
-        bj = this.bj,
-        ri = this.ri,
-        rj = this.rj,
+    var bi = this.bodyA,
+        bj = this.bodyB,
+        ri = this.contactPointA,
+        rj = this.contactPointB,
         t = this.t,
         G = this.G;
 
@@ -62752,7 +65829,7 @@ FrictionEquation.prototype.computeB = function(a,b,h){
     return B;
 };
 
-},{"../math/mat2":31,"../math/vec2":33,"../utils/Utils":50,"./Equation":24}],26:[function(require,module,exports){
+},{"../math/vec2":30,"../utils/Utils":47,"./Equation":22}],24:[function(require,module,exports){
 var Equation = require("./Equation"),
     vec2 = require('../math/vec2');
 
@@ -62764,20 +65841,20 @@ module.exports = RotationalLockEquation;
  * @class RotationalLockEquation
  * @constructor
  * @extends Equation
- * @param {Body} bi
- * @param {Body} bj
- * @param {Object} options
- * @param {Number} options.angle Angle to add to the local vector in body i.
+ * @param {Body} bodyA
+ * @param {Body} bodyB
+ * @param {Object} [options]
+ * @param {Number} [options.angle] Angle to add to the local vector in body i.
  */
-function RotationalLockEquation(bi,bj,options){
+function RotationalLockEquation(bodyA, bodyB, options){
     options = options || {};
-    Equation.call(this,bi,bj,-Number.MAX_VALUE,Number.MAX_VALUE);
+    Equation.call(this, bodyA, bodyB, -Number.MAX_VALUE, Number.MAX_VALUE);
     this.angle = options.angle || 0;
 
     var G = this.G;
     G[2] =  1;
     G[5] = -1;
-};
+}
 RotationalLockEquation.prototype = new Equation();
 RotationalLockEquation.prototype.constructor = RotationalLockEquation;
 
@@ -62786,12 +65863,12 @@ var worldVectorA = vec2.create(),
     xAxis = vec2.fromValues(1,0),
     yAxis = vec2.fromValues(0,1);
 RotationalLockEquation.prototype.computeGq = function(){
-    vec2.rotate(worldVectorA,xAxis,this.bi.angle+this.angle);
-    vec2.rotate(worldVectorB,yAxis,this.bj.angle);
+    vec2.rotate(worldVectorA,xAxis,this.bodyA.angle+this.angle);
+    vec2.rotate(worldVectorB,yAxis,this.bodyB.angle);
     return vec2.dot(worldVectorA,worldVectorB);
 };
 
-},{"../math/vec2":33,"./Equation":24}],27:[function(require,module,exports){
+},{"../math/vec2":30,"./Equation":22}],25:[function(require,module,exports){
 var Equation = require("./Equation"),
     vec2 = require('../math/vec2');
 
@@ -62803,14 +65880,14 @@ module.exports = RotationalVelocityEquation;
  * @class RotationalVelocityEquation
  * @constructor
  * @extends Equation
- * @param {Body} bi
- * @param {Body} bj
+ * @param {Body} bodyA
+ * @param {Body} bodyB
  */
-function RotationalVelocityEquation(bi,bj){
-    Equation.call(this,bi,bj,-Number.MAX_VALUE,Number.MAX_VALUE);
+function RotationalVelocityEquation(bodyA, bodyB){
+    Equation.call(this, bodyA, bodyB, -Number.MAX_VALUE, Number.MAX_VALUE);
     this.relativeVelocity = 1;
     this.ratio = 1;
-};
+}
 RotationalVelocityEquation.prototype = new Equation();
 RotationalVelocityEquation.prototype.constructor = RotationalVelocityEquation;
 RotationalVelocityEquation.prototype.computeB = function(a,b,h){
@@ -62825,7 +65902,7 @@ RotationalVelocityEquation.prototype.computeB = function(a,b,h){
     return B;
 };
 
-},{"../math/vec2":33,"./Equation":24}],28:[function(require,module,exports){
+},{"../math/vec2":30,"./Equation":22}],26:[function(require,module,exports){
 /**
  * Base class for objects that dispatches events.
  * @class EventEmitter
@@ -62868,9 +65945,16 @@ EventEmitter.prototype = {
     has: function ( type, listener ) {
         if ( this._listeners === undefined ) return false;
         var listeners = this._listeners;
-        if ( listeners[ type ] !== undefined && listeners[ type ].indexOf( listener ) !== - 1 ) {
-            return true;
+        if(listener){
+            if ( listeners[ type ] !== undefined && listeners[ type ].indexOf( listener ) !== - 1 ) {
+                return true;
+            }
+        } else {
+            if ( listeners[ type ] !== undefined ) {
+                return true;
+            }
         }
+
         return false;
     },
 
@@ -62913,8 +65997,9 @@ EventEmitter.prototype = {
     }
 };
 
-},{}],29:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var Material = require('./Material');
+var Equation = require('../equations/Equation');
 
 module.exports = ContactMaterial;
 
@@ -62925,13 +66010,13 @@ module.exports = ContactMaterial;
  * @param {Material} materialA
  * @param {Material} materialB
  * @param {Object}   [options]
- * @param {Number}   options.friction           Friction coefficient.
- * @param {Number}   options.restitution        Restitution coefficient aka "bounciness".
- * @param {Number}   options.stiffness          ContactEquation stiffness.
- * @param {Number}   options.relaxation         ContactEquation relaxation.
- * @param {Number}   options.frictionStiffness  FrictionEquation stiffness.
- * @param {Number}   options.frictionRelaxation FrictionEquation relaxation.
- * @param {Number}   options.surfaceVelocity    Surface velocity.
+ * @param {Number}   [options.friction=0.3]       Friction coefficient.
+ * @param {Number}   [options.restitution=0]      Restitution coefficient aka "bounciness".
+ * @param {Number}   [options.stiffness]          ContactEquation stiffness.
+ * @param {Number}   [options.relaxation]         ContactEquation relaxation.
+ * @param {Number}   [options.frictionStiffness]  FrictionEquation stiffness.
+ * @param {Number}   [options.frictionRelaxation] FrictionEquation relaxation.
+ * @param {Number}   [options.surfaceVelocity=0]  Surface velocity.
  * @author schteppe
  */
 function ContactMaterial(materialA, materialB, options){
@@ -62980,39 +66065,39 @@ function ContactMaterial(materialA, materialB, options){
      * @property stiffness
      * @type {Number}
      */
-    this.stiffness =            typeof(options.stiffness)           !== "undefined" ?   Number(options.stiffness)   : 1e7;
+    this.stiffness =            typeof(options.stiffness)           !== "undefined" ?   Number(options.stiffness)   : Equation.DEFAULT_STIFFNESS;
 
     /**
      * Relaxation of the resulting ContactEquation that this ContactMaterial generate
      * @property relaxation
      * @type {Number}
      */
-    this.relaxation =           typeof(options.relaxation)          !== "undefined" ?   Number(options.relaxation)  : 3;
+    this.relaxation =           typeof(options.relaxation)          !== "undefined" ?   Number(options.relaxation)  : Equation.DEFAULT_RELAXATION;
 
     /**
      * Stiffness of the resulting FrictionEquation that this ContactMaterial generate
      * @property frictionStiffness
      * @type {Number}
      */
-    this.frictionStiffness =    typeof(options.frictionStiffness)   !== "undefined" ?   Number(options.frictionStiffness)   : 1e7;
+    this.frictionStiffness =    typeof(options.frictionStiffness)   !== "undefined" ?   Number(options.frictionStiffness)   : Equation.DEFAULT_STIFFNESS;
 
     /**
      * Relaxation of the resulting FrictionEquation that this ContactMaterial generate
      * @property frictionRelaxation
      * @type {Number}
      */
-    this.frictionRelaxation =   typeof(options.frictionRelaxation)  !== "undefined" ?   Number(options.frictionRelaxation)  : 3;
+    this.frictionRelaxation =   typeof(options.frictionRelaxation)  !== "undefined" ?   Number(options.frictionRelaxation)  : Equation.DEFAULT_RELAXATION;
 
     /**
      * Will add surface velocity to this material. If bodyA rests on top if bodyB, and the surface velocity is positive, bodyA will slide to the right.
      * @property {Number} surfaceVelocity
      */
-    this.surfaceVelocity = typeof(options.surfaceVelocity)    !== "undefined" ?   Number(options.surfaceVelocity)    : 0
-};
+    this.surfaceVelocity = typeof(options.surfaceVelocity)    !== "undefined" ?   Number(options.surfaceVelocity)    : 0;
+}
 
 ContactMaterial.idCounter = 0;
 
-},{"./Material":30}],30:[function(require,module,exports){
+},{"../equations/Equation":22,"./Material":28}],28:[function(require,module,exports){
 module.exports = Material;
 
 /**
@@ -63033,19 +66118,7 @@ function Material(){
 
 Material.idCounter = 0;
 
-},{}],31:[function(require,module,exports){
-/**
- * The mat2 object from glMatrix, extended with the functions documented here. See http://glmatrix.net for full doc.
- * @class mat2
- */
-
-// Only import mat2 from gl-matrix and skip the rest
-var mat2 = require('../../node_modules/gl-matrix/src/gl-matrix/mat2').mat2;
-
-// Export everything
-module.exports = mat2;
-
-},{"../../node_modules/gl-matrix/src/gl-matrix/mat2":1}],32:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 
     /*
         PolyK library
@@ -63524,38 +66597,13 @@ module.exports = mat2;
 
 module.exports = PolyK;
 
-},{}],33:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /**
- * The vec2 object from glMatrix, extended with the functions documented here. See http://glmatrix.net for full doc.
+ * The vec2 object from glMatrix, with some extensions and some removed methods. See http://glmatrix.net for full doc.
  * @class vec2
  */
 
-// Only import vec2 from gl-matrix and skip the rest
-var vec2 = require('../../node_modules/gl-matrix/src/gl-matrix/vec2').vec2;
-
-// Now add some extensions
-
-/**
- * Get the vector x component
- * @method getX
- * @static
- * @param  {Float32Array} a
- * @return {Number}
- */
-vec2.getX = function(a){
-    return a[0];
-};
-
-/**
- * Get the vector y component
- * @method getY
- * @static
- * @param  {Float32Array} a
- * @return {Number}
- */
-vec2.getY = function(a){
-    return a[1];
-};
+var vec2 = require('../../build/vec2').vec2;
 
 /**
  * Make a cross product and only return the z component
@@ -63616,12 +66664,41 @@ vec2.rotate = function(out,a,angle){
     out[1] = s*x +c*y;
 };
 
+/**
+ * Rotate a vector 90 degrees clockwise
+ * @method rotate90cw
+ * @static
+ * @param  {Float32Array} out
+ * @param  {Float32Array} a
+ * @param  {Number} angle
+ */
+vec2.rotate90cw = function(out, a) {
+    out[0] = a[1];
+    out[1] = -a[0];
+};
+
+/**
+ * Transform a point position to local frame.
+ * @method toLocalFrame
+ * @param  {Array} out
+ * @param  {Array} worldPoint
+ * @param  {Array} framePosition
+ * @param  {Number} frameAngle
+ */
 vec2.toLocalFrame = function(out, worldPoint, framePosition, frameAngle){
     vec2.copy(out, worldPoint);
     vec2.sub(out, out, framePosition);
     vec2.rotate(out, out, -frameAngle);
 };
 
+/**
+ * Transform a point position to global frame.
+ * @method toGlobalFrame
+ * @param  {Array} out
+ * @param  {Array} localPoint
+ * @param  {Array} framePosition
+ * @param  {Number} frameAngle
+ */
 vec2.toGlobalFrame = function(out, localPoint, framePosition, frameAngle){
     vec2.copy(out, localPoint);
     vec2.rotate(out, out, frameAngle);
@@ -63648,7 +66725,7 @@ vec2.centroid = function(out, a, b, c){
 // Export everything
 module.exports = vec2;
 
-},{"../../node_modules/gl-matrix/src/gl-matrix/vec2":2}],34:[function(require,module,exports){
+},{"../../build/vec2":1}],31:[function(require,module,exports){
 var vec2 = require('../math/vec2')
 ,   decomp = require('poly-decomp')
 ,   Convex = require('../shapes/Convex')
@@ -63663,14 +66740,14 @@ module.exports = Body;
  *
  * @class Body
  * @constructor
- * @extends {EventEmitter}
+ * @extends EventEmitter
  * @param {Object}              [options]
  * @param {Number}              [options.mass=0]    A number >= 0. If zero, the .motionState will be set to Body.STATIC.
- * @param {Float32Array|Array}  [options.position]
- * @param {Float32Array|Array}  [options.velocity]
+ * @param {Array}               [options.position]
+ * @param {Array}               [options.velocity]
  * @param {Number}              [options.angle=0]
  * @param {Number}              [options.angularVelocity=0]
- * @param {Float32Array|Array}  [options.force]
+ * @param {Array}               [options.force]
  * @param {Number}              [options.angularForce=0]
  * @param {Number}              [options.fixedRotation=false]
  */
@@ -63704,7 +66781,7 @@ function Body(options){
 
     /**
      * The local shape offsets, relative to the body center of mass. This is an
-     * array of Float32Array.
+     * array of Array.
      * @property shapeOffsets
      * @type {Array}
      */
@@ -63758,7 +66835,9 @@ function Body(options){
      * @type {Array}
      */
     this.position = vec2.fromValues(0,0);
-    if(options.position) vec2.copy(this.position, options.position);
+    if(options.position){
+        vec2.copy(this.position, options.position);
+    }
 
     /**
      * The interpolated position of the body.
@@ -63768,24 +66847,47 @@ function Body(options){
     this.interpolatedPosition = vec2.fromValues(0,0);
 
     /**
+     * The interpolated angle of the body.
+     * @property interpolatedAngle
+     * @type {Number}
+     */
+    this.interpolatedAngle = 0;
+
+    /**
+     * The previous position of the body.
+     * @property previousPosition
+     * @type {Array}
+     */
+    this.previousPosition = vec2.fromValues(0,0);
+
+    /**
+     * The previous angle of the body.
+     * @property previousAngle
+     * @type {Number}
+     */
+    this.previousAngle = 0;
+
+    /**
      * The velocity of the body
      * @property velocity
-     * @type {Float32Array}
+     * @type {Array}
      */
     this.velocity = vec2.fromValues(0,0);
-    if(options.velocity) vec2.copy(this.velocity, options.velocity);
+    if(options.velocity){
+        vec2.copy(this.velocity, options.velocity);
+    }
 
     /**
      * Constraint velocity that was added to the body during the last step.
      * @property vlambda
-     * @type {Float32Array}
+     * @type {Array}
      */
     this.vlambda = vec2.fromValues(0,0);
 
     /**
      * Angular constraint velocity that was added to the body during last step.
      * @property wlambda
-     * @type {Float32Array}
+     * @type {Array}
      */
     this.wlambda = 0;
 
@@ -63807,98 +66909,134 @@ function Body(options){
     this.angle = options.angle || 0;
 
     /**
-     * The angular velocity of the body
+     * The angular velocity of the body, in radians per second.
      * @property angularVelocity
      * @type {number}
      */
     this.angularVelocity = options.angularVelocity || 0;
 
     /**
-     * The force acting on the body
+     * The force acting on the body. Since the body force (and {{#crossLink "Body/angularForce:property"}}{{/crossLink}}) will be zeroed after each step, so you need to set the force before each step.
      * @property force
-     * @type {Float32Array}
+     * @type {Array}
+     *
+     * @example
+     *     // This produces a forcefield of 1 Newton in the positive x direction.
+     *     for(var i=0; i<numSteps; i++){
+     *         body.force[0] = 1;
+     *         world.step(1/60);
+     *     }
+     *
+     * @example
+     *     // This will apply a rotational force on the body
+     *     for(var i=0; i<numSteps; i++){
+     *         body.angularForce = -3;
+     *         world.step(1/60);
+     *     }
      */
     this.force = vec2.create();
     if(options.force) vec2.copy(this.force, options.force);
 
     /**
-     * The angular force acting on the body
+     * The angular force acting on the body. See {{#crossLink "Body/force:property"}}{{/crossLink}}.
      * @property angularForce
      * @type {number}
      */
     this.angularForce = options.angularForce || 0;
 
     /**
-     * The linear damping acting on the body in the velocity direction
+     * The linear damping acting on the body in the velocity direction. Should be a value between 0 and 1.
      * @property damping
      * @type {Number}
+     * @default 0.1
      */
     this.damping = typeof(options.damping)=="number" ? options.damping : 0.1;
 
     /**
-     * The angular force acting on the body
+     * The angular force acting on the body. Should be a value between 0 and 1.
      * @property angularDamping
      * @type {Number}
+     * @default 0.1
      */
     this.angularDamping = typeof(options.angularDamping)=="number" ? options.angularDamping : 0.1;
 
     /**
-     * The type of motion this body has. Should be one of: Body.STATIC (the body
-     * does not move), Body.DYNAMIC (body can move and respond to collisions)
-     * and Body.KINEMATIC (only moves according to its .velocity).
+     * The type of motion this body has. Should be one of: {{#crossLink "Body/STATIC:property"}}Body.STATIC{{/crossLink}}, {{#crossLink "Body/DYNAMIC:property"}}Body.DYNAMIC{{/crossLink}} and {{#crossLink "Body/KINEMATIC:property"}}Body.KINEMATIC{{/crossLink}}.
+     *
+     * * Static bodies do not move, and they do not respond to forces or collision.
+     * * Dynamic bodies body can move and respond to collisions and forces.
+     * * Kinematic bodies only moves according to its .velocity, and does not respond to collisions or force.
      *
      * @property motionState
      * @type {number}
      *
      * @example
      *     // This body will move and interact with other bodies
-     *     var dynamicBody = new Body();
-     *     dynamicBody.motionState = Body.DYNAMIC;
+     *     var dynamicBody = new Body({
+     *         mass : 1  // If mass is nonzero, the body becomes dynamic automatically
+     *     });
+     *     dynamicBody.motionState == Body.DYNAMIC // true
      *
      * @example
      *     // This body will not move at all
-     *     var staticBody = new Body();
-     *     staticBody.motionState = Body.STATIC;
+     *     var staticBody = new Body({
+     *         mass : 0 // Will make the body static
+     *     });
+     *     staticBody.motionState == Body.STATIC // true
      *
      * @example
      *     // This body will only move if you change its velocity
      *     var kinematicBody = new Body();
      *     kinematicBody.motionState = Body.KINEMATIC;
      */
-    this.motionState = this.mass == 0 ? Body.STATIC : Body.DYNAMIC;
+    this.motionState = this.mass === 0 ? Body.STATIC : Body.DYNAMIC;
 
     /**
-     * Bounding circle radius
+     * Bounding circle radius.
      * @property boundingRadius
      * @type {Number}
      */
     this.boundingRadius = 0;
 
     /**
-     * Bounding box of this body
+     * Bounding box of this body.
      * @property aabb
      * @type {AABB}
      */
     this.aabb = new AABB();
 
     /**
-     * Indicates if the AABB needs update. Update it with .updateAABB()
+     * Indicates if the AABB needs update. Update it with {{#crossLink "Body/updateAABB:method"}}.updateAABB(){{/crossLink}}.
      * @property aabbNeedsUpdate
      * @type {Boolean}
+     * @see updateAABB
+     *
+     * @example
+     *     // Force update the AABB
+     *     body.aabbNeedsUpdate = true;
+     *     body.updateAABB();
+     *     console.log(body.aabbNeedsUpdate); // false
      */
     this.aabbNeedsUpdate = true;
 
     /**
-     * If true, the body will automatically fall to sleep.
+     * If true, the body will automatically fall to sleep. Note that you need to enable sleeping in the {{#crossLink "World"}}{{/crossLink}} before anything will happen.
      * @property allowSleep
      * @type {Boolean}
+     * @default true
      */
-    this.allowSleep = false;
+    this.allowSleep = true;
+
+    this.wantsToSleep = false;
 
     /**
-     * One of Body.AWAKE, Body.SLEEPY, Body.SLEEPING
+     * One of {{#crossLink "Body/AWAKE:property"}}Body.AWAKE{{/crossLink}}, {{#crossLink "Body/SLEEPY:property"}}Body.SLEEPY{{/crossLink}} and {{#crossLink "Body/SLEEPING:property"}}Body.SLEEPING{{/crossLink}}.
+     *
+     * The body is initially Body.AWAKE. If its velocity norm is below .sleepSpeedLimit, the sleepState will become Body.SLEEPY. If the body continues to be Body.SLEEPY for .sleepTimeLimit seconds, it will fall asleep (Body.SLEEPY).
+     *
      * @property sleepState
      * @type {Number}
+     * @default Body.AWAKE
      */
     this.sleepState = Body.AWAKE;
 
@@ -63906,22 +67044,30 @@ function Body(options){
      * If the speed (the norm of the velocity) is smaller than this value, the body is considered sleepy.
      * @property sleepSpeedLimit
      * @type {Number}
+     * @default 0.2
      */
-    this.sleepSpeedLimit = 0.1;
+    this.sleepSpeedLimit = 0.2;
 
     /**
      * If the body has been sleepy for this sleepTimeLimit seconds, it is considered sleeping.
      * @property sleepTimeLimit
      * @type {Number}
+     * @default 1
      */
     this.sleepTimeLimit = 1;
 
     /**
      * Gravity scaling factor. If you want the body to ignore gravity, set this to zero. If you want to reverse gravity, set it to -1.
      * @property {Number} gravityScale
+     * @default 1
      */
     this.gravityScale = 1;
 
+    /**
+     * The last time when the body went to SLEEPY state.
+     * @property {Number} timeLastSleepy
+     * @private
+     */
     this.timeLastSleepy = 0;
 
     this.concavePath = null;
@@ -63930,8 +67076,10 @@ function Body(options){
     this.lastAngularDampingScale = 1;
     this.lastDampingTimeStep = -1;
 
+    this._wakeUpAfterNarrowphase = false;
+
     this.updateMassProperties();
-};
+}
 Body.prototype = new EventEmitter();
 
 Body._idCounter = 0;
@@ -63948,7 +67096,8 @@ Body.prototype.setDensity = function(density) {
 
 /**
  * Get the total area of all shapes in the body
- * @method setDensity
+ * @method getArea
+ * @return {Number}
  */
 Body.prototype.getArea = function() {
     var totalArea = 0;
@@ -64007,8 +67156,9 @@ Body.prototype.updateBoundingRadius = function(){
         var shape = shapes[i],
             offset = vec2.length(shapeOffsets[i]),
             r = shape.boundingRadius;
-        if(offset + r > radius)
+        if(offset + r > radius){
             radius = offset + r;
+        }
     }
 
     this.boundingRadius = radius;
@@ -64021,7 +67171,7 @@ Body.prototype.updateBoundingRadius = function(){
  *
  * @method addShape
  * @param  {Shape}              shape
- * @param  {Float32Array|Array} [offset] Local body offset of the shape.
+ * @param  {Array} [offset] Local body offset of the shape.
  * @param  {Number}             [angle]  Local body angle.
  *
  * @example
@@ -64065,15 +67215,15 @@ Body.prototype.addShape = function(shape,offset,angle){
 Body.prototype.removeShape = function(shape){
     var idx = this.shapes.indexOf(shape);
 
-    if(idx != -1){
+    if(idx !== -1){
         this.shapes.splice(idx,1);
         this.shapeOffsets.splice(idx,1);
         this.shapeAngles.splice(idx,1);
         this.aabbNeedsUpdate = true;
         return true;
-    } else
+    } else {
         return false;
-
+    }
 };
 
 /**
@@ -64087,7 +67237,7 @@ Body.prototype.removeShape = function(shape){
  *     body.updateMassProperties();
  */
 Body.prototype.updateMassProperties = function(){
-    if(this.motionState == Body.STATIC || this.motionState == Body.KINEMATIC){
+    if(this.motionState === Body.STATIC || this.motionState === Body.KINEMATIC){
 
         this.mass = Number.MAX_VALUE;
         this.invMass = 0;
@@ -64126,8 +67276,8 @@ var Body_applyForce_r = vec2.create();
 /**
  * Apply force to a world point. This could for example be a point on the RigidBody surface. Applying force this way will add to Body.force and Body.angularForce.
  * @method applyForce
- * @param {Float32Array} force The force to add.
- * @param {Float32Array} worldPoint A world point to apply the force on.
+ * @param {Array} force The force to add.
+ * @param {Array} worldPoint A world point to apply the force on.
  */
 Body.prototype.applyForce = function(force,worldPoint){
     // Compute point position relative to the body center
@@ -64147,8 +67297,8 @@ Body.prototype.applyForce = function(force,worldPoint){
 /**
  * Transform a world point to local body frame.
  * @method toLocalFrame
- * @param  {Float32Array|Array} out          The vector to store the result in
- * @param  {Float32Array|Array} worldPoint   The input world vector
+ * @param  {Array} out          The vector to store the result in
+ * @param  {Array} worldPoint   The input world vector
  */
 Body.prototype.toLocalFrame = function(out, worldPoint){
     vec2.toLocalFrame(out, worldPoint, this.position, this.angle);
@@ -64318,10 +67468,10 @@ Body.prototype.addConstraintVelocity = function(){
  * @param  {number} dt Current time step
  */
 Body.prototype.applyDamping = function(dt){
-    if(this.motionState == Body.DYNAMIC){ // Only for dynamic bodies
+    if(this.motionState === Body.DYNAMIC){ // Only for dynamic bodies
 
         // Since Math.pow generates garbage we check if we can reuse the scaling coefficient from last step
-        if(dt != this.lastDampingTimeStep){
+        if(dt !== this.lastDampingTimeStep){
             this.lastDampingScale =         Math.pow(1.0 - this.damping,dt);
             this.lastAngularDampingScale =  Math.pow(1.0 - this.angularDamping,dt);
             this.lastDampingTimeStep = dt;
@@ -64334,47 +67484,90 @@ Body.prototype.applyDamping = function(dt){
 };
 
 /**
+ * Wake the body up. Normally you should not need this, as the body is automatically awoken at events such as collisions.
+ * Sets the sleepState to {{#crossLink "Body/AWAKE:property"}}Body.AWAKE{{/crossLink}} and emits the wakeUp event if the body wasn't awake before.
  * @method wakeUp
- * @brief Wake the body up.
  */
 Body.prototype.wakeUp = function(){
     var s = this.sleepState;
     this.sleepState = Body.AWAKE;
+    this.idleTime = 0;
     if(s !== Body.AWAKE){
         this.emit(Body.wakeUpEvent);
     }
 };
 
 /**
+ * Force body sleep
  * @method sleep
- * @brief Force body sleep
  */
 Body.prototype.sleep = function(){
     this.sleepState = Body.SLEEPING;
+    this.angularVelocity = 0;
+    this.angularForce = 0;
+    vec2.set(this.velocity,0,0);
+    vec2.set(this.force,0,0);
     this.emit(Body.sleepEvent);
 };
+
+//var velo2 = vec2.create();
 
 /**
  * @method sleepTick
  * @param float time The world time in seconds
  * @brief Called every timestep to update internal sleep timer and change sleep state if needed.
  */
-Body.prototype.sleepTick = function(time){
-    if(!this.allowSleep)
+Body.prototype.sleepTick = function(time, dontSleep, dt){
+    if(!this.allowSleep || this.motionState === Body.SLEEPING){
         return;
+    }
+
+    this.wantsToSleep = false;
 
     var sleepState = this.sleepState,
         speedSquared = vec2.squaredLength(this.velocity) + Math.pow(this.angularVelocity,2),
         speedLimitSquared = Math.pow(this.sleepSpeedLimit,2);
+
+    // Add to idle time
+    if(speedSquared >= speedLimitSquared){
+        this.idleTime = 0;
+        this.sleepState = Body.AWAKE;
+    } else {
+        this.idleTime += dt;
+        this.sleepState = Body.SLEEPY;
+    }
+    if(this.idleTime > this.sleepTimeLimit){
+        if(!dontSleep){
+            this.sleep();
+        } else {
+            this.wantsToSleep = true;
+        }
+    }
+
+    /*
     if(sleepState===Body.AWAKE && speedSquared < speedLimitSquared){
         this.sleepState = Body.SLEEPY; // Sleepy
         this.timeLastSleepy = time;
         this.emit(Body.sleepyEvent);
-    } else if(sleepState===Body.SLEEPY && speedSquared > speedLimitSquared){
+    } else if(sleepState===Body.SLEEPY && speedSquared >= speedLimitSquared){
         this.wakeUp(); // Wake up
     } else if(sleepState===Body.SLEEPY && (time - this.timeLastSleepy ) > this.sleepTimeLimit){
-        this.sleep();
+        this.wantsToSleep = true;
+        if(!dontSleep){
+            this.sleep();
+        }
     }
+    */
+};
+
+Body.prototype.getVelocityFromPosition = function(store, timeStep){
+    store = store || vec2.create();
+    vec2.sub(store, this.position, this.previousPosition);
+    vec2.scale(store, store, 1/timeStep);
+    return store;
+};
+Body.prototype.getAngularVelocityFromPosition = function(timeStep){
+    return (this.angle - this.previousAngle) / timeStep;
 };
 
 /**
@@ -64444,50 +67637,57 @@ Body.SLEEPY = 1;
 Body.SLEEPING = 2;
 
 
-},{"../collision/AABB":9,"../events/EventEmitter":28,"../math/vec2":33,"../shapes/Convex":39,"poly-decomp":7}],35:[function(require,module,exports){
+},{"../collision/AABB":8,"../events/EventEmitter":26,"../math/vec2":30,"../shapes/Convex":36,"poly-decomp":6}],32:[function(require,module,exports){
 var vec2 = require('../math/vec2');
+var Utils = require('../utils/Utils');
 
 module.exports = Spring;
 
 /**
- * A spring, connecting two bodies.
+ * A spring, connecting two bodies. The Spring explicitly adds force and angularForce to the bodies and does therefore not put load on the solver.
  *
  * @class Spring
  * @constructor
  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {Object} [options]
- * @param {number} options.restLength   A number > 0. Default: 1
- * @param {number} options.stiffness    A number >= 0. Default: 100
- * @param {number} options.damping      A number >= 0. Default: 1
- * @param {Array}  options.worldAnchorA Where to hook the spring to body A, in world coordinates.
- * @param {Array}  options.worldAnchorB
- * @param {Array}  options.localAnchorA Where to hook the spring to body A, in local body coordinates.
- * @param {Array}  options.localAnchorB
+ * @param {number} [options.restLength=1]   A number > 0. Default: 1
+ * @param {number} [options.stiffness=100]  Spring constant (see Hookes Law). A number >= 0.
+ * @param {number} [options.damping=1]      A number >= 0. Default: 1
+ * @param {Array}  [options.localAnchorA]   Where to hook the spring to body A, in local body coordinates. Defaults to the body center.
+ * @param {Array}  [options.localAnchorB]
+ * @param {Array}  [options.worldAnchorA]   Where to hook the spring to body A, in world coordinates. Overrides the option "localAnchorA" if given.
+ * @param {Array}  [options.worldAnchorB]
  */
 function Spring(bodyA,bodyB,options){
-    options = options || {};
+    options = Utils.defaults(options,{
+        restLength: 1,
+        stiffness: 100,
+        damping: 1,
+        localAnchorA: [0,0],
+        localAnchorB: [0,0],
+    });
 
     /**
      * Rest length of the spring.
      * @property restLength
      * @type {number}
      */
-    this.restLength = typeof(options.restLength)=="number" ? options.restLength : 1;
+    this.restLength = options.restLength;
 
     /**
      * Stiffness of the spring.
      * @property stiffness
      * @type {number}
      */
-    this.stiffness = options.stiffness || 100;
+    this.stiffness = options.stiffness;
 
     /**
      * Damping of the spring.
      * @property damping
      * @type {number}
      */
-    this.damping = options.damping || 1;
+    this.damping = options.damping;
 
     /**
      * First connected body.
@@ -64508,20 +67708,24 @@ function Spring(bodyA,bodyB,options){
      * @property localAnchorA
      * @type {Array}
      */
-    this.localAnchorA = vec2.fromValues(0,0);
+    this.localAnchorA = vec2.create();
+    vec2.copy(this.localAnchorA, options.localAnchorA);
 
     /**
      * Anchor for bodyB in local bodyB coordinates.
      * @property localAnchorB
      * @type {Array}
      */
-    this.localAnchorB = vec2.fromValues(0,0);
+    this.localAnchorB = vec2.create();
+    vec2.copy(this.localAnchorB, options.localAnchorB);
 
-    if(options.localAnchorA) vec2.copy(this.localAnchorA, options.localAnchorA);
-    if(options.localAnchorB) vec2.copy(this.localAnchorB, options.localAnchorB);
-    if(options.worldAnchorA) this.setWorldAnchorA(options.worldAnchorA);
-    if(options.worldAnchorB) this.setWorldAnchorB(options.worldAnchorB);
-};
+    if(options.worldAnchorA){
+        this.setWorldAnchorA(options.worldAnchorA);
+    }
+    if(options.worldAnchorB){
+        this.setWorldAnchorB(options.worldAnchorB);
+    }
+}
 
 /**
  * Set the anchor point on body A, using world coordinates.
@@ -64627,7 +67831,7 @@ Spring.prototype.applyForce = function(){
     bodyB.angularForce += rj_x_f;
 };
 
-},{"../math/vec2":33}],36:[function(require,module,exports){
+},{"../math/vec2":30,"../utils/Utils":47}],33:[function(require,module,exports){
 // Export p2 classes
 module.exports = {
     AABB :                          require('./collision/AABB'),
@@ -64648,8 +67852,6 @@ module.exports = {
     GridBroadphase :                require('./collision/GridBroadphase'),
     GSSolver :                      require('./solver/GSSolver'),
     Heightfield :                   require('./shapes/Heightfield'),
-    Island :                        require('./solver/IslandSolver'),
-    IslandSolver :                  require('./solver/IslandSolver'),
     Line :                          require('./shapes/Line'),
     LockConstraint :                require('./constraints/LockConstraint'),
     Material :                      require('./material/Material'),
@@ -64667,14 +67869,13 @@ module.exports = {
     Spring :                        require('./objects/Spring'),
     Utils :                         require('./utils/Utils'),
     World :                         require('./world/World'),
-    QuadTree :                      require('./collision/QuadTree').QuadTree,
     vec2 :                          require('./math/vec2'),
     version :                       require('../package.json').version,
 };
 
-},{"../package.json":8,"./collision/AABB":9,"./collision/Broadphase":10,"./collision/GridBroadphase":11,"./collision/NaiveBroadphase":12,"./collision/Narrowphase":13,"./collision/QuadTree":14,"./collision/SAPBroadphase":15,"./constraints/Constraint":16,"./constraints/DistanceConstraint":17,"./constraints/GearConstraint":18,"./constraints/LockConstraint":19,"./constraints/PrismaticConstraint":20,"./constraints/RevoluteConstraint":21,"./equations/AngleLockEquation":22,"./equations/ContactEquation":23,"./equations/Equation":24,"./equations/FrictionEquation":25,"./equations/RotationalVelocityEquation":27,"./events/EventEmitter":28,"./material/ContactMaterial":29,"./material/Material":30,"./math/vec2":33,"./objects/Body":34,"./objects/Spring":35,"./shapes/Capsule":37,"./shapes/Circle":38,"./shapes/Convex":39,"./shapes/Heightfield":40,"./shapes/Line":41,"./shapes/Particle":42,"./shapes/Plane":43,"./shapes/Rectangle":44,"./shapes/Shape":45,"./solver/GSSolver":46,"./solver/IslandSolver":48,"./solver/Solver":49,"./utils/Utils":50,"./world/World":51}],37:[function(require,module,exports){
+},{"../package.json":7,"./collision/AABB":8,"./collision/Broadphase":9,"./collision/GridBroadphase":10,"./collision/NaiveBroadphase":11,"./collision/Narrowphase":12,"./collision/SAPBroadphase":13,"./constraints/Constraint":14,"./constraints/DistanceConstraint":15,"./constraints/GearConstraint":16,"./constraints/LockConstraint":17,"./constraints/PrismaticConstraint":18,"./constraints/RevoluteConstraint":19,"./equations/AngleLockEquation":20,"./equations/ContactEquation":21,"./equations/Equation":22,"./equations/FrictionEquation":23,"./equations/RotationalVelocityEquation":25,"./events/EventEmitter":26,"./material/ContactMaterial":27,"./material/Material":28,"./math/vec2":30,"./objects/Body":31,"./objects/Spring":32,"./shapes/Capsule":34,"./shapes/Circle":35,"./shapes/Convex":36,"./shapes/Heightfield":37,"./shapes/Line":38,"./shapes/Particle":39,"./shapes/Plane":40,"./shapes/Rectangle":41,"./shapes/Shape":42,"./solver/GSSolver":43,"./solver/Solver":44,"./utils/Utils":47,"./world/World":51}],34:[function(require,module,exports){
 var Shape = require('./Shape')
-,   vec2 = require('../math/vec2')
+,   vec2 = require('../math/vec2');
 
 module.exports = Capsule;
 
@@ -64682,11 +67883,11 @@ module.exports = Capsule;
  * Capsule shape class.
  * @class Capsule
  * @constructor
- * @extends {Shape}
- * @param {Number} length The distance between the end points
- * @param {Number} radius Radius of the capsule
+ * @extends Shape
+ * @param {Number} [length] The distance between the end points
+ * @param {Number} [radius] Radius of the capsule
  */
-function Capsule(length,radius){
+function Capsule(length, radius){
 
     /**
      * The distance between the end points.
@@ -64701,7 +67902,7 @@ function Capsule(length,radius){
     this.radius = radius || 1;
 
     Shape.call(this,Shape.CAPSULE);
-};
+}
 Capsule.prototype = new Shape();
 
 /**
@@ -64759,7 +67960,7 @@ Capsule.prototype.computeAABB = function(out, position, angle){
     vec2.add(out.upperBound, out.upperBound, position);
 };
 
-},{"../math/vec2":33,"./Shape":45}],38:[function(require,module,exports){
+},{"../math/vec2":30,"./Shape":42}],35:[function(require,module,exports){
 var Shape = require('./Shape')
 ,    vec2 = require('../math/vec2')
 
@@ -64768,9 +67969,9 @@ module.exports = Circle;
 /**
  * Circle shape class.
  * @class Circle
- * @extends {Shape}
+ * @extends Shape
  * @constructor
- * @param {number} radius The radius of this circle
+ * @param {number} [radius=1] The radius of this circle
  */
 function Circle(radius){
 
@@ -64795,10 +67996,18 @@ Circle.prototype.computeMomentOfInertia = function(mass){
     return mass * r * r / 2;
 };
 
+/**
+ * @method updateBoundingRadius
+ * @return {Number}
+ */
 Circle.prototype.updateBoundingRadius = function(){
     this.boundingRadius = this.radius;
 };
 
+/**
+ * @method updateArea
+ * @return {Number}
+ */
 Circle.prototype.updateArea = function(){
     this.area = Math.PI * this.radius * this.radius;
 };
@@ -64819,7 +68028,7 @@ Circle.prototype.computeAABB = function(out, position, angle){
     }
 };
 
-},{"../math/vec2":33,"./Shape":45}],39:[function(require,module,exports){
+},{"../math/vec2":30,"./Shape":42}],36:[function(require,module,exports){
 var Shape = require('./Shape')
 ,   vec2 = require('../math/vec2')
 ,   polyk = require('../math/polyk')
@@ -64831,7 +68040,7 @@ module.exports = Convex;
  * Convex shape class.
  * @class Convex
  * @constructor
- * @extends {Shape}
+ * @extends Shape
  * @param {Array} vertices An array of Float32Array vertices that span this shape. Vertices are given in counter-clockwise (CCW) direction.
  */
 function Convex(vertices){
@@ -65050,24 +68259,71 @@ Convex.prototype.computeAABB = function(out, position, angle){
    out.setFromPoints(this.vertices,position,angle);
 };
 
-},{"../math/polyk":32,"../math/vec2":33,"./Shape":45,"poly-decomp":7}],40:[function(require,module,exports){
+},{"../math/polyk":29,"../math/vec2":30,"./Shape":42,"poly-decomp":6}],37:[function(require,module,exports){
 var Shape = require('./Shape')
 ,    vec2 = require('../math/vec2')
+,    Utils = require('../utils/Utils');
 
 module.exports = Heightfield;
 
 /**
  * Heightfield shape class. Height data is given as an array. These data points are spread out evenly with a distance "elementWidth".
  * @class Heightfield
- * @extends {Shape}
+ * @extends Shape
  * @constructor
+ * @param {Array} data
+ * @param {Number} maxValue
+ * @param {Number} elementWidth
+ * @todo Should take maxValue as an option and also be able to compute it itself if not given.
+ * @todo Should be possible to use along all axes, not just y
  */
-function Heightfield(data,maxValue,elementWidth){
+function Heightfield(data, options){
+    options = Utils.defaults(options, {
+        maxValue : null,
+        minValue : null,
+        elementWidth : 0.1
+    });
+
+    if(options.minValue === null || options.maxValue === null){
+        options.maxValue = data[0];
+        options.minValue = data[0];
+        for(var i=0; i !== data.length; i++){
+            var v = data[i];
+            if(v > options.maxValue){
+                options.maxValue = v;
+            }
+            if(v < options.minValue){
+                options.minValue = v;
+            }
+        }
+    }
+
+    /**
+     * An array of numbers, or height values, that are spread out along the x axis.
+     * @property {array} data
+     */
     this.data = data;
-    this.maxValue = maxValue;
-    this.elementWidth = elementWidth;
+
+    /**
+     * Max value of the data
+     * @property {number} maxValue
+     */
+    this.maxValue = options.maxValue;
+
+    /**
+     * Max value of the data
+     * @property {number} minValue
+     */
+    this.minValue = options.minValue;
+
+    /**
+     * The width of each element
+     * @property {number} elementWidth
+     */
+    this.elementWidth = options.elementWidth;
+
     Shape.call(this,Shape.HEIGHTFIELD);
-};
+}
 Heightfield.prototype = new Shape();
 
 /**
@@ -65103,10 +68359,10 @@ Heightfield.prototype.computeAABB = function(out, position, angle){
     out.upperBound[0] = this.elementWidth * this.data.length + position[0];
     out.upperBound[1] = this.maxValue + position[1];
     out.lowerBound[0] = position[0];
-    out.lowerBound[1] = position[1];
+    out.lowerBound[1] = -Number.MAX_VALUE; // Infinity
 };
 
-},{"../math/vec2":33,"./Shape":45}],41:[function(require,module,exports){
+},{"../math/vec2":30,"../utils/Utils":47,"./Shape":42}],38:[function(require,module,exports){
 var Shape = require('./Shape')
 ,   vec2 = require('../math/vec2')
 
@@ -65116,7 +68372,7 @@ module.exports = Line;
  * Line shape class. The line shape is along the x direction, and stretches from [-length/2, 0] to [length/2,0].
  * @class Line
  * @param {Number} length The total length of the line
- * @extends {Shape}
+ * @extends Shape
  * @constructor
  */
 function Line(length){
@@ -65126,10 +68382,10 @@ function Line(length){
      * @property length
      * @type {Number}
      */
-    this.length = length;
+    this.length = length || 1;
 
     Shape.call(this,Shape.LINE);
-};
+}
 Line.prototype = new Shape();
 Line.prototype.computeMomentOfInertia = function(mass){
     return mass * Math.pow(this.length,2) / 12;
@@ -65155,7 +68411,7 @@ Line.prototype.computeAABB = function(out, position, angle){
 };
 
 
-},{"../math/vec2":33,"./Shape":45}],42:[function(require,module,exports){
+},{"../math/vec2":30,"./Shape":42}],39:[function(require,module,exports){
 var Shape = require('./Shape')
 ,   vec2 = require('../math/vec2')
 
@@ -65165,7 +68421,7 @@ module.exports = Particle;
  * Particle shape class.
  * @class Particle
  * @constructor
- * @extends {Shape}
+ * @extends Shape
  */
 function Particle(){
     Shape.call(this,Shape.PARTICLE);
@@ -65191,7 +68447,7 @@ Particle.prototype.computeAABB = function(out, position, angle){
     vec2.copy(out.upperBound, position);
 };
 
-},{"../math/vec2":33,"./Shape":45}],43:[function(require,module,exports){
+},{"../math/vec2":30,"./Shape":42}],40:[function(require,module,exports){
 var Shape =  require('./Shape')
 ,    vec2 =  require('../math/vec2')
 ,    Utils = require('../utils/Utils')
@@ -65201,7 +68457,7 @@ module.exports = Plane;
 /**
  * Plane shape class. The plane is facing in the Y direction.
  * @class Plane
- * @extends {Shape}
+ * @extends Shape
  * @constructor
  */
 function Plane(){
@@ -65268,10 +68524,10 @@ Plane.prototype.updateArea = function(){
 };
 
 
-},{"../math/vec2":33,"../utils/Utils":50,"./Shape":45}],44:[function(require,module,exports){
+},{"../math/vec2":30,"../utils/Utils":47,"./Shape":42}],41:[function(require,module,exports){
 var vec2 = require('../math/vec2')
 ,   Shape = require('./Shape')
-,   Convex = require('./Convex')
+,   Convex = require('./Convex');
 
 module.exports = Rectangle;
 
@@ -65279,34 +68535,37 @@ module.exports = Rectangle;
  * Rectangle shape class.
  * @class Rectangle
  * @constructor
- * @param {Number} w Width
- * @param {Number} h Height
- * @extends {Convex}
+ * @param {Number} width Width
+ * @param {Number} height Height
+ * @extends Convex
  */
-function Rectangle(w,h){
-    var verts = [   vec2.fromValues(-w/2, -h/2),
-                    vec2.fromValues( w/2, -h/2),
-                    vec2.fromValues( w/2,  h/2),
-                    vec2.fromValues(-w/2,  h/2)];
+function Rectangle(width, height){
+    width = width || 1;
+    height = height || 1;
+
+    var verts = [   vec2.fromValues(-width/2, -height/2),
+                    vec2.fromValues( width/2, -height/2),
+                    vec2.fromValues( width/2,  height/2),
+                    vec2.fromValues(-width/2,  height/2)];
 
     /**
      * Total width of the rectangle
      * @property width
      * @type {Number}
      */
-    this.width = w;
+    this.width = width;
 
     /**
      * Total height of the rectangle
      * @property height
      * @type {Number}
      */
-    this.height = h;
+    this.height = height;
 
     Convex.call(this,verts);
 
     this.type = Shape.RECTANGLE;
-};
+}
 Rectangle.prototype = new Convex([]);
 
 /**
@@ -65351,15 +68610,31 @@ Rectangle.prototype.updateArea = function(){
 };
 
 
-},{"../math/vec2":33,"./Convex":39,"./Shape":45}],45:[function(require,module,exports){
+},{"../math/vec2":30,"./Convex":36,"./Shape":42}],42:[function(require,module,exports){
 module.exports = Shape;
 
 /**
  * Base class for shapes.
  * @class Shape
  * @constructor
+ * @param {Number} type
  */
 function Shape(type){
+
+    /**
+     * The type of the shape. One of:
+     *
+     * * {{#crossLink "Shape/CIRCLE:property"}}Shape.CIRCLE{{/crossLink}}
+     * * {{#crossLink "Shape/PARTICLE:property"}}Shape.PARTICLE{{/crossLink}}
+     * * {{#crossLink "Shape/PLANE:property"}}Shape.PLANE{{/crossLink}}
+     * * {{#crossLink "Shape/CONVEX:property"}}Shape.CONVEX{{/crossLink}}
+     * * {{#crossLink "Shape/LINE:property"}}Shape.LINE{{/crossLink}}
+     * * {{#crossLink "Shape/RECTANGLE:property"}}Shape.RECTANGLE{{/crossLink}}
+     * * {{#crossLink "Shape/CAPSULE:property"}}Shape.CAPSULE{{/crossLink}}
+     * * {{#crossLink "Shape/HEIGHTFIELD:property"}}Shape.HEIGHTFIELD{{/crossLink}}
+     *
+     * @property {number} type
+     */
     this.type = type;
 
     /**
@@ -65526,11 +68801,11 @@ Shape.prototype.computeAABB = function(out, position, angle){
     // To be implemented in each subclass
 };
 
-},{}],46:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 var vec2 = require('../math/vec2')
 ,   Solver = require('./Solver')
 ,   Utils = require('../utils/Utils')
-,   FrictionEquation = require('../equations/FrictionEquation')
+,   FrictionEquation = require('../equations/FrictionEquation');
 
 module.exports = GSSolver;
 
@@ -65541,11 +68816,8 @@ module.exports = GSSolver;
  * @constructor
  * @extends Solver
  * @param {Object} [options]
- * @param {Number} options.iterations
- * @param {Number} options.timeStep
- * @param {Number} options.stiffness
- * @param {Number} options.relaxation
- * @param {Number} options.tolerance
+ * @param {Number} [options.iterations=10]
+ * @param {Number} [options.tolerance=0]
  */
 function GSSolver(options){
     Solver.call(this,options,Solver.GS);
@@ -65559,38 +68831,16 @@ function GSSolver(options){
     this.iterations = options.iterations || 10;
 
     /**
-     * The error tolerance. If the total error is below this limit, the solver will stop. Set to zero for as good solution as possible.
+     * The error tolerance, per constraint. If the total error is below this limit, the solver will stop iterating. Set to zero for as good solution as possible, but to something larger than zero to make computations faster.
      * @property tolerance
      * @type {Number}
      */
-    this.tolerance = options.tolerance || 0;
+    this.tolerance = options.tolerance || 1e-10;
 
-    this.debug = options.debug || false;
     this.arrayStep = 30;
     this.lambda = new Utils.ARRAY_TYPE(this.arrayStep);
     this.Bs =     new Utils.ARRAY_TYPE(this.arrayStep);
     this.invCs =  new Utils.ARRAY_TYPE(this.arrayStep);
-
-    /**
-     * Whether to use .stiffness and .relaxation parameters from the Solver instead of each Equation individually.
-     * @type {Boolean}
-     * @property useGlobalEquationParameters
-     */
-    this.useGlobalEquationParameters = true;
-
-    /**
-     * Global equation stiffness. Larger number gives harder contacts, etc, but may also be more expensive to compute, or it will make your simulation explode.
-     * @property stiffness
-     * @type {Number}
-     */
-    this.stiffness = 1e6;
-
-    /**
-     * Global equation relaxation. This is the number of timesteps required for a constraint to be resolved. Larger number will give softer contacts. Set to around 3 or 4 for good enough results.
-     * @property relaxation
-     * @type {Number}
-     */
-    this.relaxation = 4;
 
     /**
      * Set to true to set all right hand side terms to zero when solving. Can be handy for a few applications.
@@ -65599,20 +68849,26 @@ function GSSolver(options){
      */
     this.useZeroRHS = false;
 
-    this.useNormalForceForFriction = false;
-
     /**
-     * Number of friction iterations to skip. If .skipFrictionIterations=2, then no FrictionEquations will be iterated until the third iteration.
-     * @property skipFrictionIterations
+     * Number of solver iterations that are done to approximate normal forces. When these iterations are done, friction force will be computed from the contact normal forces. These friction forces will override any other friction forces set from the World for example.
+     * The solver will use less iterations if the solution is below the .tolerance.
+     * @property frictionIterations
      * @type {Number}
      */
-    this.skipFrictionIterations = 0;
-};
+    this.frictionIterations = 0;
+
+    /**
+     * The number of iterations that were made during the last solve. If .tolerance is zero, this value will always be equal to .iterations, but if .tolerance is larger than zero, and the solver can quit early, then this number will be somewhere between 1 and .iterations.
+     * @property {Number} usedIterations
+     */
+    this.usedIterations = 0;
+}
 GSSolver.prototype = new Solver();
 
 function setArrayZero(array){
-    for(var i=0; i!==array.length; i++){
-        array[i] = 0.0;
+    var l = array.length;
+    while(l--){
+        array[l] = +0.0;
     }
 }
 
@@ -65622,28 +68878,24 @@ function setArrayZero(array){
  * @param  {Number}  h       Time step
  * @param  {World}   world    World to solve
  */
-GSSolver.prototype.solve = function(h,world){
+GSSolver.prototype.solve = function(h, world){
 
     this.sortEquations();
 
     var iter = 0,
         maxIter = this.iterations,
-        skipFrictionIter = this.skipFrictionIterations,
-        tolSquared = this.tolerance*this.tolerance,
+        maxFrictionIter = this.frictionIterations,
         equations = this.equations,
         Neq = equations.length,
+        tolSquared = Math.pow(this.tolerance*Neq, 2),
         bodies = world.bodies,
         Nbodies = world.bodies.length,
-        d = this.relaxation,
-        k = this.stiffness,
-        eps = 4.0 / (h * h * k * (1 + 4 * d)),
-        a = 4.0 / (h * (1 + 4 * d)),
-        b = (4.0 * d) / (1 + 4 * d),
-        useGlobalParams = this.useGlobalEquationParameters,
         add = vec2.add,
         set = vec2.set,
         useZeroRHS = this.useZeroRHS,
         lambda = this.lambda;
+
+    this.usedIterations = 0;
 
     // Things that does not change during iteration can be computed once
     if(lambda.length < Neq){
@@ -65655,17 +68907,15 @@ GSSolver.prototype.solve = function(h,world){
     var invCs = this.invCs,
         Bs = this.Bs,
         lambda = this.lambda;
-    if(!useGlobalParams){
-        for(var i=0, c; c = equations[i]; i++){
-            c.updateSpookParams(h);
-            Bs[i] =     c.computeB(c.a,c.b,h);
-            invCs[i] =  c.computeInvC(c.eps);
+
+    for(var i=0; i!==equations.length; i++){
+        var c = equations[i];
+        if(c.timeStep !== h || c.needsUpdate){
+            c.timeStep = h;
+            c.update();
         }
-    } else {
-        for(var i=0, c; c = equations[i]; i++){
-            Bs[i] =     c.computeB(a,b,h);
-            invCs[i] =  c.computeInvC(eps);
-        }
+        Bs[i] =     c.computeB(c.a,c.b,h);
+        invCs[i] =  c.computeInvC(c.epsilon);
     }
 
     var q, B, c, deltalambdaTot,i,j;
@@ -65677,7 +68927,46 @@ GSSolver.prototype.solve = function(h,world){
             bodies[i].resetConstraintVelocity();
         }
 
-        // Iterate over equations
+        if(maxFrictionIter){
+            // Iterate over contact equations to get normal forces
+            for(iter=0; iter!==maxFrictionIter; iter++){
+
+                // Accumulate the total error for each iteration.
+                deltalambdaTot = 0.0;
+
+                for(j=0; j!==Neq; j++){
+                    c = equations[j];
+
+                    if(c instanceof FrictionEquation){
+                        //continue;
+                    }
+
+                    var deltalambda = GSSolver.iterateEquation(j,c,c.epsilon,Bs,invCs,lambda,useZeroRHS,h,iter);
+                    deltalambdaTot += Math.abs(deltalambda);
+                }
+
+                this.usedIterations++;
+
+                // If the total error is small enough - stop iterate
+                if(deltalambdaTot*deltalambdaTot <= tolSquared){
+                    break;
+                }
+            }
+
+            GSSolver.updateMultipliers(equations, lambda, 1/h);
+
+            // Set computed friction force
+            for(j=0; j!==Neq; j++){
+                var eq = equations[j];
+                if(eq instanceof FrictionEquation){
+                    var f = eq.contactEquation.multiplier * eq.frictionCoefficient;
+                    eq.maxForce =  f;
+                    eq.minForce = -f;
+                }
+            }
+        }
+
+        // Iterate over all equations
         for(iter=0; iter!==maxIter; iter++){
 
             // Accumulate the total error for each iteration.
@@ -65686,43 +68975,49 @@ GSSolver.prototype.solve = function(h,world){
             for(j=0; j!==Neq; j++){
                 c = equations[j];
 
-                if(c instanceof FrictionEquation && iter < skipFrictionIter)
-                    continue;
-
-                var _eps = useGlobalParams ? eps : c.eps;
-
-                var deltalambda = GSSolver.iterateEquation(j,c,_eps,Bs,invCs,lambda,useZeroRHS,h,iter,skipFrictionIter,this.useNormalForceForFriction);
+                var deltalambda = GSSolver.iterateEquation(j,c,c.epsilon,Bs,invCs,lambda,useZeroRHS,h,iter);
                 deltalambdaTot += Math.abs(deltalambda);
             }
 
+            this.usedIterations++;
+
             // If the total error is small enough - stop iterate
-            if(deltalambdaTot*deltalambdaTot <= tolSquared) break;
+            if(deltalambdaTot*deltalambdaTot <= tolSquared){
+                break;
+            }
         }
 
         // Add result to velocity
         for(i=0; i!==Nbodies; i++){
             bodies[i].addConstraintVelocity();
         }
+
+        GSSolver.updateMultipliers(equations, lambda, 1/h);
     }
 };
 
-GSSolver.iterateEquation = function(j,eq,eps,Bs,invCs,lambda,useZeroRHS,dt,iter,skipFrictionIter,useNormal){
+// Sets the .multiplier property of each equation
+GSSolver.updateMultipliers = function(equations, lambda, invDt){
+    // Set the .multiplier property of each equation
+    var l = equations.length;
+    while(l--){
+        equations[l].multiplier = lambda[l] * invDt;
+    }
+};
+
+GSSolver.iterateEquation = function(j,eq,eps,Bs,invCs,lambda,useZeroRHS,dt,iter){
     // Compute iteration
     var B = Bs[j],
         invC = invCs[j],
         lambdaj = lambda[j],
         GWlambda = eq.computeGWlambda();
 
-    if(useNormal && eq instanceof FrictionEquation && iter == skipFrictionIter){
-        // Rescale the max friction force according to the normal force
-        eq.maxForce =  eq.contactEquation.multiplier * eq.frictionCoefficient * dt;
-        eq.minForce = -eq.contactEquation.multiplier * eq.frictionCoefficient * dt;
-    }
-
     var maxForce = eq.maxForce,
         minForce = eq.minForce;
 
-    if(useZeroRHS) B = 0;
+    if(useZeroRHS){
+        B = 0;
+    }
 
     var deltalambda = invC * ( B - GWlambda - eps * lambdaj );
 
@@ -65734,13 +69029,522 @@ GSSolver.iterateEquation = function(j,eq,eps,Bs,invCs,lambda,useZeroRHS,dt,iter,
         deltalambda = maxForce*dt - lambdaj;
     }
     lambda[j] += deltalambda;
-    eq.multiplier = lambda[j] / dt;
     eq.addToWlambda(deltalambda);
 
     return deltalambda;
 };
 
-},{"../equations/FrictionEquation":25,"../math/vec2":33,"../utils/Utils":50,"./Solver":49}],47:[function(require,module,exports){
+},{"../equations/FrictionEquation":23,"../math/vec2":30,"../utils/Utils":47,"./Solver":44}],44:[function(require,module,exports){
+var Utils = require('../utils/Utils')
+,   EventEmitter = require('../events/EventEmitter')
+
+module.exports = Solver;
+
+/**
+ * Base class for constraint solvers.
+ * @class Solver
+ * @constructor
+ * @extends EventEmitter
+ */
+function Solver(options,type){
+    options = options || {};
+
+    EventEmitter.call(this);
+
+    this.type = type;
+
+    /**
+     * Current equations in the solver.
+     *
+     * @property equations
+     * @type {Array}
+     */
+    this.equations = [];
+
+    /**
+     * Function that is used to sort all equations before each solve.
+     * @property equationSortFunction
+     * @type {function|boolean}
+     */
+    this.equationSortFunction = options.equationSortFunction || false;
+}
+Solver.prototype = new EventEmitter();
+
+/**
+ * Method to be implemented in each subclass
+ * @method solve
+ * @param  {Number} dt
+ * @param  {World} world
+ */
+Solver.prototype.solve = function(dt,world){
+    throw new Error("Solver.solve should be implemented by subclasses!");
+};
+
+var mockWorld = {bodies:[]};
+
+/**
+ * Solves all constraints in an island.
+ * @method solveIsland
+ * @param  {Number} dt
+ * @param  {Island} island
+ */
+Solver.prototype.solveIsland = function(dt,island){
+
+    this.removeAllEquations();
+
+    if(island.equations.length){
+        // Add equations to solver
+        this.addEquations(island.equations);
+        mockWorld.bodies.length = 0;
+        island.getBodies(mockWorld.bodies);
+
+        // Solve
+        if(mockWorld.bodies.length){
+            this.solve(dt,mockWorld);
+        }
+    }
+};
+
+/**
+ * Sort all equations using the .equationSortFunction. Should be called by subclasses before solving.
+ * @method sortEquations
+ */
+Solver.prototype.sortEquations = function(){
+    if(this.equationSortFunction){
+        this.equations.sort(this.equationSortFunction);
+    }
+};
+
+/**
+ * Add an equation to be solved.
+ *
+ * @method addEquation
+ * @param {Equation} eq
+ */
+Solver.prototype.addEquation = function(eq){
+    if(eq.enabled){
+        this.equations.push(eq);
+    }
+};
+
+/**
+ * Add equations. Same as .addEquation, but this time the argument is an array of Equations
+ *
+ * @method addEquations
+ * @param {Array} eqs
+ */
+Solver.prototype.addEquations = function(eqs){
+    //Utils.appendArray(this.equations,eqs);
+    for(var i=0, N=eqs.length; i!==N; i++){
+        var eq = eqs[i];
+        if(eq.enabled){
+            this.equations.push(eq);
+        }
+    }
+};
+
+/**
+ * Remove an equation.
+ *
+ * @method removeEquation
+ * @param {Equation} eq
+ */
+Solver.prototype.removeEquation = function(eq){
+    var i = this.equations.indexOf(eq);
+    if(i !== -1){
+        this.equations.splice(i,1);
+    }
+};
+
+/**
+ * Remove all currently added equations.
+ *
+ * @method removeAllEquations
+ */
+Solver.prototype.removeAllEquations = function(){
+    this.equations.length=0;
+};
+
+Solver.GS = 1;
+Solver.ISLAND = 2;
+
+},{"../events/EventEmitter":26,"../utils/Utils":47}],45:[function(require,module,exports){
+var TupleDictionary = require('./TupleDictionary');
+var Utils = require('./Utils');
+
+module.exports = OverlapKeeper;
+
+/**
+ * Keeps track of overlaps in the current state and the last step state.
+ * @class OverlapKeeper
+ * @constructor
+ */
+function OverlapKeeper() {
+    this.overlappingLastState = new TupleDictionary();
+    this.overlappingCurrentState = new TupleDictionary();
+    this.recordPool = [];
+    this.tmpDict = new TupleDictionary();
+    this.tmpArray1 = [];
+}
+
+/**
+ * @method tick
+ */
+OverlapKeeper.prototype.tick = function() {
+    var last = this.overlappingLastState;
+    var current = this.overlappingCurrentState;
+
+    // Save old objects into pool
+    var l = current.keys.length;
+    while(l--){
+        var key = current.keys[l];
+        this.recordPool.push(current.getByKey(key));
+    }
+
+    // Clear last object
+    last.reset();
+
+    // Transfer from new object to old
+    last.copy(current);
+
+    // Clear current object
+    current.reset();
+};
+
+/**
+ * @method setOverlapping
+ */
+OverlapKeeper.prototype.setOverlapping = function(bodyA, shapeA, bodyB, shapeB) {
+    var last = this.overlappingLastState;
+    var current = this.overlappingCurrentState;
+
+    // Store current contact state
+    if(!current.get(shapeA.id, shapeB.id)){
+
+        var data;
+        if(this.recordPool.length){
+            data = this.recordPool.pop();
+        } else {
+            data = new OverlapKeeperRecord(bodyA, shapeA, bodyB, shapeB);
+        }
+
+        current.set(shapeA.id, shapeB.id, data);
+    }
+};
+
+OverlapKeeper.prototype.getNewOverlaps = function(result){
+    return this.getDiff(this.overlappingLastState, this.overlappingCurrentState, result);
+};
+
+OverlapKeeper.prototype.getEndOverlaps = function(result){
+    return this.getDiff(this.overlappingCurrentState, this.overlappingLastState, result);
+};
+
+OverlapKeeper.prototype.getDiff = function(dictA, dictB, result){
+    var result = result || [];
+    var last = dictA;
+    var current = dictB;
+
+    result.length = 0;
+
+    var l = current.keys.length;
+    while(l--){
+        var key = current.keys[l];
+        var data = current.data[key];
+
+        if(!data){
+            throw new Error('Key '+key+' had no data!');
+        }
+
+        var lastData = last.data[key];
+        if(!lastData){
+            // Not overlapping in last state, but in current.
+            result.push(data);
+        }
+    }
+
+    return result;
+};
+
+OverlapKeeper.prototype.isNewOverlap = function(shapeA, shapeB){
+    var idA = shapeA.id|0,
+        idB = shapeB.id|0;
+    return !!!this.overlappingLastState.get(idA, idB) && !!this.overlappingCurrentState.get(idA, idB);
+};
+
+OverlapKeeper.prototype.getNewBodyOverlaps = function(result){
+    this.tmpArray1.length = 0;
+    var overlaps = this.getNewOverlaps(this.tmpArray1);
+    return this.getBodyDiff(overlaps, result);
+};
+
+OverlapKeeper.prototype.getEndBodyOverlaps = function(result){
+    this.tmpArray1.length = 0;
+    var overlaps = this.getEndOverlaps(this.tmpArray1);
+    return this.getBodyDiff(overlaps, result);
+};
+
+OverlapKeeper.prototype.getBodyDiff = function(overlaps, result){
+    result = result || [];
+    var accumulator = this.tmpDict;
+
+    var l = overlaps.length;
+
+    while(l--){
+        var data = overlaps[l];
+
+        // Since we use body id's for the accumulator, these will be a subset of the original one
+        accumulator.set(data.bodyA.id|0, data.bodyB.id|0, data);
+    }
+
+    l = accumulator.keys.length;
+    while(l--){
+        var data = accumulator.keys[l];
+        result.push(data.bodyA, data.bodyB);
+    }
+
+    accumulator.reset();
+
+    return result;
+};
+
+/**
+ * Overlap data container for the OverlapKeeper
+ * @param {Body} bodyA
+ * @param {Shape} shapeA
+ * @param {Body} bodyB
+ * @param {Shape} shapeB [description]
+ */
+function OverlapKeeperRecord(bodyA, shapeA, bodyB, shapeB){
+    /**
+     * @property {Shape} shapeA
+     */
+    this.shapeA = shapeA;
+    /**
+     * @property {Shape} shapeB
+     */
+    this.shapeB = shapeB;
+    /**
+     * @property {Body} bodyA
+     */
+    this.bodyA = bodyA;
+    /**
+     * @property {Body} bodyB
+     */
+    this.bodyB = bodyB;
+}
+
+OverlapKeeperRecord.prototype.set = function(bodyA, shapeA, bodyB, shapeB){
+    OverlapKeeperRecord.call(this, bodyA, shapeA, bodyB, shapeB);
+};
+
+},{"./TupleDictionary":46,"./Utils":47}],46:[function(require,module,exports){
+var Utils = require('./Utils');
+
+module.exports = TupleDictionary;
+
+/**
+ * @class TupleDictionary
+ * @constructor
+ */
+function TupleDictionary() {
+
+    /**
+     * The data storage
+     * @property data
+     * @type {Array}
+     */
+    this.data = [];
+
+    /**
+     * Keys that are currently used.
+     * @type {Array}
+     */
+    this.keys = [];
+}
+
+/**
+ * Generate a key given two integers
+ * @param  {number} i
+ * @param  {number} j
+ * @return {string}
+ */
+TupleDictionary.prototype.getKey = function(id1, id2) {
+    id1 = id1|0;
+    id2 = id2|0;
+
+    if ( (id1|0) === (id2|0) ){
+        return -1;
+    }
+
+    // valid for values < 2^16
+    return ((id1|0) > (id2|0) ?
+        (id1 << 16) | (id2 & 0xFFFF) :
+        (id2 << 16) | (id1 & 0xFFFF))|0
+        ;
+};
+
+/**
+ * @method getByKey
+ * @param  {Number} key
+ * @return {Object}
+ */
+TupleDictionary.prototype.getByKey = function(key) {
+    key = key|0;
+    return this.data[key];
+};
+
+/**
+ * @method get
+ * @param  {Number} i
+ * @param  {Number} j
+ * @return {Number}
+ */
+TupleDictionary.prototype.get = function(i, j) {
+    i = i|0;
+    j = j|0;
+    var key = this.getKey(i, j)|0;
+    return this.data[key];
+};
+
+/**
+ * @method set
+ * @param  {Number} i
+ * @param  {Number} j
+ * @param {Number} value
+ */
+TupleDictionary.prototype.set = function(i, j, value) {
+    if(!value){
+        throw new Error("No data!");
+    }
+
+    i = i|0;
+    j = j|0;
+    var key = this.getKey(i, j)|0;
+
+    // Check if key already exists
+    if(!this.get(i, j)){
+        this.keys.push(key);
+    }
+
+    this.data[key] = value;
+
+    return key;
+};
+
+/**
+ * @method reset
+ */
+TupleDictionary.prototype.reset = function() {
+    var data = this.data,
+        keys = this.keys;
+
+    var l = keys.length|0;
+    while(l--){
+        var key = keys[l]|0;
+        data[key] = undefined;
+    }
+
+    keys.length = 0;
+};
+
+/**
+ * @method copy
+ */
+TupleDictionary.prototype.copy = function(dict) {
+    this.reset();
+    Utils.appendArray(this.keys, dict.keys);
+    var l = dict.keys.length|0;
+    while(l--){
+        var key = dict.keys[l]|0;
+        this.data[key] = dict.data[key];
+    }
+};
+
+},{"./Utils":47}],47:[function(require,module,exports){
+module.exports = Utils;
+
+/**
+ * Misc utility functions
+ * @class Utils
+ * @constructor
+ */
+function Utils(){};
+
+/**
+ * Append the values in array b to the array a. See <a href="http://stackoverflow.com/questions/1374126/how-to-append-an-array-to-an-existing-javascript-array/1374131#1374131">this</a> for an explanation.
+ * @method appendArray
+ * @static
+ * @param  {Array} a
+ * @param  {Array} b
+ */
+Utils.appendArray = function(a,b){
+    if (b.length < 150000) {
+        a.push.apply(a, b);
+    } else {
+        for (var i = 0, len = b.length; i !== len; ++i) {
+            a.push(b[i]);
+        }
+    }
+};
+
+/**
+ * Garbage free Array.splice(). Does not allocate a new array.
+ * @method splice
+ * @static
+ * @param  {Array} array
+ * @param  {Number} index
+ * @param  {Number} howmany
+ */
+Utils.splice = function(array,index,howmany){
+    howmany = howmany || 1;
+    for (var i=index, len=array.length-howmany; i < len; i++){
+        array[i] = array[i + howmany];
+    }
+    array.length = len;
+};
+
+/**
+ * The array type to use for internal numeric computations.
+ * @type {Array}
+ * @static
+ * @property ARRAY_TYPE
+ */
+Utils.ARRAY_TYPE = window.Float32Array || Array;
+
+/**
+ * Extend an object with the properties of another
+ * @static
+ * @method extend
+ * @param  {object} a
+ * @param  {object} b
+ */
+Utils.extend = function(a,b){
+    for(var key in b){
+        a[key] = b[key];
+    }
+};
+
+/**
+ * Extend an object with the properties of another
+ * @static
+ * @method extend
+ * @param  {object} a
+ * @param  {object} b
+ */
+Utils.defaults = function(options, defaults){
+    options = options || {};
+    for(var key in defaults){
+        if(!(key in options)){
+            options[key] = defaults[key];
+        }
+    }
+    return options;
+};
+
+},{}],48:[function(require,module,exports){
+var Body = require('../objects/Body');
+
 module.exports = Island;
 
 /**
@@ -65771,410 +69575,298 @@ function Island(){
  */
 Island.prototype.reset = function(){
     this.equations.length = this.bodies.length = 0;
-}
+};
 
+var bodyIds = [];
 
 /**
  * Get all unique bodies in this island.
  * @method getBodies
  * @return {Array} An array of Body
  */
-Island.prototype.getBodies = function(){
-    var bodies = [],
-        bodyIds = [],
+Island.prototype.getBodies = function(result){
+    var bodies = result || [],
         eqs = this.equations;
+    bodyIds.length = 0;
     for(var i=0; i!==eqs.length; i++){
         var eq = eqs[i];
-        if(bodyIds.indexOf(eq.bi.id)===-1){
-            bodies.push(eq.bi);
-            bodyIds.push(eq.bi.id);
+        if(bodyIds.indexOf(eq.bodyA.id)===-1){
+            bodies.push(eq.bodyA);
+            bodyIds.push(eq.bodyA.id);
         }
-        if(bodyIds.indexOf(eq.bj.id)===-1){
-            bodies.push(eq.bj);
-            bodyIds.push(eq.bj.id);
+        if(bodyIds.indexOf(eq.bodyB.id)===-1){
+            bodies.push(eq.bodyB);
+            bodyIds.push(eq.bodyB.id);
         }
     }
     return bodies;
 };
 
 /**
- * Solves all constraints in the group of islands.
- * @method solve
- * @param  {Number} dt
- * @param  {Solver} solver
+ * Check if the entire island wants to sleep.
+ * @method wantsToSleep
+ * @return {Boolean}
  */
-Island.prototype.solve = function(dt,solver){
-    var bodies = [];
-
-    solver.removeAllEquations();
-
-    // Add equations to solver
-    var numEquations = this.equations.length;
-    for(var j=0; j!==numEquations; j++){
-        solver.addEquation(this.equations[j]);
+Island.prototype.wantsToSleep = function(){
+    for(var i=0; i<this.bodies.length; i++){
+        var b = this.bodies[i];
+        if(b.motionState === Body.DYNAMIC && !b.wantsToSleep){
+            return false;
+        }
     }
-    var islandBodies = this.getBodies();
-    var numBodies = islandBodies.length;
-    for(var j=0; j!==numBodies; j++){
-        bodies.push(islandBodies[j]);
-    }
-
-    // Solve
-    solver.solve(dt,{bodies:bodies});
+    return true;
 };
 
-},{}],48:[function(require,module,exports){
-var Solver = require('./Solver')
-,   vec2 = require('../math/vec2')
-,   Island = require('../solver/Island')
-,   Body = require('../objects/Body')
-,   STATIC = Body.STATIC
+/**
+ * Make all bodies in the island sleep.
+ * @method sleep
+ */
+Island.prototype.sleep = function(){
+    for(var i=0; i<this.bodies.length; i++){
+        var b = this.bodies[i];
+        b.sleep();
+    }
+    return true;
+};
 
-module.exports = IslandSolver;
+},{"../objects/Body":31}],49:[function(require,module,exports){
+var vec2 = require('../math/vec2')
+,   Island = require('./Island')
+,   IslandNode = require('./IslandNode')
+,   Body = require('../objects/Body')
+
+module.exports = IslandManager;
 
 /**
  * Splits the system of bodies and equations into independent islands
  *
- * @class IslandSolver
+ * @class IslandManager
  * @constructor
- * @param {Solver} subsolver
- * @param {Object} options
+ * @param {Object} [options]
  * @extends Solver
  */
-function IslandSolver(subsolver,options){
-    Solver.call(this,options,Solver.ISLAND);
-    var that = this;
-
-    /**
-     * The solver used in the workers.
-     * @property subsolver
-     * @type {Solver}
-     */
-    this.subsolver = subsolver;
-
-    /**
-     * Number of islands. Read only.
-     * @property numIslands
-     * @type {number}
-     */
-    this.numIslands = 0;
+function IslandManager(options){
 
     // Pooling of node objects saves some GC load
     this._nodePool = [];
-
     this._islandPool = [];
 
     /**
-     * Fires before an island is solved.
-     * @event beforeSolveIsland
-     * @param {Island} island
-     */
-    this.beforeSolveIslandEvent = {
-        type : "beforeSolveIsland",
-        island : null,
-    };
-};
-IslandSolver.prototype = new Solver();
-
-function getUnvisitedNode(nodes){
-    var Nnodes = nodes.length;
-    for(var i=0; i!==Nnodes; i++){
-        var node = nodes[i];
-        if(!node.visited && !(node.body.motionState == STATIC)){ // correct?
-            return node;
-        }
-    }
-    return false;
-}
-
-function visitFunc(node,bds,eqs){
-    bds.push(node.body);
-    var Neqs = node.eqs.length;
-    for(var i=0; i!==Neqs; i++){
-        var eq = node.eqs[i];
-        if(eqs.indexOf(eq) === -1){
-            eqs.push(eq);
-        }
-    }
-}
-
-var queue = [];
-function bfs(root,visitFunc,bds,eqs){
-    queue.length = 0;
-    queue.push(root);
-    root.visited = true;
-    visitFunc(root,bds,eqs);
-    while(queue.length) {
-        var node = queue.pop();
-        // Loop over unvisited child nodes
-        var child;
-        while((child = getUnvisitedNode(node.children))) {
-            child.visited = true;
-            visitFunc(child,bds,eqs);
-            queue.push(child);
-        }
-    }
-}
-
-var tmpArray = [],
-    tmpArray2 = [],
-    tmpArray3 = [],
-    tmpArray4 = [];
-
-/**
- * Solves the full system.
- * @method solve
- * @param  {Number} dt
- * @param  {World} world
- */
-IslandSolver.prototype.solve = function(dt,world){
-    var nodes = tmpArray,
-        bodies=world.bodies,
-        equations=this.equations,
-        Neq=equations.length,
-        Nbodies=bodies.length,
-        subsolver=this.subsolver,
-        workers = this._workers,
-        workerData = this._workerData,
-        workerIslandGroups = this._workerIslandGroups,
-        islandPool = this._islandPool;
-
-    tmpArray.length = 0;
-
-    // Create needed nodes, reuse if possible
-    for(var i=0; i!==Nbodies; i++){
-        if(this._nodePool.length)
-            nodes.push( this._nodePool.pop() );
-        else {
-            nodes.push({
-                body:bodies[i],
-                children:[],
-                eqs:[],
-                visited:false
-            });
-        }
-    }
-
-    // Reset node values
-    for(var i=0; i!==Nbodies; i++){
-        var node = nodes[i];
-        node.body = bodies[i];
-        node.children.length = 0;
-        node.eqs.length = 0;
-        node.visited = false;
-    }
-
-    // Add connectivity data. Each equation connects 2 bodies.
-    for(var k=0; k!==Neq; k++){
-        var eq=equations[k],
-            i=bodies.indexOf(eq.bi),
-            j=bodies.indexOf(eq.bj),
-            ni=nodes[i],
-            nj=nodes[j];
-        ni.children.push(nj);
-        ni.eqs.push(eq);
-        nj.children.push(ni);
-        nj.eqs.push(eq);
-    }
-
-    // The BFS search algorithm needs a traversal function. What we do is gather all bodies and equations connected.
-    var child, n=0, eqs=tmpArray2, bds=tmpArray3;
-    eqs.length = 0;
-    bds.length = 0;
-
-    // Get islands
-    var islands = tmpArray4;
-    islands.length = 0;
-    while((child = getUnvisitedNode(nodes))){
-        var island = islandPool.length ? islandPool.pop() : new Island();
-        eqs.length = 0;
-        bds.length = 0;
-        bfs(child,visitFunc,bds,eqs); // run search algo to gather an island of bodies
-
-        // Add equations to island
-        var Neqs = eqs.length;
-        for(var i=0; i!==Neqs; i++){
-            var eq = eqs[i];
-            island.equations.push(eq);
-        }
-
-        n++;
-        islands.push(island);
-    }
-
-    this.numIslands = n;
-
-    // Solve islands
-    var e = this.beforeSolveIslandEvent;
-    for(var i=0; i<islands.length; i++){
-        var island = islands[i];
-        e.island = island;
-        this.emit(e);
-        island.solve(dt,this.subsolver);
-
-        // Turn it back to the pool
-        island.reset();
-        islandPool.push(island);
-    }
-};
-
-},{"../math/vec2":33,"../objects/Body":34,"../solver/Island":47,"./Solver":49}],49:[function(require,module,exports){
-var Utils = require('../utils/Utils')
-,   EventEmitter = require('../events/EventEmitter')
-
-module.exports = Solver;
-
-/**
- * Base class for constraint solvers.
- * @class Solver
- * @constructor
- * @extends {EventEmitter}
- */
-function Solver(options,type){
-    options = options || {};
-
-    EventEmitter.call(this);
-
-    this.type = type;
-
-    /**
-     * Current equations in the solver.
-     *
-     * @property equations
-     * @type {Array}
+     * The equations to split. Manually fill this array before running .split().
+     * @property {Array} equations
      */
     this.equations = [];
 
     /**
-     * Function that is used to sort all equations before each solve.
-     * @property equationSortFunction
-     * @type {function|boolean}
+     * The resulting {{#crossLink "Island"}}{{/crossLink}}s.
+     * @property {Array} islands
      */
-    this.equationSortFunction = options.equationSortFunction || false;
-};
-Solver.prototype = new EventEmitter();
+    this.islands = [];
+
+    /**
+     * The resulting graph nodes.
+     * @property {Array} nodes
+     */
+    this.nodes = [];
+
+    /**
+     * The node queue, used when traversing the graph of nodes.
+     * @private
+     * @property {Array} queue
+     */
+    this.queue = [];
+}
 
 /**
- * Method to be implemented in each subclass
- * @method solve
- * @param  {Number} dt
- * @param  {World} world
- */
-Solver.prototype.solve = function(dt,world){
-    throw new Error("Solver.solve should be implemented by subclasses!");
-};
-
-/**
- * Sort all equations using the .equationSortFunction. Should be called by subclasses before solving.
- * @method sortEquations
- */
-Solver.prototype.sortEquations = function(){
-    if(this.equationSortFunction)
-        this.equations.sort(this.equationSortFunction);
-};
-
-/**
- * Add an equation to be solved.
- *
- * @method addEquation
- * @param {Equation} eq
- */
-Solver.prototype.addEquation = function(eq){
-    if(eq.enabled)
-        this.equations.push(eq);
-};
-
-/**
- * Add equations. Same as .addEquation, but this time the argument is an array of Equations
- *
- * @method addEquations
- * @param {Array} eqs
- */
-Solver.prototype.addEquations = function(eqs){
-    //Utils.appendArray(this.equations,eqs);
-    for(var i=0, N=eqs.length; i!==N; i++){
-        var eq = eqs[i];
-        if(eq.enabled)
-            this.equations.push(eq);
-    }
-};
-
-/**
- * Remove an equation.
- *
- * @method removeEquation
- * @param {Equation} eq
- */
-Solver.prototype.removeEquation = function(eq){
-    var i = this.equations.indexOf(eq);
-    if(i!=-1)
-        this.equations.splice(i,1);
-};
-
-/**
- * Remove all currently added equations.
- *
- * @method removeAllEquations
- */
-Solver.prototype.removeAllEquations = function(){
-    this.equations.length=0;
-};
-
-Solver.GS=1;
-Solver.ISLAND=2;
-
-},{"../events/EventEmitter":28,"../utils/Utils":50}],50:[function(require,module,exports){
-module.exports = Utils;
-
-/**
- * Misc utility functions
- * @class Utils
- * @constructor
- */
-function Utils(){};
-
-/**
- * Append the values in array b to the array a. See <a href="http://stackoverflow.com/questions/1374126/how-to-append-an-array-to-an-existing-javascript-array/1374131#1374131">this</a> for an explanation.
- * @method appendArray
+ * Get an unvisited node from a list of nodes.
  * @static
- * @param  {Array} a
- * @param  {Array} b
+ * @method getUnvisitedNode
+ * @param  {Array} nodes
+ * @return {IslandNode|boolean} The node if found, else false.
  */
-Utils.appendArray = function(a,b){
-    if (b.length < 150000) {
-        a.push.apply(a, b)
-    } else {
-        for (var i = 0, len = b.length; i !== len; ++i) {
-            a.push(b[i]);
+IslandManager.getUnvisitedNode = function(nodes){
+    var Nnodes = nodes.length;
+    for(var i=0; i!==Nnodes; i++){
+        var node = nodes[i];
+        if(!node.visited && node.body.motionState === Body.DYNAMIC){
+            return node;
+        }
+    }
+    return false;
+};
+
+/**
+ * Visit a node.
+ * @method visit
+ * @param  {IslandNode} node
+ * @param  {Array} bds
+ * @param  {Array} eqs
+ */
+IslandManager.prototype.visit = function (node,bds,eqs){
+    bds.push(node.body);
+    var Neqs = node.equations.length;
+    for(var i=0; i!==Neqs; i++){
+        var eq = node.equations[i];
+        if(eqs.indexOf(eq) === -1){ // Already added?
+            eqs.push(eq);
         }
     }
 };
 
 /**
- * Garbage free Array.splice(). Does not allocate a new array.
- * @method splice
- * @static
- * @param  {Array} array
- * @param  {Number} index
- * @param  {Number} howmany
+ * Runs the search algorithm, starting at a root node. The resulting bodies and equations will be stored in the provided arrays.
+ * @method bfs
+ * @param  {IslandNode} root The node to start from
+ * @param  {Array} bds  An array to append resulting Bodies to.
+ * @param  {Array} eqs  An array to append resulting Equations to.
  */
-Utils.splice = function(array,index,howmany){
-    howmany = howmany || 1;
-    for (var i=index, len=array.length-howmany; i < len; i++)
-        array[i] = array[i + howmany];
-    array.length = len;
+IslandManager.prototype.bfs = function(root,bds,eqs){
+
+    // Reset the visit queue
+    var queue = this.queue;
+    queue.length = 0;
+
+    // Add root node to queue
+    queue.push(root);
+    root.visited = true;
+    this.visit(root,bds,eqs);
+
+    // Process all queued nodes
+    while(queue.length) {
+
+        // Get next node in the queue
+        var node = queue.pop();
+
+        // Visit unvisited neighboring nodes
+        var child;
+        while((child = IslandManager.getUnvisitedNode(node.neighbors))) {
+            child.visited = true;
+            this.visit(child,bds,eqs);
+
+            // Only visit the children of this node if it's dynamic
+            if(child.body.motionState === Body.DYNAMIC){
+                queue.push(child);
+            }
+        }
+    }
 };
 
 /**
- * The array type to use for internal numeric computations.
- * @type {Array}
- * @static
- * @property ARRAY_TYPE
+ * Split the world into independent islands. The result is stored in .islands.
+ * @method split
+ * @param  {World} world
+ * @return {Array} The generated islands
  */
-Utils.ARRAY_TYPE = Float32Array || Array;
+IslandManager.prototype.split = function(world){
+    var bodies = world.bodies,
+        nodes = this.nodes,
+        equations = this.equations;
+
+    // Move old nodes to the node pool
+    while(nodes.length){
+        this._nodePool.push(nodes.pop());
+    }
+
+    // Create needed nodes, reuse if possible
+    for(var i=0; i!==bodies.length; i++){
+        if(this._nodePool.length){
+            var node = this._nodePool.pop();
+            node.reset();
+            node.body = bodies[i];
+            nodes.push(node);
+        } else {
+            nodes.push(new IslandNode(bodies[i]));
+        }
+    }
+
+    // Add connectivity data. Each equation connects 2 bodies.
+    for(var k=0; k!==equations.length; k++){
+        var eq=equations[k],
+            i=bodies.indexOf(eq.bodyA),
+            j=bodies.indexOf(eq.bodyB),
+            ni=nodes[i],
+            nj=nodes[j];
+        ni.neighbors.push(nj);
+        nj.neighbors.push(ni);
+        ni.equations.push(eq);
+        nj.equations.push(eq);
+    }
+
+    // Move old islands to the island pool
+    var islands = this.islands;
+    while(islands.length){
+        var island = islands.pop();
+        island.reset();
+        this._islandPool.push(island);
+    }
+
+    // Get islands
+    var child;
+    while((child = IslandManager.getUnvisitedNode(nodes))){
+
+        // Create new island
+        var island = this._islandPool.length ? this._islandPool.pop() : new Island();
+
+        // Get all equations and bodies in this island
+        this.bfs(child, island.bodies, island.equations);
+
+        islands.push(island);
+    }
+
+    return islands;
+};
+
+},{"../math/vec2":30,"../objects/Body":31,"./Island":48,"./IslandNode":50}],50:[function(require,module,exports){
+module.exports = IslandNode;
+
+/**
+ * Holds a body and keeps track of some additional properties needed for graph traversal.
+ * @class IslandNode
+ * @constructor
+ * @param {Body} body
+ */
+function IslandNode(body){
+
+	/**
+	 * The body that is contained in this node.
+	 * @property {Body}
+	 */
+    this.body = body;
+
+    /**
+     * Neighboring IslandNodes
+     * @property {Array} neighbors
+     */
+    this.neighbors = [];
+
+    /**
+     * Equations connected to this node.
+     * @property {Array} equations
+     */
+    this.equations = [];
+
+    /**
+     * If this node was visiting during the graph traversal.
+     * @property visited
+     * @type {Boolean}
+     */
+    this.visited = false;
+}
+
+/**
+ * Clean this node from bodies and equations.
+ * @method reset
+ */
+IslandNode.prototype.reset = function(){
+    this.equations.length = 0;
+    this.neighbors.length = 0;
+    this.visited = false;
+    this.body = null;
+};
 
 },{}],51:[function(require,module,exports){
 var  GSSolver = require('../solver/GSSolver')
+,    Solver = require('../solver/Solver')
 ,    NaiveBroadphase = require('../collision/NaiveBroadphase')
 ,    vec2 = require('../math/vec2')
 ,    Circle = require('../shapes/Circle')
@@ -66186,32 +69878,37 @@ var  GSSolver = require('../solver/GSSolver')
 ,    Particle = require('../shapes/Particle')
 ,    EventEmitter = require('../events/EventEmitter')
 ,    Body = require('../objects/Body')
+,    Shape = require('../shapes/Shape')
 ,    Spring = require('../objects/Spring')
 ,    Material = require('../material/Material')
 ,    ContactMaterial = require('../material/ContactMaterial')
 ,    DistanceConstraint = require('../constraints/DistanceConstraint')
+,    Constraint = require('../constraints/Constraint')
 ,    LockConstraint = require('../constraints/LockConstraint')
 ,    RevoluteConstraint = require('../constraints/RevoluteConstraint')
 ,    PrismaticConstraint = require('../constraints/PrismaticConstraint')
+,    GearConstraint = require('../constraints/GearConstraint')
 ,    pkg = require('../../package.json')
 ,    Broadphase = require('../collision/Broadphase')
+,    SAPBroadphase = require('../collision/SAPBroadphase')
 ,    Narrowphase = require('../collision/Narrowphase')
 ,    Utils = require('../utils/Utils')
+,    OverlapKeeper = require('../utils/OverlapKeeper')
+,    IslandManager = require('./IslandManager')
 
 module.exports = World;
 
-var currentVersion = pkg.version.split(".").slice(0,2).join("."); // "X.Y"
-
-if(typeof performance === 'undefined')
+if(typeof performance === 'undefined'){
     performance = {};
+}
 if(!performance.now){
     var nowOffset = Date.now();
     if (performance.timing && performance.timing.navigationStart){
-      nowOffset = performance.timing.navigationStart
+        nowOffset = performance.timing.navigationStart;
     }
     performance.now = function(){
-      return Date.now() - nowOffset;
-    }
+        return Date.now() - nowOffset;
+    };
 }
 
 /**
@@ -66220,11 +69917,12 @@ if(!performance.now){
  * @class World
  * @constructor
  * @param {Object}          [options]
- * @param {Solver}          options.solver          Defaults to GSSolver.
- * @param {Float32Array}    options.gravity         Defaults to [0,-9.78]
- * @param {Broadphase}      options.broadphase      Defaults to NaiveBroadphase
- * @param {Boolean}         options.doProfiling
- * @extends {EventEmitter}
+ * @param {Solver}          [options.solver]            Defaults to GSSolver.
+ * @param {Array}           [options.gravity]           Defaults to [0,-9.78]
+ * @param {Broadphase}      [options.broadphase]        Defaults to NaiveBroadphase
+ * @param {Boolean}         [options.islandSplit=false]
+ * @param {Boolean}         [options.doProfiling=false]
+ * @extends EventEmitter
  */
 function World(options){
     EventEmitter.apply(this);
@@ -66232,7 +69930,7 @@ function World(options){
     options = options || {};
 
     /**
-     * All springs in the world.
+     * All springs in the world. To add a spring to the world, use {{#crossLink "World/addSpring:method"}}{{/crossLink}}.
      *
      * @property springs
      * @type {Array}
@@ -66240,18 +69938,21 @@ function World(options){
     this.springs = [];
 
     /**
-     * All bodies in the world.
-     *
-     * @property bodies
-     * @type {Array}
+     * All bodies in the world. To add a body to the world, use {{#crossLink "World/addBody:method"}}{{/crossLink}}.
+     * @property {Array} bodies
      */
     this.bodies = [];
 
     /**
-     * The solver used to satisfy constraints and contacts.
-     *
-     * @property solver
-     * @type {Solver}
+     * Disabled body collision pairs. See {{#crossLink "World/disableBodyCollision:method"}}.
+     * @private
+     * @property {Array} disabledBodyCollisionPairs
+     */
+    this.disabledBodyCollisionPairs = [];
+
+    /**
+     * The solver used to satisfy constraints and contacts. Default is {{#crossLink "GSSolver"}}{{/crossLink}}.
+     * @property {Solver} solver
      */
     this.solver = options.solver || new GSSolver();
 
@@ -66264,12 +69965,39 @@ function World(options){
     this.narrowphase = new Narrowphase(this);
 
     /**
+     * The island manager of this world.
+     * @property {IslandManager} islandManager
+     */
+    this.islandManager = new IslandManager();
+
+    /**
      * Gravity in the world. This is applied on all bodies in the beginning of each step().
      *
-     * @property
-     * @type {Float32Array}
+     * @property gravity
+     * @type {Array}
      */
-    this.gravity = options.gravity || vec2.fromValues(0, -9.78);
+    this.gravity = vec2.fromValues(0, -9.78);
+    if(options.gravity){
+        vec2.copy(this.gravity, options.gravity);
+    }
+
+    /**
+     * Gravity to use when approximating the friction max force (mu*mass*gravity).
+     * @property {Number} frictionGravity
+     */
+    this.frictionGravity = vec2.length(this.gravity) || 10;
+
+    /**
+     * Set to true if you want .frictionGravity to be automatically set to the length of .gravity.
+     * @property {Boolean} useWorldGravityAsFrictionGravity
+     */
+    this.useWorldGravityAsFrictionGravity = true;
+
+    /**
+     * If the length of .gravity is zero, and .useWorldGravityAsFrictionGravity=true, then switch to using .frictionGravity for friction instead. This fallback is useful for gravityless games.
+     * @property {Boolean} useFrictionGravityOnZeroGravity
+     */
+    this.useFrictionGravityOnZeroGravity = true;
 
     /**
      * Whether to do timing measurements during the step() or not.
@@ -66294,7 +70022,6 @@ function World(options){
      * @type {Broadphase}
      */
     this.broadphase = options.broadphase || new NaiveBroadphase();
-
     this.broadphase.setWorld(this);
 
     /**
@@ -66306,21 +70033,15 @@ function World(options){
     this.constraints = [];
 
     /**
-     * Friction between colliding bodies. This value is used if no matching ContactMaterial is found for a Material pair.
-     * @property defaultFriction
-     * @type {Number}
+     * Dummy default material in the world, used in .defaultContactMaterial
+     * @property {Material} defaultMaterial
      */
-    this.defaultFriction = 0.3;
-
-    /**
-     * Default coefficient of restitution between colliding bodies. This value is used if no matching ContactMaterial is found for a Material pair.
-     * @property defaultRestitution
-     * @type {Number}
-     */
-    this.defaultRestitution = 0.0;
-
     this.defaultMaterial = new Material();
 
+    /**
+     * The default contact material to use, if no contact material was set for the colliding materials.
+     * @property {ContactMaterial} defaultContactMaterial
+     */
     this.defaultContactMaterial = new ContactMaterial(this.defaultMaterial,this.defaultMaterial);
 
     /**
@@ -66372,7 +70093,26 @@ function World(options){
      */
     this.time = 0.0;
 
+    /**
+     * Is true during the step().
+     * @property {Boolean} stepping
+     */
+    this.stepping = false;
+
+    /**
+     * Bodies that are scheduled to be removed at the end of the step.
+     * @property {Array} bodiesToBeRemoved
+     * @private
+     */
+    this.bodiesToBeRemoved = [];
+
     this.fixedStepTime = 0.0;
+
+    /**
+     * Whether to enable island splitting. Island splitting can be an advantage for many things, including solver performance. See {{#crossLink "IslandManager"}}{{/crossLink}}.
+     * @property {Boolean} islandSplit
+     */
+    this.islandSplit = typeof(options.islandSplit)!=="undefined" ? !!options.islandSplit : false;
 
     /**
      * Set to true if you want to the world to emit the "impact" event. Turning this off could improve performance.
@@ -66394,6 +70134,7 @@ function World(options){
     };
 
     /**
+     * Fired when a body is added to the world.
      * @event addBody
      * @param {Body} body
      */
@@ -66403,6 +70144,7 @@ function World(options){
     };
 
     /**
+     * Fired when a body is removed from the world.
      * @event removeBody
      * @param {Body} body
      */
@@ -66449,11 +70191,17 @@ function World(options){
     };
 
     /**
-     * Enable / disable automatic body sleeping
+     * Enable / disable automatic body sleeping. Sleeping can improve performance. You might need to {{#crossLink "Body/wakeUp:method"}}wake up{{/crossLink}} the bodies if they fall asleep when they shouldn't. If you want to enable sleeping in the world, but want to disable it for a particular body, see {{#crossLink "Body/allowSleep:property"}}Body.allowSleep{{/crossLink}}.
      * @property allowSleep
      * @type {Boolean}
      */
     this.enableBodySleeping = false;
+
+    /**
+     * Enable or disable island sleeping. Note that you must enable {{#crossLink "World/islandSplit:property"}}.islandSplit{{/crossLink}} for this to work.
+     * @property {Boolean} enableIslandSleeping
+     */
+    this.enableIslandSleeping = false;
 
     /**
      * Fired when two shapes starts start to overlap. Fired in the narrowphase, during step.
@@ -66505,8 +70253,9 @@ function World(options){
     // For keeping track of overlapping shapes
     this.overlappingShapesLastState = { keys:[] };
     this.overlappingShapesCurrentState = { keys:[] };
-    this.overlappingShapeLookup = { keys:[] };
-};
+
+    this.overlapKeeper = new OverlapKeeper();
+}
 World.prototype = new Object(EventEmitter.prototype);
 
 /**
@@ -66536,8 +70285,9 @@ World.prototype.addContactMaterial = function(contactMaterial){
  */
 World.prototype.removeContactMaterial = function(cm){
     var idx = this.contactMaterials.indexOf(cm);
-    if(idx!==-1)
+    if(idx!==-1){
         Utils.splice(this.contactMaterials,idx,1);
+    }
 };
 
 /**
@@ -66553,8 +70303,9 @@ World.prototype.getContactMaterial = function(materialA,materialB){
     for(var i=0, N=cmats.length; i!==N; i++){
         var cm = cmats[i];
         if( (cm.materialA === materialA) && (cm.materialB === materialB) ||
-            (cm.materialA === materialB) && (cm.materialB === materialA) )
+            (cm.materialA === materialB) && (cm.materialB === materialA) ){
             return cm;
+        }
     }
     return false;
 };
@@ -66581,7 +70332,8 @@ var step_r = vec2.create(),
     step_mg = vec2.create(),
     xiw = vec2.fromValues(0,0),
     xjw = vec2.fromValues(0,0),
-    zero = vec2.fromValues(0,0);
+    zero = vec2.fromValues(0,0),
+    interpvelo = vec2.fromValues(0,0);
 
 /**
  * Step the physics world forward in time.
@@ -66597,12 +70349,14 @@ var step_r = vec2.create(),
  *     // fixed timestepping without interpolation
  *     var world = new World();
  *     world.step(0.01);
+ *
+ * @see http://bulletphysics.org/mediawiki-1.5.8/index.php/Stepping_The_World
  */
 World.prototype.step = function(dt,timeSinceLastCalled,maxSubSteps){
     maxSubSteps = maxSubSteps || 10;
     timeSinceLastCalled = timeSinceLastCalled || 0;
 
-    if(timeSinceLastCalled == 0){ // Fixed, simple stepping
+    if(timeSinceLastCalled === 0){ // Fixed, simple stepping
 
         this.internalStep(dt);
 
@@ -66611,36 +70365,51 @@ World.prototype.step = function(dt,timeSinceLastCalled,maxSubSteps){
 
     } else {
 
+        // Compute the number of fixed steps we should have taken since the last step
         var internalSteps = Math.floor( (this.time+timeSinceLastCalled) / dt) - Math.floor(this.time / dt);
         internalSteps = Math.min(internalSteps,maxSubSteps);
 
-        for(var i=0; i<internalSteps; i++){
+        // Do some fixed steps to catch up
+        for(var i=0; i!==internalSteps; i++){
             this.internalStep(dt);
-            /*
-            for(var j=0; j!==this.bodies.length; j++){
-                // Store state for interpolation
-                // Todo
-                var b = this.bodies[j];
-            }
-            */
         }
 
-        // Increment time
+        // Increment internal clock
         this.time += timeSinceLastCalled;
-        this.fixedStepTime += internalSteps * dt;
 
-        // Compute the interpolation data
-        var h = this.time - this.fixedStepTime - dt;
+        // Compute "Left over" time step
+        var h = this.time % dt;
+        var h_div_dt = h/dt;
+
         for(var j=0; j!==this.bodies.length; j++){
-            // Store interpolated state
             var b = this.bodies[j];
-            b.interpolatedPosition[0] = b.position[0] + b.velocity[0]*h;
-            b.interpolatedPosition[1] = b.position[1] + b.velocity[1]*h;
+            if(b.motionState !== Body.STATIC && b.sleepState !== Body.SLEEPING){
+                // Interpolate
+                vec2.sub(interpvelo, b.position, b.previousPosition);
+                vec2.scale(interpvelo, interpvelo, h_div_dt);
+                vec2.add(b.interpolatedPosition, b.position, interpvelo);
+
+                b.interpolatedAngle = b.angle + (b.angle - b.previousAngle) * h_div_dt;
+            } else {
+                // For static bodies, just copy. Who else will do it?
+                vec2.copy(b.interpolatedPosition, b.position);
+                b.interpolatedAngle = b.angle;
+            }
         }
     }
 };
 
+var endOverlaps = [];
+
+/**
+ * Make a fixed step.
+ * @method internalStep
+ * @param  {number} dt
+ * @private
+ */
 World.prototype.internalStep = function(dt){
+    this.stepping = true;
+
     var that = this,
         doProfiling = this.doProfiling,
         Nsprings = this.springs.length,
@@ -66658,7 +70427,8 @@ World.prototype.internalStep = function(dt){
         mg = step_mg,
         scale = vec2.scale,
         add = vec2.add,
-        rotate = vec2.rotate;
+        rotate = vec2.rotate,
+        islandManager = this.islandManager;
 
     this.lastTimeStep = dt;
 
@@ -66666,15 +70436,25 @@ World.prototype.internalStep = function(dt){
         t0 = performance.now();
     }
 
-    var glen = vec2.length(this.gravity);
+    // Update approximate friction gravity.
+    if(this.useWorldGravityAsFrictionGravity){
+        var gravityLen = vec2.length(this.gravity);
+        if(gravityLen === 0 && this.useFrictionGravityOnZeroGravity){
+            // Leave friction gravity as it is.
+        } else {
+            // Nonzero gravity. Use it.
+            this.frictionGravity = gravityLen;
+        }
+    }
 
     // Add gravity to bodies
     if(this.applyGravity){
         for(var i=0; i!==Nbodies; i++){
             var b = bodies[i],
                 fi = b.force;
-            if(b.motionState != Body.DYNAMIC)
+            if(b.motionState !== Body.DYNAMIC || b.sleepState === Body.SLEEPING){
                 continue;
+            }
             vec2.scale(mg,g,b.mass*b.gravityScale); // F=m*g
             add(fi,fi,mg);
         }
@@ -66691,13 +70471,39 @@ World.prototype.internalStep = function(dt){
     if(this.applyDamping){
         for(var i=0; i!==Nbodies; i++){
             var b = bodies[i];
-            if(b.motionState == Body.DYNAMIC)
+            if(b.motionState === Body.DYNAMIC){
                 b.applyDamping(dt);
+            }
         }
     }
 
     // Broadphase
     var result = broadphase.getCollisionPairs(this);
+
+    // Remove ignored collision pairs
+    var ignoredPairs = this.disabledBodyCollisionPairs;
+    for(var i=ignoredPairs.length-2; i>=0; i-=2){
+        for(var j=result.length-2; j>=0; j-=2){
+            if( (ignoredPairs[i]   === result[j] && ignoredPairs[i+1] === result[j+1]) ||
+                (ignoredPairs[i+1] === result[j] && ignoredPairs[i]   === result[j+1])){
+                result.splice(j,2);
+            }
+        }
+    }
+
+    // Remove constrained pairs with collideConnected == false
+    var Nconstraints = constraints.length;
+    for(i=0; i!==Nconstraints; i++){
+        var c = constraints[i];
+        if(!c.collideConnected){
+            for(var j=result.length-2; j>=0; j-=2){
+                if( (c.bodyA === result[j] && c.bodyB === result[j+1]) ||
+                    (c.bodyB === result[j] && c.bodyA === result[j+1])){
+                    result.splice(j,2);
+                }
+            }
+        }
+    }
 
     // postBroadphase event
     this.postBroadphaseEvent.pairs = result;
@@ -66721,95 +70527,97 @@ World.prototype.internalStep = function(dt){
                     xj = bj.shapeOffsets[l],
                     aj = bj.shapeAngles[l];
 
-                /*
-                var mu = this.defaultFriction,
-                    restitution = this.defaultRestitution,
-                    surfaceVelocity = 0;
-                */
-
                 var cm = this.defaultContactMaterial;
                 if(si.material && sj.material){
                     var tmp = this.getContactMaterial(si.material,sj.material);
                     if(tmp){
                         cm = tmp;
-                        /*
-                        mu = cm.friction;
-                        restitution = cm.restitution;
-                        surfaceVelocity = cm.surfaceVelocity;
-                        */
                     }
                 }
 
-                this.runNarrowphase(np,bi,si,xi,ai,bj,sj,xj,aj,cm,glen);
+                this.runNarrowphase(np,bi,si,xi,ai,bj,sj,xj,aj,cm,this.frictionGravity);
             }
         }
     }
 
-    // Emit shape end overlap events
-    var last = this.overlappingShapesLastState;
-    for(var i=0; i!==last.keys.length; i++){
-        var key = last.keys[i];
-
-        if(last[key]!==true)
-            continue;
-
-        if(!this.overlappingShapesCurrentState[key]){
-            // Not overlapping in current state, but in last state. Emit event!
-            var e = this.endContactEvent;
-
-            // Add shapes to the event object
-            e.shapeA = last[key+"_shapeA"];
-            e.shapeB = last[key+"_shapeB"];
-            e.bodyA = last[key+"_bodyA"];
-            e.bodyB = last[key+"_bodyB"];
-            this.emit(e);
+    // Wake up bodies
+    for(var i=0; i!==Nbodies; i++){
+        var body = bodies[i];
+        if(body._wakeUpAfterNarrowphase){
+            body.wakeUp();
+            body._wakeUpAfterNarrowphase = false;
         }
     }
 
-    // Clear last object
-    for(var i=0; i!==last.keys.length; i++)
-        delete last[last.keys[i]];
-    last.keys.length = 0;
-
-    // Transfer from new object to old
-    var current = this.overlappingShapesCurrentState;
-    for(var i=0; i!==current.keys.length; i++){
-        last[current.keys[i]] = current[current.keys[i]];
-        last.keys.push(current.keys[i]);
+    // Emit end overlap events
+    if(this.has('endContact')){
+        this.overlapKeeper.getEndOverlaps(endOverlaps);
+        var e = this.endContactEvent;
+        var l = endOverlaps.length;
+        while(l--){
+            var data = endOverlaps[l];
+            e.shapeA = data.shapeA;
+            e.shapeB = data.shapeB;
+            e.bodyA = data.bodyA;
+            e.bodyB = data.bodyA;
+            this.emit(e);
+        }
     }
-
-    // Clear current object
-    for(var i=0; i!==current.keys.length; i++)
-        delete current[current.keys[i]];
-    current.keys.length = 0;
+    this.overlapKeeper.tick();
 
     var preSolveEvent = this.preSolveEvent;
     preSolveEvent.contactEquations = np.contactEquations;
     preSolveEvent.frictionEquations = np.frictionEquations;
     this.emit(preSolveEvent);
 
-    // Add contact equations to solver
-    solver.addEquations(np.contactEquations);
-    solver.addEquations(np.frictionEquations);
-
-    // Add user-defined constraint equations
+    // update constraint equations
     var Nconstraints = constraints.length;
     for(i=0; i!==Nconstraints; i++){
-        var c = constraints[i];
-        c.update();
-        solver.addEquations(c.equations);
+        constraints[i].update();
     }
 
-    if(this.solveConstraints)
-        solver.solve(dt,this);
+    if(np.contactEquations.length || np.frictionEquations.length || constraints.length){
+        if(this.islandSplit){
+            // Split into islands
+            islandManager.equations.length = 0;
+            Utils.appendArray(islandManager.equations, np.contactEquations);
+            Utils.appendArray(islandManager.equations, np.frictionEquations);
+            for(i=0; i!==Nconstraints; i++){
+                Utils.appendArray(islandManager.equations, constraints[i].equations);
+            }
+            islandManager.split(this);
 
-    solver.removeAllEquations();
+            for(var i=0; i!==islandManager.islands.length; i++){
+                var island = islandManager.islands[i];
+                if(island.equations.length){
+                    solver.solveIsland(dt,island);
+                }
+            }
+
+        } else {
+
+            // Add contact equations to solver
+            solver.addEquations(np.contactEquations);
+            solver.addEquations(np.frictionEquations);
+
+            // Add user-defined constraint equations
+            for(i=0; i!==Nconstraints; i++){
+                solver.addEquations(constraints[i].equations);
+            }
+
+            if(this.solveConstraints){
+                solver.solve(dt,this);
+            }
+
+            solver.removeAllEquations();
+        }
+    }
 
     // Step forward
     for(var i=0; i!==Nbodies; i++){
         var body = bodies[i];
 
-        if(body.sleepState !== Body.SLEEPING && body.motionState!=Body.STATIC){
+        if(body.sleepState !== Body.SLEEPING && body.motionState !== Body.STATIC){
             World.integrateBody(body,dt);
         }
     }
@@ -66825,13 +70633,13 @@ World.prototype.internalStep = function(dt){
     }
 
     // Emit impact event
-    if(this.emitImpactEvent){
+    if(this.emitImpactEvent && this.has('impact')){
         var ev = this.impactEvent;
         for(var i=0; i!==np.contactEquations.length; i++){
             var eq = np.contactEquations[i];
             if(eq.firstImpact){
-                ev.bodyA = eq.bi;
-                ev.bodyB = eq.bj;
+                ev.bodyA = eq.bodyA;
+                ev.bodyB = eq.bodyB;
                 ev.shapeA = eq.shapeA;
                 ev.shapeB = eq.shapeB;
                 ev.contactEquation = eq;
@@ -66843,8 +70651,32 @@ World.prototype.internalStep = function(dt){
     // Sleeping update
     if(this.enableBodySleeping){
         for(i=0; i!==Nbodies; i++){
-            bodies[i].sleepTick(this.time);
+            bodies[i].sleepTick(this.time, false, dt);
         }
+    } else if(this.enableIslandSleeping && this.islandSplit){
+
+        // Tell all bodies to sleep tick but dont sleep yet
+        for(i=0; i!==Nbodies; i++){
+            bodies[i].sleepTick(this.time, true, dt);
+        }
+
+        // Sleep islands
+        for(var i=0; i<this.islandManager.islands.length; i++){
+            var island = this.islandManager.islands[i];
+            if(island.wantsToSleep()){
+                island.sleep();
+            }
+        }
+    }
+
+    this.stepping = false;
+
+    // Remove bodies that are scheduled for removal
+    if(this.bodiesToBeRemoved.length){
+        for(var i=0; i!==this.bodiesToBeRemoved.length; i++){
+            this.removeBody(this.bodiesToBeRemoved[i]);
+        }
+        this.bodiesToBeRemoved.length = 0;
     }
 
     this.emit(this.postStepEvent);
@@ -66859,12 +70691,17 @@ var ib_velodt = vec2.create();
  * @method integrateBody
  * @param  {Body} body
  * @param  {Number} dt
+ * @todo Move to Body.prototype?
  */
 World.integrateBody = function(body,dt){
     var minv = body.invMass,
         f = body.force,
         pos = body.position,
         velo = body.velocity;
+
+    // Save old position
+    vec2.copy(body.previousPosition, body.position);
+    body.previousAngle = body.angle;
 
     // Angular step
     if(!body.fixedRotation){
@@ -66895,16 +70732,12 @@ World.integrateBody = function(body,dt){
  * @param  {Number} aj
  * @param  {Number} mu
  */
-World.prototype.runNarrowphase = function(np,bi,si,xi,ai,bj,sj,xj,aj,cm,glen){ /* mu,restitution,surfaceVelocity */
+World.prototype.runNarrowphase = function(np,bi,si,xi,ai,bj,sj,xj,aj,cm,glen){
 
-    if(!((si.collisionGroup & sj.collisionMask) !== 0 && (sj.collisionGroup & si.collisionMask) !== 0))
+    // Check collision groups and masks
+    if(!((si.collisionGroup & sj.collisionMask) !== 0 && (sj.collisionGroup & si.collisionMask) !== 0)){
         return;
-
-    /*
-    var reducedMass = bi.invMass + bj.invMass;
-    if(reducedMass > 0)
-        reducedMass = 1/reducedMass;
-    */
+    }
 
     // Get world position and angle of each shape
     vec2.rotate(xiw, xi, bi.angle);
@@ -66914,16 +70747,16 @@ World.prototype.runNarrowphase = function(np,bi,si,xi,ai,bj,sj,xj,aj,cm,glen){ /
     var aiw = ai + bi.angle;
     var ajw = aj + bj.angle;
 
-    // Run narrowphase
     np.enableFriction = cm.friction > 0;
     np.frictionCoefficient = cm.friction;
     var reducedMass;
-    if(bi.motionState == Body.STATIC || bi.motionState == Body.KINEMATIC)
+    if(bi.motionState === Body.STATIC || bi.motionState === Body.KINEMATIC){
         reducedMass = bj.mass;
-    else if(bj.motionState == Body.STATIC || bj.motionState == Body.KINEMATIC)
+    } else if(bj.motionState === Body.STATIC || bj.motionState === Body.KINEMATIC){
         reducedMass = bi.mass;
-    else
+    } else {
         reducedMass = (bi.mass*bj.mass)/(bi.mass+bj.mass);
+    }
     np.slipForce = cm.friction*glen*reducedMass;
     np.restitution = cm.restitution;
     np.surfaceVelocity = cm.surfaceVelocity;
@@ -66936,15 +70769,44 @@ World.prototype.runNarrowphase = function(np,bi,si,xi,ai,bj,sj,xj,aj,cm,glen){ /
         numContacts = 0;
     if (resolver) {
         var sensor = si.sensor || sj.sensor;
+        var numFrictionBefore = np.frictionEquations.length;
         if (si.type < sj.type) {
             numContacts = resolver.call(np, bi,si,xiw,aiw, bj,sj,xjw,ajw, sensor);
         } else {
             numContacts = resolver.call(np, bj,sj,xjw,ajw, bi,si,xiw,aiw, sensor);
         }
+        var numFrictionEquations = np.frictionEquations.length - numFrictionBefore;
 
         if(numContacts){
-            var key = si.id < sj.id ? si.id+" "+ sj.id : sj.id+" "+ si.id;
-            if(!this.overlappingShapesLastState[key]){
+
+            if( bi.allowSleep &&
+                bi.motionState === Body.DYNAMIC &&
+                bi.sleepState  === Body.SLEEPING &&
+                bj.sleepState  === Body.AWAKE &&
+                bj.motionState !== Body.STATIC
+            ){
+                var speedSquaredB = vec2.squaredLength(bj.velocity) + Math.pow(bj.angularVelocity,2);
+                var speedLimitSquaredB = Math.pow(bj.sleepSpeedLimit,2);
+                if(speedSquaredB >= speedLimitSquaredB*2){
+                    bi._wakeUpAfterNarrowphase = true;
+                }
+            }
+
+            if( bj.allowSleep &&
+                bj.motionState === Body.DYNAMIC &&
+                bj.sleepState  === Body.SLEEPING &&
+                bi.sleepState  === Body.AWAKE &&
+                bi.motionState !== Body.STATIC
+            ){
+                var speedSquaredA = vec2.squaredLength(bi.velocity) + Math.pow(bi.angularVelocity,2);
+                var speedLimitSquaredA = Math.pow(bi.sleepSpeedLimit,2);
+                if(speedSquaredA >= speedLimitSquaredA*2){
+                    bj._wakeUpAfterNarrowphase = true;
+                }
+            }
+
+            this.overlapKeeper.setOverlapping(bi, si, bj, sj);
+            if(this.has('beginContact') && this.overlapKeeper.isNewOverlap(si, sj)){
 
                 // Report new shape overlap
                 var e = this.beginContactEvent;
@@ -66953,32 +70815,24 @@ World.prototype.runNarrowphase = function(np,bi,si,xi,ai,bj,sj,xj,aj,cm,glen){ /
                 e.bodyA = bi;
                 e.bodyB = bj;
 
-                if(typeof(numContacts)=="number"){
-                    // Add contacts to the event object
-                    e.contactEquations.length = 0;
-                    for(var i=np.contactEquations.length-numContacts; i<np.contactEquations.length; i++)
+                // Reset contact equations
+                e.contactEquations.length = 0;
+
+                if(typeof(numContacts)==="number"){
+                    for(var i=np.contactEquations.length-numContacts; i<np.contactEquations.length; i++){
                         e.contactEquations.push(np.contactEquations[i]);
+                    }
                 }
 
                 this.emit(e);
             }
 
-            // Store current contact state
-            var current = this.overlappingShapesCurrentState;
-            if(!current[key]){
-
-                current[key] = true;
-                current.keys.push(key);
-
-                // Also store shape & body data
-                current[key+"_shapeA"] = si;
-                current.keys.push(key+"_shapeA");
-                current[key+"_shapeB"] = sj;
-                current.keys.push(key+"_shapeB");
-                current[key+"_bodyA"] = bi;
-                current.keys.push(key+"_bodyA");
-                current[key+"_bodyB"] = bj;
-                current.keys.push(key+"_bodyB");
+            // divide the max friction force by the number of contacts
+            if(typeof(numContacts)==="number" && numFrictionEquations > 1){ // Why divide by 1?
+                for(var i=np.frictionEquations.length-numFrictionEquations; i<np.frictionEquations.length; i++){
+                    var f = np.frictionEquations[i];
+                    f.setSlipForce(f.getSlipForce() / numFrictionEquations);
+                }
             }
         }
     }
@@ -67005,8 +70859,9 @@ World.prototype.addSpring = function(s){
  */
 World.prototype.removeSpring = function(s){
     var idx = this.springs.indexOf(s);
-    if(idx===-1)
+    if(idx===-1){
         Utils.splice(this.springs,idx,1);
+    }
 };
 
 /**
@@ -67019,35 +70874,35 @@ World.prototype.removeSpring = function(s){
  *     var world = new World(),
  *         body = new Body();
  *     world.addBody(body);
- *
+ * @todo What if this is done during step?
  */
 World.prototype.addBody = function(body){
-    if(body.world)
-        throw new Error("This body is already added to a World.");
-
-    this.bodies.push(body);
-    body.world = this;
-    this.addBodyEvent.body = body;
-    this.emit(this.addBodyEvent);
+    if(this.bodies.indexOf(body) === -1){
+        this.bodies.push(body);
+        body.world = this;
+        this.addBodyEvent.body = body;
+        this.emit(this.addBodyEvent);
+    }
 };
 
 /**
- * Remove a body from the simulation
+ * Remove a body from the simulation. If this method is called during step(), the body removal is scheduled to after the step.
  *
  * @method removeBody
  * @param {Body} body
  */
 World.prototype.removeBody = function(body){
-    if(body.world !== this)
-        throw new Error("The body was never added to this World, cannot remove it.");
-
-    body.world = null;
-    var idx = this.bodies.indexOf(body);
-    if(idx!==-1){
-        Utils.splice(this.bodies,idx,1);
-        this.removeBodyEvent.body = body;
-        body.resetConstraintVelocity();
-        this.emit(this.removeBodyEvent);
+    if(this.stepping){
+        this.bodiesToBeRemoved.push(body);
+    } else {
+        body.world = null;
+        var idx = this.bodies.indexOf(body);
+        if(idx!==-1){
+            Utils.splice(this.bodies,idx,1);
+            this.removeBodyEvent.body = body;
+            body.resetConstraintVelocity();
+            this.emit(this.removeBodyEvent);
+        }
     }
 };
 
@@ -67060,11 +70915,63 @@ World.prototype.getBodyById = function(id){
     var bodies = this.bodies;
     for(var i=0; i<bodies.length; i++){
         var b = bodies[i];
-        if(b.id === id)
+        if(b.id === id){
             return b;
+        }
     }
     return false;
 };
+
+/**
+ * Disable collision between two bodies
+ * @method disableCollision
+ * @param {Body} bodyA
+ * @param {Body} bodyB
+ */
+World.prototype.disableBodyCollision = function(bodyA,bodyB){
+    this.disabledBodyCollisionPairs.push(bodyA,bodyB);
+};
+
+/**
+ * Enable collisions between the given two bodies
+ * @method enableCollision
+ * @param {Body} bodyA
+ * @param {Body} bodyB
+ */
+World.prototype.enableBodyCollision = function(bodyA,bodyB){
+    var pairs = this.disabledBodyCollisionPairs;
+    for(var i=0; i<pairs.length; i+=2){
+        if((pairs[i] === bodyA && pairs[i+1] === bodyB) || (pairs[i+1] === bodyA && pairs[i] === bodyB)){
+            pairs.splice(i,2);
+            return;
+        }
+    }
+};
+
+
+function v2a(v){
+    if(!v) return v;
+    return [v[0],v[1]];
+}
+
+function extend(a,b){
+    for(var key in b)
+        a[key] = b[key];
+}
+
+function contactMaterialToJSON(cm){
+    return {
+        id : cm.id,
+        materialA :             cm.materialA.id,
+        materialB :             cm.materialB.id,
+        friction :              cm.friction,
+        restitution :           cm.restitution,
+        stiffness :             cm.stiffness,
+        relaxation :            cm.relaxation,
+        frictionStiffness :     cm.frictionStiffness,
+        frictionRelaxation :    cm.frictionRelaxation,
+    };
+}
 
 /**
  * Convert the world to a JSON-serializable Object.
@@ -67074,209 +70981,245 @@ World.prototype.getBodyById = function(id){
  * @deprecated Should use Serializer instead.
  */
 World.prototype.toJSON = function(){
+    var world = this;
+
     var json = {
-        p2 : currentVersion,
-        bodies : [],
-        springs : [],
-        solver : {},
-        gravity : v2a(this.gravity),
-        broadphase : {},
-        constraints : [],
-        contactMaterials : [],
+        p2 :                        pkg.version,
+        bodies :                    [],
+        springs :                   [],
+        solver :                    {},
+        gravity :                   v2a(world.gravity),
+        broadphase :                {},
+        distanceConstraints :       [],
+        revoluteConstraints :       [],
+        prismaticConstraints :      [],
+        lockConstraints :           [],
+        gearConstraints :           [],
+        contactMaterials :          [],
+        materials :                 [],
+        defaultContactMaterial :    contactMaterialToJSON(world.defaultContactMaterial),
+        islandSplit :               world.islandSplit,
+        enableIslandSleeping :      world.enableIslandSleeping,
+        enableBodySleeping :        world.enableBodySleeping,
     };
 
+    // Solver
+    var js = json.solver,
+        s = world.solver;
+    if(s.type === Solver.GS){
+        js.type = "GSSolver";
+        js.iterations = s.iterations;
+    }
+
+    // Broadphase
+    var jb = json.broadphase,
+        wb = world.broadphase;
+    if(wb.type === Broadphase.NAIVE){
+        jb.type = "NaiveBroadphase";
+    } else if(wb.type === Broadphase.SAP) {
+        jb.type = "SAPBroadphase";
+        //jb.axisIndex = wb.axisIndex;
+    } else {
+        console.error("Broadphase not supported: "+wb.type);
+    }
+
     // Serialize springs
-    for(var i=0; i!==this.springs.length; i++){
-        var s = this.springs[i];
+    for(var i=0; i!==world.springs.length; i++){
+        var s = world.springs[i];
         json.springs.push({
-            bodyA : this.bodies.indexOf(s.bodyA),
-            bodyB : this.bodies.indexOf(s.bodyB),
-            stiffness : s.stiffness,
-            damping : s.damping,
-            restLength : s.restLength,
-            localAnchorA : v2a(s.localAnchorA),
-            localAnchorB : v2a(s.localAnchorB),
+            bodyA :         world.bodies.indexOf(s.bodyA),
+            bodyB :         world.bodies.indexOf(s.bodyB),
+            stiffness :     s.stiffness,
+            damping :       s.damping,
+            restLength :    s.restLength,
+            localAnchorA :  v2a(s.localAnchorA),
+            localAnchorB :  v2a(s.localAnchorB),
         });
     }
 
     // Serialize constraints
-    for(var i=0; i<this.constraints.length; i++){
-        var c = this.constraints[i];
+    for(var i=0; i<world.constraints.length; i++){
+        var c = world.constraints[i];
         var jc = {
-            bodyA : this.bodies.indexOf(c.bodyA),
-            bodyB : this.bodies.indexOf(c.bodyB),
-        }
-        if(c instanceof DistanceConstraint){
-            jc.type = "DistanceConstraint";
-            jc.distance = c.distance;
-            jc.maxForce = c.getMaxForce();
-        } else if(c instanceof RevoluteConstraint){
-            jc.type = "RevoluteConstraint";
-            jc.pivotA = v2a(c.pivotA);
-            jc.pivotB = v2a(c.pivotB);
-            jc.maxForce = c.maxForce;
-            jc.motorSpeed = c.getMotorSpeed(); // False if motor is disabled, otherwise number.
-            jc.lowerLimit = c.lowerLimit;
-            jc.lowerLimitEnabled = c.lowerLimitEnabled;
-            jc.upperLimit = c.upperLimit;
-            jc.upperLimitEnabled = c.upperLimitEnabled;
-        } else if(c instanceof PrismaticConstraint){
-            jc.type = "PrismaticConstraint";
-            jc.localAxisA = v2a(c.localAxisA);
-            jc.localAnchorA = v2a(c.localAnchorA);
-            jc.localAnchorB = v2a(c.localAnchorB);
-            jc.maxForce = c.maxForce;
-        } else if(c instanceof LockConstraint){
-            jc.type = "LockConstraint";
-            jc.localOffsetB = v2a(c.localOffsetB);
-            jc.localAngleB = c.localAngleB;
-            jc.maxForce = c.maxForce;
-        } else {
-            console.error("Constraint not supported yet!");
-            continue;
-        }
+            bodyA : world.bodies.indexOf(c.bodyA),
+            bodyB : world.bodies.indexOf(c.bodyB),
+            collideConnected : c.collideConnected
+        };
 
-        json.constraints.push(jc);
+        switch(c.type){
+
+        case Constraint.DISTANCE:
+            extend(jc,{
+                distance : c.distance,
+                maxForce : c.getMaxForce(),
+            });
+            json.distanceConstraints.push(jc);
+            break;
+
+        case Constraint.REVOLUTE:
+            extend(jc,{
+                pivotA :            v2a(c.pivotA),
+                pivotB :            v2a(c.pivotB),
+                maxForce :          c.maxForce,
+                motorSpeed :        c.getMotorSpeed() || 0,
+                motorEnabled :       !!c.getMotorSpeed(),
+                lowerLimit :        c.lowerLimit,
+                lowerLimitEnabled : c.lowerLimitEnabled,
+                upperLimit :        c.upperLimit,
+                upperLimitEnabled : c.upperLimitEnabled,
+            });
+            json.revoluteConstraints.push(jc);
+            break;
+
+        case Constraint.PRISMATIC:
+            extend(jc,{
+                localAxisA :    v2a(c.localAxisA),
+                localAnchorA :  v2a(c.localAnchorA),
+                localAnchorB :  v2a(c.localAnchorB),
+                maxForce :      c.maxForce,
+                upperLimitEnabled : c.upperLimitEnabled,
+                lowerLimitEnabled : c.lowerLimitEnabled,
+                upperLimit : c.upperLimit,
+                lowerLimit : c.lowerLimit,
+                motorEnabled : c.motorEnabled,
+                motorSpeed : c.motorSpeed,
+            });
+            json.prismaticConstraints.push(jc);
+            break;
+
+        case Constraint.LOCK:
+            extend(jc,{
+                localOffsetB :  v2a(c.localOffsetB),
+                localAngleB :   c.localAngleB,
+                maxForce :      c.getMaxForce(),
+            });
+            json.lockConstraints.push(jc);
+            break;
+
+        case Constraint.GEAR:
+            extend(jc,{
+                angle :     c.angle,
+                ratio :     c.ratio,
+                maxForce :  c.maxForce || 1e6, // correct?
+            });
+            json.gearConstraints.push(jc);
+            break;
+
+        default:
+            console.error("Constraint not supported yet: ",c.type);
+            break;
+        }
     }
 
     // Serialize bodies
-    for(var i=0; i!==this.bodies.length; i++){
-        var b = this.bodies[i],
+    for(var i=0; i!==world.bodies.length; i++){
+        var b = world.bodies[i],
             ss = b.shapes,
-            jsonShapes = [];
+            jsonBody = {
+                id : b.id,
+                mass : b.mass,
+                angle : b.angle,
+                position : v2a(b.position),
+                velocity : v2a(b.velocity),
+                angularVelocity : b.angularVelocity,
+                force : v2a(b.force),
+                motionState : b.motionState,
+                fixedRotation : b.fixedRotation,
+                circleShapes :    [],
+                planeShapes :     [],
+                particleShapes :  [],
+                lineShapes :      [],
+                rectangleShapes : [],
+                convexShapes :    [],
+                capsuleShapes :   [],
+            };
+
+        if(b.concavePath){
+            jsonBody.concavePath = b.concavePath;
+        }
 
         for(var j=0; j<ss.length; j++){
             var s = ss[j],
-                jsonShape;
-
-            // Check type
-            if(s instanceof Circle){
-                jsonShape = {
-                    type : "Circle",
-                    radius : s.radius,
-                };
-            } else if(s instanceof Plane){
-                jsonShape = { type : "Plane", };
-            } else if(s instanceof Particle){
-                jsonShape = { type : "Particle", };
-            } else if(s instanceof Line){
-                jsonShape = {   type : "Line",
-                                length : s.length };
-            } else if(s instanceof Rectangle){
-                jsonShape = {   type : "Rectangle",
-                                width : s.width,
-                                height : s.height };
-            } else if(s instanceof Convex){
-                var verts = [];
-                for(var k=0; k<s.vertices.length; k++)
-                    verts.push(v2a(s.vertices[k]));
-                jsonShape = {   type : "Convex",
-                                verts : verts };
-            } else if(s instanceof Capsule){
-                jsonShape = {   type : "Capsule",
-                                length : s.length,
-                                radius : s.radius };
-            } else {
-                throw new Error("Shape type not supported yet!");
-            }
+                jsonShape = {};
 
             jsonShape.offset = v2a(b.shapeOffsets[j]);
             jsonShape.angle = b.shapeAngles[j];
             jsonShape.collisionGroup = s.collisionGroup;
             jsonShape.collisionMask = s.collisionMask;
-            jsonShape.material = s.material && {
-                id : s.material.id,
-            };
+            jsonShape.material = s.material ? s.material.id : null;
 
-            jsonShapes.push(jsonShape);
+            // Check type
+            switch(s.type){
+
+            case Shape.CIRCLE:
+                extend(jsonShape,{ radius : s.radius, });
+                jsonBody.circleShapes.push(jsonShape);
+                break;
+
+            case Shape.PLANE:
+                jsonBody.planeShapes.push(jsonShape);
+                break;
+
+            case Shape.PARTICLE:
+                jsonBody.particleShapes.push(jsonShape);
+                break;
+
+            case Shape.LINE:
+                jsonShape.length = s.length;
+                jsonBody.lineShapes.push(jsonShape);
+                break;
+
+            case Shape.RECTANGLE:
+                extend(jsonShape,{   width : s.width,
+                                     height : s.height });
+                jsonBody.rectangleShapes.push(jsonShape);
+                break;
+
+            case Shape.CONVEX:
+                var verts = [];
+                for(var k=0; k<s.vertices.length; k++){
+                    verts.push(v2a(s.vertices[k]));
+                }
+                extend(jsonShape,{ vertices : verts });
+                jsonBody.convexShapes.push(jsonShape);
+                break;
+
+            case Shape.CAPSULE:
+                extend(jsonShape,{ length : s.length, radius : s.radius });
+                jsonBody.capsuleShapes.push(jsonShape);
+                break;
+
+            default:
+                console.error("Shape type not supported yet!");
+                break;
+            }
         }
 
-        json.bodies.push({
-            id : b.id,
-            mass : b.mass,
-            angle : b.angle,
-            position : v2a(b.position),
-            velocity : v2a(b.velocity),
-            angularVelocity : b.angularVelocity,
-            force : v2a(b.force),
-            shapes : jsonShapes,
-            concavePath : b.concavePath,
-        });
+        json.bodies.push(jsonBody);
     }
 
     // Serialize contactmaterials
-    for(var i=0; i<this.contactMaterials.length; i++){
-        var cm = this.contactMaterials[i];
-        json.contactMaterials.push({
-            id : cm.id,
-            materialA :             cm.materialA.id, // Note: Reference by id!
-            materialB :             cm.materialB.id,
-            friction :              cm.friction,
-            restitution :           cm.restitution,
-            stiffness :             cm.stiffness,
-            relaxation :            cm.relaxation,
-            frictionStiffness :     cm.frictionStiffness,
-            frictionRelaxation :    cm.frictionRelaxation,
+    for(var i=0; i<world.contactMaterials.length; i++){
+        var cm = world.contactMaterials[i];
+        json.contactMaterials.push(contactMaterialToJSON(cm));
+    }
+
+    // Serialize materials
+    var mats = {};
+    // Get unique materials first
+    for(var i=0; i<world.contactMaterials.length; i++){
+        var cm = world.contactMaterials[i];
+        mats[cm.materialA.id+''] = cm.materialA;
+        mats[cm.materialB.id+''] = cm.materialB;
+    }
+    for(var matId in mats){
+        var m = mats[parseInt(matId)];
+        json.materials.push({
+            id : m.id,
         });
     }
 
     return json;
-
-    function v2a(v){
-        if(!v) return v;
-        return [v[0],v[1]];
-    }
-};
-
-/**
- * Upgrades a JSON object to current version
- * @method upgradeJSON
- * @param  {Object} json
- * @return {Object|Boolean} New json object, or false on failure.
- */
-World.upgradeJSON = function(json){
-    if(!json || !json.p2)
-        return false;
-
-    // Clone the json object
-    json = JSON.parse(JSON.stringify(json));
-
-    // Check version
-    switch(json.p2){
-
-        case currentVersion:
-            // We are at latest json version
-            return json;
-
-        case "0.3":
-            // Changes:
-            // - Started caring about versioning
-
-            // - Added LockConstraint type
-            // Can't do much about that now though. Ignore.
-
-            // Changed PrismaticConstraint arguments...
-            for(var i=0; i<json.constraints.length; i++){
-                var jc = json.constraints[i];
-                if(jc.type=="PrismaticConstraint"){
-
-                    // ...from these...
-                    delete jc.localAxisA;
-                    delete jc.localAxisB;
-
-                    // ...to these. We cant make up anything good here, just do something
-                    jc.localAxisA = [1,0];
-                    jc.localAnchorA = [0,0];
-                    jc.localAnchorB = [0,0];
-                }
-            }
-
-            // Upgrade version number
-            json.p2 = "0.4";
-            break;
-    }
-
-    return World.upgradeJSON(json);
 };
 
 /**
@@ -67288,25 +71231,64 @@ World.upgradeJSON = function(json){
  */
 World.prototype.fromJSON = function(json){
     this.clear();
-    json = World.upgradeJSON(json);
 
-    // Upgrade failed.
-    if(!json) return false;
-
-    if(!json.p2)
+    if(!json.p2){
         return false;
+    }
+
+    var w = this;
 
     // Set gravity
-    vec2.copy(this.gravity, json.gravity);
+    vec2.copy(w.gravity, json.gravity);
 
-    var bodies = this.bodies;
+    w.islandSplit =           json.islandSplit;
+    w.enableIslandSleeping =  json.enableIslandSleeping;
+    w.enableBodySleeping =    json.enableBodySleeping;
+
+    // Set solver
+    switch(json.solver.type){
+    case "GSSolver":
+        var js = json.solver,
+            s = new GSSolver();
+        w.solver = s;
+        s.iterations = js.iterations;
+        break;
+    default:
+        throw new Error("Solver type not recognized: "+json.solver.type);
+    }
+
+    // Broadphase
+    switch(json.broadphase.type){
+    case "NaiveBroadphase":
+        w.broadphase = new NaiveBroadphase();
+        break;
+
+    case "SAPBroadphase":
+        w.broadphase = new SAPBroadphase();
+        break;
+    }
+    w.broadphase.setWorld(w);
+
+
+    var bodies = w.bodies;
+
+    // Load materials
+    var id2material = {};
+    for(var i=0; i!==json.materials.length; i++){
+        var jm = json.materials[i];
+        var m = new Material();
+        id2material[jm.id+""] = m;
+        m.id = jm.id;
+    }
+
+    // Load default material
+    w.defaultMaterial.id = json.defaultContactMaterial.materialA;
 
     // Load bodies
-    var id2material = {};
     for(var i=0; i!==json.bodies.length; i++){
-        var jb = json.bodies[i],
-            jss = jb.shapes;
+        var jb = json.bodies[i];
 
+        // Create body
         var b = new Body({
             mass :              jb.mass,
             position :          jb.position,
@@ -67314,58 +71296,108 @@ World.prototype.fromJSON = function(json){
             velocity :          jb.velocity,
             angularVelocity :   jb.angularVelocity,
             force :             jb.force,
+            fixedRotation :     jb.fixedRotation,
         });
         b.id = jb.id;
+        b.motionState = jb.motionState;
 
-        for(var j=0; j<jss.length; j++){
-            var shape, js=jss[j];
-
-            switch(js.type){
-                case "Circle":      shape = new Circle(js.radius);              break;
-                case "Plane":       shape = new Plane();                        break;
-                case "Particle":    shape = new Particle();                     break;
-                case "Line":        shape = new Line(js.length);                break;
-                case "Rectangle":   shape = new Rectangle(js.width,js.height);  break;
-                case "Convex":      shape = new Convex(js.verts);               break;
-                case "Capsule":     shape = new Capsule(js.length, js.radius);  break;
-                default:
-                    throw new Error("Shape type not supported: "+js.type);
-                    break;
-            }
-            shape.collisionMask = js.collisionMask;
-            shape.collisionGroup = js.collisionGroup;
-            shape.material = js.material;
-            if(shape.material){
-                shape.material = new Material();
-                shape.material.id = js.material.id;
-                id2material[shape.material.id+""] = shape.material;
-            }
-            b.addShape(shape,js.offset,js.angle);
+        // Circle
+        for(var j=0; j<jb.circleShapes.length; j++){
+            var s = jb.circleShapes[j];
+            addShape(b, new Circle(s.radius), s);
         }
 
-        if(jb.concavePath)
-            b.concavePath = jb.concavePath;
+        // Plane
+        for(var j=0; j<jb.planeShapes.length; j++){
+            var s = jb.planeShapes[j];
+            addShape(b, new Plane(), s);
+        }
 
-        this.addBody(b);
+        // Particle
+        for(var j=0; j<jb.particleShapes.length; j++){
+            var s = jb.particleShapes[j];
+            addShape(b, new Particle(), s);
+        }
+
+        // Line
+        for(var j=0; j<jb.lineShapes.length; j++){
+            var s = jb.lineShapes[j];
+            addShape(b, new Line(s.length), s);
+        }
+
+        // Rectangle
+        for(var j=0; j<jb.rectangleShapes.length; j++){
+            var s = jb.rectangleShapes[j];
+            addShape(b, new Rectangle(s.width,s.height), s);
+        }
+
+        // Convex
+        for(var j=0; j<jb.convexShapes.length; j++){
+            var s = jb.convexShapes[j];
+            addShape(b, new Convex(s.vertices), s);
+        }
+
+        // Capsule
+        for(var j=0; j<jb.capsuleShapes.length; j++){
+            var s = jb.capsuleShapes[j];
+            addShape(b, new Capsule(s.length, s.radius), s);
+        }
+
+        function addShape(body, shape, shapeJSON){
+            shape.collisionMask = shapeJSON.collisionMask;
+            shape.collisionGroup = shapeJSON.collisionGroup;
+            if(shapeJSON.material){
+                shape.material = id2material[shapeJSON.material+""];
+            }
+            body.addShape(shape, shapeJSON.offset, shapeJSON.angle);
+        }
+
+        if(jb.concavePath){
+            b.concavePath = jb.concavePath;
+        }
+
+        w.addBody(b);
     }
 
     // Load springs
     for(var i=0; i<json.springs.length; i++){
         var js = json.springs[i];
-        var s = new Spring(bodies[js.bodyA], bodies[js.bodyB], {
+        var bodyA = bodies[js.bodyA],
+            bodyB = bodies[js.bodyB];
+        if(!bodyA){
+            this.error = "instance.springs["+i+"] references instance.body["+js.bodyA+"], which does not exist.";
+            return false;
+        }
+        if(!bodyB){
+            this.error = "instance.springs["+i+"] references instance.body["+js.bodyB+"], which does not exist.";
+            return false;
+        }
+        var s = new Spring(bodyA, bodyB, {
             stiffness : js.stiffness,
             damping : js.damping,
             restLength : js.restLength,
             localAnchorA : js.localAnchorA,
             localAnchorB : js.localAnchorB,
         });
-        this.addSpring(s);
+        w.addSpring(s);
     }
 
     // Load contact materials
     for(var i=0; i<json.contactMaterials.length; i++){
-        var jm = json.contactMaterials[i];
-        var cm = new ContactMaterial(id2material[jm.materialA+""], id2material[jm.materialB+""], {
+        var jm = json.contactMaterials[i],
+            matA = id2material[jm.materialA+""],
+            matB = id2material[jm.materialB+""];
+
+        if(!matA){
+            this.error = "Reference to material id "+jm.materialA+": material not found";
+            return false;
+        }
+        if(!matB){
+            this.error = "Reference to material id "+jm.materialB+": material not found";
+            return false;
+        }
+
+        var cm = new ContactMaterial(matA, matB, {
             friction :              jm.friction,
             restitution :           jm.restitution,
             stiffness :             jm.stiffness,
@@ -67374,47 +71406,85 @@ World.prototype.fromJSON = function(json){
             frictionRelaxation :    jm.frictionRelaxation,
         });
         cm.id = jm.id;
-        this.addContactMaterial(cm);
+        w.addContactMaterial(cm);
     }
 
-    // Load constraints
-    for(var i=0; i<json.constraints.length; i++){
-        var jc = json.constraints[i],
-            c;
-        switch(jc.type){
-            case "DistanceConstraint":
-                c = new DistanceConstraint(bodies[jc.bodyA], bodies[jc.bodyB], jc.distance, jc.maxForce);
-                break;
-            case "RevoluteConstraint":
-                c = new RevoluteConstraint(bodies[jc.bodyA], jc.pivotA, bodies[jc.bodyB], jc.pivotB, jc.maxForce);
-                if(jc.motorSpeed){
-                    c.enableMotor();
-                    c.setMotorSpeed(jc.motorSpeed);
-                }
-                c.lowerLimit = jc.lowerLimit || 0;
-                c.upperLimit = jc.upperLimit || 0;
-                c.lowerLimitEnabled = jc.lowerLimitEnabled || false;
-                c.upperLimitEnabled = jc.upperLimitEnabled || false;
-                break;
-            case "PrismaticConstraint":
-                c = new PrismaticConstraint(bodies[jc.bodyA], bodies[jc.bodyB], {
-                    maxForce : jc.maxForce,
-                    localAxisA : jc.localAxisA,
-                    localAnchorA : jc.localAnchorA,
-                    localAnchorB : jc.localAnchorB,
-                });
-                break;
-            case "LockConstraint":
-                c = new LockConstraint(bodies[jc.bodyA], bodies[jc.bodyB], {
-                    maxForce :     jc.maxForce,
-                    localOffsetB : jc.localOffsetB,
-                    localAngleB :  jc.localAngleB,
-                });
-                break;
-            default:
-                throw new Error("Constraint type not recognized: "+jc.type);
+    // Load default contact material
+    var jm = json.defaultContactMaterial,
+        matA = w.defaultMaterial,
+        matB = w.defaultMaterial;
+    var cm = new ContactMaterial(matA, matB, {
+        friction :              jm.friction,
+        restitution :           jm.restitution,
+        stiffness :             jm.stiffness,
+        relaxation :            jm.relaxation,
+        frictionStiffness :     jm.frictionStiffness,
+        frictionRelaxation :    jm.frictionRelaxation,
+    });
+    cm.id = jm.id;
+    w.defaultContactMaterial = cm;
+
+    // DistanceConstraint
+    for(var i=0; i<json.distanceConstraints.length; i++){
+        var c = json.distanceConstraints[i];
+        w.addConstraint(new DistanceConstraint( bodies[c.bodyA], bodies[c.bodyB], c.distance, {
+            maxForce:c.maxForce,
+            collideConnected:c.collideConnected
+        }));
+    }
+
+    // RevoluteConstraint
+    for(var i=0; i<json.revoluteConstraints.length; i++){
+        var c = json.revoluteConstraints[i];
+        var revolute = new RevoluteConstraint(bodies[c.bodyA], c.pivotA, bodies[c.bodyB], c.pivotB, {
+            maxForce: c.maxForce,
+            collideConnected: c.collideConnected
+        });
+        if(c.motorEnabled){
+            revolute.enableMotor();
         }
-        this.addConstraint(c);
+        revolute.setMotorSpeed(c.motorSpeed);
+        revolute.lowerLimit = c.lowerLimit;
+        revolute.upperLimit = c.upperLimit;
+        revolute.lowerLimitEnabled = c.lowerLimitEnabled;
+        revolute.upperLimitEnabled = c.upperLimitEnabled;
+        w.addConstraint(revolute);
+    }
+
+    // PrismaticConstraint
+    for(var i=0; i<json.prismaticConstraints.length; i++){
+        var c = json.prismaticConstraints[i],
+            p = new PrismaticConstraint(bodies[c.bodyA], bodies[c.bodyB], {
+                maxForce : c.maxForce,
+                localAxisA : c.localAxisA,
+                localAnchorA : c.localAnchorA,
+                localAnchorB : c.localAnchorB,
+                collideConnected: c.collideConnected
+            });
+        p.motorSpeed = c.motorSpeed;
+        w.addConstraint(p);
+    }
+
+    // LockConstraint
+    for(var i=0; i<json.lockConstraints.length; i++){
+        var c = json.lockConstraints[i];
+        w.addConstraint(new LockConstraint(bodies[c.bodyA], bodies[c.bodyB], {
+            maxForce :     c.maxForce,
+            localOffsetB : c.localOffsetB,
+            localAngleB :  c.localAngleB,
+            collideConnected: c.collideConnected
+        }));
+    }
+
+    // GearConstraint
+    for(var i=0; i<json.gearConstraints.length; i++){
+        var c = json.gearConstraints[i];
+        w.addConstraint(new GearConstraint(bodies[c.bodyA], bodies[c.bodyB], {
+            maxForce :      c.maxForce,
+            angle :         c.angle,
+            ratio :         c.ratio,
+            collideConnected: c.collideConnected
+        }));
     }
 
     return true;
@@ -67428,10 +71498,12 @@ World.prototype.fromJSON = function(json){
 World.prototype.clear = function(){
 
     this.time = 0;
+    this.fixedStepTime = 0;
 
     // Remove all solver equations
-    if(this.solver && this.solver.equations.length)
+    if(this.solver && this.solver.equations.length){
         this.solver.removeAllEquations();
+    }
 
     // Remove all constraints
     var cs = this.constraints;
@@ -67456,6 +71528,8 @@ World.prototype.clear = function(){
     for(var i=cms.length-1; i>=0; i--){
         this.removeContactMaterial(cms[i]);
     }
+
+    World.apply(this);
 };
 
 /**
@@ -67524,11 +71598,82 @@ World.prototype.hitTest = function(worldPoint,bodies,precision){
     return result;
 };
 
-},{"../../package.json":8,"../collision/Broadphase":10,"../collision/NaiveBroadphase":12,"../collision/Narrowphase":13,"../constraints/DistanceConstraint":17,"../constraints/LockConstraint":19,"../constraints/PrismaticConstraint":20,"../constraints/RevoluteConstraint":21,"../events/EventEmitter":28,"../material/ContactMaterial":29,"../material/Material":30,"../math/vec2":33,"../objects/Body":34,"../objects/Spring":35,"../shapes/Capsule":37,"../shapes/Circle":38,"../shapes/Convex":39,"../shapes/Line":41,"../shapes/Particle":42,"../shapes/Plane":43,"../shapes/Rectangle":44,"../solver/GSSolver":46,"../utils/Utils":50}]},{},[36])
-(36)
-});
-;
+/**
+ * Sets the Equation parameters for all constraints and contact materials.
+ * @method setGlobalEquationParameters
+ * @param {object} [parameters]
+ * @param {Number} [parameters.relaxation]
+ * @param {Number} [parameters.stiffness]
+ */
+World.prototype.setGlobalEquationParameters = function(parameters){
+    parameters = parameters || {};
 
+    // Set for all constraints
+    for(var i=0; i !== this.constraints.length; i++){
+        var c = this.constraints[i];
+        for(var j=0; j !== c.equations.length; j++){
+            var eq = c.equations[j];
+            if(typeof(parameters.stiffness) !== "undefined"){
+                eq.stiffness = parameters.stiffness;
+            }
+            if(typeof(parameters.relaxation) !== "undefined"){
+                eq.relaxation = parameters.relaxation;
+            }
+            eq.needsUpdate = true;
+        }
+    }
+
+    // Set for all contact materials
+    for(var i=0; i !== this.contactMaterials.length; i++){
+        var c = this.contactMaterials[i];
+        if(typeof(parameters.stiffness) !== "undefined"){
+            c.stiffness = parameters.stiffness;
+            c.frictionStiffness = parameters.stiffness;
+        }
+        if(typeof(parameters.relaxation) !== "undefined"){
+            c.relaxation = parameters.relaxation;
+            c.frictionRelaxation = parameters.relaxation;
+        }
+    }
+
+    // Set for default contact material
+    var c = this.defaultContactMaterial;
+    if(typeof(parameters.stiffness) !== "undefined"){
+        c.stiffness = parameters.stiffness;
+        c.frictionStiffness = parameters.stiffness;
+    }
+    if(typeof(parameters.relaxation) !== "undefined"){
+        c.relaxation = parameters.relaxation;
+        c.frictionRelaxation = parameters.relaxation;
+    }
+};
+
+/**
+ * Set the stiffness for all equations and contact materials.
+ * @method setGlobalStiffness
+ * @param {Number} stiffness
+ */
+World.prototype.setGlobalStiffness = function(stiffness){
+    this.setGlobalEquationParameters({
+        stiffness: stiffness
+    });
+};
+
+/**
+ * Set the relaxation for all equations and contact materials.
+ * @method setGlobalRelaxation
+ * @param {Number} relaxation
+ */
+World.prototype.setGlobalRelaxation = function(relaxation){
+    this.setGlobalEquationParameters({
+        relaxation: relaxation
+    });
+};
+
+},{"../../package.json":7,"../collision/Broadphase":9,"../collision/NaiveBroadphase":11,"../collision/Narrowphase":12,"../collision/SAPBroadphase":13,"../constraints/Constraint":14,"../constraints/DistanceConstraint":15,"../constraints/GearConstraint":16,"../constraints/LockConstraint":17,"../constraints/PrismaticConstraint":18,"../constraints/RevoluteConstraint":19,"../events/EventEmitter":26,"../material/ContactMaterial":27,"../material/Material":28,"../math/vec2":30,"../objects/Body":31,"../objects/Spring":32,"../shapes/Capsule":34,"../shapes/Circle":35,"../shapes/Convex":36,"../shapes/Line":38,"../shapes/Particle":39,"../shapes/Plane":40,"../shapes/Rectangle":41,"../shapes/Shape":42,"../solver/GSSolver":43,"../solver/Solver":44,"../utils/OverlapKeeper":45,"../utils/Utils":47,"./IslandManager":49}]},{},[33])
+(33)
+});
+;;
 /**
 * @author       Richard Davey <rich@photonstorm.com>
 * @copyright    2014 Photon Storm Ltd.
@@ -67559,7 +71704,7 @@ Phaser.Physics.P2 = function (game, config) {
     }
 
     /**
-    * @property {p2.World} game - The p2 World in which the simulation is run.
+    * @property {p2.World} world - The p2 World in which the simulation is run.
     * @protected
     */
     this.world = new p2.World(config);
@@ -67577,26 +71722,26 @@ Phaser.Physics.P2 = function (game, config) {
     this.useElapsedTime = false;
 
     /**
+    * @property {boolean} paused - The paused state of the P2 World.
+    * @default
+    */
+    this.paused = false;
+
+    /**
     * @property {array<Phaser.Physics.P2.Material>} materials - A local array of all created Materials.
     * @protected
     */
     this.materials = [];
 
     /**
-    * @property {Phaser.InversePointProxy} gravity - The gravity applied to all bodies each step.
+    * @property {Phaser.Physics.P2.InversePointProxy} gravity - The gravity applied to all bodies each step.
     */
     this.gravity = new Phaser.Physics.P2.InversePointProxy(this, this.world.gravity);
 
     /**
-    * @property {p2.Body} bounds - The bounds body contains the 4 walls that border the World. Define or disable with setBounds.
+    * @property {object} walls - An object containing the 4 wall bodies that bound the physics world.
     */
-    this.bounds = null;
-
-    /**
-    * @property {array} _wallShapes - The wall bounds shapes.
-    * @private
-    */
-    this._wallShapes = [ null, null, null, null ];
+    this.walls = { left: null, right: null, top: null, bottom: null };
 
     /**
     * @property {Phaser.Signal} onBodyAdded - Dispatched when a new Body is added to the World.
@@ -67639,17 +71784,14 @@ Phaser.Physics.P2 = function (game, config) {
     this.onContactMaterialRemoved = new Phaser.Signal();
 
     /**
-    * @property {Phaser.Signal} onPostBroadphase - Dispatched after the Broadphase has collected collision pairs in the world.
+    * @property {function} postBroadphaseCallback - A postBroadphase callback.
     */
-    // this.onPostBroadphase = new Phaser.Signal();
     this.postBroadphaseCallback = null;
-    this.callbackContext = null;
 
     /**
-    * @property {Phaser.Signal} onImpact - Dispatched when a first contact is created between two bodies. This event is fired after the step has been done.
+    * @property {object} callbackContext - The context under which the callbacks are fired.
     */
-    // this.onImpact = new Phaser.Signal();
-    this.impactCallback = null;
+    this.callbackContext = null;
 
     /**
     * @property {Phaser.Signal} onBeginContact - Dispatched when a first contact is created between two bodies. This event is fired before the step has been done.
@@ -67675,14 +71817,35 @@ Phaser.Physics.P2 = function (game, config) {
     this.world.on("endContact", this.endContactHandler, this);
 
     /**
-    * @property {array} _toRemove - Internal var used to hold references to bodies to remove from the world on the next step.
-    */
-    this._toRemove = [];
-
-    /**
-    * @property {array} collisionGroups - Internal var.
+    * @property {array} collisionGroups - An array containing the collision groups that have been defined in the World.
     */
     this.collisionGroups = [];
+
+    /**
+    * @property {Phaser.Physics.P2.CollisionGroup} nothingCollisionGroup - A default collision group.
+    */
+    this.nothingCollisionGroup = new Phaser.Physics.P2.CollisionGroup(1);
+
+    /**
+    * @property {Phaser.Physics.P2.CollisionGroup} boundsCollisionGroup - A default collision group.
+    */
+    this.boundsCollisionGroup = new Phaser.Physics.P2.CollisionGroup(2);
+
+    /**
+    * @property {Phaser.Physics.P2.CollisionGroup} everythingCollisionGroup - A default collision group.
+    */
+    this.everythingCollisionGroup = new Phaser.Physics.P2.CollisionGroup(2147483648);
+
+    /**
+    * @property {array} boundsCollidesWith - An array of the bodies the world bounds collides with.
+    */
+    this.boundsCollidesWith = [];
+
+    /**
+    * @property {array} _toRemove - Internal var used to hold references to bodies to remove from the world on the next step.
+    * @private
+    */
+    this._toRemove = [];
 
     /**
     * @property {number} _collisionGroupID - Internal var.
@@ -67690,22 +71853,10 @@ Phaser.Physics.P2 = function (game, config) {
     */
     this._collisionGroupID = 2;
 
-    this.nothingCollisionGroup = new Phaser.Physics.P2.CollisionGroup(1);
-    this.boundsCollisionGroup = new Phaser.Physics.P2.CollisionGroup(2);
-    this.everythingCollisionGroup = new Phaser.Physics.P2.CollisionGroup(2147483648);
-
-    this.boundsCollidesWith = [];
-
     //  By default we want everything colliding with everything
     this.setBoundsToWorld(true, true, true, true, false);
 
 };
-
-/**
-* @const
-* @type {number}
-*/
-Phaser.Physics.P2.LIME_CORONA_JSON = 0;
 
 Phaser.Physics.P2.prototype = {
 
@@ -67873,12 +72024,11 @@ Phaser.Physics.P2.prototype = {
 
         if (this.postBroadphaseCallback)
         {
-            //  Body.id 1 is always the World bounds object
             var i = event.pairs.length;
 
             while (i -= 2)
             {
-                if (event.pairs[i].id !== 1 && event.pairs[i+1].id !== 1 && !this.postBroadphaseCallback.call(this.callbackContext, event.pairs[i].parent, event.pairs[i+1].parent))
+                if (event.pairs[i].parent && event.pairs[i+1].parent && !this.postBroadphaseCallback.call(this.callbackContext, event.pairs[i].parent, event.pairs[i+1].parent))
                 {
                     event.pairs.splice(i, 2);
                 }
@@ -67934,19 +72084,16 @@ Phaser.Physics.P2.prototype = {
     */
     beginContactHandler: function (event) {
 
-        if (event.bodyA.id > 1 && event.bodyB.id > 1)
+        this.onBeginContact.dispatch(event.bodyA, event.bodyB, event.shapeA, event.shapeB, event.contactEquations);
+
+        if (event.bodyA.parent)
         {
-            this.onBeginContact.dispatch(event.bodyA, event.bodyB, event.shapeA, event.shapeB, event.contactEquations);
+            event.bodyA.parent.onBeginContact.dispatch(event.bodyB.parent, event.shapeA, event.shapeB, event.contactEquations);
+        }
 
-            if (event.bodyA.parent)
-            {
-                event.bodyA.parent.onBeginContact.dispatch(event.bodyB.parent, event.shapeA, event.shapeB, event.contactEquations);
-            }
-
-            if (event.bodyB.parent)
-            {
-                event.bodyB.parent.onBeginContact.dispatch(event.bodyA.parent, event.shapeB, event.shapeA, event.contactEquations);
-            }
+        if (event.bodyB.parent)
+        {
+            event.bodyB.parent.onBeginContact.dispatch(event.bodyA.parent, event.shapeB, event.shapeA, event.contactEquations);
         }
 
     },
@@ -67959,19 +72106,16 @@ Phaser.Physics.P2.prototype = {
     */
     endContactHandler: function (event) {
 
-        if (event.bodyA.id > 1 && event.bodyB.id > 1)
+        this.onEndContact.dispatch(event.bodyA, event.bodyB, event.shapeA, event.shapeB);
+
+        if (event.bodyA.parent)
         {
-            this.onEndContact.dispatch(event.bodyA, event.bodyB, event.shapeA, event.shapeB);
+            event.bodyA.parent.onEndContact.dispatch(event.bodyB.parent, event.shapeA, event.shapeB);
+        }
 
-            if (event.bodyA.parent)
-            {
-                event.bodyA.parent.onEndContact.dispatch(event.bodyB.parent, event.shapeA, event.shapeB);
-            }
-
-            if (event.bodyB.parent)
-            {
-                event.bodyB.parent.onEndContact.dispatch(event.bodyA.parent, event.shapeB, event.shapeA);
-            }
+        if (event.bodyB.parent)
+        {
+            event.bodyB.parent.onEndContact.dispatch(event.bodyA.parent, event.shapeB, event.shapeA);
         }
 
     },
@@ -67993,7 +72137,6 @@ Phaser.Physics.P2.prototype = {
 
     },
 
-
     /**
     * Sets the given material against the 4 bounds of this World.
     *
@@ -68011,24 +72154,24 @@ Phaser.Physics.P2.prototype = {
         if (typeof top === 'undefined') { top = true; }
         if (typeof bottom === 'undefined') { bottom = true; }
 
-        if (left && this._wallShapes[0])
+        if (left && this.walls.left)
         {
-            this._wallShapes[0].material = material;
+            this.walls.left.shapes[0].material = material;
         }
 
-        if (right && this._wallShapes[1])
+        if (right && this.walls.right)
         {
-            this._wallShapes[1].material = material;
+            this.walls.right.shapes[0].material = material;
         }
 
-        if (top && this._wallShapes[2])
+        if (top && this.walls.top)
         {
-            this._wallShapes[2].material = material;
+            this.walls.top.shapes[0].material = material;
         }
 
-        if (bottom && this._wallShapes[3])
+        if (bottom && this.walls.bottom)
         {
-            this._wallShapes[3].material = material;
+            this.walls.bottom.shapes[0].material = material;
         }
 
     },
@@ -68043,21 +72186,28 @@ Phaser.Physics.P2.prototype = {
     */
     updateBoundsCollisionGroup: function (setCollisionGroup) {
 
-        if (typeof setCollisionGroup === 'undefined') { setCollisionGroup = true; }
+        var mask = this.everythingCollisionGroup.mask;
 
-        for (var i = 0; i < 4; i++)
+        if (typeof setCollisionGroup === 'undefined') { mask = this.boundsCollisionGroup.mask; }
+
+        if (this.walls.left)
         {
-            if (this._wallShapes[i])
-            {
-                if (setCollisionGroup)
-                {
-                    this._wallShapes[i].collisionGroup = this.boundsCollisionGroup.mask;
-                }
-                else
-                {
-                    this._wallShapes[i].collisionGroup = this.everythingCollisionGroup.mask;
-                }
-            }
+            this.walls.left.shapes[0].collisionGroup = mask;
+        }
+
+        if (this.walls.right)
+        {
+            this.walls.right.shapes[0].collisionGroup = mask;
+        }
+
+        if (this.walls.top)
+        {
+            this.walls.top.shapes[0].collisionGroup = mask;
+        }
+
+        if (this.walls.bottom)
+        {
+            this.walls.bottom.shapes[0].collisionGroup = mask;
         }
 
     },
@@ -68085,90 +72235,114 @@ Phaser.Physics.P2.prototype = {
         if (typeof bottom === 'undefined') { bottom = true; }
         if (typeof setCollisionGroup === 'undefined') { setCollisionGroup = true; }
 
-        var hw = (width / 2);
-        var hh = (height / 2);
-        var cx = hw + x;
-        var cy = hh + y;
-
-        if (this.bounds !== null)
+        if (this.walls.left)
         {
-            if (this.bounds.world)
-            {
-                this.world.removeBody(this.bounds);
-            }
-
-            var i = this.bounds.shapes.length;
-
-            while (i--)
-            {
-                var shape = this.bounds.shapes[i];
-                this.bounds.removeShape(shape);
-            }
-
-            this.bounds.position[0] = this.pxmi(cx);
-            this.bounds.position[1] = this.pxmi(cy);
+            this.world.removeBody(this.walls.left);
         }
-        else
+
+        if (this.walls.right)
         {
-            this.bounds = new p2.Body({ mass: 0, position: [this.pxmi(cx), this.pxmi(cy)] });
+            this.world.removeBody(this.walls.right);
+        }
+
+        if (this.walls.top)
+        {
+            this.world.removeBody(this.walls.top);
+        }
+
+        if (this.walls.bottom)
+        {
+            this.world.removeBody(this.walls.bottom);
         }
 
         if (left)
         {
-            this._wallShapes[0] = new p2.Plane();
+            this.walls.left = new p2.Body({ mass: 0, position: [ this.pxmi(x), this.pxmi(y) ], angle: 1.5707963267948966 });
+            this.walls.left.addShape(new p2.Plane());
 
             if (setCollisionGroup)
             {
-                this._wallShapes[0].collisionGroup = this.boundsCollisionGroup.mask;
+                this.walls.left.shapes[0].collisionGroup = this.boundsCollisionGroup.mask;
             }
 
-            this.bounds.addShape(this._wallShapes[0], [this.pxmi(-hw), 0], 1.5707963267948966);
+            this.world.addBody(this.walls.left);
         }
 
         if (right)
         {
-            this._wallShapes[1] = new p2.Plane();
+            this.walls.right = new p2.Body({ mass: 0, position: [ this.pxmi(x + width), this.pxmi(y) ], angle: -1.5707963267948966 });
+            this.walls.right.addShape(new p2.Plane());
 
             if (setCollisionGroup)
             {
-                this._wallShapes[1].collisionGroup = this.boundsCollisionGroup.mask;
+                this.walls.right.shapes[0].collisionGroup = this.boundsCollisionGroup.mask;
             }
 
-            this.bounds.addShape(this._wallShapes[1], [this.pxmi(hw), 0], -1.5707963267948966);
+            this.world.addBody(this.walls.right);
         }
 
         if (top)
         {
-            this._wallShapes[2] = new p2.Plane();
+            this.walls.top = new p2.Body({ mass: 0, position: [ this.pxmi(x), this.pxmi(y) ], angle: -3.141592653589793 });
+            this.walls.top.addShape(new p2.Plane());
 
             if (setCollisionGroup)
             {
-                this._wallShapes[2].collisionGroup = this.boundsCollisionGroup.mask;
+                this.walls.top.shapes[0].collisionGroup = this.boundsCollisionGroup.mask;
             }
 
-            this.bounds.addShape(this._wallShapes[2], [0, this.pxmi(-hh)], -3.141592653589793);
+            this.world.addBody(this.walls.top);
         }
 
         if (bottom)
         {
-            this._wallShapes[3] = new p2.Plane();
+            this.walls.bottom = new p2.Body({ mass: 0, position: [ this.pxmi(x), this.pxmi(height) ] });
+            this.walls.bottom.addShape(new p2.Plane());
 
             if (setCollisionGroup)
             {
-                this._wallShapes[3].collisionGroup = this.boundsCollisionGroup.mask;
+                this.walls.bottom.shapes[0].collisionGroup = this.boundsCollisionGroup.mask;
             }
 
-            this.bounds.addShape(this._wallShapes[3], [0, this.pxmi(hh)]);
+            this.world.addBody(this.walls.bottom);
         }
-
-        this.world.addBody(this.bounds);
 
     },
 
     /**
+    * Pauses the P2 World independent of the game pause state.
+    *
+    * @method Phaser.Physics.P2#pause
+    */
+    pause: function() {
+
+        this.paused = true;
+
+    },
+    
+    /**
+    * Resumes a paused P2 World.
+    *
+    * @method Phaser.Physics.P2#resume
+    */
+    resume: function() {
+
+        this.paused = false;
+
+    },
+
+    /**
+    * Internal P2 update loop.
+    *
     * @method Phaser.Physics.P2#update
     */
     update: function () {
+
+        // Do nothing when the pysics engine was paused before
+        if (this.paused)
+        {
+            return;
+        }
 
         if (this.useElapsedTime)
         {
@@ -68527,7 +72701,7 @@ Phaser.Physics.P2.prototype = {
 
         while (i--)
         {
-            bodies.setMaterial(material);
+            bodies[i].setMaterial(material);
         }
 
     },
@@ -68734,24 +72908,24 @@ Phaser.Physics.P2.prototype = {
 
         var bitmask = Math.pow(2, this._collisionGroupID);
 
-        if (this._wallShapes[0])
+        if (this.walls.left)
         {
-            this._wallShapes[0].collisionMask = this._wallShapes[0].collisionMask | bitmask;
+            this.walls.left.shapes[0].collisionMask = this.walls.left.shapes[0].collisionMask | bitmask;
         }
 
-        if (this._wallShapes[1])
+        if (this.walls.right)
         {
-            this._wallShapes[1].collisionMask = this._wallShapes[1].collisionMask | bitmask;
+            this.walls.right.shapes[0].collisionMask = this.walls.right.shapes[0].collisionMask | bitmask;
         }
 
-        if (this._wallShapes[2])
+        if (this.walls.top)
         {
-            this._wallShapes[2].collisionMask = this._wallShapes[2].collisionMask | bitmask;
+            this.walls.top.shapes[0].collisionMask = this.walls.top.shapes[0].collisionMask | bitmask;
         }
 
-        if (this._wallShapes[3])
+        if (this.walls.bottom)
         {
-            this._wallShapes[3].collisionMask = this._wallShapes[3].collisionMask | bitmask;
+            this.walls.bottom.shapes[0].collisionMask = this.walls.bottom.shapes[0].collisionMask | bitmask;
         }
 
         this._collisionGroupID++;
@@ -69012,7 +73186,7 @@ Phaser.Physics.P2.prototype = {
             {
                 var tile = map.layers[layer].data[y][x];
 
-                if (tile)
+                if (tile && tile.collides)
                 {
                     if (optimize)
                     {
@@ -69136,33 +73310,93 @@ Object.defineProperty(Phaser.Physics.P2.prototype, "friction", {
 
     get: function () {
 
-        return this.world.defaultFriction;
+        return this.world.defaultContactMaterial.friction;
 
     },
 
     set: function (value) {
 
-        this.world.defaultFriction = value;
+        this.world.defaultContactMaterial.friction = value;
 
     }
 
 });
 
 /**
-* @name Phaser.Physics.P2#restituion
-* @property {number} restitution - Default coefficient of restitution between colliding bodies. This value is used if no matching ContactMaterial is found for a Material pair.
+* @name Phaser.Physics.P2#defaultFriction
+* @property {number} defaultFriction - DEPRECATED: Use World.friction instead.
 */
-Object.defineProperty(Phaser.Physics.P2.prototype, "restituion", {
+Object.defineProperty(Phaser.Physics.P2.prototype, "defaultFriction", {
 
     get: function () {
 
-        return this.world.defaultRestitution;
+        return this.world.defaultContactMaterial.friction;
 
     },
 
     set: function (value) {
 
-        this.world.defaultRestitution = value;
+        this.world.defaultContactMaterial.friction = value;
+
+    }
+
+});
+
+/**
+* @name Phaser.Physics.P2#restitution
+* @property {number} restitution - Default coefficient of restitution between colliding bodies. This value is used if no matching ContactMaterial is found for a Material pair.
+*/
+Object.defineProperty(Phaser.Physics.P2.prototype, "restitution", {
+
+    get: function () {
+
+        return this.world.defaultContactMaterial.restitution;
+
+    },
+
+    set: function (value) {
+
+        this.world.defaultContactMaterial.restitution = value;
+
+    }
+
+});
+
+/**
+* @name Phaser.Physics.P2#defaultRestitution
+* @property {number} defaultRestitution - DEPRECATED: Use World.restitution instead.
+*/
+Object.defineProperty(Phaser.Physics.P2.prototype, "defaultRestitution", {
+
+    get: function () {
+
+        return this.world.defaultContactMaterial.restitution;
+
+    },
+
+    set: function (value) {
+
+        this.world.defaultContactMaterial.restitution = value;
+
+    }
+
+});
+
+/**
+* @name Phaser.Physics.P2#contactMaterial
+* @property {p2.ContactMaterial} contactMaterial - The default Contact Material being used by the World.
+*/
+Object.defineProperty(Phaser.Physics.P2.prototype, "contactMaterial", {
+
+    get: function () {
+
+        return this.world.defaultContactMaterial;
+
+    },
+
+    set: function (value) {
+
+        this.world.defaultContactMaterial = value;
 
     }
 
@@ -69318,6 +73552,239 @@ Object.defineProperty(Phaser.Physics.P2.prototype, "total", {
 
 });
 
+/* jshint noarg: false */
+
+/**
+* @author       Georgios Kaleadis https://github.com/georgiee
+* @author       Richard Davey <rich@photonstorm.com>
+* @copyright    2014 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+*/
+
+/**
+* Allow to access a list of created fixture (coming from Body#addPhaserPolygon)
+* which itself parse the input from PhysicsEditor with the custom phaser exporter.
+* You can access fixtures of a Body by a group index or even by providing a fixture Key.
+
+* You can set the fixture key and also the group index for a fixture in PhysicsEditor.
+* This gives you the power to create a complex body built of many fixtures and modify them
+* during runtime (to remove parts, set masks, categories & sensor properties)
+*
+* @class Phaser.Physics.P2.FixtureList
+* @classdesc Collection for generated P2 fixtures 
+* @constructor
+* @param {Array} list - A list of fixtures (from Phaser.Physics.P2.Body#addPhaserPolygon)
+*/
+Phaser.Physics.P2.FixtureList = function (list) {
+
+    if (!Array.isArray(list))
+    {
+        list = [list];
+    }
+
+    this.rawList = list;
+    this.init();
+    this.parse(this.rawList);
+
+};
+
+Phaser.Physics.P2.FixtureList.prototype = {
+  
+    /**
+    * @method Phaser.Physics.P2.FixtureList#init
+    */
+    init: function () {
+
+        /**
+        * @property {object} namedFixtures - Collect all fixtures with a key
+        * @private
+        */
+        this.namedFixtures = {};
+
+        /**
+        * @property {Array} groupedFixtures - Collect all given fixtures per group index. Notice: Every fixture with a key also belongs to a group
+        * @private
+        */
+        this.groupedFixtures = [];
+
+        /**
+        * @property {Array} allFixtures - This is a list of everything in this collection
+        * @private
+        */
+        this.allFixtures = [];
+
+    },
+
+    /**
+    * @method Phaser.Physics.P2.FixtureList#setCategory
+    * @param {number} bit - The bit to set as the collision group.
+    * @param {string} fixtureKey - Only apply to the fixture with the given key.
+    */
+    setCategory: function (bit, fixtureKey) {
+
+        var setter = function(fixture) {
+            fixture.collisionGroup = bit;
+        };
+
+        this.getFixtures(fixtureKey).forEach(setter);
+
+    },
+  
+    /**
+    * @method Phaser.Physics.P2.FixtureList#setMask
+    * @param {number} bit - The bit to set as the collision mask
+    * @param {string} fixtureKey - Only apply to the fixture with the given key
+    */
+    setMask: function (bit, fixtureKey) {
+
+        var setter = function(fixture) {
+            fixture.collisionMask = bit;
+        };
+
+        this.getFixtures(fixtureKey).forEach(setter);
+
+    },
+  
+    /**
+    * @method Phaser.Physics.P2.FixtureList#setSensor
+    * @param {boolean} value - sensor true or false
+    * @param {string} fixtureKey - Only apply to the fixture with the given key
+    */
+    setSensor: function (value, fixtureKey) {
+
+        var setter = function(fixture) {
+            fixture.sensor = value;
+        };
+
+        this.getFixtures(fixtureKey).forEach(setter);
+
+    },
+
+    /**
+    * @method Phaser.Physics.P2.FixtureList#setMaterial
+    * @param {Object} material - The contact material for a fixture
+    * @param {string} fixtureKey - Only apply to the fixture with the given key
+    */
+    setMaterial: function (material, fixtureKey) {
+
+        var setter = function(fixture) {
+            fixture.material = material;
+        };
+
+        this.getFixtures(fixtureKey).forEach(setter);
+
+    },
+
+    /**
+    * Accessor to get either a list of specified fixtures by key or the whole fixture list
+    * 
+    * @method Phaser.Physics.P2.FixtureList#getFixtures
+    * @param {array} keys - A list of fixture keys
+    */
+    getFixtures: function (keys) {
+
+        var fixtures = [];
+
+        if (keys)
+        {
+            if (!(keys instanceof Array))
+            {
+                keys = [keys];
+            }
+
+            var self = this;
+            keys.forEach(function(key) {
+                if (self.namedFixtures[key])
+                {
+                    fixtures.push(self.namedFixtures[key]);
+                }
+            });
+
+            return this.flatten(fixtures);
+
+        }
+        else
+        {
+            return this.allFixtures;
+        }
+
+    },
+
+    /**
+    * Accessor to get either a single fixture by its key.
+    * 
+    * @method Phaser.Physics.P2.FixtureList#getFixtureByKey
+    * @param {string} key - The key of the fixture.
+    */
+    getFixtureByKey: function (key) {
+
+        return this.namedFixtures[key];
+
+    },
+
+    /**
+    * Accessor to get a group of fixtures by its group index.
+    * 
+    * @method Phaser.Physics.P2.FixtureList#getGroup
+    * @param {number} groupID - The group index.
+    */
+    getGroup: function (groupID) {
+
+        return this.groupedFixtures[groupID];
+
+    },
+  
+    /**
+    * Parser for the output of Phaser.Physics.P2.Body#addPhaserPolygon
+    * 
+    * @method Phaser.Physics.P2.FixtureList#parse
+    */
+    parse: function () {
+
+        var key, value, _ref, _results;
+        _ref = this.rawList;
+        _results = [];
+
+        for (key in _ref)
+        {
+            value = _ref[key];
+
+            if (!isNaN(key - 0))
+            {
+                this.groupedFixtures[key] = this.groupedFixtures[key] || [];
+                this.groupedFixtures[key] = this.groupedFixtures[key].concat(value);
+            }
+            else
+            {
+                this.namedFixtures[key] = this.flatten(value);
+            }
+
+            _results.push(this.allFixtures = this.flatten(this.groupedFixtures));
+        }
+
+    },
+
+    /**
+    * A helper to flatten arrays. This is very useful as the fixtures are nested from time to time due to the way P2 creates and splits polygons.
+    * 
+    * @method Phaser.Physics.P2.FixtureList#flatten
+    * @param {array} array - The array to flatten. Notice: This will happen recursive not shallow.
+    */
+    flatten: function (array) {
+
+        var result, self;
+        result = [];
+        self = arguments.callee;
+        
+        array.forEach(function(item) {
+            return Array.prototype.push.apply(result, (Array.isArray(item) ? self(item) : [item]));
+        });
+
+        return result;
+
+    }
+
+};
 /**
 * @author       Richard Davey <rich@photonstorm.com>
 * @copyright    2014 Photon Storm Ltd.
@@ -69505,6 +73972,7 @@ Phaser.Physics.P2.Body = function (game, sprite, x, y, mass) {
     * @protected
     */
     this.data = new p2.Body({ position: [ this.world.pxmi(x), this.world.pxmi(y) ], mass: mass });
+
     this.data.parent = this;
 
     /**
@@ -69523,12 +73991,6 @@ Phaser.Physics.P2.Body = function (game, sprite, x, y, mass) {
     this.gravity = new Phaser.Point();
 
     /**
-    * Dispatched when the shape/s of this Body impact with another. The event will be sent 2 parameters, this Body and the impact Body.
-    * @property {Phaser.Signal} onImpact
-    */
-    this.onImpact = new Phaser.Signal();
-
-    /**
     * Dispatched when a first contact is created between shapes in two bodies. This event is fired during the step, so collision has already taken place.
     * The event will be sent 4 parameters: The body it is in contact with, the shape from this body that caused the contact, the shape from the contact body and the contact equation data array.
     * @property {Phaser.Signal} onBeginContact
@@ -69544,7 +74006,6 @@ Phaser.Physics.P2.Body = function (game, sprite, x, y, mass) {
 
     /**
     * @property {array} collidesWith - Array of CollisionGroups that this Bodies shapes collide with.
-    * @private
     */
     this.collidesWith = [];
 
@@ -69553,6 +74014,15 @@ Phaser.Physics.P2.Body = function (game, sprite, x, y, mass) {
     */
     this.removeNextStep = false;
 
+    /**
+    * @property {Phaser.Physics.P2.BodyDebug} debugBody - Reference to the debug body.
+    */
+    this.debugBody = null;
+
+    /**
+    * @property {boolean} _collideWorldBounds - Internal var that determines if this Body collides with the world bounds or not.
+    * @private
+    */
     this._collideWorldBounds = true;
 
     /**
@@ -69578,11 +74048,6 @@ Phaser.Physics.P2.Body = function (game, sprite, x, y, mass) {
     * @private
     */
     this._groupCallbackContext = {};
-
-    /**
-    * @property {Phaser.Physics.P2.BodyDebug} debugBody - Reference to the debug body.
-    */
-    this.debugBody = null;
 
     //  Set-up the default shape
     if (sprite)
@@ -69875,7 +74340,7 @@ Phaser.Physics.P2.Body.prototype = {
     */
     applyForce: function (force, worldX, worldY) {
 
-        this.data.applyForce(force, [this.world.pxm(worldX), this.world.pxm(worldY)]);
+        this.data.applyForce(force, [this.world.pxmi(worldX), this.world.pxmi(worldY)]);
 
     },
 
@@ -70240,11 +74705,11 @@ Phaser.Physics.P2.Body.prototype = {
     * Will automatically update the mass properties and bounding radius.
     *
     * @method Phaser.Physics.P2.Body#addShape
-    * @param {*} shape - The shape to add to the body.
+    * @param {p2.Shape} shape - The shape to add to the body.
     * @param {number} [offsetX=0] - Local horizontal offset of the shape relative to the body center of mass.
     * @param {number} [offsetY=0] - Local vertical offset of the shape relative to the body center of mass.
     * @param {number} [rotation=0] - Local rotation of the shape relative to the body center of mass, specified in radians.
-    * @return {p2.Circle|p2.Rectangle|p2.Plane|p2.Line|p2.Particle} The shape that was added to the body.
+    * @return {p2.Shape} The shape that was added to the body.
     */
     addShape: function (shape, offsetX, offsetY, rotation) {
 
@@ -70459,7 +74924,7 @@ Phaser.Physics.P2.Body.prototype = {
 
         this.clearShapes();
 
-        this.addCircle(radius, offsetX, offsetY, rotation);
+        return this.addCircle(radius, offsetX, offsetY, rotation);
 
     },
 
@@ -70510,7 +74975,7 @@ Phaser.Physics.P2.Body.prototype = {
     * If you only wish to apply it to a specific Shape in this Body then provide that as the 2nd parameter.
     *
     * @method Phaser.Physics.P2.Body#setMaterial
-    * @param {Phaser.Physics.Material} material - The Material that will be applied.
+    * @param {Phaser.Physics.P2.Material} material - The Material that will be applied.
     * @param {p2.Shape} [shape] - An optional Shape. If not provided the Material will be added to all Shapes in this Body.
     */
     setMaterial: function (material, shape) {
@@ -70547,7 +75012,7 @@ Phaser.Physics.P2.Body.prototype = {
     * Reads the shape data from a physics data file stored in the Game.Cache and adds it as a polygon to this Body.
     * The shape data format is based on the custom phaser export in.
     *
-    * @method Phaser.Physics.P2.Body#loadPhaserPolygon
+    * @method Phaser.Physics.P2.Body#addPhaserPolygon
     * @param {string} key - The key of the Physics Data file as stored in Game.Cache.
     * @param {string} object - The key of the object within the Physics data file that you wish to load the shape data from.
     */
@@ -70561,8 +75026,16 @@ Phaser.Physics.P2.Body.prototype = {
         {
             var fixtureData = data[i];
             var shapesOfFixture = this.addFixture(fixtureData);
+            
+            //  Always add to a group
             createdFixtures[fixtureData.filter.group] = createdFixtures[fixtureData.filter.group] || [];
-            createdFixtures[fixtureData.filter.group].push(shapesOfFixture);
+            createdFixtures[fixtureData.filter.group] = createdFixtures[fixtureData.filter.group].concat(shapesOfFixture);
+
+            //  if (unique) fixture key is provided
+            if (fixtureData.fixtureKey)
+            {
+                createdFixtures[fixtureData.fixtureKey] = shapesOfFixture;
+            }
         }
 
         this.data.aabbNeedsUpdate = true;
@@ -70573,10 +75046,11 @@ Phaser.Physics.P2.Body.prototype = {
     },
 
     /**
-    * Add a polygon fixture. This is used during #loadPhaserPolygon.
+    * Add a polygon fixture. This is used during #loadPolygon.
     *
-    * @method Phaser.Physics.P2.Body#addPolygonFixture
+    * @method Phaser.Physics.P2.Body#addFixture
     * @param {string} fixtureData - The data for the fixture. It contains: isSensor, filter (collision) and the actual polygon shapes.
+    * @return {array} An array containing the generated shapes for the given polygon.
     */
     addFixture: function (fixtureData) {
 
@@ -70649,97 +75123,70 @@ Phaser.Physics.P2.Body.prototype = {
     * @method Phaser.Physics.P2.Body#loadPolygon
     * @param {string} key - The key of the Physics Data file as stored in Game.Cache.
     * @param {string} object - The key of the object within the Physics data file that you wish to load the shape data from.
-    * @param {object} options - An object containing the build options. Note that this isn't used if the data file contains multiple shapes.
-    * @param {boolean} [options.optimalDecomp=false] - Set to true if you need optimal decomposition. Warning: very slow for polygons with more than 10 vertices.
-    * @param {boolean} [options.skipSimpleCheck=false] - Set to true if you already know that the path is not intersecting itself.
-    * @param {boolean|number} [options.removeCollinearPoints=false] - Set to a number (angle threshold value) to remove collinear points, or false to keep all points.
     * @return {boolean} True on success, else false.
     */
-    loadPolygon: function (key, object, options) {
+    loadPolygon: function (key, object) {
 
         var data = this.game.cache.getPhysicsData(key, object);
 
-        if (data.length === 1)
-        {
-            var temp = [];
-            var localData = data[data.length - 1];
+        //  We've multiple Convex shapes, they should be CCW automatically
+        var cm = p2.vec2.create();
 
-            //  We've a list of numbers
-            for (var i = 0, len = localData.shape.length; i < len; i += 2)
+        for (var i = 0; i < data.length; i++)
+        {
+            var vertices = [];
+
+            for (var s = 0; s < data[i].shape.length; s += 2)
             {
-                temp.push([localData.shape[i], localData.shape[i + 1]]);
+                vertices.push([ this.world.pxmi(data[i].shape[s]), this.world.pxmi(data[i].shape[s + 1]) ]);
             }
 
-            return this.addPolygon(options, temp);
-        }
-        else
-        {
-            //  We've multiple Convex shapes, they should be CCW automatically
-            var cm = p2.vec2.create();
+            var c = new p2.Convex(vertices);
 
-            for (var i = 0; i < data.length; i++)
+            // Move all vertices so its center of mass is in the local center of the convex
+            for (var j = 0; j !== c.vertices.length; j++)
             {
-                var vertices = [];
-
-                for (var s = 0; s < data[i].shape.length; s += 2)
-                {
-                    vertices.push([ this.world.pxmi(data[i].shape[s]), this.world.pxmi(data[i].shape[s + 1]) ]);
-                }
-
-                var c = new p2.Convex(vertices);
-
-                // Move all vertices so its center of mass is in the local center of the convex
-                for (var j = 0; j !== c.vertices.length; j++)
-                {
-                    var v = c.vertices[j];
-                    p2.vec2.sub(v, v, c.centerOfMass);
-                }
-
-                p2.vec2.scale(cm, c.centerOfMass, 1);
-
-                cm[0] -= this.world.pxmi(this.sprite.width / 2);
-                cm[1] -= this.world.pxmi(this.sprite.height / 2);
-
-                c.updateTriangles();
-                c.updateCenterOfMass();
-                c.updateBoundingRadius();
-
-                this.data.addShape(c, cm);
+                var v = c.vertices[j];
+                p2.vec2.sub(v, v, c.centerOfMass);
             }
 
-            this.data.aabbNeedsUpdate = true;
-            this.shapeChanged();
+            p2.vec2.scale(cm, c.centerOfMass, 1);
 
-            return true;
+            cm[0] -= this.world.pxmi(this.sprite.width / 2);
+            cm[1] -= this.world.pxmi(this.sprite.height / 2);
 
+            c.updateTriangles();
+            c.updateCenterOfMass();
+            c.updateBoundingRadius();
+
+            this.data.addShape(c, cm);
         }
 
-        return false;
+        this.data.aabbNeedsUpdate = true;
+        this.shapeChanged();
+
+        return true;
 
     },
 
     /**
+    * DEPRECATED: This method will soon be removed from the API. Please avoid using.
     * Reads the physics data from a physics data file stored in the Game.Cache.
-    * It will add the shape data to this Body, as well as set the density (mass), friction and bounce (restitution) values.
+    * It will add the shape data to this Body, as well as set the density (mass).
     *
-    * @method Phaser.Physics.P2.Body#loadPolygon
+    * @method Phaser.Physics.P2.Body#loadData
     * @param {string} key - The key of the Physics Data file as stored in Game.Cache.
     * @param {string} object - The key of the object within the Physics data file that you wish to load the shape data from.
-    * @param {object} options - An object containing the build options:
-    * @param {boolean} [options.optimalDecomp=false] - Set to true if you need optimal decomposition. Warning: very slow for polygons with more than 10 vertices.
-    * @param {boolean} [options.skipSimpleCheck=false] - Set to true if you already know that the path is not intersecting itself.
-    * @param {boolean|number} [options.removeCollinearPoints=false] - Set to a number (angle threshold value) to remove collinear points, or false to keep all points.
     * @return {boolean} True on success, else false.
     */
-    loadData: function (key, object, options) {
+    loadData: function (key, object) {
 
         var data = this.game.cache.getPhysicsData(key, object);
 
         if (data && data.shape)
         {
             this.mass = data.density;
-            this.loadPolygon(key, object, options);
-            //  TODO set friction + bounce here
+            return this.loadPolygon(key, object);
         }
 
     }
@@ -72078,7 +76525,7 @@ Phaser.Physics.P2.RevoluteConstraint = function (world, bodyA, pivotA, bodyB, pi
     pivotA = [ world.pxmi(pivotA[0]), world.pxmi(pivotA[1]) ];
     pivotB = [ world.pxmi(pivotB[0]), world.pxmi(pivotB[1]) ];
 
-    p2.RevoluteConstraint.call(this, bodyA, pivotA, bodyB, pivotB, maxForce);
+    p2.RevoluteConstraint.call(this, bodyA, pivotA, bodyB, pivotB, {maxForce: maxForce});
 
 };
 

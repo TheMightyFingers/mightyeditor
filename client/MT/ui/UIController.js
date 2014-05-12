@@ -36,8 +36,7 @@ MT(
 		
 		var that = this;
 		this.events.on("resize", function(){
-			that.alignCenter();
-			that.right.setPosition();
+			that.resize();
 		});
 		
 	},
@@ -45,6 +44,10 @@ MT(
 		_onResize: [],
 		onResize: function(cb){
 			this._onResize.push(cb);
+		},
+		resize: function(){
+			this.alignCenter();
+			this.right.setPosition();
 		},
 		addHolders: function(){
 			

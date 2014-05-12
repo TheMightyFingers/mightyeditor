@@ -99,6 +99,9 @@ MT(
 			
 			var that = this;
 			var cb = function(e){
+				e.x = e.x || e.pageX;
+				e.y = e.y || e.pageY;
+				
 				that.mouse.mx = e.pageX - that.mouse.x;
 				that.mouse.my = e.pageY - that.mouse.y;
 				that.mouse.x = e.pageX;
@@ -116,6 +119,8 @@ MT(
 			
 			var that = this;
 			var cb = function(e){
+				e.x = e.x || e.pageX;
+				e.y = e.y || e.pageY;
 				that.mouse.down = true;
 				that.mouse.lastClick = e;
 				
@@ -128,6 +133,8 @@ MT(
 			
 			var that = this;
 			var cb = function(e){
+				e.x = e.x || e.pageX;
+				e.y = e.y || e.pageY;
 				that.mouse.down = false;
 				that.mouse.lastClick = e;
 				

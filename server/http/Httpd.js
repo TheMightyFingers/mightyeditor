@@ -29,6 +29,13 @@ MT(
 			}
 			req.url = decodeURI(that.path.normalize(that.root + req.url));
 			
+			if(req.url.indexOf(that.root)  != 0){
+				
+				console.log("HACKING: ", req.url);
+				
+				that.notFound(req, res);
+				return;
+			}
 			
 			that.serve(req, res);
 		});

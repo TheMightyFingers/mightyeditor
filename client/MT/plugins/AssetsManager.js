@@ -327,15 +327,36 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		handleFiles: function(e){
 			var that = this;
 			var files = e.dataTransfer.files;
-			
+			var entry = null;
 			for(var i=0; i<files.length; i++){
-				var entry = (e.dataTransfer.items[i].getAsEntry ? e.dataTransfer.items[i].getAsEntry() : e.dataTransfer.items[i].webkitGetAsEntry());
-				this.handleEntry(entry);
+				//chrome
+				if(e.dataTransfer.items){
+					entry = (e.dataTransfer.items[i].getAsEntry ? e.dataTransfer.items[i].getAsEntry() : e.dataTransfer.items[i].webkitGetAsEntry());
+					this.handleEntry(entry);
+				}
+				//ff
+				else{
+					this.handleFile(files.item(i));
+				}
+			}
+		},
+		
+		handleFile: function(file){
+			var path = file.path || file.name;
+			//folder
+			if(file.size == 0){
+				this.send("newFolder", path);
+			}
+			//file
+			else{
+				this.uploadImage(file, path);
 			}
 		},
 		
 		handleEntry: function(entry){
 			var that = this;
+			console.log(entry.type);
+			
 			
 			if (entry.isFile) {
 				entry.file(function(file){
@@ -354,41 +375,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 		},
 		
-		uploadImage: function(file, path){
-			
-				var fr  = new FileReader();
-				var that = this;
-				fr.onload = function(){
-					var img = new Image();
-					img.onload = function(){
-						
-						var data = {
-							data: fr.result,
-							name: file.name,
-							path: path,
-							key: path,
-							width: img.width,
-							height: img.height,
-							frameWidth: img.width,
-							frameHeight: img.height,
-							frameMax: -1,
-							margin: 0,
-							spacing: 0,
-							anchorX: 0,
-							anchorY: 0,
-							fps: 10
-						};
-						
-						that.send("newImage", data);
-					};
-					img.src = "data:image/png;base64,"+btoa(fr.result);
-				};
-				
-				fr.readAsBinaryString(file);
-			
-			
-			
-		},
 		
 		initSocket: function(socket){
 			MT.core.BasicPlugin.initSocket.call(this, socket);
@@ -399,9 +385,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
    
 		buildAssetsTree: function(list){
-			console.log("list", list);
-			
-			
 			var that = this;
 			list.sort(function(a,b){
 				var inca = ( a.contents ? 1000 : 0);
@@ -452,10 +435,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		deleteAsset: function(id, silent){
 			console.log("delete", id);
-			var data = this.tv.getData();
 			this.send("delete", id);
-			
-			this.tv.merge(data);
 			
 			//if using silent.. you should call manually sync
 			if(!silent){
@@ -472,6 +452,67 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			return null;
+		},
+		
+		uploadImage: function(file, path){
+			var fr  = new FileReader();
+			var that = this;
+			fr.onload = function(){
+				var img = new Image();
+				
+				
+				console.log("upload", file.name);
+				
+				img.onload = function(){
+					
+					var data = {
+						data: fr.result,
+						name: file.name,
+						path: path,
+						key: path,
+						width: img.width,
+						height: img.height,
+						frameWidth: img.width,
+						frameHeight: img.height,
+						frameMax: -1,
+						margin: 0,
+						spacing: 0,
+						anchorX: 0,
+						anchorY: 0,
+						fps: 10
+					};
+					
+					that.guessFrameWidth(data);
+					
+					that.send("newImage", data);
+				};
+				img.src = "data:image/png;base64,"+btoa(fr.result);
+			};
+			
+			fr.readAsBinaryString(file);
+		},
+		
+		guessFrameWidth: function(data){
+			var basename = data.name.split(".");
+			//throw away extension
+			basename.pop();
+			
+			var tmp = basename.join(".").split("_").pop();
+			var dimensions = null;
+			console.log("dd",tmp);
+			if(tmp){
+				console.log("found frame size");
+				dimensions = tmp.split("x");
+				var w = parseInt(dimensions[0], 10);
+				var h = parseInt(dimensions[1], 10);
+				if(w && !isNaN(w) && h && !isNaN(h)){
+					data.frameWidth = w;
+					data.frameHeight = h;
+				}
+			}
+			
+			
 		}
+		
 	}
 );
