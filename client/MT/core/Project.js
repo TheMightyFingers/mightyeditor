@@ -43,7 +43,7 @@ MT.extend("core.BasicPlugin")(
 		a_maintenance: function(data){
 			var seconds = data.seconds;
 			var content = "System will go down for maintenance in ";
-			var desc = "<p>All you current work in progress has been saved.</p><p>Please wait. Editor will reload automatically.</p>";
+			var desc = "<p>All your current work in progress has been saved.</p><p>Please wait. Editor will reload automatically.</p>";
 			
 			if(data.type == "new"){
 				content = "System is being maintained. Will be back in ";
