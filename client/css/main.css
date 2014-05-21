@@ -64,6 +64,11 @@ body{
 ::-webkit-scrollbar-corner {
     background: #000;
 }
+
+.hidden{
+	display: none;
+}
+
 .ui-handle-h, .ui-handle-v{
 	z-index: 2;
 }
@@ -209,6 +214,11 @@ div.ui-treeview-folder.open > .ui-treeView-folder-head:last-child > div{
 .ui-treeview-item.active{
 	font-weight: bold;
 }
+.ui-treeview-item-head  *, .ui-wrap{
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
 
 
 .ui-treeview-folder.selected > .ui-treeView-folder-head, .ui-treeview-folder.active > .ui-treeView-folder-head{
@@ -248,6 +258,7 @@ div.ui-treeview-folder.open > .ui-treeView-folder-head:last-child > div{
 .ui-treeView .show-hide.hidden{
 	background-position: -16px 50%;
 	padding: 0 5px 0 2px;
+	display: block;
 }
 
 .ui-treeView .lock{
@@ -355,6 +366,11 @@ input.ui-input{
 	font-weight: bold;
 }
 
+input.ui-input.ui-input-helper{
+	margin: 0;
+	margin-top: 2px;
+	padding-left: 10px;
+}
 .ui-preview{
 	z-index: 10;
 	background: 50% no-repeat rgba(100,100,100,100.9);
@@ -388,6 +404,7 @@ input.ui-input{
 
 .ui-button.datalink{
 	padding: 0 5px;
+	left: auto !important;
 }
 
 .ui-button.datalink:hover{
@@ -423,7 +440,63 @@ div.ui-popup-content {
 	padding: 10px 10px 25px;
 }
 
+div.ui-panel.text-tools .ui-button{
+	background-color: rgba(255,255,255,0.5);
+	width: 36px;
+	line-height: 26px;
+	padding: 0 10px;
+}
 
+div.ui-panel.text-tools .ui-button.text-font{
+	width: 175px;
+	
+}
+div.ui-panel.text-tools .ui-button.active{
+	color: red;
+}
+
+div.ui-panel.text-tools div.ui-button.word-wrap-width-size{
+	width: 75px;
+}
+div.ui-panel.text-tools div.ui-button.word-wrap-width-size:after{
+	content: "px"
+}
+
+div.ui-colorpalette {
+	background-color: rgba(33,33,33,0.95);
+	padding: 10px;
+	box-shadow: inset 0px -41px 163px 44px rgba(255,255,255,0.1);
+}
+div.ui-colorpalette span.ui-colorpalette-node{
+	display: inline-block;
+	width: 19px;
+	height: 18px;
+	padding: 1px;
+	margin: 0px;
+	background-clip: content-box;
+}
+div.ui-colorpalette span.ui-colorpalette-node:hover{
+	border: solid 1px #000;
+	cursor: pointer;
+}
+div.ui-colorpalette > div.seperator{
+	height: 3px;
+}
+
+div.ui-text-colorpicker .ui-button{
+text-align: center;
+background-color: rgba(177,177,177,0.8);
+color: #222;
+width: 83px;
+line-height: 25px;
+border: solid 1px #333;
+font-weight: bold;
+}
+div.ui-text-colorpicker .ui-button.active{
+	background-color: #333;
+	color: #eee;
+	border-bottom: solid 2px #313131;
+}
 
 
 

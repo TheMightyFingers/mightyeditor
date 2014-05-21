@@ -134,7 +134,13 @@ MT(
 				}
 				return;
 			}
-			
+			cl = cls.split(" ");
+			if(cl.length > 1){
+				for(var i=0; i<cl.length; i++){
+					this.addClass(cl[i]);
+				}
+				return;
+			}
 			
 			if(!this.hasClass(cls)){
 				this.el.className += " "+cls;
@@ -149,7 +155,13 @@ MT(
 				}
 				return;
 			}
-			
+			cl = cls.split(" ");
+			if(cl.length > 1){
+				for(var i=0; i<cl.length; i++){
+					this.removeClass(cl[i]);
+				}
+				return;
+			}
 			
 			var c = this.el.className.split(" ");
 			for(var i=0; i<c.length; i++){
@@ -227,12 +239,17 @@ MT(
 	
 		_width: 0,
 		get width(){
+			if(this._width == "auto"){
+				return this.el.offsetWidth;
+			}
+			
 			return this._width;
 		},
 		set width(val){
 			if(!val){
 				return;
 			}
+			
 			this._width = val;
 			this.style.right = 0;
 			this.style.right = (this.el.offsetWidth - val)+"px";
@@ -248,7 +265,7 @@ MT(
 				this.children[i].updateChildren();
 			}
 		},
-   
+		
 		calcOffsetY: function(upTo){
 			upTo = upTo || document.body;
 			var ret = this.el.offsetTop;
@@ -256,8 +273,8 @@ MT(
 			while(p && p != upTo){
 				ret += p.offsetTop - p.scrollTop;
 				p = p.offsetParent;
-				
 			}
+			
 			return ret;
 		},
 		calcOffsetX: function(upTo){

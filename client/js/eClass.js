@@ -1,6 +1,5 @@
 /*
  * usage: createClass(scope, name, path);
- * 
  */
 
 (function(scope){
@@ -248,10 +247,23 @@
 			fn.prototype = Object.create(parentClass.prototype);
 			
 			for(var key in parentClass.prototype){
+				pd = Object.getOwnPropertyDescriptor(parentClass.prototype, key);
+				if(pd == void(0)){
+					fn[key] = parentClass.prototype[key];
+					continue;
+				}
+				if(pd.value !== void(0) ){
+					fn[key] = pd.value
+					continue;
+				}
+				
+			}
+			
+			/*for(var key in parentClass.prototype){
 				if(fn[key] === void(0)){
 					fn[key] = parentClass.prototype[key];
 				}
-			}
+			}*/
 			
 			for(var key in proto){
 				var pd = null;

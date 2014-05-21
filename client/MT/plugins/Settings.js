@@ -19,6 +19,8 @@ MT(
 					that.clear();
 				}
 			});
+			
+			this.panel.header.addClass("ui-wrap");
 		},
 		
 		installUI: function(){
@@ -116,6 +118,10 @@ MT(
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
 				this.objects.angle = this.addInput( "angle", obj, true, cb);
+				if(obj.isFixedToCamera === void(0)){
+					obj.isFixedToCamera = 0;
+				}
+				this.objects.isFixedToCamera = this.addInput({key:"isFixedToCamera", min: 0, max: 1, step: 1}, obj, true, cb);
 			}
 			//sprite
 			else{

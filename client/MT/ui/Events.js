@@ -24,6 +24,7 @@ MT(
 			y: 0,
 			mx: 0,
 			my: 0,
+			down: false,
 			lastEvent: null,
 			lastClick: null
 		};

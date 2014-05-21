@@ -2,6 +2,13 @@ MT.require("ui.TreeView");
 MT.require("ui.List");
 MT.require("core.Selector");
 
+MT.objectTypes = {
+	SPRITE: 0,
+	GROUP: 1,
+	TEXT: 2
+};
+
+
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.ObjectsManager = function(project){
 		MT.core.Emitter.call(this);
@@ -222,6 +229,61 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			};
 		},
 		
+		createTextObject: function(x, y){
+			x = x || 0;
+			y = y || 0;
+
+			var name = "Text";
+			return  {
+				x: x,
+				y: y,
+				type: MT.objectTypes.TEXT,
+				anchorX: 0,
+				anchorY: 0,
+				scaleX: 1,
+				scaleY: 1,
+				angle: 0,
+				alpha: 1,
+				tmpName: name,
+				isVisible: 1,
+				isLocked: 0
+			};
+			
+		},
+		
+		newFolder: function(silent){
+			var data = this.tv.getData();
+			
+			var tmpName= "Group";
+			var name = tmpName;
+			for(var i=0; i<data.length; i++){
+				if(data[i].name == name){
+					name = tmpName+" "+i;
+				}
+			}
+			
+			var group = {
+				id: "tmp"+this.mkid(),
+				name: name,
+				x: 0,
+				y: 0,
+				angle: 0,
+				contents: [],
+				isVisible: 1,
+				isLocked: 0,
+				isFixedToCamera: 0
+			};
+			
+			data.unshift(group);
+			
+			this.tv.merge(data);
+			
+			if(!silent){
+				this.sync();
+			}
+			return group;
+		},
+		
 		copy: function(obj, x, y, name, silent){
 			
 			name = name || obj.name + this.getNewNameId(obj.name, this.tv.getData());
@@ -357,37 +419,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.emit("update", this.tv.getData());
 		},
 		
-		newFolder: function(silent){
-			var data = this.tv.getData();
-			
-			var tmpName= "Group";
-			var name = tmpName;
-			for(var i=0; i<data.length; i++){
-				if(data[i].name == name){
-					name = tmpName+" "+i;
-				}
-			}
-			
-			var group = {
-				id: "tmp"+this.mkid(),
-				name: name,
-				x: 0,
-				y: 0,
-				angle: 0,
-				contents: [],
-				isVisible: 1,
-				isLocked: 0
-			};
-			
-			data.unshift(group);
-			
-			this.tv.merge(data);
-			
-			if(!silent){
-				this.sync();
-			}
-			return group;
-		},
 		
 		select: function(id){
 			this.tv.select(id);

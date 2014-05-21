@@ -157,8 +157,11 @@ MT.extend("core.Emitter")(
 			
 			label.el.innerHTML = data.name;
 			head.style.position = "relative";
+			label.addChild("ui-treeview-label");
+			
 			label.style.position = "relative";
 			label.style.paddingLeft = "30px";
+			label.style.paddingRight = "23px";
 			
 			//el.addChild(head);
 			head.show(el.el);
@@ -389,7 +392,7 @@ MT.extend("core.Emitter")(
 			
 			
 			var p = al.el.parentNode;
-			al.addClass("active");
+			al.addClass("active ui-wrap");
 			p.appendChild(al.el);
 			al.style.display = "none";
 			

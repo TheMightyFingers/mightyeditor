@@ -14,7 +14,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 					return;
 				}
 			}
-			if(autohide){
+			if(that.isVisible && autohide){
 				that.hide();
 				that.emit("hide");
 			}
@@ -23,12 +23,13 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.isVisible = false;
 		
 		this.update(list);
-
+		
 		this.addChild(this.panel);
 	},
 	{
 		update: function(list){
 			this.clear();
+			this.list = list;
 			
 			var b = null;
 			var l = null;
@@ -37,13 +38,29 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				b = this.panel.addButton(l.label, l.className, l.cb);
 				b.style.position = "relative";
 				b.addClass("ui-list-button");
+				
+				if(l.create){
+					l.create(b);
+				}
 			}
+		},
 		
-
+		show: function(parent){
+			if(this.isVisible){
+				return;
+			}
+			this.isVisible = true;
+			MT.ui.DomElement.show.call(this, parent);
+			this.emit("show");
+		},
+		
+		hide: function(){
+			if(!this.isVisible){
+				return;
+			}
+			this.isVisible = false;
+			MT.ui.DomElement.hide.call(this);
+			this.emit("hide");
 		}
-		
-		
-		
-		
 	}
 );

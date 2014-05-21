@@ -9,6 +9,7 @@ MT(
 	MT.ui.UIController = function(){
 		this.events = new MT.ui.Events();
 		
+		window.ui = this;
 		//window.x = new MT.ui.DomElement();
 		//return;
 		

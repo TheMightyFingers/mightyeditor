@@ -1,5 +1,5 @@
 "use strict";
-MT.requireFile("js/phaser.min.js");
+MT.requireFile("js/phaser.js");
 MT.require("core.Helper");
 MT.require("core.Selector");
 
@@ -24,6 +24,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		this.selector = new MT.core.Selector();
 		
+		this.helperBoxSize = 6;
 		
 		
 		this.settings = {
@@ -135,7 +136,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				that.addObjects(data);
 			});
 			
-			
 		},
 	
 		createMap: function(){
@@ -193,10 +193,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!this.game || !this.game.world){
 				return;
 			}
+			
 			this.game.width = this.project.ui.center.offsetWidth;
 			this.game.height = this.project.ui.center.offsetHeight;
-			
-			this.game.world.setBounds(0, 0, 2000, 2000);
 			
 			this.game.renderer.resize(this.game.width, this.game.height);
 			
@@ -243,8 +242,11 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.game.camera.x = this.settings.cameraX;
 			this.game.camera.y = this.settings.cameraY;
 			
-			if(this.game.stage.backgroundColor != this.settings.backgroundColor){
-				this.game.stage.backgroundColor = this.settings.backgroundColor;
+			var tmp = this.settings.backgroundColor.substring(1);
+			var bg = parseInt(tmp, 16);
+			
+			if(this.game.stage.backgroundColor != bg){
+				this.game.stage.setBackgroundColor(bg);
 			}
 		},
 		
@@ -254,6 +256,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return;
 			}
 			
+			var alpha = ctx.globalAlpha;
+			
 			var g = 0;
 			var game = this.game;
 			
@@ -261,7 +265,22 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			ctx.save();
 			ctx.beginPath();
 			
-			ctx.strokeStyle = "rgba(255,255,255,0.1)";
+			var bg = game.stage.backgroundColor;
+			var inv = parseInt("FFFFFF", 16);
+			var xx = (inv - bg).toString(16);
+			while(xx.length < 6){
+				xx = "0"+xx;
+			}
+			
+			if(parseInt(xx, 16) - bg < 10){
+				xx = "#000000";
+			}
+			
+			ctx.lineWidth = 0.1;
+			ctx.strokeStyle = "#"+xx;
+			ctx.globalAlpha = 0.5;
+			
+			//ctx.strokeStyle = "rgba(255,255,255,0.1)";
 			
 			var ox = game.camera.x % this.settings.gridX;
 			var oy = game.camera.y % this.settings.gridY;
@@ -275,10 +294,12 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				ctx.beginPath();
 				if(i + game.camera.x == 0){
-					ctx.strokeStyle = "rgba(255,0,0,1)";
+					ctx.lineWidth = 0.5;
+					ctx.globalAlpha = 1;
 				}
 				else{
-					ctx.strokeStyle = "rgba(255,255,255,0.1)";
+					ctx.lineWidth = 0.1;
+					ctx.globalAlpha = 0.5;
 				}
 				ctx.moveTo(i, 0);
 				ctx.lineTo(i, game.canvas.height);
@@ -295,10 +316,12 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				ctx.beginPath();
 				if(j + game.camera.y == 0){
-					ctx.strokeStyle = "rgba(255,0,0,1)";
+					ctx.lineWidth = 0.5;
+					ctx.globalAlpha = 1;
 				}
 				else{
-					ctx.strokeStyle = "rgba(255,255,255,0.1)";
+					ctx.lineWidth = 0.1;
+					ctx.globalAlpha = 0.5;
 				}
 				
 				ctx.moveTo(0, j);
@@ -307,6 +330,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				ctx.stroke();
 			}
 			
+			ctx.globalAlpha = alpha;
 			ctx.restore();
 		},
 		
@@ -327,6 +351,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return;
 			}
 			
+			var alpha = ctx.globalAlpha;
+			
 			var bounds = obj.getBounds();
 			var group = null;
 			
@@ -343,16 +369,75 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			ctx.save();
 			
+			ctx.translate(0.5,0.5);
+			
 			if(this.activeObject == obj){
-				ctx.strokeStyle = "rgba(255,0,0,4)";
+				ctx.strokeStyle = "rgb(255,0,0)";
+				ctx.lineWidth = 1;
+				
+				
+				var off = this.helperBoxSize;
+				var sx = bounds.x-off*0.5 | 0;
+				var dx = sx + bounds.width | 0;
+				
+				var sy = bounds.y-off*0.5 | 0;
+				var dy = sy + bounds.height | 0;
+					
+				if(obj.MT_OBJECT.type == MT.objectTypes.TEXT){
+					var width = bounds.width;
+					if(obj.wordWrap){
+						width = obj.wordWrapWidth;
+						
+						ctx.strokeRect(bounds.x - off | 0, sy + bounds.height*0.5 | 0, off, off);
+						ctx.strokeRect(bounds.x + width | 0, sy + bounds.height*0.5 | 0, off, off);
+						
+					}
+					
+					ctx.strokeRect(bounds.x | 0, bounds.y | 0, width | 0, bounds.height | 0);
+					
+					
+					
+					
+				}
+				else{
+					
+					ctx.strokeRect(sx, sy, off, off);
+					ctx.strokeRect(sx, dy, off, off);
+					ctx.strokeRect(dx, sy, off, off);
+					ctx.strokeRect(dx, dy, off, off);
+					
+					
+					ctx.beginPath();
+					
+					ctx.moveTo(sx + off, bounds.y);
+					ctx.lineTo(dx, bounds.y);
+					
+					ctx.moveTo(sx + off, bounds.y + bounds.height);
+					ctx.lineTo(dx, bounds.y + bounds.height);
+					
+					ctx.moveTo(bounds.x, sy + off);
+					ctx.lineTo(bounds.x, dy);
+					
+					ctx.moveTo(bounds.x + bounds.width, sy + off);
+					ctx.lineTo(bounds.x + bounds.width, dy);
+					
+					
+					ctx.stroke();
+				
+				}
 			}
 			else{
-				ctx.strokeStyle = "rgba(255,100,0,0.5)";
+				ctx.strokeStyle = "rgb(255,100,0)";
+				ctx.strokeRect(bounds.x | 0, bounds.y | 0, bounds.width, bounds.height);
 			}
-			ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
-
+			
+			
+			
+			
 			ctx.strokeStyle = "#ffffff";
 			ctx.lineWidth = 1;
+			
+			
 			
 			var par = group.parent;
 			var oo = [];
@@ -376,10 +461,11 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			ctx.moveTo(x, y);
 			ctx.lineTo(x, y - 16);
 			ctx.stroke();
-			
 			ctx.strokeRect(x - 4, y - 4, 8, 8);
-			ctx.restore();
+
 			
+			ctx.globalAlpha = alpha;
+			ctx.restore();
 		},
 		
 		
@@ -559,7 +645,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				
 				var obj = this.addObject(objs[i], group);
-				obj.bringToTop();
+				//obj.bringToTop();
 				this.inheritSprite(obj, objs[i]);
 				obj.z = i;
 			}
@@ -581,6 +667,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			group.visible = !!obj.isVisible;
 			
+			group.fixedToCamera = !!obj.isFixedToCamera;
+			
 			return group;
 		},
    
@@ -590,19 +678,55 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			for(var i=0; i<this.oldObjects.length; i++){
 				od = this.oldObjects[i];
 				oo = this.oldObjects[i].MT_OBJECT;
-				
+				if(!od.parent){
+					continue;
+				}
+					
 				if(oo.id == obj.id ){
-					od.loadTexture(oo.assetId, oo.frame);
+					
+					if(oo.type == MT.objectTypes.SPRITE){
+						od.loadTexture(oo.assetId, oo.frame);
+					}
+					
+					if(oo.type == MT.objectTypes.TEXT){
+						od.text = obj.name;
+						od.setStyle(obj.style);
+					}
+					
 					this.objects.push(od);
 					group.add(od);
+					if(od.bringToTop){
+						od.bringToTop();
+					}
+					else{
+						if(od.parent.bringToTop){
+							od.parent.bringToTop(od);
+						}
+					}
 					return od;
 				}
+			}
+			
+			if(obj.type == MT.objectTypes.TEXT){
+				var t = this.addText(obj, group);
+				//t.font = "Arial";
+				t.MT_OBJECT = obj;
+				this.objects.push(t);
+				group.add(t);
+				return t;
 			}
 			
 			var sp = this.createSprite(obj, group);
 			this.objects.push(sp);
 			
 			return sp;
+		},
+		
+		addText: function(obj, group){
+			group = group || this.game.world;
+			var t = this.game.add.text(obj.x, obj.y, obj.name, obj.style);
+			
+			return t;
 		},
 		
 		createSprite: function(obj, group){
@@ -665,6 +789,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			
 			sp.visible = !!obj.isVisible;
+			
 		},
 		
 		reloadObjects: function(){
@@ -707,6 +832,14 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		get offsetYCam(){
 			return this.ui.center.offsetTop + this.game.camera.y;
 		},
+		
+		get ox(){
+			return this.ui.center.offsetTop;
+		},
+		
+		get oy(){
+			return this.ui.center.offsetTop;
+		},
 		/* input handling */
 		
 		handleMouseDown: function(e){
@@ -740,7 +873,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		 
 		
 		
-		_handleMouseMove: function(){},
+		_handleMouseMove: function(){
+			
+		},
 		
 		
 		set handleMouseMove(val){

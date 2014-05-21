@@ -1,11 +1,14 @@
+"use strict";
+
 MT.require("ui.Button");
-MT.extend("ui.DomElement")(
+MT.extend("core.Emitter").extend("ui.DomElement")(
 	MT.ui.Panel = function(title, events){
 		MT.ui.DomElement.call(this);
 		
 		this.addClass("ui-panel");
 		//this.style.backgroundColor = "rgba(0,0,0, 0.5)";
 		
+	
 		this.header = new MT.ui.DomElement();
 		this.header.addClass("ui-panel-header");
 		this.header.el.innerHTML = "PANEL";
@@ -13,22 +16,24 @@ MT.extend("ui.DomElement")(
 		
 		
 		
-		this.title = title;
+		
 		
 		
 		this.content = new MT.ui.DomElement();
 		this.addChild(this.content);
 		this.content.show(this.el);
-		this.content.y = this.header.height;
+		
 		
 		this.content.style.overflow = "auto";
 		//this.content.style.position = "initial";
 		this.content.addClass("ui-panel-content");
 		
-		
-		this.addHeader();
+		if(title){
+			this.addHeader();
+		}
 		this.hide();
 		
+		this.title = title;
 		
 		this.events = events;
 		var that = this;
@@ -42,9 +47,27 @@ MT.extend("ui.DomElement")(
 			that.update();
 			
 		});
-
+		this.buttons = [];
+		
+		this.isVisible = false;
 	},
 	{
+		show: function(parent){
+			if(this.isVisible){
+				return;
+			}
+			MT.ui.DomElement.show.call(this, parent);
+			this.alignButtons();
+			this.emit("show");
+		},
+		
+		hide: function(){
+			if(!this.isVisible){
+				return;
+			}
+			MT.ui.DomElement.hide.call(this);
+			this.emit("hide");
+		},
 		addHeader: function(){
 			this.addChild(this.header);
 			this.header.show(this.el);
@@ -56,17 +79,31 @@ MT.extend("ui.DomElement")(
 		},
 		
 		addButton: function(title, className, cb){
-			var b = new MT.ui.Button(title, className, this.events, cb);
+			var b = null;
 			
+			if(title && typeof title == "object"){
+				b = title;
+			}
+			else{
+				b = new MT.ui.Button(title, className, this.events, cb);
+			}
+			this.content.addChild(b);
+			this.buttons.push(b);
+			
+			this.alignButtons();
+			return b;
+		},
+		
+		alignButtons: function(){
 			var off = 0;
-			for(var i=0; i<this.content.children.length; i++){
-				off += this.content.children[i].width;
+			var c = null;
+			for(var i=0; i<this.buttons.length; i++){
+				c = this.buttons[i];
+				c.x = off;
+				off += c.width;
+				
 			}
 			
-			b.x += off;
-			
-			this.content.addChild(b);
-			return b;
 		},
 		
 		addButtonV: function(title, className, cb){
@@ -85,6 +122,9 @@ MT.extend("ui.DomElement")(
 		
 		set title(val){
 			this.header.el.innerHTML = val;
+			if(val){
+				this.content.y = this.header.height;
+			}
 		},
 		get title(){
 			return this.header.el.innerHTML;

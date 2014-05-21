@@ -1,50 +1,44 @@
 MT.require("ui.List");
+MT.require("plugins.tools.Select");
+MT.require("plugins.tools.Stamp");
+MT.require("plugins.tools.Brush");
+MT.require("plugins.tools.Text");
+
 
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.Tools = function(project){
 		MT.core.Emitter.call(this);
-		this.activeTool = this.tools.select;
+		
 		
 		this.project = project;
 		
+		this.tools = {};
+		
+		//var tools = MT.plugins.tools;
+		this.toolsAvailable = {
+			"select": MT.plugins.tools.Select,
+			"Stamp": MT.plugins.tools.Stamp,
+			"Brush": MT.plugins.tools.Brush,
+			"Text": MT.plugins.tools.Text
+		};
+		
+
+
 	},
 	{
-		tools: {
-			select: "select",
-			brush: "brush",
-			stamp: "stamp"
-		},
 		
 		initUI: function(ui){
 			this.ui = ui;
 			this.panel = this.ui.addPanel("",this.ui.left);
 			this.panel.addClass("toolbox");
 			this.panel.removeHeader();
-			
-			
-			var that = this;
-			this.buttons = {};
-			
-			this.buttons.select = this.panel.addButtonV("", "tool.select.active", function(){
-				that.setTool("select");
-			});
-			
-			this.buttons.stamp = this.panel.addButtonV("", "tool.stamp", function(){
-				that.setTool("stamp");
-			});
-			
-			this.buttons.brush = this.panel.addButtonV("", "tool.brush", function(){
-				that.setTool("brush");
-			});
-			
-			this.buttons.delete = this.panel.addButtonV("", "tool.delete", function(){
-				that.setTool("delete");
-			});
-			
-			
-			this.setTool("select");
-			
-			
+					
+		
+			for(var i in this.toolsAvailable){
+				this.tools[i.toLowerCase()] = new this.toolsAvailable[i](this);
+			}
+		
+			return;
 		},
 		
 		installUI: function(){
@@ -55,9 +49,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			am.tv.on("click", function(asset, element){
 				that.activeAsset = asset;
-					if( (that["init_"+that.activeTool]) ){
-						that["init_"+that.activeTool](asset);
-					}
+				that.activeTool.init(asset);
 			});
 			
 			
@@ -68,7 +60,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			om.tv.on("click",function(data){
-				that.setTool(that.tools.select);
+				//that.setTool(that.tools.select);
 				select(map.getById(data.id));
 			});
 			
@@ -82,7 +74,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.emit("unselectedObject", obj.MT_OBJECT.id);
 			});
 			
-			
+			om.on("update", function(){
+				if(map.activeObject){
+					select(map.activeObject);
+				}
+			});
 			
 			var lastKey = 0;
 			
@@ -91,7 +87,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.ui.events.on("keyup", function(e){
 				
 				if(lastKey == MT.keys.esc){
-					that.setTool("select");
+					that.setTool(that.tools.select);
 					lastKey = 0;
 					return;
 				}
@@ -120,7 +116,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}, 500);
 				
 				if(e.which === MT.keys.esc){
-					that.deactivateTool();
+					that.activeTool.deactivate();
 				}
 				
 				
@@ -144,8 +140,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						var y = that.ui.events.mouse.lastEvent.y;
 						that.map.selector.clear();
 						
-						
-						
 						var bounds = null;
 						var midX = 0;
 						var midY = 0;
@@ -159,24 +153,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						midY /= toCopy.length;
 						midX /= toCopy.length;
 						
-						
-						
 						for(var i=0; i<toCopy.length; i++){
 							bounds = toCopy[i].getBounds();
-							
 							that.copy(toCopy[i].MT_OBJECT, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
-							
 							that.map.selector.add(this.map.getById(toCopy[i].id));
 						}
-						
 					}
-					
 				}
-				
-				
-				
-				
 			});
+			
+			
+			
+			
+			for(var i in this.tools){
+				this.tools[i].initUI(this.ui);
+			}
+			
+			
+			this.setTool(this.tools.select);
 			
 		},
 		
@@ -184,9 +178,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		
 		select: function(object){
-			if(this["select_"+this.activeTool]){
-				this["select_"+this.activeTool](object);
+			this.tools.select.select(object);
+			if(this.activeTool != this.tools.select){
+				this.activeTool.select(object);
 			}
+			
 		},
 		
 		copy: function(toCopy, x, y){
@@ -214,211 +210,35 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				return;
 			}
 			
-			console.log("active tool", tool);
-			
-			this.buttons[this.activeTool].removeClass("active");
-			
-			this.deactivateTool();
-			
-			
-			this.activeTool = tool;
-			
-			var style = window.getComputedStyle(this.buttons[tool].el);
-			
-			this.ui.center.style.cursor = style.backgroundImage+",auto";
-			
-			
-			
-			this.buttons[this.activeTool].addClass("active");
-			
-			
-			if(this["init_"+this.activeTool]){
-				this["init_"+this.activeTool]();
+			if(this.activeTool){
+				this.activeTool.button.removeClass("active");
+				this.activeTool.deactivate();
 			}
 			
+			this.activeTool = tool;
+			this.activeTool.button.addClass("active");
+			this.activeTool.init()
 			this.emit("select", tool);
 		},
 		
-		deactivateTool: function(){
-			
-			if(this["deactivate_"+this.activeTool]){
-				this["deactivate_"+this.activeTool]();
-			}
-			
-		},
-		
 		mouseDown: function(e){
-			if(!this["mouseDown_"+this.activeTool]){
-				console.log("unknown tool", this.activeTool);
-				return;
-			}
-			
 			if(e.button === 2){
 				this.previousMouseMove = this.map.handleMouseMove;
 				this.mouseDown_hand(e);
 				return;
 			}
 			
-			this["mouseDown_"+this.activeTool](e);
+			this.activeTool.mouseDown(e);
 		},
 		
-		
-		mouseDown_select: function(e){
-			console.log("mouseDown");
+		mouseUp: function(e){
 			
-			var that = this;
-			var shift = (e.shiftKey ? true : false);
-			
-			
-			var x = e.x - this.map.offsetXCam;
-			var y = e.y - this.map.offsetYCam;
-			
-			var obj = this.map.pickObject(x, y);
-			var group = this.map.pickGroup(x, y);
-			
-			if(group && (this.map.selector.is(group) || group == this.map.activeObject) ){
-				this.select_initMove(e);
+			if(e.button == 2){
+				this.map.handleMouseMove = this.previousMouseMove;
 				return;
 			}
 			
-			console.log(obj);
-			
-			if(obj){
-				if(!shift){
-					if(this.map.selector.is(obj)){
-						this.select_initMove(e);
-					}
-					else{
-					
-						this.select_select(obj);
-						if(this.map.selector.is(obj)){
-							this.select_initMove(e);
-						}
-					}
-				}
-				else{
-					this.select_select(obj);
-				}
-			}
-			else{
-				this.map.handleMouseMove = function(e){
-					that.mouseMove_select(e);
-				};
-				
-				this.map.selection.x = e.x - this.map.offsetX;
-				this.map.selection.y = e.y - this.map.offsetY;
-				
-				this.map.selection.sx = e.x - this.map.offsetX;
-				this.map.selection.sy = e.y - this.map.offsetY;
-				
-				this.map.selection.width = 0;
-				this.map.selection.height = 0;
-				
-				if(!shift){
-					this.map.selector.clear();
-					this.map.activeObject = null;
-					this.project.plugins.settings.handleScene(this.map.settings);
-				}
-			}
-			
-		},
-		
-		select_initMove: function(e){
-			this.map.handleMouseMove = this.map._objectMove;
-			
-			if(e.altKey){
-				var copy = [];
-				var sel = this.map.selector;
-				sel.forEach(function(o){
-					copy.push(o.MT_OBJECT);
-				});
-				
-				sel.clear();
-				
-				var bounds = null;
-				var cx = this.map.game.camera.x;
-				var cy = this.map.game.camera.y;
-				
-				
-				
-				var data = this.om.multiCopy(copy);
-				
-				var sprite;
-				for(var i=0; i<data.length; i++){
-					sprite = this.map.getById(copy[i].id);
-					bounds = sprite.getBounds();
-					data[i].x = bounds.x + cx;
-					data[i].y = bounds.y + cy;
-					
-					sel.add(sprite);
-				}
-				
-				
-			}
-			
-		},
-		
-		mouseMove_select: function(e){
-
-			
-			var x = e.x - this.map.offsetX;
-			var y = e.y - this.map.offsetY;
-			
-			
-			if(x > this.map.selection.sx){
-				this.map.selection.width = x - this.map.selection.x;
-			}
-			else{
-				this.map.selection.width = this.map.selection.sx - x;
-				this.map.selection.x = x;
-			}
-			
-			if(y > this.map.selection.sy){
-				this.map.selection.height = y - this.map.selection.y;
-			}
-			else{
-				this.map.selection.height = this.map.selection.sy - y;
-				this.map.selection.y = y;
-			}
-			
-			//this.map.selection.x -= this.map.game.camera.x;
-			//this.map.selection.y -= this.map.game.camera.y;
-			
-			
-			
-			
-			this.map.selectRect(this.map.selection, !e.shiftKey);
-			
-			
-		},
-		
-		
-		mouseUp_select: function(e){
-			//this.map.selection.x -= this.map.game.camera.x;
-			//this.map.selection.y -= this.map.game.camera.y;
-			
-			this.map.selectRect(this.map.selection);
-			
-			this.map.selection.width = 0;
-			this.map.selection.height = 0;
-			
-			this.map.handleMouseMove = this.map.emptyFn;
-		},
-		
-		select_select: function(obj){
-			
-			var shift = (this.ui.events.mouse.lastEvent && this.ui.events.mouse.lastEvent.shiftKey ? true : false);
-			if(shift){
-				if(this.map.selector.is(obj)){
-					this.map.selector.remove(obj);
-					return;
-				}
-				
-				this.map.selector.add(obj);
-				return;
-			}
-			
-			this.selectObject(obj, true);
+			this.activeTool.mouseUp(e);
 		},
 		
 		selectObject: function(obj, clear){
@@ -429,6 +249,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.map.selector.add(obj);
 			this.map.activeObject = obj;
+			
+			this.emit("selectObject", obj);
 		},
 		
 		
@@ -446,7 +268,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var om = this.project.plugins.objectsmanager;
 			
 			var dx = 0;
-			var dy = 0;//this.activeObject.y;
+			var dy = 0;
 			
 			if(this.activeObject){
 				dx = this.activeObject.x;
@@ -458,195 +280,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			this.activeObject.x = dx || x;
-			this.activeObject.y = dy || y;//this.ui.events.mouse.y;
+			this.activeObject.y = dy || y;
 			
 			
 		},
 		
-		init_stamp: function(asset){
-			
-			this.unselectObjects();
-			asset = asset || this.activeAsset;
-			
-			if(!asset || asset.contents){
-				return;
-			}
-			
-			console.log("init stamp");
-			
-			this.initActiveObject(asset);
-			this.setTool(this.tools.stamp);
-			
-			this.map.handleMouseMove = this.map._followMouse;
-		},
-		
-		mouseDown_stamp: function(e){
-			
-			if(!this.activeObject){
-				if(!this.map.activeObject){
-					this.lastAsset = this.project.plugins.assetsmanager.active.data;
-					return;
-				}
-				if(!this.lastAsset){
-					this.lastAsset = this.project.plugins.assetsmanager.getById(this.map.activeObject.MT_OBJECT.assetId);
-				}
-				this.init_stamp(this.lastAsset);
-				return;
-			}
-			
-			var om = this.project.plugins.objectsmanager;
-			
-			this.map.sync(this.activeObject);
-			
-			om.insertObject(this.activeObject.MT_OBJECT);
-			
-			this.initActiveObject();
-		},
-		
-		mouseUp_stamp: function(e){
-			console.log("upp", e);
-		},
-		
-		deactivate_stamp: function(){
-			
-			if(this.activeObject){
-				this.map.removeObject(this.activeObject);
-				this.activeObject = null;
-				this.lastAsset = null;
-			}
-			
-			
-			this.map.handleMouseMove = this.map.emptyFn;
-			this.project.plugins.objectsmanager.update();
-		},
-		
-		
-		init_brush: function(asset){
-			this.unselectObjects();
-			asset = asset || this.activeAsset;
-			if(!asset){
-				return;
-			}
-			
-			console.log("init brush");
-			if(asset.contents){
-				return;
-			}
-			this.initActiveObject(asset);
-			this.setTool(this.tools.brush);
-			
-			var that = this;
-			this.map.handleMouseMove = function(e){
-				that.mouseMove_brush(e);
-			}
-		},
-		
-		lastX: 0,
-		lastY: 0,
 		
 		
 		
-		mouseDown_brush: function(e){
-			
-			if(!this.activeObject){
-				if(!this.map.activeObject){
-					return;
-				}
-				if(!this.lastAsset){
-					this.lastAsset = this.project.plugins.assetsmanager.getById(this.map.activeObject.MT_OBJECT.assetId);
-				}
-				this.init_brush(this.lastAsset);
-				return;
-			}
-			
-			var om = this.project.plugins.objectsmanager;
-			
-			this.map.sync(this.activeObject);
-			
-			om.insertObject(this.activeObject.MT_OBJECT);
-			
-			this.lastX = this.activeObject.x;
-			this.lastY = this.activeObject.y;
-			
-			this.initActiveObject();
-		},
 		
-		mouseMove_brush: function(e){
-			
-			if(e.target != this.map.game.canvas){
-				return;
-			}
-			
-			var x = this.activeObject.x;
-			var y = this.activeObject.y;
-			
-			this.map._followMouse(e, true);
-			
-			if(this.ui.events.mouse.down){
-				
-				if(this.activeObject.x != this.lastX || this.activeObject.y != this.lastY){
-					
-					console.log("ADD brush");
-					
-					var om = this.project.plugins.objectsmanager;
-					this.map.sync(this.activeObject, this.activeObject.MT_OBJECT);
-					om.insertObject(this.activeObject.MT_OBJECT);
-					
-					this.lastX = this.activeObject.x;
-					this.lastY = this.activeObject.y;
-					
-					
-					this.initActiveObject();
-					
-				}
-				
-			}
-			
-			
-			
-		},
-		
-		mouseUp_brush: function(e){
-			console.log("upp", e);
-			
-		},
-		
-		
-		deactivate_brush: function(){
-			
-			if(this.activeObject){
-				this.map.removeObject(this.activeObject);
-				this.activeObject = null;
-				this.lastAsset = null;
-			}
-			
-			
-			this.map.handleMouseMove = this.map.emptyFn;
-			this.project.plugins.objectsmanager.update();
-		},
 		
 		
 		mouseDown_hand: function(e){
 			this.map.handleMouseMove = this.map._cameraMove;
 		},
 		
-		mouseUp: function(e){
-			
-			if(e.button == 2){
-				this.map.handleMouseMove = this.previousMouseMove;
-				return;
-			}
-			
-			
-			if(!this["mouseUp_"+this.activeTool]){
-				console.log("reset up");
-				this.map.handleMouseMove = this.map.emptyFn;
-				return;
-			}
-			
-			
-			this["mouseUp_"+this.activeTool](e);
-		},
+
 		
 
 		unselectObjects: function(){
