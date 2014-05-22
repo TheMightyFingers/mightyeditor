@@ -17,6 +17,9 @@ MT(
 		
 		this.server = this.http.createServer();
 		
+		var nRoot = this.path.normalize(this.root);
+		
+		
 		this.server.on("request", function(req, res) {
 			
 			if(req.method != "GET"){
@@ -28,6 +31,8 @@ MT(
 				res.setHeader("connection","keep-alive");
 			}
 			req.url = decodeURI(that.path.normalize(that.root + req.url));
+			
+			
 			
 			if(req.url.indexOf(that.root)  != 0){
 				
