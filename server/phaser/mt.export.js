@@ -1,3 +1,6 @@
+/*
+ * License: Public domain
+ */
 (function(global){
 	"use strict";
 	var data = null;
@@ -29,6 +32,8 @@
 	
 		data: data,
 		
+		autoLoadFonts: true,
+ 
 		preload: function(game){
 			this.game = game;
 			this.game.load.crossOrigin = "anonymous";
@@ -198,6 +203,9 @@
 		},
 		_fontsToLoad: 0,
 		getFontFamily: function(font){
+			if(!this.autoLoadFonts){
+				return;
+			}
 			var sp = document.createElement("span");
 			sp.style.font = font;
 			var fontFamily = sp.style.fontFamily.replace(/'/gi, '');
