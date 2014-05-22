@@ -15,6 +15,9 @@ MT.extend("core.SocketManager")(
 		this.importFile = "mt.import.js";
 		this.dataFile = "mt.data.js";
 		this.jsonFile = "mt.data.json";
+		this.exampleFile = "example.html";
+		
+		
 		
 		this.phaserPath = "phaser";
 		this.assetsPath = "assets";
@@ -84,6 +87,7 @@ MT.extend("core.SocketManager")(
 			this.fs.copy("phaser/mt.export.js", this.dir + this.sep + this.importFile);
 			
 			this.fs.copy("phaser" + this.sep + this.phaserSrc, this.dir + this.sep + this.phaserSrc);
+			this.fs.copy("phaser" + this.sep + this.exampleFile, this.dir + this.sep + this.exampleFile);
 			
 			
 			
@@ -131,8 +135,6 @@ MT.extend("core.SocketManager")(
 			
 			
 			this.parseAssets(this.assets.contents);
-			
-			
 			
 			this.phaserDataOnly(function(err, local, pub){
 				

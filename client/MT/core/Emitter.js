@@ -28,6 +28,29 @@ MT(
 			return cb;
 		},
 		
+		once: function(action, cb){
+			if(typeof cb != "function"){
+				console.error("event",action,"not a function:",cb);
+				return;
+			}
+			
+			if(Array.isArray(action)){
+				for(var i=0; i<action.length; i++){
+					this.once(action[i], cb);
+				}
+				return;
+			}
+			
+			var that = this;
+			var fn = function(action1, data){
+				cb(action1, cb);
+				that.off(action, fn);
+			};
+			
+			this.on(action, fn);
+			
+		},
+   
 		off: function(type, cb){
 			if(cb === void(0)){
 				cb = type; type = void(0);
@@ -44,13 +67,12 @@ MT(
 			
 			for(var i in this.callbacks){
 				this._off(cb, i);
-				
 			}
 		},
 		
 		_off: function(cb, type){
-			var i=0, cbs = null;
-			for(i=0, cbs = this.callbacks[type]; i<cbs.length; i++){
+			var i=0, cbs = this.callbacks[type];
+			for(i=0; i<cbs.length; i++){
 				if(cbs[i] === cb){
 					cbs.splice(i, 1);
 				}

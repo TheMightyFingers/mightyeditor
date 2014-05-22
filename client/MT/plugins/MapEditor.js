@@ -510,7 +510,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var game = this.game;
 			var that = this;
 			var asset = null;
-			this.isAssetsAdded = false;
+			this.isAssetsAdded = !assets.length;
 			for(var i=0; i<assets.length; i++){
 				this.addAsset(assets[i], function(){
 					that.assetsToLoad--;
@@ -716,7 +716,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				//t.font = "Arial";
 				t.MT_OBJECT = obj;
 				this.objects.push(t);
-				group.add(t);
+				
 				return t;
 			}
 			
@@ -729,6 +729,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		addText: function(obj, group){
 			group = group || this.game.world;
 			var t = this.game.add.text(obj.x, obj.y, obj.name, obj.style);
+			group.add(t);
 			
 			return t;
 		},

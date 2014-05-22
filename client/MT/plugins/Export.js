@@ -1,4 +1,4 @@
-MT.extend("core.BasicPlugin")(
+MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	MT.plugins.Export = function(project){
 		MT.core.BasicPlugin.call(this, "Export");
 		this.project = project;
@@ -12,14 +12,25 @@ MT.extend("core.BasicPlugin")(
 					label: "Phaser.io (.js)",
 					className: "",
 					cb: function(){
-						that.export("phaser");
+						that.export("phaser", function(){
+							window.location = this.project.path + "/"+ data.file;
+						});
 					}
 				},
 				{
 					label: "Phaser.io (data only)",
 					className: "",
 					cb: function(){
-						that.export("phaserDataOnly");
+						that.export("phaserDataOnly", function(data){
+							that.openDataLink(data);
+						});
+					}
+				},
+				{
+					label: "Open sample",
+					className: "",
+					cb: function(){
+						that.openLink();
 					}
 				}
 				/*,
@@ -48,9 +59,10 @@ MT.extend("core.BasicPlugin")(
 			
 		},
 		
-		export: function(dest){
+		export: function(dest, cb){
 			console.log("export", dest);
 			this.send(dest);
+			this.once("done", cb);
 		},
 		
 		showExport: function(){
@@ -60,24 +72,33 @@ MT.extend("core.BasicPlugin")(
 			//},0);
 		},
 		
+		openDataLink: function(data){
+			var w = window.innerWidth*0.5;
+			var h = window.innerHeight*0.8;
+			var l = (window.innerWidth - w)*0.5;
+			var t = (window.innerHeight - h)*0.5;
+			
+			window.open(this.project.path + "/" + data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
+		},
+		
+		openLink: function(){
+			var w = window.open("about:blank",Date.now());
+			w.opener=null;
+			var path = this.project.path;
+			
+			this.export("phaser", function(data){
+				
+				console.log(data);
+				if(w.location){
+					w.location.href = path + "/phaser/example.html";
+				}
+			});
+			
+		},
+		
 		a_complete: function(data){
 			console.log("data",data);
-			switch(data.action){
-				case "phaser":
-					window.location = this.project.path + "/"+ data.file;
-					break;
-				
-				case "phaserDataOnly":
-					var w = window.innerWidth*0.5;
-					var h = window.innerHeight*0.8;
-					var l = (window.innerWidth - w)*0.5;
-					var t = (window.innerHeight - h)*0.5;
-					
-					window.open(this.project.path + "/" + data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
-					break;
-			}
-			
-			
+			this.emit("done", data);
 		}
 		
 	}

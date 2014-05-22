@@ -44,13 +44,13 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		var ready = function(){
 			that.checkFonts();
-			that.createPanel();
+			
 			that.tools.map.off(ready);
 		};
 		this.tools.map.on("objectsAdded", ready);
 		
 		
-		
+		this.createPanel();
 		
 	},{
 		
