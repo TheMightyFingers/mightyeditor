@@ -365,6 +365,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(!silent){
 				this.ui.events.simulateKey(MT.keys.esc);
 				this.sync();
+				this.update();
 			}
 			
 			this.emit("deleted", id);

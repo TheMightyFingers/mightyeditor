@@ -1,3 +1,9 @@
+/**
+ * usage new MT.ui.Input(MT.events, key, object);
+ */
+
+"use strict";
+
 MT.extend("ui.DomElement").extend("core.Emitter")(
 	MT.ui.Input = function(events, properties, obj){
 		MT.ui.DomElement.call(this);
@@ -156,6 +162,10 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			if(this.el.parentNode){
 				this.el.parentNode.removeChild(this.el);
 			}
+		},
+		
+		update: function(){
+			this.setValue(this.obj[this.key], true);
 		},
 		
 		setValue: function(val, silent){

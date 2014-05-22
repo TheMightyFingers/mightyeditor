@@ -1,7 +1,9 @@
 MT.require("plugins.list");
-MT.require("plugins.HelpAndSupport");
 MT.require("core.keys");
 MT.require("ui.Popup");
+
+MT.require("plugins.HelpAndSupport");
+MT.require("plugins.FontManager");
 
 MT.extend("core.BasicPlugin")(
 	MT.core.Project = function(ui, socket){
@@ -21,7 +23,8 @@ MT.extend("core.BasicPlugin")(
 			"UndoRedo",
 			"DataLink",
 			"Analytics",
-			"HelpAndSupport"
+			"HelpAndSupport",
+			"FontManager"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){

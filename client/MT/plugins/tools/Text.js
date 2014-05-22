@@ -16,7 +16,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		this.tester = document.createElement("span");
 		
-		this.createPanel();
+		this.fonts = [
+			"Arial",
+			"Comic Sans MS",
+			"Courier New",
+			"Georgia",
+			"Impact",
+			"Times New Roman",
+			"Trebuchet MS",
+			"Verdana"
+		];
 		
 	
 		
@@ -30,6 +39,17 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		this.tools.on("unselectedObject", function(){
 			that.panel.hide();
 		});
+		
+		this.manager = this.tools.project.plugins.fontmanager;
+		
+		var ready = function(){
+			that.checkFonts();
+			that.createPanel();
+			that.tools.map.off(ready);
+		};
+		this.tools.map.on("objectsAdded", ready);
+		
+		
 		
 		
 	},{
@@ -47,16 +67,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.panel.addClass("text-tools");
 		
-			var fonts = [
-				"Arial",
-				"Comic Sans MS",
-				"Courier New",
-				"Georgia",
-				"Impact",
-				"Times New Roman",
-				"Trebuchet MS",
-				"Verdana"
-			];
+			var fonts = this.fonts;
 			
 			var fontList = [];
 			for(var i=0; i<fonts.length; i++){
@@ -111,13 +122,13 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			});
 			this.bold.width = "auto";
 			
-			this.italic = this.panel.addButton("I", "text-bold", function(){
+			this.italic = this.panel.addButton("I", "text-italic", function(){
 				that.toggleItalic();
 			});
 			this.italic.width = "auto";
 			
 			
-			this.wordWrap = this.panel.addButton("Wx", "text-bold", function(){
+			this.wordWrap = this.panel.addButton("Wx", "text-wrap", function(){
 				that.toggleWordWrap();
 			});
 			this.wordWrap.width = "auto";
@@ -137,35 +148,77 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.panel.addButton(this.wordWrapWidth.button);
 			
 			
+			
+			
+			
 			this.left = this.panel.addButton("L", "text-left", function(){
 				that.setAlign("left");
 			});
 			this.left.width = "auto";
 			
-			this.center = this.panel.addButton("C", "text-left", function(){
+			this.center = this.panel.addButton("C", "text-center", function(){
 				that.setAlign("center");
 			});
 			this.center.width = "auto";
 			
-			this.right = this.panel.addButton("R", "text-left", function(){
+			this.right = this.panel.addButton("R", "text-right", function(){
 				that.setAlign("right");
 			});
 			this.right.width = "auto";
 			
 			
+			
+			
 			this.colorButton = this.panel.addButton("C", "text-color", function(){
 				that.showColorPicker();
 			});
+			this.colorButton.width = "auto";
 			
 			this.colorPicker = new MT.ui.TextColorPicker(this.tools.ui);
+			this.colorPicker.el.style.zIndex = 3;
+			
 			this.panel.on("hide", function(){
 				that.colorPicker.hide();
 			});
 			
+			this.colorPicker.on("fill", function(color){
+				that.setFill(color);
+			});
+			this.colorPicker.on("stroke", function(obj){
+				that.setStroke(obj);
+			});
+			this.colorPicker.on("shadow", function(obj){
+				that.setShadow(obj);
+			});
+			
+			
+			
+			this.textButton = this.panel.addButton("txt", "text-edit", function(){
+				that.showTextEdit();
+			});
+			this.textButton.width = "auto";
+			
+			this.textPopup = new MT.ui.Popup("Edit Text", "");
+			this.textPopup.hide();
+			
+			this.textPopup.showClose();
+			this.textPopup.addButton("Done", function(){
+				that.setText(that.textArea.value);
+				that.textPopup.hide();
+			});
+			
+			this.textArea = document.createElement("textarea");
+			this.textPopup.content.appendChild(this.textArea);
+			this.textArea.style.width = "100%";
+			this.textArea.style.height = "200px";
+			
 		},
 		
 		showColorPicker: function(){
-			console.log("SHOW colorPicker");
+			if(this.colorPicker.isVisible){
+				this.colorPicker.hide();
+				return;
+			}
 			this.colorPicker.show(document.body);
 			var r = this.colorButton.el.getBoundingClientRect();
 			this.colorPicker.y = r.top + r.height;
@@ -197,8 +250,71 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			};
 		},
 		
+		
+		showTextEdit: function(shouldRemove){
+			this.map = this.tools.map;
+			if(!this.map.activeObject){
+				return;
+			}
+			var obj = this.tools.map.activeObject;
+			
+			this.textArea.value = obj.text;
+			
+			this.textPopup.show();
+			
+			if(shouldRemove){
+				var pop = this.textPopup;
+				var that = this;
+				var rem = function(cancel){
+					pop.off("close", rem);
+					if(cancel){
+						that.tools.om.deleteObj(obj.MT_OBJECT.id);
+					}
+				};
+				this.textPopup.on("close", rem);
+			}
+		},
+		
+		setText: function(val){
+			this.map = this.tools.map;
+			if(!this.map.activeObject){
+				return;
+			}
+			this.map.activeObject.text = val;
+			this.map.activeObject.MT_OBJECT.text = val;
+			this.map.activeObject.MT_OBJECT.name = val;
+			
+		},
+		
 		change: function(e){
 			console.log("TEXT:: change", e);
+		},
+		
+		setFill: function(color){
+			this.map = this.tools.map;
+			if(!this.map.activeObject){
+				return;
+			}
+			this.map.activeObject.fill = color;
+			this.tools.om.sync();
+		},
+		
+		setStroke: function(obj){
+			this.map = this.tools.map;
+			if(!this.map.activeObject){
+				return;
+			}
+			this.map.activeObject.stroke = obj.color;
+			this.map.activeObject.strokeThickness = obj.strokeThickness;
+		},
+		
+		setShadow: function(obj){
+			this.map = this.tools.map;
+			if(!this.map.activeObject){
+				return;
+			}
+			this.map.activeObject.setShadow(obj.x, obj.y, obj.color, obj.shadowBlur);
+			
 		},
 		
 		setAlign: function(pos){
@@ -209,8 +325,86 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.map.activeObject.align = pos;
 			this.select(this.map.activeObject);
 		},
+		isUnknownFont: function(font, cb){
+			for(var i=0; i<this.fonts.length; i++){
+				if(this.fonts[i] == font){
+					return false;
+				}
+			}
+			return true;
+		},
+		
+		addFont: function(font){
+			if(this.isUnknownFont(font)){
+				this.fonts.push(font);
+				// might not be isInitialized yet
+				if(this.fontFace){
+					this.fontFace.addItem(this._mk_setFontSelect(font));
+				}
+			}
+		},
+		
+		
+		checkFonts: function(){
+			var objects = this.tools.map.objects;
+			var o = null;
+			var that = this;
+			var toLoad = 0;
+			for(var i=0; i<objects.length; i++){
+				o = objects[i];
+				if(o.type == Phaser.TEXT){
+					this._setFontFamily(o);
+					
+					if(this.isUnknownFont(o.font)){
+						this.addFont(o.font);
+						toLoad++;
+						this.manager.loadFont(o.font, function(){
+							toLoad--;
+							if(toLoad != 0){
+								return;
+							}
+							window.setTimeout(function(){
+								that.updateTextObjects();
+							}, 500);
+						});
+					}
+				}
+			}
+		},
+		
+		updateTextObjects: function(fontIn){
+			
+			var objects = this.tools.map.objects;
+			for(var i=0; i<objects.length; i++){
+				if(objects[i].type == Phaser.TEXT ){
+					if(fontIn == void(0) || objects[i].font == fontIn || objects[i].style.font.indexOf(fontIn) > -1 ){ 
+						objects[i].dirty = true;
+					}
+				}
+			}
+		},
 		
 		setFontFamily: function(fontIn){
+			this.map = this.tools.map;
+			if(!this.map.activeObject){
+				return;
+			}
+			
+			if(this.isUnknownFont(fontIn)){
+				var that = this;
+				var active = this.map.activeObject;
+				this.addFont(fontIn);
+				this.manager.loadFont(fontIn, function(){
+					that.setFontFamily(fontIn);
+					window.setTimeout(function(){
+						that.updateTextObjects(fontIn);
+					}, 1000);
+				});
+				return;
+			}
+			
+			
+			
 			this.map = this.tools.map;
 			if(!this.map.activeObject){
 				return;
@@ -235,7 +429,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this._setFontFamily(this.map.activeObject);
 			
 			this.select(this.map.activeObject);
-			
+			this.map.activeObject.dirty = true;
 		},
 		
 		setFontSize: function(size){
@@ -324,11 +518,15 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		_setFontFamily: function(obj){
-			this.tester.style.font = this.map.activeObject.style.font;
+			obj = obj || this.map.activeObject;
+			
+			
+			this.tester.style.font = obj.style.font;
 			obj.font = this.tester.style.fontFamily.replace(/'/gi,"");
 			obj.fontWeight = this.tester.style.fontWeight;
 			if(this.tester.style.fontStyle == "italic"){
-				obj.fontWeight += " "+this.tester.style.fontStyle;
+				console.log("italic");
+				obj.fontWeight += " "+this.tester.style.fontStyle.replace(/normal/gi,"");;
 			}
 			obj.fontSize = this.tester.style.fontSize;
 		},
@@ -370,12 +568,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			else{
 				this.tester.style.font = obj.style.font;
 			}
-			//if(!this.tester.style.fontFamily){
-				
-			//}
 			
 			
-			this.fontFace.value = this.tester.style.fontFamily;
+			
+			
+			this.fontFace.value = this.tester.style.fontFamily.replace(/'/gi, "");;
 			this.fontFace.button.style.fontFamily = this.tester.style.fontFamily;
 			
 			this.fontSize.value = obj.fontSize;
@@ -394,6 +591,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.italic.addClass("active");
 			}
 			else{
+				console.log("not italic");
+				
 				this.italic.style.fontStyle = "normal";
 				this.italic.removeClass("active");
 			}
@@ -407,10 +606,23 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.checkAlign(obj);
 			
+			
+			this.colorPicker.setColors({
+				stroke: obj.stroke,
+				fill: obj.fill,
+				shadow: obj.shadowColor
+			});
+			
+			this.colorPicker.shadowXInput.setValue(obj.shadowOffsetX, true);
+			this.colorPicker.shadowYInput.setValue(obj.shadowOffsetY, true);
+			this.colorPicker.shadowBlurInput.setValue(obj.shadowBlur, true);
+			
+			this.colorPicker.strokeThicknessInput.setValue(obj.strokeThickness, true);
+			
 			this.panel.hide();
 			
 			this.panel.show(document.body);
-			console.log(this.tester.style.fontFamily);
+			obj.dirty = true;
 		},
 		
 		
@@ -507,7 +719,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.tools.om.insertObject(text);
 				obj = this.map.getById(text.id);
 				this.tools.select(obj);
-				console.log(obj);
+				
+				this.tools.tools.text.showTextEdit(true);
 			}
 		},
 		

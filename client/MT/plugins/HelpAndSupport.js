@@ -27,6 +27,13 @@ MT.extend("core.BasicPlugin")(
 					cb: function(){
 						that.openForum();
 					}
+				},
+				{
+					label: "google fonts",
+					className: "",
+					cb: function(){
+						that.openFonts();
+					}
 				}
 			
 			], ui, true);
@@ -59,6 +66,12 @@ MT.extend("core.BasicPlugin")(
 			//https://www.youtube.com/watch?v=7dk2naCCePc
 			var w = window.open("about:blank","_newTab");
 			w.opener=null; w.location.href="https://www.youtube.com/watch?v=7dk2naCCePc";
+		},
+		
+		openFonts: function(){
+			//https://www.youtube.com/watch?v=7dk2naCCePc
+			var w = window.open("about:blank","_newTab");
+			w.opener=null; w.location.href="https://www.google.com/fonts";
 		}
 	}
 );

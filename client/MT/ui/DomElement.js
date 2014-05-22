@@ -102,6 +102,7 @@ MT(
 					this.children.length = this.children.length - 1;
 					this.sortChildren();
 					i--;
+					child.hide()
 					return child;
 				}
 			}

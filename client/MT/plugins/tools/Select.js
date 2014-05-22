@@ -5,6 +5,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		this.activeState = this.states.NONE;
 		
+		
+		this.startMove = {
+			x: 0,
+			y: 0
+		};
 	},{
 		
 		states: {
@@ -39,10 +44,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.tools.selectObject(obj, true);
 		},
 		
-		
+		/* !!! this functions runs in map scope */
 		mouseMoveFree: function(e){
 			
-			if(!this.activeObject || e.target != this.game.canvas || this.ui.events.mouse.down){
+			if(!this.activeObject){
+				return;
+			}
+			var self = this.project.plugins.tools.tools.select;
+			
+			if(this.ui.events.mouse.down && self.activeState != self.states.NONE){
+				self.resizeObject(this.activeObject, this.ui.events.mouse);
 				return;
 			}
 			
@@ -54,40 +65,53 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var x = e.x - this.ox;
 			var y = e.y - this.oy;
 			
-			var self = this.project.plugins.tools.tools.select;
-
+			var obj = this.activeObject;
+			
 			if(type == MT.objectTypes.TEXT){
 				
 				var my = bounds.y + bounds.height * 0.5 - off*0.5;
 				
+				var width = this.activeObject.wordWrapWidth;
 				
-				
-				if(x > bounds.x + off && x < bounds.x + off*2  && y > my && y < my + off){
-					document.body.style.cursor = "w-resize";
-					self.activeState = self.states.RW;
+				if(y > my && y < my + off){
+					if(x > bounds.x + off && x < bounds.x + off*2 ){
+						document.body.style.cursor = "w-resize";
+						self.activeState = self.states.RW;
+						self.startMove.x = obj.x;
+					}
+					else if(x > bounds.x + width + off && x < bounds.x + width + off*3){
+						document.body.style.cursor = "w-resize";
+						self.activeState = self.states.RE;
+						self.startMove.x = obj.x;
+					}
+					else{
+						document.body.style.cursor = "auto";
+						self.activeState = self.states.NONE;
+					}
 				}
-				
 				else{
 					document.body.style.cursor = "auto";
 					self.activeState = self.states.NONE;
 				}
-				
-				
-				
-				
-				/*if(x > bounds.x && x < bounds.x + bounds.width){
-					console.log("match X");
-				}*/
-				
-				
 			}
-			
 			
 		},
 		
-		resizeObject: function(){
+		resizeObject: function(obj, mouse){
+			//console.log("resize", mouse);
+			if(this.activeState == this.states.RW){
+				this.map.activeObject.wordWrapWidth -= mouse.mx;
+				this.map.activeObject.x = this.startMove.x + mouse.mx;
+				this.startMove.x = this.map.activeObject.x;
+			}
+			if(this.activeState == this.states.RE){
+				obj.wordWrapWidth += mouse.mx;
+				obj.x = this.startMove.x;
+			}
 			
+			this.tools.tools.text.select(obj);
 			
+			this.map.sync();
 		},
 		
 		
@@ -138,7 +162,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					copy.push(o.MT_OBJECT);
 				});
 				
-				sel.clear();
+				
 				
 				var bounds = null;
 				var cx = this.map.game.camera.x;
@@ -147,6 +171,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				
 				
 				var data = this.tools.om.multiCopy(copy);
+				sel.clear();
+				
 				
 				var sprite;
 				for(var i=0; i<data.length; i++){
@@ -159,13 +185,13 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				}
 				
 				
+				
 			}
 			
 		},
 		mouseDown: function(e){
 			
 			if(this.activeState !== this.states.NONE){
-				this.resizeObject();
 				return;
 			}
 			

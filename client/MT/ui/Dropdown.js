@@ -29,6 +29,8 @@ MT.extend("core.Emitter")(
 				
 				that.emit("change", button.text);
 				
+				
+				
 				if(options.onchange){
 					that.hide();
 					options.onchange(button.text);
@@ -105,6 +107,10 @@ MT.extend("core.Emitter")(
 		
 		get value(val){
 			return this.button.text;
+		},
+		
+		addItem: function(item){
+			this.list.addItem(item);
 		},
 		
 		show: function(){

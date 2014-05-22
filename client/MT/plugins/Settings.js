@@ -107,6 +107,9 @@ MT(
 		},
    
 		handleObjects: function(obj){
+			if(!obj){
+				return;
+			}
 			this.clear();
 			this.panel.title = obj.name;
 			var that = this;
@@ -164,6 +167,12 @@ MT(
 				}, obj, true, cb);
 			}
 			
+		},
+		
+		update: function(){
+			for(var i in this.objects){
+				this.objects[i].update();
+			}
 		},
    
 		updateObjects: function(obj){

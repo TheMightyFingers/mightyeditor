@@ -400,29 +400,33 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 				}
 				else{
+					if(obj.type != Phaser.GROUP){
+						ctx.strokeRect(sx, sy, off, off);
+						ctx.strokeRect(sx, dy, off, off);
+						ctx.strokeRect(dx, sy, off, off);
+						ctx.strokeRect(dx, dy, off, off);
+						ctx.beginPath();
+						ctx.moveTo(sx + off, bounds.y);
+						ctx.lineTo(dx, bounds.y);
+						
+						ctx.moveTo(sx + off, bounds.y + bounds.height);
+						ctx.lineTo(dx, bounds.y + bounds.height);
+						
+						ctx.moveTo(bounds.x, sy + off);
+						ctx.lineTo(bounds.x, dy);
+						
+						ctx.moveTo(bounds.x + bounds.width, sy + off);
+						ctx.lineTo(bounds.x + bounds.width, dy);
+						
+						
+						ctx.stroke();
+						
+					}
+					else{
+						ctx.strokeRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
+					}
 					
-					ctx.strokeRect(sx, sy, off, off);
-					ctx.strokeRect(sx, dy, off, off);
-					ctx.strokeRect(dx, sy, off, off);
-					ctx.strokeRect(dx, dy, off, off);
 					
-					
-					ctx.beginPath();
-					
-					ctx.moveTo(sx + off, bounds.y);
-					ctx.lineTo(dx, bounds.y);
-					
-					ctx.moveTo(sx + off, bounds.y + bounds.height);
-					ctx.lineTo(dx, bounds.y + bounds.height);
-					
-					ctx.moveTo(bounds.x, sy + off);
-					ctx.lineTo(bounds.x, dy);
-					
-					ctx.moveTo(bounds.x + bounds.width, sy + off);
-					ctx.lineTo(bounds.x + bounds.width, dy);
-					
-					
-					ctx.stroke();
 				
 				}
 			}
@@ -1061,6 +1065,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			obj.scaleX = sprite.scale.x;
 			obj.scaleY = sprite.scale.y;
+			
+			if(sprite == this.activeObject){
+				this.project.settings.update();
+			}
 			
 			this.emit("sync", this);
 		},

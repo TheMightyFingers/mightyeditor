@@ -5,6 +5,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.panel = new MT.ui.Panel("", ui.events);
 		this.panel.removeHeader();
 		this.panel.content.style.overflow = "initial";
+		this.panel.show(this.el);
 		
 		var that = this;
 		
@@ -31,17 +32,18 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.clear();
 			this.list = list;
 			
-			var b = null;
-			var l = null;
 			for(var i=0; i<list.length; i++){
-				l = list[i];
-				b = this.panel.addButton(l.label, l.className, l.cb);
-				b.style.position = "relative";
-				b.addClass("ui-list-button");
-				
-				if(l.create){
-					l.create(b);
-				}
+				this.addItem(list[i]);
+			}
+		},
+		
+		addItem: function(item){
+			var b = this.panel.addButton(item.label, item.className, item.cb);
+			b.style.position = "relative";
+			b.addClass("ui-list-button");
+			
+			if(item.create){
+				item.create(b);
 			}
 		},
 		

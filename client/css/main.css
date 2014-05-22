@@ -345,7 +345,7 @@ div.ui-input .ui-input-value{
 	min-height: 100%;
 }
 
-input.ui-input{
+input.ui-input, textarea.ui-input{
 	position: absolute;
 	width: 180px;
 	height: 23px;
@@ -434,10 +434,37 @@ div.ui-popup-head {
 	position: relative;
 	text-align: center;
 	font-size: 14px;
+	cursor: default;
 }
 div.ui-popup-content {
 	text-align: center;
 	padding: 10px 10px 25px;
+}
+div.ui-popup .ui-popup-close{
+	width: 28px;
+	height: 28px;
+	position: absolute;
+	background-color: #fff;
+	right: 0;
+	top: 0;
+	cursor: pointer;
+}
+
+.ui-popup-button{
+position: absolute;
+bottom: 0;
+width: 200px;
+height: 36px;
+background-color: rgba(0,0,0,0.7);
+color: #eee;
+cursor: pointer;
+line-height: 36px;
+font-weight: bold;
+margin-bottom: 4px;
+}
+
+.ui-popup.ui-has-buttons{
+	padding-bottom: 20px;
 }
 
 div.ui-panel.text-tools .ui-button{
@@ -483,20 +510,27 @@ div.ui-colorpalette > div.seperator{
 	height: 3px;
 }
 
+div.ui-text-colorpicker{
+	background-color: rgba(33,33,33,0.9);
+}
 div.ui-text-colorpicker .ui-button{
-text-align: center;
-background-color: rgba(177,177,177,0.8);
-color: #222;
-width: 83px;
-line-height: 25px;
-border: solid 1px #333;
-font-weight: bold;
+	text-align: center;
+	background-color: rgba(177,177,177,0.8);
+	color: #222;
+	width: 83px;
+	line-height: 25px;
+	border: solid 1px #333;
+	font-weight: bold;
 }
 div.ui-text-colorpicker .ui-button.active{
 	background-color: #333;
 	color: #eee;
 	border-bottom: solid 2px #313131;
 }
-
+div.ui-text-colorpicker div.ui-input{
+	min-height: 20px;
+	border-top: dashed 1px rgba(255,255,255,0.1);
+	border-bottom: none;
+}
 
 

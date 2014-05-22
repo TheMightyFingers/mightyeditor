@@ -1,20 +1,26 @@
 "use strict";
 
-MT.extend("ui.DomElement")(
+MT.extend("core.Emitter").extend("ui.DomElement")(
 	MT.ui.ColorPalette = function(onChange){
 		MT.ui.DomElement.call(this);
-		
+		var that = this;
 		this.addClass("ui-colorpalette");
 		this.nodes = [];
 		
 		this.createPalette();
 		this.el.onclick = function(e){
 			console.log("clicked", e.target.style.backgroundColor);
-			if(onChange && e.target.style.backgroundColor){
-				onChange(e.target.style.backgroundColor);
+			if(onChange && e.target.color){
+				onChange(e.target.color);
+				that.emit("change", e.target.color);
 			}
 		};
-		
+		/*this.el.onmousemove = function(e){
+			console.log("clicked", e.target.style.backgroundColor);
+			if(e.target.color){
+				that.emit("hover", e.target.color);
+			}
+		};*/
 	},
 	{
 		createPalette: function(){
@@ -34,7 +40,7 @@ MT.extend("ui.DomElement")(
 				0xff0000
 			];
 			
-			
+			var color = "";
 			
 			var it = 2;
 			var rows = 3;
@@ -44,7 +50,9 @@ MT.extend("ui.DomElement")(
 					node = document.createElement("span");
 					node.className = "ui-colorpalette-node";
 					el.appendChild(node);
-					node.style.backgroundColor = this.mkColor(0x000000, 0xffffff, i/(l-1), 0);
+					color = this.mkColor(0x000000, 0xffffff, i/(l-1), 0);
+					node.color = color;
+					node.style.backgroundColor = color;
 				}
 			}
 			
@@ -57,7 +65,9 @@ MT.extend("ui.DomElement")(
 					node = document.createElement("span");
 					node.className = "ui-colorpalette-node";
 					el.appendChild(node);
-					node.style.backgroundColor = this.mkColor(colors[i], colors[i+1], j/it, 0);
+					color = this.mkColor(colors[i], colors[i+1], j/it, 0);
+					node.color = color;
+					node.style.backgroundColor = color;
 				}
 			}
 			
@@ -75,7 +85,9 @@ MT.extend("ui.DomElement")(
 						node = document.createElement("span");
 						node.className = "ui-colorpalette-node";
 						el.appendChild(node);
-						node.style.backgroundColor = this.mkColor(colors[i], colors[i+1], j/it, l/(rows+1));
+						color = this.mkColor(colors[i], colors[i+1], j/(it+1), l/(rows*1.8));
+						node.color = color;
+						node.style.backgroundColor = color;
 					}
 				}
 				node = document.createElement("div");
@@ -98,23 +110,64 @@ MT.extend("ui.DomElement")(
 			var outgreen = inc * green2 + (1-inc) * green1 | 0;
 			var outblue = inc * blue2 + (1-inc) * blue1 | 0;
 			
+			var p = 0;
 			
 			if(outred > max){
+				p = (outred - max) / max;
+				
+				outblue = (outblue + outblue*p) | 0;
+				outgreen = (outgreen + outgreen*p) | 0;
+
 				outred = max;
+			}
+			if(outblue > max){
+				p = ( outblue - max ) / max;
+				
+				outred = (outred + outred*p) | 0;
+				outgreen = (outgreen + outgreen*p) | 0;
+				outblue = max;
+			}
+			if(outgreen > max){
+				p = (outgreen - max) / max;
+				
+				outred = (outred + outred*p) | 0;
+				outblue = (outblue + outblue*p) | 0;
+				
+				outgreen = max;
+			}
+			
+			if(outgreen > max){
+				outgreen = max
 			}
 			if(outblue > max){
 				outblue = max;
 			}
-			if(outgreen > max){
-				outgreen = max;
+			
+			if(outred > max){
+				outred = max
 			}
+			
+			
 			if(outred < 0){
+				p = -outred / max;
+				
+				outblue = (outblue - outblue*p) | 0;
+				outgreen = (outgreen - outgreen*p) | 0;
 				outred = 0;
 			}
 			if(outblue < 0){
+				p = -outblue / max;
+				
+				outred = (outred - outred*p) | 0;
+				outgreen = (outgreen - outgreen*p) | 0;
+				
 				outblue = 0;
 			}
 			if(outgreen < 0){
+				p = -outgreen / max;
+				outred = (outred - outred*p) | 0;
+				outblue = (outblue - outblue*p) | 0;
+				
 				outgreen = 0;
 			}
 			

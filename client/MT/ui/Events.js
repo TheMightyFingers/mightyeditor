@@ -1,7 +1,10 @@
 MT(
 	MT.ui.Events = function(){
-		
-		window.events = this;
+		if(window.MT.events){
+			console.warn("events already initialized");
+			return window.MT.events;
+		}
+		window.MT.events = this;
 		
 		this.events = {
 			mousemove: [],

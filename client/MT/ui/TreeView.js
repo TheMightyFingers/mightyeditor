@@ -81,7 +81,7 @@ MT.extend("core.Emitter")(
 					
 					if(p){
 						p.removeChild(item);
-						p.addChild(item, item.index);
+						p.addChild(item, item.index).show();
 					}
 					
 					
@@ -98,7 +98,7 @@ MT.extend("core.Emitter")(
 							item.el.parentNode.removeChild(item.el);
 						}
 						item.parent.removeChild(item);
-						parent.addChild(item);
+						parent.addChild(item).show();
 						if(!parent.visible){
 							item.hide();
 						}

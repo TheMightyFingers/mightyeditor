@@ -34,9 +34,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panel.removeHeader();
 					
 		
-			for(var i in this.toolsAvailable){
-				this.tools[i.toLowerCase()] = new this.toolsAvailable[i](this);
-			}
+			
 		
 			return;
 		},
@@ -46,6 +44,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var am = this.project.plugins.assetsmanager;
 			var map = this.map = this.project.plugins.mapeditor;
 			var om = this.om = this.project.plugins.objectsmanager;
+			
+			for(var i in this.toolsAvailable){
+				this.tools[i.toLowerCase()] = new this.toolsAvailable[i](this);
+			}
+			
 			
 			am.tv.on("click", function(asset, element){
 				that.activeAsset = asset;
@@ -88,6 +91,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				if(lastKey == MT.keys.esc){
 					that.setTool(that.tools.select);
+					window.getSelection().removeAllRanges();
 					lastKey = 0;
 					return;
 				}
@@ -135,7 +139,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						return;
 					}
 					
-					if(e.which === MT.keys.V){
+					
+					
+					if(e.which === MT.keys.V && e.target == document.body){
 						var x = that.ui.events.mouse.lastEvent.x;
 						var y = that.ui.events.mouse.lastEvent.y;
 						that.map.selector.clear();

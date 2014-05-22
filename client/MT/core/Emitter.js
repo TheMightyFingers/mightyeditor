@@ -4,6 +4,11 @@ MT(
 	},
 	{
 		on: function(action, cb){
+			if(typeof cb != "function"){
+				console.error("event",action,"not a function:",cb);
+				return;
+			}
+			
 			if(Array.isArray(action)){
 				for(var i=0; i<action.length; i++){
 					this.on(action[i], cb);
