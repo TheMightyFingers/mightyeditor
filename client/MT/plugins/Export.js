@@ -12,8 +12,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					label: "Phaser.io (.js)",
 					className: "",
 					cb: function(){
-						that.export("phaser", function(){
-							window.location = this.project.path + "/"+ data.file;
+						that.export("phaser", function(data){
+							window.location = that.project.path + "/"+ data.file;
 						});
 					}
 				},
@@ -44,16 +44,13 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			], ui, true);
 			
-			var b = ui.topPanel.addButton("Export", null, function(){
-				that.showExport();
+			var b = this.button= ui.topPanel.addButton("Export", null, function(){
+				that.showList();
 			});
 			b.width = 80;
 			
 			
-			this.list.width = 250;
-			this.list.y = b.el.offsetHeight;
-			this.list.x = b.el.offsetLeft-5;
-			this.list.el.style.bottom = "initial";
+			
 			//this.list.removeHeader();
 			//this.list.content.overflow = "initial";
 			
@@ -65,11 +62,12 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.once("done", cb);
 		},
 		
-		showExport: function(){
-			var that = this;
-			//window.setTimeout(function(){
-				that.list.show(document.body);
-			//},0);
+		showList: function(){
+			this.list.width = 250;
+			this.list.y = this.button.el.offsetHeight;
+			this.list.x = this.button.el.offsetLeft-5;
+			this.list.el.style.bottom = "initial";
+			this.list.show(document.body);
 		},
 		
 		openDataLink: function(data){
@@ -83,12 +81,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		openLink: function(){
 			var w = window.open("about:blank",Date.now());
-			w.opener=null;
-			var path = this.project.path;
+			w.opener = null;
 			
+			var path = this.project.path;
 			this.export("phaser", function(data){
-				
-				console.log(data);
 				if(w.location){
 					w.location.href = path + "/phaser/example.html";
 				}

@@ -89,18 +89,38 @@ MT.extend("core.BasicPlugin")(
 			this.ui = ui;
 			var that = this;
 			
-			var b = ui.topPanel.addButton("New", null, function(){
-				window.location = window.location.toString().split("#")[0];
-			});
-			b.width = 80;
 			
-			var b = ui.topPanel.addButton("Clone", null, function(){
-				window.location = window.location.toString()+"-copy";
-				window.location.reload();
+			var that = this;
+			this.list = new MT.ui.List([
+				{
+					label: "New",
+					className: "",
+					cb: function(){
+						window.location = window.location.toString().split("#")[0];
+					}
+				},
+				{
+					label: "Clone",
+					className: "",
+					cb: function(){
+						window.location = window.location.toString()+"-copy";
+						window.location.reload();
+					}
+				}
+			], ui, true);
+			
+			var b = this.button = ui.topPanel.addButton("Project", null, function(){
+				that.showList();
 			});
 			b.width = 80;
 		},
-		
+		showList: function(){
+			this.list.width = 150;
+			this.list.y = this.button.el.offsetHeight;
+			this.list.x = this.button.el.offsetLeft-5;
+			this.list.el.style.bottom = "initial";
+			this.list.show(document.body);
+		},
 		initPlugins: function(){
 			
 			for(var i in this.plugins){

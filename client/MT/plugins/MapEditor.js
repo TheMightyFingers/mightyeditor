@@ -1,5 +1,5 @@
 "use strict";
-MT.requireFile("js/phaser.js");
+MT.requireFile("js/phaser.min.js");
 MT.require("core.Helper");
 MT.require("core.Selector");
 
@@ -788,10 +788,26 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				sp.frame = obj.frame;
 			}
 			
-			if(obj.scaleX){
-				sp.scale.x = obj.scaleX;
-				sp.scale.y = obj.scaleY;
+			if(obj.width && obj.height && sp.scale.x == obj.scaleX && sp.scale.y == obj.scaleY){
+				if(obj.width != sp.width || obj.height != sp.height){
+					sp.width = obj.width;
+					sp.height = obj.height;
+					
+					obj.scaleX = sp.scale.x;
+					obj.scaleY = sp.scale.y;
+				}
 			}
+			
+			if(obj.scaleX){
+				if(sp.scale.x != obj.scaleX || sp.scale.y != obj.scaleY){
+					sp.scale.x = obj.scaleX;
+					sp.scale.y = obj.scaleY;
+					obj.width = sp.width;
+					obj.height = sp.height;
+				}
+			}
+			
+			
 			
 			sp.visible = !!obj.isVisible;
 			
@@ -1066,6 +1082,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			obj.scaleX = sprite.scale.x;
 			obj.scaleY = sprite.scale.y;
+			
+			obj.width = sprite.width;
+			obj.height = sprite.height;
 			
 			if(sprite == this.activeObject){
 				this.project.settings.update();

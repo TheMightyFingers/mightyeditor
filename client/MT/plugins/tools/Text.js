@@ -110,12 +110,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				
 			}, ui);
 			
-			
-			
-			
 			this.panel.addButton(this.fontFace.button);
 			this.panel.addButton(this.fontSize.button);
-			
 			
 			this.bold = this.panel.addButton("B", "text-bold", function(){
 				that.toggleBold();
@@ -126,7 +122,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				that.toggleItalic();
 			});
 			this.italic.width = "auto";
-			
 			
 			this.wordWrap = this.panel.addButton("Wx", "text-wrap", function(){
 				that.toggleWordWrap();
@@ -141,15 +136,15 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				onchange: function(val){
 					that.setWordWrapWidth(val);
 				}
-				
 			}, ui);
 			
-			
+			this.wordWrapWidth.on("show", function(show){
+				that.wordWrapWidth.button.el.removeAttribute("px");
+			});
+			this.wordWrapWidth.on("hide", function(show){
+				that.wordWrapWidth.button.el.setAttribute("px", "px");
+			});
 			this.panel.addButton(this.wordWrapWidth.button);
-			
-			
-			
-			
 			
 			this.left = this.panel.addButton("L", "text-left", function(){
 				that.setAlign("left");
@@ -165,9 +160,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				that.setAlign("right");
 			});
 			this.right.width = "auto";
-			
-			
-			
 			
 			this.colorButton = this.panel.addButton("C", "text-color", function(){
 				that.showColorPicker();
@@ -512,6 +504,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!this.map.activeObject){
 				return;
 			}
+			
 			this.map.activeObject.wordWrapWidth = parseInt(val, 10);
 			this.select(this.map.activeObject);
 			
@@ -523,7 +516,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.tester.style.font = obj.style.font;
 			obj.font = this.tester.style.fontFamily.replace(/'/gi,"");
-			obj.fontWeight = this.tester.style.fontWeight;
+			obj.fontWeight = this.tester.style.fontWeight.replace(/normal/gi,'');
 			if(this.tester.style.fontStyle == "italic"){
 				console.log("italic");
 				obj.fontWeight += " "+this.tester.style.fontStyle.replace(/normal/gi,"");;
@@ -630,7 +623,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.wordWrap.addClass("active");
 			this.wordWrapWidth.button.removeClass("hidden");
 			this.wordWrapWidth.button.text = obj.wordWrapWidth;
-			
+			this.wordWrapWidth.button.el.setAttribute("px", "px");
 			
 			
 			/*this.left.removeClass("hidden");
@@ -712,6 +705,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				
 				this.tools.tools.select.select(obj);
 				this.tools.select(obj);
+				this.tools.tools.text.showTextEdit();
 			}
 			else{
 				

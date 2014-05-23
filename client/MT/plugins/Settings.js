@@ -157,6 +157,16 @@ MT(
 					step: 0.1
 				}, obj, true, cb);
 				
+				this.objects.width = this.addInput( {
+					key: "width",
+					step: 1,
+				}, obj, true, cb);
+				
+				this.objects.height = this.addInput( {
+					key: "height",
+					step: 1,
+				}, obj, true, cb);
+				
 				this.objects.scaleX = this.addInput( {
 					key: "scaleX",
 					step: 0.1

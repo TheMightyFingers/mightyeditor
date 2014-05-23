@@ -164,6 +164,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					prev.x = el.calcOffsetX() - data.width;
 					prev.y = el.calcOffsetY() - (data.height*0.5 - el.el.offsetHeight*0.5);
 					prev.style.backgroundImage = "url('"+that.project.path + "/" +data.__image+"')";
+					if(prev.y < 0){
+						prev.y = 0;
+					}
+					prev.el.setAttribute("data-size", data.width+"x"+data.height);
+					
 					prev.target = e.target;
 					prev.data = data;
 					prev.element = el;
@@ -187,7 +192,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.on("close", update);
 			
 			prev.el.onmouseover = function(){
-				console.log("over");
 				if(prevHideTm){
 					window.clearTimeout(prevHideTm);
 				}
@@ -459,16 +463,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var that = this;
 			fr.onload = function(){
 				var img = new Image();
-				
-				
-				console.log("upload", file.name);
-				
 				img.onload = function(){
 					
 					var data = {
 						data: fr.result,
 						name: file.name,
 						path: path,
+						fullPath: path,
 						key: path,
 						width: img.width,
 						height: img.height,
@@ -500,9 +501,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var tmp = basename.join(".").split("_").pop();
 			var dimensions = null;
-			console.log("dd",tmp);
 			if(tmp){
-				console.log("found frame size");
 				dimensions = tmp.split("x");
 				var w = parseInt(dimensions[0], 10);
 				var h = parseInt(dimensions[1], 10);

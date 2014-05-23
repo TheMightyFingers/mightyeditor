@@ -10,7 +10,7 @@ MT.extend("core.BasicPlugin")(
 		
 		window.ur = this;
 		this.capacity = 0;
-		
+		this.currentOffset = 0;
 		
 		this.checkLocalStorageCapacity();
 	},
@@ -105,12 +105,14 @@ MT.extend("core.BasicPlugin")(
 		save: function(){
 			
 			var str = JSON.stringify(this.buffer);
-			var off = 0;
+			var off = this.currentOffset;
 			
 			while(str.length > this.capacity && off < this.step){
 				off++;
 				str = JSON.stringify(this.buffer.slice(off, this.step));
 			}
+			this.currentOffset = off;
+			
 			
 			console.log("saved last",this.step - off,"steps");
 			

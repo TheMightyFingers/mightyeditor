@@ -279,6 +279,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.merge(data);
 			
 			if(!silent){
+				this.update();
 				this.sync();
 			}
 			return group;

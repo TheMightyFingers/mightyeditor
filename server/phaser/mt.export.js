@@ -1,5 +1,5 @@
 /*
- * License: Public domain
+ * License: MIT http://opensource.org/licenses/MIT
  */
 (function(global){
 	"use strict";
@@ -70,7 +70,9 @@
 	
 		_addAsset: function(asset, container, path){
 			var that = this;
-			
+			if(!asset.key){
+				return;
+			}
 			if(asset.width != asset.frameWidth || asset.height != asset.frameHeight){
 				this.game.load.spritesheet(asset.key, this.assetsPath + asset.fullPath, asset.frameWidth, asset.frameHeight, asset.frameMax, asset.margin, asset.spacing);
 			}
@@ -141,18 +143,26 @@
 		},
 		
 		_addText: function(object, container, group){
+			this.getFontFamily(object.style.font);
+			
 			group = group || this.game.world;
 			var t = this.game.add.text(object.x, object.y, object.name, object.style);
 			group.add(t);
 			
-			this.getFontFamily(object.style.font);
 			
-			Object.defineProperty(container, object.name, {
-				get : function(){ 
-					return t;
-				},
-				enumerable: true
-			});
+			
+			if(container.hasOwnProperty(object.name)){
+				console.warn("dublicate object name - ", object.name);
+			}
+			else{
+			
+				Object.defineProperty(container, object.name, {
+					get : function(){ 
+						return t;
+					},
+					enumerable: true
+				});
+			}
 			
 			return t;
 		},
@@ -190,14 +200,17 @@
 			sp.scale.x = object.scaleX;
 			sp.scale.y = object.scaleY;
 			
-			
-			Object.defineProperty(container, object.name, {
-				get : function(){ 
-					return sp;
-				},
-				enumerable: true
-			});
-			
+			if(container.hasOwnProperty(object.name)){
+				console.warn("dublicate object name - ", object.name);
+			}
+			else{
+				Object.defineProperty(container, object.name, {
+					get : function(){ 
+						return sp;
+					},
+					enumerable: true
+				});
+			}
 			
 			return sp;
 		},
@@ -206,9 +219,10 @@
 			if(!this.autoLoadFonts){
 				return;
 			}
-			var sp = document.createElement("span");
-			sp.style.font = font;
-			var fontFamily = sp.style.fontFamily.replace(/'/gi, '');
+			var span = document.createElement("span");
+			span.style.font = font;
+			
+			var fontFamily = span.style.fontFamily.replace(/'/gi, '');
 			
 			if(this.isKnownFontFamily(fontFamily)){
 				return;
@@ -262,19 +276,20 @@
 			link.setAttribute("rel", "stylesheet");
 			link.setAttribute("type", "text/css");
 			
-			var sp = document.createElement("span");
-			//sp.style.position = "absolute";
-			//sp.style.top = sp.style.left = 0;
+			var span = document.createElement("span");
+			span.style.position = "absolute";
+			span.style.top = span.style.left = 0;
+			span.style.zIndex = -1;
 			
-			sp.style.fontFamily = font;
-			sp.innerHTML = "ignore moi";
-			sp.style.visibility = "hidden";
-			document.body.appendChild(sp);
+			span.style.fontFamily = font;
+			span.innerHTML = "ignore moi";
+			span.style.visibility = "hidden";
+			document.body.appendChild(span);
 			
 			link.onload = function(e){
 				
 				window.setTimeout(function(){
-					document.body.removeChild(sp);
+					document.body.removeChild(span);
 				}, 1000);
 				window.setTimeout(function(){
 					cb(font);
