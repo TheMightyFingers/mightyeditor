@@ -16,7 +16,7 @@ MT.extend("core.SocketManager")(
 		this.dataFile = "mt.data.js";
 		this.jsonFile = "mt.data.json";
 		this.exampleFile = "example.html";
-		
+		this.hacksFile = "phaserHacks.js";
 		
 		
 		this.phaserPath = "phaser";
@@ -88,6 +88,7 @@ MT.extend("core.SocketManager")(
 			
 			this.fs.copy("phaser" + this.sep + this.phaserSrc, this.dir + this.sep + this.phaserSrc);
 			this.fs.copy("phaser" + this.sep + this.exampleFile, this.dir + this.sep + this.exampleFile);
+			this.fs.copy("phaser" + this.sep + this.hacksFile, this.dir + this.sep + this.hacksFile);
 			
 			
 			

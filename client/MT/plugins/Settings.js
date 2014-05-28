@@ -27,7 +27,7 @@ MT(
 			
 			var that = this;
 
-			this.project.plugins.assetsmanager.tv.on(["click", "select"], function(obj){
+			this.assetsManager = this.project.plugins.assetsmanager.tv.on(["click", "select"], function(obj){
 				that.handleAssets(obj);
 			});
 			
@@ -160,17 +160,30 @@ MT(
 				this.objects.width = this.addInput( {
 					key: "width",
 					step: 1,
-				}, obj, true, cb);
+				}, obj, true, function(width, oldWidth){
+					var ow = oldWidth / obj.scaleX;
+					var scale = width / ow;
+					that.objects.scaleX.setValue(scale);
+					cb();
+					that.objects.width.setValue(parseInt(width, 10), true);
+				});
+				
 				
 				this.objects.height = this.addInput( {
 					key: "height",
 					step: 1,
-				}, obj, true, cb);
+				}, obj, true, function(height, oldHeight){
+					var ov = oldHeight / obj.scaleY;
+					var scale = height / ov;
+					that.objects.scaleY.setValue(scale);
+					cb();
+					that.objects.height.setValue(parseInt(height, 10), true);
+				});
 				
 				this.objects.scaleX = this.addInput( {
 					key: "scaleX",
 					step: 0.1
-				}, obj, true, cb);
+				}, obj, true, cb)
 				this.objects.scaleY = this.addInput( {
 					key: "scaleY",
 					step: 0.1

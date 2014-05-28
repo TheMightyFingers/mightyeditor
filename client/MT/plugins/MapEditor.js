@@ -1,5 +1,8 @@
 "use strict";
-MT.requireFile("js/phaser.min.js");
+MT.requireFile("js/phaser.js", function(){
+	MT.requireFile("js/phaserHacks.js");
+	
+});
 MT.require("core.Helper");
 MT.require("core.Selector");
 
@@ -38,11 +41,18 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		};
 		
 		
+		this.zoom = 1;
+		
 		window.map = this;
 	},
 	{
 		_mousedown: false,
 		
+		setZoom: function(zoom){
+			this.zoom = 1/zoom;
+			this.resize();
+			
+		},
 		
 		/* basic pluginf fns */
 		initUI: function(ui){
@@ -165,7 +175,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				},
 				create: function(){
 					that.resize();
-					
+					that.scale = game.camera.scale;
 					if(!ctx){
 						ctx = game.canvas.getContext("2d");
 					}
@@ -194,10 +204,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return;
 			}
 			
-			this.game.width = this.project.ui.center.offsetWidth;
-			this.game.height = this.project.ui.center.offsetHeight;
+			this.game.width = this.project.ui.center.offsetWidth*this.zoom;
+			this.game.height = this.project.ui.center.offsetHeight*this.zoom;
 			
-			this.game.renderer.resize(this.game.width, this.game.height);
+			this.game.renderer.resize(this.game.width*this.zoom, this.game.height*this.zoom);
 			
 			this.setCameraBounds();
 			
@@ -209,6 +219,14 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.game.camera.bounds.y = -Infinity;
 			this.game.camera.bounds.width = Infinity;
 			this.game.camera.bounds.height = Infinity;
+			
+			
+			this.game.canvas.style.width = "100%";
+			this.game.canvas.style.height = "100%";
+			
+			this.game.camera.view.width = this.game.canvas.width/this.game.camera.scale.x;
+			this.game.camera.view.height = this.game.canvas.height/this.game.camera.scale.y;
+			
 		},
 		
 		updateSettings: function(obj){
@@ -263,6 +281,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			ctx.save();
+			
+			ctx.scale(this.game.camera.scale.x, this.game.camera.scale.y);
+			
 			ctx.beginPath();
 			
 			var bg = game.stage.backgroundColor;
@@ -282,18 +303,22 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			//ctx.strokeStyle = "rgba(255,255,255,0.1)";
 			
-			var ox = game.camera.x % this.settings.gridX;
-			var oy = game.camera.y % this.settings.gridY;
+			var ox = game.camera.x/this.scale.x % this.settings.gridX;
+			var oy = game.camera.y/this.scale.y % this.settings.gridY;
+			
+			var width = game.canvas.width/game.camera.scale.x;
+			var height = game.canvas.height/game.camera.scale.y
 			
 			
 			g = this.settings.gridX;
-			for(var i = -ox; i<game.canvas.width; i += g){
+			for(var i = -ox; i<width; i += g){
 				if(i < 0){
 					continue;
 				}
 				
 				ctx.beginPath();
-				if(i + game.camera.x == 0){
+				
+				if(Math.round(i*this.scale.x + game.camera.x) == 0){
 					ctx.lineWidth = 0.5;
 					ctx.globalAlpha = 1;
 				}
@@ -302,20 +327,20 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					ctx.globalAlpha = 0.5;
 				}
 				ctx.moveTo(i, 0);
-				ctx.lineTo(i, game.canvas.height);
+				ctx.lineTo(i, height);
 				
 				ctx.stroke();
 			}
 			
 			
 			g = this.settings.gridY;
-			for(var j = -oy; j<game.canvas.height; j += g){
+			for(var j = -oy; j<height; j += g){
 				if(j < 0){
 					continue;
 				}
 				
 				ctx.beginPath();
-				if(j + game.camera.y == 0){
+				if(Math.round(j*this.scale.y + game.camera.y) == 0){
 					ctx.lineWidth = 0.5;
 					ctx.globalAlpha = 1;
 				}
@@ -325,7 +350,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				
 				ctx.moveTo(0, j);
-				ctx.lineTo(game.canvas.width, j);
+				ctx.lineTo(width, j);
 				
 				ctx.stroke();
 			}
@@ -350,6 +375,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!this.isVisible(obj)){
 				return;
 			}
+			
 			
 			var alpha = ctx.globalAlpha;
 			
@@ -386,7 +412,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				if(obj.MT_OBJECT.type == MT.objectTypes.TEXT){
 					var width = bounds.width;
 					if(obj.wordWrap){
-						width = obj.wordWrapWidth;
+						width = obj.wordWrapWidth*this.game.camera.scale.x | 0;
 						
 						ctx.strokeRect(bounds.x - off | 0, sy + bounds.height*0.5 | 0, off, off);
 						ctx.strokeRect(bounds.x + width | 0, sy + bounds.height*0.5 | 0, off, off);
@@ -394,10 +420,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					}
 					
 					ctx.strokeRect(bounds.x | 0, bounds.y | 0, width | 0, bounds.height | 0);
-					
-					
-					
-					
 				}
 				else{
 					if(obj.type != Phaser.GROUP){
@@ -760,11 +782,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				obj._framesCount = frameData.total;
 			}
 			
-			
-			
-			//sp.inputEnabled = true;
-			//sp.input.pixelPerfectOver = true;
-			
 			return sp;
 		},
 		
@@ -778,9 +795,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			sp.x = obj.x;
 			sp.y = obj.y;
 			
-			if(obj.angle){
-				sp.angle = obj.angle;
-			}
+			sp.angle = obj.angle;
+			
 			obj._framesCount = 0;
 			
 			
@@ -788,7 +804,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				sp.frame = obj.frame;
 			}
 			
-			if(obj.width && obj.height && sp.scale.x == obj.scaleX && sp.scale.y == obj.scaleY){
+			/*if(obj.width && obj.height && sp.scale.x == obj.scaleX && sp.scale.y == obj.scaleY){
 				if(obj.width != sp.width || obj.height != sp.height){
 					sp.width = obj.width;
 					sp.height = obj.height;
@@ -796,7 +812,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					obj.scaleX = sp.scale.x;
 					obj.scaleY = sp.scale.y;
 				}
-			}
+			}*/
 			
 			if(obj.scaleX){
 				if(sp.scale.x != obj.scaleX || sp.scale.y != obj.scaleY){
@@ -939,8 +955,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			var angle = this.getOffsetAngle(object);
 			
-			var x = this.ui.events.mouse.mx;
-			var y = this.ui.events.mouse.my;
+			var x = this.ui.events.mouse.mx/this.scale.x;
+			var y = this.ui.events.mouse.my/this.scale.y;
 			
 			if(!this.dist[id]){
 				this.dist[id] = {
@@ -1085,6 +1101,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			obj.width = sprite.width;
 			obj.height = sprite.height;
+			
 			
 			if(sprite == this.activeObject){
 				this.project.settings.update();

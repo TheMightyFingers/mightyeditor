@@ -5,6 +5,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.panel = new MT.ui.Panel("", ui.events);
 		this.panel.removeHeader();
 		this.panel.content.style.overflow = "initial";
+		this.panel.style.position = this.panel.content.style.position = "relative";
 		this.panel.show(this.el);
 		
 		var that = this;

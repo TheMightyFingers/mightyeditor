@@ -32,10 +32,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panel = this.ui.addPanel("",this.ui.left);
 			this.panel.addClass("toolbox");
 			this.panel.removeHeader();
-					
-		
-			
-		
 			return;
 		},
 		
@@ -135,11 +131,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						map.selector.forEach(function(obj){
 							toCopy.push(obj);
 						});
-						
 						return;
 					}
-					
-					
 					
 					if(e.which === MT.keys.V && e.target == document.body){
 						var x = that.ui.events.mouse.lastEvent.x;

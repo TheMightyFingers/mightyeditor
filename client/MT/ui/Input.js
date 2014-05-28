@@ -93,7 +93,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			input.width = that.value.offsetWidth + "px";
 			
 			
-			that.setValue("", true);
+			that.value.el.innerHTML = "";
+			
 			that.value.el.offsetParent.appendChild(input);
 			input.focus();
 			if(input.type != "color"){
@@ -133,8 +134,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			this.onwheel = events.on("wheel", function(e){
 				if(e.target == that.value.el){
 					var d = (e.wheelDelta > 0 ? 1 : -1);
-					that.obj[that.key] += d*that.step;
-					that.setValue(obj[that.key]);
+					var val = that.obj[that.key] + d*that.step;
+					that.setValue(val);
 				}
 				
 			});
@@ -169,7 +170,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		},
 		
 		setValue: function(val, silent){
-			
 			if(val < this.min){
 				val = this.min;
 			}
@@ -178,7 +178,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				val = this.max;
 			}
 			
-			
+			var oldValue = this.obj[this.key];
 			
 			this.obj[this.key] = val;
 			
@@ -190,7 +190,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 			
 			if(!silent){
-				this.emit("change", val);
+				this.emit("change", val, oldValue);
 			}
 		},
 		

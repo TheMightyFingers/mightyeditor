@@ -367,6 +367,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		updateTextObjects: function(fontIn){
 			
 			var objects = this.tools.map.objects;
+			PIXI.Text.heightCache = {};
 			for(var i=0; i<objects.length; i++){
 				if(objects[i].type == Phaser.TEXT ){
 					if(fontIn == void(0) || objects[i].font == fontIn || objects[i].style.font.indexOf(fontIn) > -1 ){ 
@@ -495,6 +496,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 			
 			this.map.activeObject.wordWrap = !this.map.activeObject.wordWrap;
+			var bounds = this.map.activeObject.getBounds();
+			if(this.map.activeObject.wordWrapWidth < bounds.width - 10){
+				this.map.activeObject.wordWrapWidth = parseInt(bounds.width, 10);
+			}
 			this.select(this.map.activeObject);
 			
 			

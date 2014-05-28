@@ -25,7 +25,9 @@ MT.extend("core.Emitter")(
 						this.parentNode.removeChild(this);
 					}
 				}
-				catch(e){}
+				catch(e){
+					window.getSelection().removeAllRanges();
+				}
 				
 				that.emit("change", button.text);
 				
@@ -50,11 +52,19 @@ MT.extend("core.Emitter")(
 		var list = null;
 		
 		if(options.list){
-			list = this.list = new MT.ui.List(options.list, ui, true);
-			
-			if(options.listStyle){
-				list.width = options.listStyle.width;
+			if(typeof options.list[0] !== "object"){
+				this.listSource = this.mkList(options.list);
 			}
+			else{
+				this.listSource = options.list;
+			}
+			
+			
+			list = this.list = new MT.ui.List(this.listSource, ui, true);
+			
+			list.addClass("ui-dropdown-list");
+			
+			
 			
 			
 			list.on("show", function(){
@@ -63,6 +73,15 @@ MT.extend("core.Emitter")(
 				
 				list.style.top = (b.top + b.height)+"px";
 				list.style.left = b.left+"px";
+				
+				
+				if(list.el.offsetTop + list.panel.content.el.offsetHeight > window.innerHeight){
+					list.style.top = (b.top - list.panel.content.el.offsetHeight)+"px";
+				}
+				if(options.listStyle){
+					list.width = options.listStyle.width;
+				}
+				
 			});
 			
 			list.on("hide", function(){
@@ -95,11 +114,35 @@ MT.extend("core.Emitter")(
 		if(options.button.width){
 			button.width = options.button.width;
 		}
-
+		
+		if(options.value){
+			button.text = options.value;
+		}
 		
 		
 	},
 	{
+		
+		mkList: function(arr){
+			var out = [];
+			for(var i=0; i<arr.length; i++){
+				out.push(this.mkListItem(arr[i]));
+			}
+			return out;
+		},
+		
+		mkListItem: function(str){
+			var that = this;
+			
+			return {
+				label: str,
+				cb: function(){
+					that.value = str;
+					that.emit("change", str);
+				}
+			};
+		},
+		
 		set value(val){
 			this.button.text = val;
 			this.input.value = val;

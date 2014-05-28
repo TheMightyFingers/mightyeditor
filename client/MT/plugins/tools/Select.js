@@ -66,12 +66,13 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var y = e.y - this.oy;
 			
 			var obj = this.activeObject;
+			var scale = this.game.camera.scale.x;
 			
 			if(type == MT.objectTypes.TEXT){
 				
 				var my = bounds.y + bounds.height * 0.5 - off*0.5;
 				
-				var width = this.activeObject.wordWrapWidth;
+				var width = this.activeObject.wordWrapWidth * scale;
 				
 				if(y > my && y < my + off){
 					if(x > bounds.x + off && x < bounds.x + off*2 ){
@@ -80,7 +81,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 						self.startMove.x = obj.x;
 					}
 					else if(x > bounds.x + width + off && x < bounds.x + width + off*3){
-						document.body.style.cursor = "w-resize";
+						document.body.style.cursor = "e-resize";
 						self.activeState = self.states.RE;
 						self.startMove.x = obj.x;
 					}
@@ -99,16 +100,22 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		resizeObject: function(obj, mouse){
 			//console.log("resize", mouse);
+			obj = obj || this.map.activeObject;
+			var scale = this.map.game.camera.scale.x;
+			var x = mouse.mx/scale;
+			
 			if(this.activeState == this.states.RW){
-				this.map.activeObject.wordWrapWidth -= mouse.mx;
-				this.map.activeObject.x = this.startMove.x + mouse.mx;
-				this.startMove.x = this.map.activeObject.x;
+				obj.wordWrapWidth -= x;
+				obj.x = (this.startMove.x) + x * (1-obj.anchor.x);
+				this.startMove.x = obj.x;
+				
+				
 			}
 			if(this.activeState == this.states.RE){
-				obj.wordWrapWidth += mouse.mx;
-				obj.x = this.startMove.x;
+				obj.wordWrapWidth += x;
+				obj.x += x*obj.anchor.x;
 			}
-			
+
 			this.tools.tools.text.select(obj);
 			
 			this.map.sync();

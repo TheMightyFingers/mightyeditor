@@ -69,9 +69,9 @@ MT(
 			
 			
 			this.bottom = new MT.ui.Holder(MT.ui.position.BOTTOM, this.events);
-			this.bottom.height = 0;
+			this.bottom.height = 32;
 			this.bottom.addLeft(this.left);
-			
+			this.bottom.resizeable = false;
 			this.bottom.show(document.body);
 			
 			

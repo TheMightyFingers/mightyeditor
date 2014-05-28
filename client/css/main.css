@@ -614,4 +614,31 @@ div.ui-text-colorpicker div.ui-input{
 	border-bottom: none;
 }
 
+div.ui-dropdown-list{
+	z-index: 3;
+}
+
+.map-manager-panel .ui-button{
+	background-color: rgba(80,80,80,0.8);
+	width: 43px;
+	margin: 0 3px 0 0;
+	line-height: 26px;
+	text-align: center;
+}
+
+.map-manager-panel .ui-button:after{
+	content: attr(data-text);
+}
+
+.map-manager-panel .map-locate{
+	background-image:url(../img/icons/maptools/locate.png);
+	background-position:center;
+	background-repeat:no-repeat;
+	border-right:1px solid #fff;
+	width:32px;
+	background-size: 50%;
+}
+
+
+
 

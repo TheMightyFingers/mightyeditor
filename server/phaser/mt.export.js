@@ -38,6 +38,8 @@
 			this.game = game;
 			this.game.load.crossOrigin = "anonymous";
 			
+			this.game.load.script("hacks","phaserHacks.js");
+			
 			this._loadAssets(this.data.assets.contents, this.assets, "");
 		},
 	
@@ -167,7 +169,6 @@
 			return t;
 		},
 		
- 
 		_addObject: function(object, container, group){
 			
 			var sp = null;
@@ -233,6 +234,8 @@
 				that._fontsToLoad--;
 				
 				if(that._fontsToLoad == 0){
+					//clean up height cache
+					PIXI.Text.heightCache = {};
 					that.markDirty();
 				}
 			});
