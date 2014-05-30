@@ -23,7 +23,7 @@ MT(
 		this.server.on("request", function(req, res) {
 			
 			if(req.method != "GET"){
-				that.sendAway(res);
+				that.sendAway(req, res);
 				return;
 			}
 			
