@@ -216,6 +216,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				__image: asset.__image,
 				x: x,
 				y: y,
+				type: MT.objectTypes.SPRITE,
 				anchorX: asset.anchorX,
 				anchorY: asset.anchorY,
 				scaleX: 1,

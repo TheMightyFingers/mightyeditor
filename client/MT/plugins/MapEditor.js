@@ -709,6 +709,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 					
 				if(oo.id == obj.id ){
+					// fix this;
+					if(oo.type == void(0)){
+						oo.type = MT.objectTypes.SPRITE;
+					}
 					
 					if(oo.type == MT.objectTypes.SPRITE){
 						od.loadTexture(oo.assetId, oo.frame);
