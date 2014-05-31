@@ -1,6 +1,10 @@
 (function(){
 	var fs = require("fs");
 	var path = require("path");
+	var C = require('constants');
+	
+	console.log("constant", C);
+	
 	var that = MT.core.FS = {
 		path: path,
 		fs: fs,
@@ -12,7 +16,6 @@
  
 		_writeFile: function(file, contents, cb){
 			fs.writeFile(file, contents, function(e){
-				
 				if(e){
 					console.log("FS::writeFile Error",e);
 				}
@@ -27,7 +30,7 @@
  
 		_readFile: function(file, cb){
 			fs.readFile(file, function(e, contents){
-				if(e){
+				if(e && e.errno !== C.ENOENT){
 					console.log("FS::Readfile", e);
 				}
 				

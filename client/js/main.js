@@ -1,6 +1,6 @@
 console.log("Hello World!");
 
-var MT = createClass("MT", "js");
+var MT = createClass("MT");
 MT.require("Core");
 MT.require("Socket");
 MT.require("ui.UIController");
