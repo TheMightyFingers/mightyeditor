@@ -13,5 +13,3 @@ this.cors = {
 	jpeg: "*",
 	json: "*"
 }
-
-this.shutdownTimeout = 5;

@@ -1,10 +1,9 @@
 (function(){
 	var fs = require("fs");
 	var path = require("path");
-	var C = require('constants');
-	
-	console.log("constant", C);
-	
+	var errors = {
+		ENOENT: 34
+	};
 	var that = MT.core.FS = {
 		path: path,
 		fs: fs,
@@ -30,7 +29,7 @@
  
 		_readFile: function(file, cb){
 			fs.readFile(file, function(e, contents){
-				if(e && e.errno !== C.ENOENT){
+				if(e){
 					console.log("FS::Readfile", e);
 				}
 				
@@ -44,7 +43,7 @@
 		},
 		_mkdir: function(path, cb){
 			fs.stat(path, function(err){
-				if(err){
+				if(err && err.errno !== errors.ENOENT){
 					console.log("FS::mkdir err", err);
 				}
 				

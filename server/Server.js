@@ -23,8 +23,8 @@ var handler = server.openSocket(function(socket){
 	var project = new MT.core.Project(s);
 });
 
-
 var tm = config.shutdownTimeout;
+
 function gracefulExit(){
 	maintenance = true;
 	MT.core.Socket.sendAll("Project", "maintenance", {
@@ -40,12 +40,13 @@ function gracefulExit(){
 }
 
 function errorShutdown(error){
-	console.error("SERVER SHUTDOWN", error);
+	console.error((new Date).toISOString()+": SERVER SHUTDOWN");
+	console.log(error.stack);
+	console.log("\n");
 	gracefulExit();
 }
 
 process.on('SIGINT', gracefulExit).on('SIGTERM', gracefulExit); 
-
 process.on('uncaughtException', errorShutdown);
 
 
