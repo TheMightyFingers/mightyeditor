@@ -126,6 +126,18 @@ MT(
 				}
 				this.objects.isFixedToCamera = this.addInput({key:"isFixedToCamera", min: 0, max: 1, step: 1}, obj, true, cb);
 			}
+			// tile layer
+			else if(obj.type == MT.objectTypes.TILE_LAYER){
+				
+				
+				
+				
+				
+				
+				
+				
+				
+			}
 			//sprite
 			else{
 				this.objects.x = this.addInput( "x", obj, true, cb);

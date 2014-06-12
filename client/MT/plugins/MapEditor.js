@@ -1,13 +1,13 @@
 "use strict";
-MT.requireFile("js/phaser.min.js", function(){
+MT.requireFile("js/phaser.js", function(){
 	MT.requireFile("js/phaserHacks.js");
 	
 });
 MT.require("core.Helper");
 MT.require("core.Selector");
 
-MT.extend("core.Emitter").extend("core.BasicPlugin")(
-	MT.plugins.MapEditor = function(project){
+MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
+	function(project){
 		MT.core.BasicPlugin.call(this, "MapEditor");
 		
 		this.project = project;
@@ -36,8 +36,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			gridX: 64,
 			gridY: 64,
 			showGrid: 1,
-			backgroundColor: "#111111",
-			gridColor: "rgba(255,255,255,0.1)"
+			backgroundColor: "#111111"
 		};
 		
 		
@@ -47,6 +46,29 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	},
 	{
 		_mousedown: false,
+		
+		createTestMap: function(img, x, y){
+			x = x || 0;
+			y = y || 0;
+			if(!this.tm){
+				var tm = this.tm = this.game.add.tilemap(null, 64, 100, 640, 500);
+				tm.addTilesetImage(img);
+				this.layer = tm.createBlankLayer("level1", 10, 10, 64, 100);
+				this.layer.fixedToCamera = false;
+			}
+			this.tm.putTile(1, x, y, "level1");
+			
+		},
+		
+		createTileMap: function(){
+			this.tilemap = this.game.add.tilemap(null, 64, 64, 640, 500);
+		},
+		
+		addLayer: function(obj){
+			this.tilemap.createBlankLayer(obj.name, obj.tileWidth, obj.tileHeight, obj.width * obj.tileWidth, obj.height * obj.tileHeight);
+			
+			
+		},
 		
 		setZoom: function(zoom){
 			this.zoom = 1/zoom;
@@ -64,19 +86,11 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				that.resize();
 			});
 			
-			this.selector.on("select", function(obj){
-				//that.emit("select", obj);
-			});
-			
 			this.selector.on("unselect", function(obj){
 				that.emit("unselect", obj);
 			});
 			
-			
-			
 			this.createMap();
-			
-			
 			
 			var tools = this.project.plugins.tools;
 			var om = this.project.plugins.objectsmanager;
@@ -96,7 +110,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			ui.events.on("mouseup", function(e){
-				that.handleMouseUp(e);
+				//if(e.target == that.game.canvas){
+					that.handleMouseUp(e);
+				//}
 			});
 			
 			
@@ -182,6 +198,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 					that.setCameraBounds();
 					that.postUpdateSetting();
+					
+					that.createTileMap();
+					
 				},
 				
 				
@@ -195,6 +214,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 				}
 			});
+			
 			
 		},
 		

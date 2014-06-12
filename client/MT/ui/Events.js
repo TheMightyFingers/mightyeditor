@@ -33,6 +33,11 @@ MT(
 		};
 	},
 	{
+		MOUSEMOVE: "mousemove",
+		MOUSEUP: "mouseup",
+		MOUSEDOWN: "mousedown",
+		RESIZE: "resize",
+		
 		enable: function(){
 			var that = this;
 			for(var i in this.events){
@@ -108,6 +113,11 @@ MT(
 				
 				that.mouse.mx = e.pageX - that.mouse.x;
 				that.mouse.my = e.pageY - that.mouse.y;
+				
+				if(that.mouse.mx == 0 && that.mouse.my == 0){
+					return;
+				}
+				
 				that.mouse.x = e.pageX;
 				that.mouse.y = e.pageY;
 				

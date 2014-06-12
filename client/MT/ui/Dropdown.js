@@ -148,7 +148,7 @@ MT.extend("core.Emitter")(
 			this.input.value = val;
 		},
 		
-		get value(val){
+		get value(){
 			return this.button.text;
 		},
 		

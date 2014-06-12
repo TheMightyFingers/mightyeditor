@@ -4,6 +4,7 @@
 
 (function(scope){
 	"use strict";
+	
 	//check if we are running under nodejs
 	var isNodejs = (typeof global !== "undefined" && global == scope);
 	
@@ -47,20 +48,33 @@
 		};
 	}
 	else{
+		var isDomReady = false;
+		
+		window.addEventListener('DOMContentLoaded', function(){
+			
+			console.log("dom Ready");
+			isDomReady = true;
+		}, false);
+		
 		Loader = function(className, accumulator) {
 			this.loadings = 0;
 			this.acc = new Accumulator();
 			this.cache = {};
 			this.className = className;
 			this.accumulator = accumulator;
-			
-			var that = this;
 		};
 		
 		Loader.prototype = {
 			onReady: function(cb){
 				if(this.loadings === 0){
-					cb();
+					if(isDomReady){
+						cb();
+					}
+					else{
+						window.addEventListener('DOMContentLoaded', function(){
+							cb();
+						}, false);
+					}
 				}
 				else{
 					this.acc.push(cb);
@@ -147,10 +161,18 @@
 			onScriptsLoaded: function(){
 				if(this.loadings == 0){
 					var that = this;
-					window.setTimeout(function(){
-						that.accumulator.release();
-						that.acc.release();
-					},0);
+					if(isDomReady){
+						window.setTimeout(function(){
+							that.accumulator.release();
+							that.acc.release();
+						},0);
+					}
+					else{
+						window.addEventListener('DOMContentLoaded', function(){
+							that.accumulator.release();
+							that.acc.release();
+						}, false);
+					}
 				}
 			}
 		};
@@ -195,11 +217,9 @@
 		
 		var resolve = function(str, scope){
 			var namespaces = str.split(".");
-			var baseinc = namespaces .pop();
 			var ns = scope;
-			var nsinc = "";
 			
-			
+			namespaces.pop();
 			
 			for(var i=0; i<namespaces.length; i++){
 				ns = ns[namespaces[i]];
@@ -244,7 +264,15 @@
 			}
 			
 			var proto = fn.prototype;
-			fn.prototype = Object.create(parentClass.prototype);
+			
+			var desc = {};
+			for(var key in parentClass.prototype){
+				var pd = Object.getOwnPropertyDescriptor(parentClass.prototype, key)
+				desc[key] = pd;
+			}
+			
+			
+			fn.prototype = Object.create(parentClass.prototype, desc);
 			
 			for(var key in parentClass.prototype){
 				pd = Object.getOwnPropertyDescriptor(parentClass.prototype, key);
@@ -259,12 +287,6 @@
 				
 			}
 			
-			/*for(var key in parentClass.prototype){
-				if(fn[key] === void(0)){
-					fn[key] = parentClass.prototype[key];
-				}
-			}*/
-			
 			for(var key in proto){
 				var pd = null;
 				pd = Object.getOwnPropertyDescriptor(proto, key);
@@ -272,6 +294,7 @@
 					fn.prototype[key] = proto[key];
 					continue;
 				}
+				
 				if(pd.value !== void(0) ){
 					fn.prototype[key] = pd.value;
 					continue;

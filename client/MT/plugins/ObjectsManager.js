@@ -5,7 +5,8 @@ MT.require("core.Selector");
 MT.objectTypes = {
 	SPRITE: 0,
 	GROUP: 1,
-	TEXT: 2
+	TEXT: 2,
+	TILE_LAYER: 3
 };
 
 
@@ -31,21 +32,28 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.list = new MT.ui.List([
 				{
-					label: "new group",
+					label: "Add Group",
 					className: "",
 					cb: function(){
-						that.newFolder();
+						that.createGroup();
 					}
 				},
 				{
-					label: "group selected",
+					label: "Add TileLayer",
+					className: "",
+					cb: function(){
+						that.createTileLayer();
+					}
+				},
+				{
+					label: "Group Selected Objects",
 					className: "",
 					cb: function(){
 						that.groupSelected();
 					}
 				},
 				{
-					label: "delete selected",
+					label: "Delete Selected Objects",
 					className: "",
 					cb: function(){
 						that.deleteSelected();
@@ -163,8 +171,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(obj.contents){
 				return;
 			}
-			
-			
 			var no = this.createObject(obj, e.offsetX, e.offsetY);
 			this.insertObject(no);
 		},
@@ -252,7 +258,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
-		newFolder: function(silent){
+		createGroup: function(silent){
 			var data = this.tv.getData();
 			
 			var tmpName= "Group";
@@ -285,6 +291,46 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			return group;
 		},
+		
+		createTileLayer: function(){
+			var data = this.tv.getData();
+			
+			var tmpName= "Tile Layer";
+			var name = tmpName;
+			for(var i=0; i<data.length; i++){
+				if(data[i].name == name){
+					name = tmpName+" "+i;
+				}
+			}
+			
+			var obj = {
+				id: "tmp"+this.mkid(),
+				type: MT.objectTypes.TILE_LAYER,
+				name: name,
+				x: 0,
+				y: 0,
+				angle: 0,
+				data: [],
+				isVisible: 1,
+				isLocked: 0,
+				isFixedToCamera: 0,
+				tileWidth: 64,
+				tileHeight: 64
+			};
+			
+			data.unshift(obj);
+			
+			this.tv.merge(data);
+			
+			if(!silent){
+				this.update();
+				this.sync();
+			}
+			return obj;
+			
+		},
+		
+		
 		
 		copy: function(obj, x, y, name, silent){
 			
@@ -343,7 +389,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		
 		deleteSelected: function(){
-		
 			var data = this.tv.getData();
 			this.selector.forEach(function(obj){
 				this.deleteObj(obj.data.id, true, data);
@@ -357,7 +402,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		deleteObj: function(id, silent, data){
-			
 			var datax = data || this.tv.getData();
 			this._delete(id, datax);
 			if(!data){
@@ -422,10 +466,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.emit("update", this.tv.getData());
 		},
 		
-		
 		select: function(id){
 			this.tv.select(id);
-			
 		},
 		
 		cleanSelection: function(){
@@ -439,7 +481,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		groupSelected: function(){
-			var folder = this.newFolder(true);
+			var folder = this.createGroup(true);
 			var that = this;
 			
 			var data = this.tv.getData();

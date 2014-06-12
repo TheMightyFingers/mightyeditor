@@ -1,17 +1,15 @@
 "use strict";
 MT.require("ui.Holder");
 MT.require("ui.Panel");
-MT.require("ui.Button");
 MT.require("ui.Events");
-MT.require("ui.DomElement");
 
 MT(
 	MT.ui.UIController = function(){
+		window.ui = this;
+		
 		this.events = new MT.ui.Events();
 		
-		window.ui = this;
-		//window.x = new MT.ui.DomElement();
-		//return;
+		
 		
 		this.addHolders();
 		this.addCenter();
@@ -28,12 +26,6 @@ MT(
 		});
 		logo.width = 70;
 		logo.height = 27;
-		
-		
-		/*var ex = this.topPanel.addButton("Export", null, this);
-		ex.width = 70;
-		ex.style.lineHeight = this.topPanel.el.offsetHeight+"px";
-		*/
 		
 		var that = this;
 		this.events.on("resize", function(){

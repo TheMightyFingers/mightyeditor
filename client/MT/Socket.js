@@ -75,6 +75,7 @@ MT.extend("core.Emitter")(
 				}, 100);
 			}
 		},
+		
 		sendDelayed: function(){
 			if(this.ws.readyState !== this.ws.OPEN){
 				var that = this;

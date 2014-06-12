@@ -51,7 +51,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.activeTool.init(asset);
 			});
 			
-			
 			var select =  function(object){
 				that.select(object);
 			};
@@ -240,8 +239,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.activeTool.mouseUp(e);
 		},
 		
+		
+		lastSelected: null,
+		
 		selectObject: function(obj, clear){
-			
+			if(this.lastSelected == obj && this.map.activeObject){
+				return;
+			}
+			this.lastSelected = obj;
 			if(clear){
 				this.map.selector.clear();
 			}

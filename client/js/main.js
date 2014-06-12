@@ -1,13 +1,10 @@
-console.log("Hello World!");
-
 var MT = createClass("MT");
-MT.require("Core");
-MT.require("Socket");
-MT.require("ui.UIController");
+
 MT.require("core.Project");
+MT.require("ui.UIController");
+MT.require("Socket");
 
 MT.onReady(main);
-
 
 function main(){
 	var socket = new MT.Socket();

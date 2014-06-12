@@ -2,48 +2,18 @@ MT(
 	MT.ui.DomElement = function(type){
 		type = type || "div";
 		this.el = document.createElement(type);
-		this.el.style.position = "absolute";
-		
 		this.style = this.el.style;
-		this.style.top = 0;
-		this.style.right = 0;
-		this.style.bottom = 0;
-		this.style.left = 0;
 		this.el.ctrl = this;
 		
 		this.index = 0;
-		this.isVisible = true;
+		this.isVisible = false;
 		this.children = [];
 	},
 	{
 		_parent: null,
-		addChild: function(el, index){
-			el._parent = this.el;
+		appendChild: function(el, index){
 			el.parent = this;
-			
-			if(index != void(0)){
-				el.index = index;
-			
-				for(var i=0; i<this.children.length; i++){
-					if(this.children[i].index >= index){
-						this.children[i].index++;
-					}
-				}
-				
-				this.children.push(el);
-				
-				this.sortChildren();
-			}
-			else if(index == void(0)){
-				el.index = this.children.length;
-				this.children.push(el);
-			}
-
-			
-			if(el.isVisible){
-				el.show(el._parent);
-			}
-
+			el.show(this.el);
 			return el;
 		},
 		
@@ -55,15 +25,6 @@ MT(
 				}
 				p = p.parent;
 			}
-			
-		},
-		
-		clear: function(){
-			for(var i=0; i<this.children.length; i++){
-				this.children[i].remove();
-			}
-			this.children.length = 0;
-			
 		},
 		
 		remove: function(){
@@ -71,51 +32,21 @@ MT(
 				this.el.parentNode.removeChild(this.el);
 			}
 		},
-   
-		sortChildren: function(){
-			var c = null;
-			var children = [];
-			
-			this.children.sort(function(a, b){
-				return a.index - b.index;
-			});
-			
-			for(var i=0; i<this.children.length; i++){
-				var c = this.children[i];
-				children.push(c);
-				if(c.el.parentNode){
-					c.el.parentNode.removeChild(c.el);
-				}
-			}
-			
-			this.children.length = 0;
-			
-			for(var i=0; i<children.length; i++){
-				this.addChild(children[i]);
-			}
-		},
-   
-		removeChild: function(child){
-			for(var i=0; i<this.children.length; i++){
-				if(this.children[i] == child){
-					this.children[i] = this.children[this.children.length-1];
-					this.children.length = this.children.length - 1;
-					this.sortChildren();
-					i--;
-					child.hide()
-					return child;
-				}
-			}
-		},
+
 		show: function(parent){
-			this._parent = parent || this._parent;
-			if(this.el.parentNode == this._parent){
-				return;
+			if(parent == void(0)){
+				if(!this._parent){
+					this._parent = document.body;
+				}
 			}
+			else{
+				this._parent = parent;
+			}
+			
 			this._parent.appendChild(this.el);
 			
-			this.height = this._height;
-			this.width = this._width;
+			this.resize();
+			
 			this.isVisible = true;
 		},
    
@@ -144,7 +75,7 @@ MT(
 			}
 			
 			if(!this.hasClass(cls)){
-				this.el.className += " "+cls;
+				this.el.className = (this.el.className + " " + cls).trim();
 			}
 		},
 		
@@ -184,33 +115,32 @@ MT(
 			return false;
 		},
 		
-   
-		update: function(){
-			this.height = this._height;
-			this.width = this._width;
-			for(var i=0; i<this.children.length; i++){
-				this.children[i].height = this.children[i]._height;
-				this.children[i].width = this.children[i]._width;
-			}
-			
-		},
-   
 		_x: 0,
 		set x(val){
+			this.setX(val);
+		},
+		
+		setX: function(val){
 			this._x = val;
 			this.style.left = val+"px";
 			this.width = this._width;
 		},
+   
 		get x(){
 			return this._x;
 		},
    
 		_y: 0,
 		set y(val){
+			this.setY(val);
+		},
+		
+		setY: function(val){
 			this._y = val;
 			this.style.top = val+"px";
 			this.height = this._height;
 		},
+   
 		get y(){
 			return this._y;
 		},
@@ -220,51 +150,40 @@ MT(
 			return this._height;
 		},
 		set height(val){
+			this.setHeight(val);
+		},
+		
+		setHeight: function(val){
+			
 			this._height = val;
-			
-			if(!val){
-				for(var i=0; i<this.children.length; i++){
-					this.children[i].height = this.children[i]._height;
-				}
-				return;
+			if(val == 0){
+				this.style.height = "auto";
 			}
-			
-			//this.style.lineHeight = this._height+"px";
-			this.style.height = "initial";
-			this.style.bottom = 0;
-			this.style.bottom = (this.el.offsetHeight - val)+"px";
-			for(var i=0; i<this.children.length; i++){
-				this.children[i].height = this.children[i]._height;
+			else{
+				this.style.height = val+"px";
 			}
 		},
-	
+   
 		_width: 0,
 		get width(){
-			if(this._width == "auto"){
-				return this.el.offsetWidth;
-			}
-			
 			return this._width;
 		},
 		set width(val){
+			this.setWidth(val);
+		},
+   
+		setWidth: function(val){
 			if(!val){
 				return;
 			}
 			
 			this._width = val;
-			this.style.right = 0;
-			this.style.right = (this.el.offsetWidth - val)+"px";
-			for(var i=0; i<this.children.length; i++){
-				this.children[i].width = this.children[i]._width;
-			}
+			this.style.width = val+"px";
 		},
-		
-		updateChildren: function(){
-			for(var i=0; i<this.children.length; i++){
-				this.children[i].width = this.children[i]._width;
-				this.children[i].height = this.children[i]._height;
-				this.children[i].updateChildren();
-			}
+   
+		resize: function(w, h){
+			this.width = w || this._width;
+			this.height = h || this._height;
 		},
 		
 		calcOffsetY: function(upTo){
@@ -290,7 +209,33 @@ MT(
 			return ret;
 		},
 		ox: 0,
-		oy: 0
+		oy: 0,
+   
+		setAbsolute: function(){
+			this.style.position = "absolute";
+			this.style.top = 0;
+			this.style.left = 0;
+		},
+   
+		fitIn: function(){
+			this.style.position = "absolute";
+			this.style.top = 0;
+			this.style.right = 0;
+			this.style.bottom = 0;
+			this.style.left = 0;
+			this.style.height = "auto";
+		},
+   
+		inheritSize: function(el){
+			this.x = el.x;
+			this.y = el.y;
+			this.width = el.width;
+			this.height = el.height;
+		},
+   
+		getStyle: function(){
+			return window.getComputedStyle(this.el);
+		}
 		
 	}
 );

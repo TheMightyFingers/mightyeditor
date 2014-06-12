@@ -289,7 +289,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					}
 					return;
 				}
-				that.tv.select(obj.assetId);
+				that.tv.select(obj.assetId, true);
 			};
 			
 			this.project.om.tv.on("click", select);

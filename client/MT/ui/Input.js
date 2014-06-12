@@ -132,25 +132,26 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		if(this.type == "number"){
 		
 			this.onwheel = events.on("wheel", function(e){
+				console.log("wheel",e.wheelDelta);
 				if(e.target == that.value.el){
-					var d = (e.wheelDelta > 0 ? 1 : -1);
+					
+					var d = ( (e.wheelDelta || -e.deltaY) > 0 ? 1 : -1);
 					var val = that.obj[that.key] + d*that.step;
 					that.setValue(val);
 				}
 				
 			});
 			
-			
 			this.mouseup = events.on("mouseup",function(){
 				down = false;
 			});
 			
-			this.mousemove = events.on("mousemove",function(){
+			this.mousemove = events.on("mousemove",function(e){
 				if(!down){
 					return;
 				}
-				that.obj[that.key] -= events.mouse.my*that.step;
-				that.setValue(that.obj[that.key]);
+				var val = that.obj[that.key] - events.mouse.my*that.step;
+				that.setValue(val, false);
 			});
 		}
 	},
