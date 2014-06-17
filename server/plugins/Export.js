@@ -33,8 +33,6 @@ MT.extend("core.SocketManager")(
 			
 
 			this.phaserDataOnly(function(err, localFilePath, filePath){
-				console.log(err);
-				
 				that.send("complete",{
 					file: localFilePath,
 					action: "phaserDataOnly"
@@ -112,9 +110,7 @@ MT.extend("core.SocketManager")(
 			this.fs.mkdir(this.dir + this.sep + this.assetsPath);
 			
 			this.phaser(function(error, stdout, stderr){
-				console.log("exec", error, stdout, stderr);
-				
-				//console.log("EXPORT", this.assets, this.objects);
+				console.log("Export::exec", error, stdout, stderr);
 				that.send("complete", {
 					file:  that.zipName,
 					action: "phaser"
@@ -193,18 +189,10 @@ MT.extend("core.SocketManager")(
 					this.parseObjects(object.contents);
 					continue;
 				}
-
-				
-				//console.log("assetkey", object.assetId);
 				
 				object.assetKey = this.idList[object.assetId];
 				
 				this._cleanUp(object);
-				
-				if(!object.assetKey){
-					console.warn("Missing asset key", object);
-				}
-				
 			}
 			
 		}

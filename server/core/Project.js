@@ -36,18 +36,14 @@ MT.extend("core.SocketManager")(
 		},
 		
 		a_loadProject: function(id){
-			console.log("Load Project");
-			
 			var idr = id.split("-");
 			var that = this;
 			if(idr.length == 1){
-				console.log("loading Project", id);
 				this.openProject(id, function(){
 					that.send("selectProject", that.id);
 				});
 				return;
 			}
-			
 			this.loadCommand(idr[0], idr[1]);
 		},
 		
@@ -62,7 +58,6 @@ MT.extend("core.SocketManager")(
 				});
 				return;
 			}
-			
 			
 			console.log("unsupported command", command);
 		},
@@ -94,15 +89,11 @@ MT.extend("core.SocketManager")(
 		},
 		
 		openProject: function(pid, cb){
-			console.log("OPENED project");
 			var that = this;
-			
 			that.path = that.root + MT.core.FS.path.sep + pid;
-			
 			
 			this.fs.fs.exists(this.path, function(yes){
 				if(!yes){
-					console.log("non existent project");
 					that.a_newProject();
 					return;
 				}
@@ -129,13 +120,8 @@ MT.extend("core.SocketManager")(
 		
 		
 		createProject: function(){
-			console.log("create Project !!!!!!!!!!!!");
-			
-			
 			this.id = this.makeID(this.knownProjects.length);
 			this.path = this.root + MT.core.FS.path.sep + this.id;
-			
-			console.log("create Project !!!!!!!!!!!!", this.path);
 			
 			var that = this;
 			MT.core.FS.mkdir(this.path, function(){

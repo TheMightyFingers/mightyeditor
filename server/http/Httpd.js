@@ -34,13 +34,11 @@ MT(
 			
 			
 			
-			//if(req.url.indexOf(that.root)  != 0){
-			//	
-			//	console.log("HACKING: ", req.url);
-				
-			//	that.notFound(req, res);
-			//	return;
-			//}
+			if(req.url.indexOf(that.root)  != 0){
+				console.log("bad request:", req.url, that.root);
+				that.notFound(req, res);
+				return;
+			}
 			
 			that.serve(req, res);
 		});
@@ -104,7 +102,7 @@ MT(
 		},
 		
 		notFound: function(req, res, err){
-			console.log("not found!: " + req.url);
+			console.log("not found: " + req.url);
 			res.writeHead(404);
 			res.end('not found: ' + "\n" + req.url);
 		},

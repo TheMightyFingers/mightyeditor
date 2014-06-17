@@ -58,15 +58,17 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var that = this;
 			var ui = this.tools.ui;
 			
-			this.panel = new MT.ui.Panel(null, ui.events);
+			this.panel = ui.createPanel("Text");
 			
-			this.panel.style.height = ui.top.height+"px";
-			this.panel.style.top = ui.top.height+"px";
-			this.panel.style.left = ui.left.width+"px";
-			this.panel.style.right = ui.right.width+"px";
+			this.panel.style.height = this.project.panel.height+"px";
+			this.panel.style.top = this.tools.map.panel.content.bounds.top+"px";
+			this.panel.style.left = this.project.panel.width+"px";
 			
 			this.panel.addClass("text-tools");
-		
+			this.panel.removeHeader();
+			
+			this.panel.hide();
+			
 			var fonts = this.fonts;
 			
 			var fontList = [];
@@ -112,6 +114,15 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.panel.addButton(this.fontFace.button);
 			this.panel.addButton(this.fontSize.button);
+			
+			ui.on(ui.events.RESIZE, function(){
+				
+				that.panel.width = that.tools.map.panel.content.width;
+				that.panel.height = 30;
+				that.panel.style.top = that.tools.map.panel.content.bounds.top+"px";
+				
+			});
+			
 			
 			this.bold = this.panel.addButton("B", "text-bold", function(){
 				that.toggleBold();
@@ -619,6 +630,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.panel.hide();
 			
+			
+			
 			this.panel.show(document.body);
 			obj.dirty = true;
 		},
@@ -701,8 +714,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			
-			var x = e.offsetX + this.map.offsetXCam - this.map.ui.center.offsetLeft;
-			var y = e.offsetY + this.map.offsetYCam - this.map.ui.center.offsetTop;
+			var x = e.offsetX + this.map.offsetXCam - this.map.ox;
+			var y = e.offsetY + this.map.offsetYCam - this.map.oy;
 			var obj = this.map.pickObject(e.x - this.map.offsetXCam, e.y - this.map.offsetYCam);
 			
 			if(obj && obj.MT_OBJECT.type == MT.objectTypes.TEXT){

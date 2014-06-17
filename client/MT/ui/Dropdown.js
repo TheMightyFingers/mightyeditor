@@ -61,8 +61,9 @@ MT.extend("core.Emitter")(
 			
 			
 			list = this.list = new MT.ui.List(this.listSource, ui, true);
-			
 			list.addClass("ui-dropdown-list");
+			
+			list.panel.content.style.position = "relative";
 			
 			
 			
@@ -73,7 +74,6 @@ MT.extend("core.Emitter")(
 				
 				list.style.top = (b.top + b.height)+"px";
 				list.style.left = b.left+"px";
-				
 				
 				if(list.el.offsetTop + list.panel.content.el.offsetHeight > window.innerHeight){
 					list.style.top = (b.top - list.panel.content.el.offsetHeight)+"px";
@@ -144,7 +144,9 @@ MT.extend("core.Emitter")(
 		},
 		
 		set value(val){
-			this.button.text = val;
+			if(!this.list.isVisible){
+				this.button.text = val;
+			}
 			this.input.value = val;
 		},
 		

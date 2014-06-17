@@ -75,12 +75,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				var width = this.activeObject.wordWrapWidth * scale;
 				
 				if(y > my && y < my + off){
-					if(x > bounds.x + off && x < bounds.x + off*2 ){
+					if(x > bounds.x - off | 0 && x < bounds.x ){
 						document.body.style.cursor = "w-resize";
 						self.activeState = self.states.RW;
 						self.startMove.x = obj.x;
 					}
-					else if(x > bounds.x + width + off && x < bounds.x + width + off*3){
+					else if(x > bounds.x + width && x < bounds.x + width + off){
 						document.body.style.cursor = "e-resize";
 						self.activeState = self.states.RE;
 						self.startMove.x = obj.x;
@@ -95,7 +95,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					self.activeState = self.states.NONE;
 				}
 			}
-			
 		},
 		
 		resizeObject: function(obj, mouse){
@@ -196,12 +195,35 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 			
 		},
+		_lastMD: 0,
+		doubleClick: function(){
+			if(!this.map.activeObject){
+				return false;
+			}
+			var mt = this.map.activeObject.MT_OBJECT;
+			console.log("double", mt, this.map.objects);
+			
+			for(var i=0; i<this.map.objects.length; i++){
+				if(this.map.objects[i].MT_OBJECT.assetId == mt.assetId){
+					this.map.selector.add(this.map.objects[i]);
+				}
+			}
+			return true;
+			
+		},
 		mouseDown: function(e){
 			
 			if(this.activeState !== this.states.NONE){
 				return;
 			}
+			if(Date.now() - this._lastMD < 300){
+				
+				if(this.doubleClick()){
+					return;
+				}
+			}
 			
+			this._lastMD = Date.now();
 			
 			
 			console.log("mouseDown");

@@ -19,8 +19,6 @@ MT.extend("core.SocketManager")(
 			this.db.count++;
 			name = name.split("\\").join("/");
 			
-			console.log("assets" + name);
-			
 			if(name.substring(0, 1) !== "/"){
 				name = "/"+name;
 			}
@@ -31,23 +29,18 @@ MT.extend("core.SocketManager")(
 			item.name = iname;
 			item.id = this.db.count;
 			
-			console.log("newFolder", name, item);
-			
 			this.project.db.save();
 			this.a_sendFiles();
 		},
 		
 		a_moveFile: function(files){
-			console.log("files",files);
 			this.project.db.move("assets"+files.a, "assets"+files.b);
 			this.project.db.save();
 			this.a_sendFiles();
-			
 			this.project.export.phaser();
 		},
 		
 		a_updateData: function(data){
-			console.log("updateData");
 			this.db.contents = data;
 			this.project.db.save();
 			this.sendMyGroup("receiveFileList", this.db.contents);
@@ -58,15 +51,11 @@ MT.extend("core.SocketManager")(
 		a_delete: function(id){
 			this.delete(id);
 			this.a_sendFiles();
-			console.log(this.db.contents);
 			this.project.db.save();
-			
-			
 			this.project.export.phaser();
 		},
 		
 		delete: function(id, data){
-			console.log("delete", id);
 			var data = data || this.db.contents;
 			var item = null;
 			item = this._delete(id, data);
@@ -90,8 +79,6 @@ MT.extend("core.SocketManager")(
 			
 			for(var i=0; i<data.length; i++){
 				if(data[i].id == id){
-					console.log("FOUND:", id);
-					
 					return data.splice(i, 1)[0];
 				}
 				if(data[i].contents){

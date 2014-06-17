@@ -26,11 +26,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	{
 		initUI: function(ui){
 			this.ui = ui;
-			this.panel = ui.addPanel("Objects");
+			this.panel = ui.createPanel("Objects");
+			this.panel.setFree();
 			
 			var that = this;
 			
-			this.list = new MT.ui.List([
+			this.panel.addOptions([
 				{
 					label: "Add Group",
 					className: "",
@@ -61,25 +62,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			], ui, true);
 			
-			this.list.addClass("settings-list");
-			
-			this.options = new MT.ui.Button(null, "ui-options", ui.events, function(){
-				if(!that.list.isVisible){
-					that.list.show(that.panel.header.el);
-					that.options.addClass("selected");
-				}
-				else{
-					that.list.hide();
-				}
-			});
-			
-			this.list.on("hide", function(){
-				that.options.removeClass("selected");
-			});
-			
-			this.panel.header.addChild(this.options);
-			this.options.style.width = "33px";
-			this.options.style.left = "auto";
 			
 			this.tv = new MT.ui.TreeView([], {
 				root: this.project.path,
@@ -110,6 +92,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var that = this;
 			
 			var tools = this.project.plugins.tools;
+			
 			
 			tools.on("selectedObject", function(id){
 				var el = that.tv.getById(id);

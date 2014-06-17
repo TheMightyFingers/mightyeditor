@@ -82,7 +82,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			var that = this;
 			
-			this.project.ui.onResize(function(){
+			this.panel = ui.createPanel("Map editor");
+			ui.setCenter(this.panel);
+			
+			this.project.ui.on(ui.events.RESIZE,function(){
 				that.resize();
 			});
 			
@@ -110,9 +113,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			ui.events.on("mouseup", function(e){
-				//if(e.target == that.game.canvas){
-					that.handleMouseUp(e);
-				//}
+				that.handleMouseUp(e);
 			});
 			
 			
@@ -186,7 +187,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				preload: function(){
 					var c = game.canvas;
 					c.parentNode.removeChild(c);
-					that.project.ui.center.appendChild(c);
+					that.panel.content.el.appendChild(c);
+					c.style.position = "relative";
 					
 				},
 				create: function(){
@@ -224,10 +226,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return;
 			}
 			
-			this.game.width = this.project.ui.center.offsetWidth*this.zoom;
-			this.game.height = this.project.ui.center.offsetHeight*this.zoom;
+			this.game.width = this.panel.content.el.offsetWidth;
+			this.game.height = this.panel.content.el.offsetHeight;
 			
-			this.game.renderer.resize(this.game.width*this.zoom, this.game.height*this.zoom);
+			this.game.renderer.resize(this.game.width, this.game.height);
 			
 			this.setCameraBounds();
 			
@@ -879,27 +881,29 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		get offsetX(){
-			return this.ui.center.offsetLeft - this.game.camera.x;
+			
+			
+			return this.panel.content.calcOffsetX() - this.game.camera.x;
 		},
 		
 		get offsetY(){
-			return this.ui.center.offsetTop - this.game.camera.y;
+			return this.panel.content.calcOffsetY() - this.game.camera.y;
 		},
 		
 		get offsetXCam(){
-			return this.ui.center.offsetLeft + this.game.camera.x;
+			return this.panel.content.calcOffsetX() + this.game.camera.x;
 		},
 		
 		get offsetYCam(){
-			return this.ui.center.offsetTop + this.game.camera.y;
+			return this.panel.content.calcOffsetY() + this.game.camera.y;
 		},
 		
 		get ox(){
-			return this.ui.center.offsetTop;
+			return this.panel.content.calcOffsetX();
 		},
 		
 		get oy(){
-			return this.ui.center.offsetTop;
+			return this.panel.content.calcOffsetY();
 		},
 		/* input handling */
 		
@@ -1064,13 +1068,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		_followMouse: function(e, snapToGrid){
+			
 			if(!this.activeObject){
 				return;
 			}
 			
-			
-			this.activeObject.x = e.x - this.ui.center.offsetLeft + this.game.camera.x;
-			this.activeObject.y = e.y - this.ui.center.offsetTop + this.game.camera.y;
+			this.activeObject.x = e.x - this.ox + this.game.camera.x;
+			this.activeObject.y = e.y - this.oy + this.game.camera.y;
 			
 			if(e.ctrlKey || snapToGrid){
 				this.activeObject.x = Math.round(this.activeObject.x / this.settings.gridX) * this.settings.gridX;
@@ -1153,7 +1157,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		updateScene: function(obj){
 			this.updateSettings(obj);
 			
-			console.log("save settings");
+			//console.log("save settings");
 			
 			
 			this.sendDelayed("updateData", this.settings, 100);

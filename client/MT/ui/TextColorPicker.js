@@ -48,14 +48,15 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		
 		this.addClass("ui-text-colorpicker");
 		
-		this.width = 249;
-		this.height = 310;
+		this.width = 252;
+		this.height = 260;
 		
 		
 		this.colorPalette = new MT.ui.ColorPalette(function(color){
 			console.log("picked color", color, that.active);
 			that.change(color);
 		});
+		this.colorPalette.show();
 		this.colorPalette.on("hover", function(color){
 			that.colorInput.setValue(color, true);
 		});

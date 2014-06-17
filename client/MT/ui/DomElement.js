@@ -7,6 +7,10 @@ MT(
 		
 		this.index = 0;
 		this.isVisible = false;
+		
+		// this is confusing, but handy... 
+		// probably should rename to something else
+		// used only by treeView
 		this.children = [];
 	},
 	{
@@ -34,7 +38,11 @@ MT(
 		},
 
 		show: function(parent){
+			
 			if(parent == void(0)){
+				if(this.parent){
+					this._parent = this.parent.el;
+				}
 				if(!this._parent){
 					this._parent = document.body;
 				}
@@ -44,17 +52,14 @@ MT(
 			}
 			
 			this._parent.appendChild(this.el);
-			
-			this.resize();
-			
 			this.isVisible = true;
 		},
    
 		hide: function(){
-			if(this.el.parentNode !== this._parent || !this._parent){
+			if(!this.el.parentNode){
 				return;
 			}
-			this._parent.removeChild(this.el);
+			this.el.parentNode.removeChild(this.el);
 			this.isVisible = false;
 		},
 		
@@ -124,6 +129,8 @@ MT(
 			this._x = val;
 			this.style.left = val+"px";
 			this.width = this._width;
+			
+			//this.style.transform =  "translate(" + this.y + "px," + this.y + "px)";
 		},
    
 		get x(){
@@ -137,8 +144,8 @@ MT(
 		
 		setY: function(val){
 			this._y = val;
-			this.style.top = val+"px";
-			this.height = this._height;
+			this.style.top = val;
+			//this.style.transform =  "translate(" + this.x + "px," + this.y + "px)";
 		},
    
 		get y(){
@@ -147,7 +154,10 @@ MT(
    
 		_height: 0,
 		get height(){
-			return this._height;
+			if(this._height){
+				return this._height;
+			}
+			return this.el.offsetHeight;
 		},
 		set height(val){
 			this.setHeight(val);
@@ -166,7 +176,10 @@ MT(
    
 		_width: 0,
 		get width(){
-			return this._width;
+			if(this._width){
+				return this._width;
+			}
+			return this.el.offsetWidth;
 		},
 		set width(val){
 			this.setWidth(val);
@@ -235,6 +248,67 @@ MT(
    
 		getStyle: function(){
 			return window.getComputedStyle(this.el);
+		},
+   
+		sort: function(a,b){
+			return a.index - b.index;
+		},
+   
+		addChild: function(child, index){
+			child.index = index;
+			this.children.push(child);
+			this.children.sort(this.sort);
+			
+			if(index !== void(0)){
+				var ch = null;
+				for(var i=0; i<this.children.length; i++){
+					ch = this.children[i];
+					ch.index = i;
+					if(ch.el.parentNode){
+						ch.el.parentNode.removeChild(ch.el);
+					}
+					if(ch.isVisible){
+						this.el.appendChild(ch.el);
+					}
+				}
+			}
+			else{
+				if(child.isVisible){
+					this.el.appendChild(child.el);
+				}
+			}
+			child.parent = this;
+			return child;
+		},
+		
+		removeChild: function(child){
+			if(child.el.parentNode == this.el){
+				this.el.removeChild(child.el);
+			}
+			
+			for(var i=0; i<this.children.length; i++){
+				if(this.children[i] == child){
+					this.children.splice(i, 1);
+					return;
+				}
+			}
+		},
+   
+		_index: 0,
+		get index(){
+			return this._index;
+		},
+		
+		set index(idx){
+			this._index = idx;
+		},
+		
+		clear: function(){
+			this.el.innerHTML = "";
+		},
+   
+		get bounds(){
+			return this.el.getBoundingClientRect();
 		}
 		
 	}

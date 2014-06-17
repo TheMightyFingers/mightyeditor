@@ -8,16 +8,18 @@ MT.extend("core.BasicPlugin")(
 		this.project = project;
 	},
 	{
-		installUI: function(){
+		installUI: function(ui){
 			var that = this;
 			
-			this.panel = new MT.ui.Panel(null, this.ui.events);
-			this.ui.bottom.addPanel(this.panel);
+			this.panel = this.ui.createPanel("Map Manager");
 			
 			this.locateObject = this.panel.addButton("", "map-locate", function(){
 				that.locate();
 			});
-			
+			this.panel.isDockable = true;
+			this.panel.removeHeader();
+			this.panel.height = 25;
+			ui.dockToBottom(this.panel);
 			
 			this.map = this.project.plugins.mapeditor;
 			
@@ -80,11 +82,6 @@ MT.extend("core.BasicPlugin")(
 				
 			});
 			
-			ui.events.on("click", function(e){
-				var cam = that.map.game.camera;
-				console.log(e.offsetX / cam.scale.x + cam.x/cam.scale.x, e.offsetY / cam.scale.y + cam.y/cam.scale.y);
-			});
-			
 		},
 		
 		setZoom: function(val){
@@ -100,7 +97,6 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			if(x !== void(0)){
-				
 				var dx = x/cam.scale.x + cam.x/cam.scale.x;
 				var dy = y/cam.scale.y + cam.y/cam.scale.y;
 				
@@ -109,8 +105,6 @@ MT.extend("core.BasicPlugin")(
 					
 				var ddx = (ndx - dx)*val;
 				var ddy = (ndy - dy)*val;
-				
-				console.log(ddx, val);
 			}
 			
 			cam.scale.setTo(val, val);
@@ -124,8 +118,9 @@ MT.extend("core.BasicPlugin")(
 				this.locateXY(ox, oy);
 			}
 			
-			this.zoom.button.text = (val*100).toFixed(0);
-			
+			if(!this.zoom.list.isVisible){
+				this.zoom.button.text = (val*100).toFixed(0);
+			}
 		},
 		
 		

@@ -2,7 +2,6 @@ MT.extend("ui.DomElement")(
 	MT.ui.PanelHead = function(panel){
 		MT.ui.DomElement.call(this);
 		this.addClass("ui-panel-header");
-		this.height = 25;
 		this.panel = panel;
 		this.el.panel = panel;
 		this.tabs = [];
@@ -12,7 +11,7 @@ MT.extend("ui.DomElement")(
 			var tab = new MT.ui.DomElement("span");
 			
 			tab.addClass("panel-head-tab");
-			tab.el.innerHTML = title;
+			tab.el.innerHTML = "<span>"+title+"</span>";
 			tab.panel = this.panel;
 			tab.el.panel = this.panel;
 			

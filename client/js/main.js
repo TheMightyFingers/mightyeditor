@@ -1,7 +1,7 @@
 var MT = createClass("MT");
 
 MT.require("core.Project");
-MT.require("ui.UIController");
+MT.require("ui.Controller");
 MT.require("Socket");
 
 MT.onReady(main);
@@ -16,7 +16,7 @@ function main(){
 				window.location.reload();
 				return;
 			}
-			new MT.core.Project(new MT.ui.UIController(), socket);
+			new MT.core.Project(new MT.ui.Controller(), socket);
 		}
 		if(type == "close"){
 			document.body.innerHTML = "";

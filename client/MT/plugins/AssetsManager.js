@@ -15,11 +15,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	{
 		initUI: function(ui){
 			this.ui = ui;
-			this.panel = ui.addPanel("Assets");
+			this.panel = ui.createPanel("Assets");
+			this.panel.setFree();
+			
 			window.am = this;
 			var that = this;
 			
-			this.list = new MT.ui.List([
+			
+			this.panel.addOptions([
 				{
 					label: "new Folder",
 					className: "",
@@ -34,48 +37,28 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						that.deleteAssets();
 					}
 				}
+			]);
 			
-			], ui, true);
-			
-			
-			
-			this.list.addClass("settings-list");
-			
-			this.options = new MT.ui.Button(null, "ui-options", ui.events, function(){
-				if(!that.list.isVisible){
-					that.list.show(that.panel.header.el);
-					that.options.addClass("selected");
-				}
-				else{
-					that.list.hide();
-					that.options.removeClass("selected");
-				}
-			});
-			
-			this.list.on("hide", function(){
-				that.options.removeClass("selected");
-			});
-			
-			this.panel.header.addChild(this.options);
-			
-			this.options.style.left = "auto";
 			
 			ui.events.on("drop", function(e){
 				that.handleFiles(e);
 			});
 			
 			this.tv = new MT.ui.TreeView([], this.project.path);
-			this.tv.onChange = function(oldItem, newItem){
+			
+			this.tv.on("change", function(oldItem, newItem){
 				if(oldItem && newItem){
 					that.moveFile(oldItem, newItem);
 				}
-			};
+			});
 			
 			this.tv.sortable(this.ui.events);
+			this.panel.content.style.padding = 0;
+			
 			this.tv.tree.show(this.panel.content.el);
 			
 			
-			this.tv.onDrop(function(e, item, last){
+			this.tv.on("drop", function(e, item, last){
 				if(e.target == that.project.map.game.canvas){
 					that.project.om.addObject(e, item.data);
 					return false;
@@ -137,10 +120,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.project.plugins.objectsmanager.sync();
 				
 			};
+			
 			this.tv.on("click", click);
 			this.tv.on("select", select);
 			
 			var prev = new MT.ui.DomElement();
+			prev.setAbsolute();
 			prev.width = 200;
 			prev.height = 200;
 			prev.addClass("ui-preview");

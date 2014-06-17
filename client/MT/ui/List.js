@@ -2,23 +2,29 @@ MT.require("ui.Panel");
 MT.extend("core.Emitter").extend("ui.DomElement")(
 	MT.ui.List = function(list, ui, autohide){
 		MT.ui.DomElement.call(this);
+		this.setAbsolute();
+		this.addClass("ui-list");
+		
 		this.panel = new MT.ui.Panel("", ui.events);
 		this.panel.removeHeader();
+		
+		
 		this.panel.content.style.overflow = "initial";
-		this.panel.style.position = this.panel.content.style.position = "relative";
+		this.panel.style.position = "relative";
 		this.panel.show(this.el);
 		
+		
+		this.panel.content.style.position = "relative";
 		var that = this;
 		
-		ui.events.on("click", function(e){
-			for(var i=0; i<that.children.length; i++){
-				if(that.children[i].el == e.target){
+		ui.events.on("mouseup", function(e){
+			for(var i=0; i<that.panel.buttons.length; i++){
+				if(that.panel.buttons[i].el == e.target){
 					return;
 				}
 			}
 			if(that.isVisible && autohide){
 				that.hide();
-				that.emit("hide");
 			}
 		});
 		
@@ -26,7 +32,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		this.update(list);
 		
-		this.addChild(this.panel);
+		this.addChild(this.panel).show();
 	},
 	{
 		update: function(list){

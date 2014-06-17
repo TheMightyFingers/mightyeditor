@@ -44,10 +44,9 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			], ui, true);
 			
-			var b = this.button= ui.topPanel.addButton("Export", null, function(){
+			var b = this.button= this.project.panel.addButton("Export", null, function(e){
 				that.showList();
 			});
-			b.width = 80;
 			
 			
 			

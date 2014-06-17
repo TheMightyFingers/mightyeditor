@@ -1,14 +1,10 @@
 MT.require("core.FS");
 MT(
 	MT.core.JsonDB = function(file, onReady){
-		console.log("new DB access", file);
-		
 		this.dbfile = file;
 		this.fs = MT.core.FS;
 		
 		if(this.cache[file]){
-			
-			console.log("cache", file);
 			this.data = this.cache[file].data;
 			this.cache[file].connections++;
 			onReady(this);
@@ -36,13 +32,13 @@ MT(
 					}
 					catch(e){
 						console.error("FAILED TO PARSE DB", e);
+						this.fs.writeFile(Date.now()+".db-backup", contents);
 						that.data = {
 							contents: [],
 							count: 0
 						};
 					}
 				}
-				
 				
 				that.cache[that.dbfile] = {
 					data: that.data,
@@ -54,8 +50,6 @@ MT(
 			});
 			
 		},
-		//_saveInProgress: false,
-   
 		save: function(cb){
 			var that = this;
 			this.fs.writeFile(this.dbfile, JSON.stringify(this.data), function(){
@@ -66,9 +60,6 @@ MT(
 		},
 		
 		get: function(name){
-			
-			//console.log("DB::GET", name, this.data);
-			
 			var folders = name.split("/");
 			var fi = 0;
 			var ret = this.data;
@@ -106,8 +97,6 @@ MT(
 		
 		getParent: function(name){
 			
-			//console.log("DB::GET", name, this.data);
-			
 			var folders = name.split("/");
 			var fi = 0;
 			var ret = null;
@@ -125,7 +114,6 @@ MT(
 					}
 				}
 			}
-			console.error("CANNOT FIND PARENT FOR:",name);
 			return ret;
 			
 		},
@@ -135,11 +123,9 @@ MT(
 		move: function(a, b){
 			var adb = this.delete(a);
 			if(adb.length === 0){
-				console.log("DB::bad item", a);
-				return;
 				
+				return;
 			}
-			console.log("ADB", adb);
 			
 			var bdb = null;
 			
@@ -147,8 +133,6 @@ MT(
 			var name = pb.pop();
 			var parent = this.get(pb.join("/"));
 			
-			
-			console.log("PARRENT",parent);
 			adb[0].name = name;
 			
 			parent.contents.push(adb[0]);
@@ -163,8 +147,6 @@ MT(
 			
 			var data = this.data.contents;
 			var i=0;
-			
-			console.log("DB::delete", name, folders);
 			
 			while(true){
 				if(data[i].name == folders[fi]){
@@ -188,17 +170,14 @@ MT(
 		},
    
 		close: function(){
-			console.log("closing connections", this.cache[this.dbfile]);
 			this.save();
 			if(this.cache[this.dbfile]){
 				if(this.cache[this.dbfile].connections == 1){
 					this.cache[this.dbfile] = null;
-					console.log("DB closed");
 					return;
 				}
 				this.cache[this.dbfile].connections--;
 			}
-			
 		}
 	}
 );

@@ -3,13 +3,15 @@ MT.extend("core.Emitter")(
 		this._selected = [];
 	},
 	{
-		add: function(obj){
+		add: function(obj, silent){
 			if(!obj){
 				return;
 			}
 			if(!this.is(obj)){
 				this._selected.push(obj);
-				this.emit("select", obj);
+				if(!silent){
+					this.emit("select", obj);
+				}
 			}
 			
 			

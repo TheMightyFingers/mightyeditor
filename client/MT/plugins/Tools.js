@@ -29,9 +29,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		initUI: function(ui){
 			this.ui = ui;
-			this.panel = this.ui.addPanel("",this.ui.left);
+			this.panel = ui.createPanel("toolbox",this.ui.left);
 			this.panel.addClass("toolbox");
 			this.panel.removeHeader();
+			this.panel.width = 40;
+			this.panel.isResizeable = false;
+			this.panel.isDockable = true;
+			
+			
+			ui.dockToLeft(this.panel);
 			return;
 		},
 		

@@ -18,9 +18,10 @@ MT.extend("core.BasicPlugin")(
 			"AssetsManager",
 			"ObjectsManager",
 			"MapEditor",
+			"Tools",
 			"Settings",
 			"Export",
-			"Tools",
+			
 			"UndoRedo",
 			"DataLink",
 			"Analytics",
@@ -33,6 +34,8 @@ MT.extend("core.BasicPlugin")(
 			i = this.pluginsEnabled[id];
 			this.plugins[i.toLowerCase()] = new MT.plugins[i](this);
 		}
+		
+		
 		
 		
 		this.am = this.plugins.assetsmanager;
@@ -78,7 +81,6 @@ MT.extend("core.BasicPlugin")(
 			this.initPlugins();
 		},
 		
-		
 		newProject: function(){
 			this.send("newProject");
 		},
@@ -89,7 +91,17 @@ MT.extend("core.BasicPlugin")(
 		
 		initUI: function(ui){
 			this.ui = ui;
-			var that = this;
+			this.panel = ui.createPanel("Project");
+			this.panel.height = 29;
+			this.panel.removeHeader();
+			this.panel.isDockable = true;
+			this.panel.addClass("top");
+			
+			ui.dockToTop(this.panel);
+			
+			this.panel.addButton(null, "logo",  function(e){
+				console.log("clicked", e);
+			});
 			
 			
 			var that = this;
@@ -111,11 +123,15 @@ MT.extend("core.BasicPlugin")(
 				}
 			], ui, true);
 			
-			var b = this.button = ui.topPanel.addButton("Project", null, function(){
+			var b = this.button = this.panel.addButton("Project", null, function(e){
+				e.stopPropagation();
 				that.showList();
 			});
-			b.width = 80;
+			
+			
+			
 		},
+		
 		showList: function(){
 			this.list.width = 150;
 			this.list.y = this.button.el.offsetHeight;
@@ -123,6 +139,7 @@ MT.extend("core.BasicPlugin")(
 			this.list.el.style.bottom = "initial";
 			this.list.show(document.body);
 		},
+		
 		initPlugins: function(){
 			
 			for(var i in this.plugins){
@@ -142,13 +159,8 @@ MT.extend("core.BasicPlugin")(
 				}
 			}
 			
-			
-			//delay a little bit so browesr can parse css and align before we call start to calculate
-			var that = this;
-			window.setTimeout(function(){
-				that.ui.resize();
-			}, 100);
-			
+			//this.ui.update();
+			this.ui.loadLayout();
 		},
 		
 		initSocket: function(socket){
@@ -161,10 +173,6 @@ MT.extend("core.BasicPlugin")(
 			else{
 				this.newProject();
 			}
-			
-			
-			
-			
 		}
 	}
 );

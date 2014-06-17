@@ -12,7 +12,10 @@ MT(
 	},
 	{
 		initUI: function(ui){
-			this.panel = ui.addPanel("Settings");
+			this.panel = ui.createPanel("Settings");
+			this.panel.setFree();
+			
+			
 			var that = this;
 			ui.events.on("keyup", function(e){
 				if(e.which == MT.keys.esc){
@@ -26,14 +29,15 @@ MT(
 		installUI: function(){
 			
 			var that = this;
-
-			this.assetsManager = this.project.plugins.assetsmanager.tv.on(["click", "select"], function(obj){
+			
+			//return;
+			
+			this.assetsManager = this.project.plugins.assetsmanager.tv.on(["click"], function(obj){
 				that.handleAssets(obj);
 			});
 			
-			this.project.plugins.tools.on("selectedObject", function(objId){
-				var obj = that.project.plugins.objectsmanager.getById(objId);
-				that.handleObjects(obj);
+			this.project.plugins.tools.on("selectObject", function(obj){
+				that.handleObjects(obj.MT_OBJECT);
 			});
 			
 			var map = this.project.plugins.mapeditor;
@@ -51,6 +55,13 @@ MT(
 		},
    
 		clear: function(){
+			var stack = this.inputs[this.stack];
+			for(var i in stack){
+				stack[i].hide();
+			}
+			
+			return;
+			
 			this.panel.title = "Settings";
 			for(var i=0; i<this.inputs.length; i++){
 				this.inputs[i].remove();
@@ -60,6 +71,22 @@ MT(
 		},
 		
 		addInput: function(key, toControl, right, cb){
+			if(!this.inputs[this.stack]){
+				this.inputs[this.stack] = {};
+			}
+			
+			var stack = this.inputs[this.stack];
+			var k = key;
+			if(typeof key !== "string"){
+				k = key.key;
+			}
+			if(stack[k]){
+				stack[k].setObject(toControl);
+				stack[k].show();
+				return stack[k];
+			}
+			
+			
 			var p = this.panel.content;
 			
 			var fw = new MT.ui.Input(this.project.ui.events, key, toControl);
@@ -68,9 +95,8 @@ MT(
 			fw.style.position = "relative";
 			fw.style.height = "20px";
 			
-			this.inputs.push(fw);
+			stack[k] = fw;
 			
-			var that = this;
 			fw.on("change", cb);
 			return fw;
 		},
@@ -87,13 +113,13 @@ MT(
 			var that = this;
 			var cb = function(){
 				that.project.am.updateData();
-				//that.project.plugins.mapeditor.reloadObjects();
 			};
 			
 			if(!obj.key){
 				obj.key = obj.fullPath;
 			}
 			
+			this.stack = "assets";
 			this.addInput( {key: "key", type: "text"}, obj, false, cb);
 			this.addInput( {key: "frameWidth", step: 1}, obj, false, cb);
 			this.addInput( "frameHeight", obj, true, cb);
@@ -111,6 +137,9 @@ MT(
 				return;
 			}
 			this.clear();
+			
+			
+			this.stack = "objects";
 			this.panel.title = obj.name;
 			var that = this;
 			var cb = function(){
@@ -220,6 +249,7 @@ MT(
 		handleScene: function(obj){
 			this.clear();
 			
+			this.stack = "scene";
 			var that = this;
 			var cb = function(){
 				that.project.plugins.mapeditor.updateScene(obj);

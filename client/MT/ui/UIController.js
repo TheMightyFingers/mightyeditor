@@ -1,3 +1,6 @@
+/*
+ * deprecated - rewritten to ui.Controller
+ */
 "use strict";
 MT.require("ui.Holder");
 MT.require("ui.Panel");
@@ -26,6 +29,7 @@ MT(
 		});
 		logo.width = 70;
 		logo.height = 27;
+		
 		
 		var that = this;
 		this.events.on("resize", function(){

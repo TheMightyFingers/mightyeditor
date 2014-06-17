@@ -19,7 +19,7 @@ MT.extend("core.BasicPlugin")(
 			link += "/"+this.project.path+"/phaser/mt.data.js";
 			
 			
-			var b = ui.topPanel.addButton(link, "datalink", function(e){
+			var b = this.project.panel.addButton(link, "datalink", function(e){
 				console.log("DataLink", e);
 				that.selectElementContents(b.el);
 				e.preventDefault();
@@ -31,6 +31,8 @@ MT.extend("core.BasicPlugin")(
 			};
 			
 			b.style.left = "auto";
+			b.style.right = 0;
+			b.style.position = "absolute";
 		}
 		
 		

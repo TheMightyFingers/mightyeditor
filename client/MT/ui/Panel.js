@@ -3,7 +3,7 @@
 MT.require("ui.Button");
 MT.require("ui.PanelHead");
 MT.extend("core.Emitter").extend("ui.DomElement")(
-	MT.ui.Panel = function(title, events){
+	MT.ui.Panel = function(title, ui){
 		MT.ui.DomElement.call(this);
 		this.setAbsolute();
 		
@@ -13,18 +13,16 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.content = new MT.ui.DomElement();
 		this.appendChild(this.content);
 		
-		this.content.fitIn();
-		this.content.show(this.el);
 		
-		this.content.style.overflow = "auto";
+		this.content.show(this.el);
 		this.content.addClass("ui-panel-content");
+		
 		
 		if(title){
 			this.addHeader();
 		}
 		
 		this.title = title;
-		this.events = events;
 		
 		this.buttons = [];
 		this.savedBox = {
@@ -44,11 +42,59 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.right = null;
 		this.bottom = null;
 		this.left = null;
+		
+		this.ui = ui;
 	},
 	{
 		isResizeable: false,
 		isMovable: false,
-		isDockable: true,
+		isDockable: false,
+		isJoinable: false,
+		acceptsPanels: false,
+		isPickable: true,
+		
+		setFree: function(){
+			this.isMoveable = true;
+			this.isDockable = true;
+			this.isJoinable = true;
+			this.isDockable = true;
+			this.isResizeable = true;
+			this.acceptsPanels = true;
+		},
+		
+		addOptions: function(options){
+			this.options = {};
+			var list = this.options.list = new MT.ui.List(options, this.ui, true);
+			
+			list.addClass("settings-list");
+			list.fitIn();
+			
+			var that = this;
+			
+			var button = this.options.button = new MT.ui.Button(null, "ui-options", null, function(e){
+				e.stopPropagation();
+				
+				if(!list.isVisible){
+					list.show(that.header.el);
+					button.addClass("selected");
+				}
+				else{
+					list.hide();
+					button.removeClass("selected");
+				}
+			});
+			button.show(this.header.el);
+			
+			list.on("hide", function(){
+				button.removeClass("selected");
+			});
+			
+			this.header.addChild(this.options);
+			list.fitIn();
+			
+			return this.options;
+		},
+		
 		
 		activate: function(){
 			this.show();
@@ -56,9 +102,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 
 		setX: function(val){
 			
-			for(var i=0; i<this.joints.length; i++){
-				MT.ui.DomElement.setX.call(this.joints[i], val);
-			}
+			this.setClearX(val);
 			
 			if(this.top && this.top.x != val){
 				this.top.setX(val);
@@ -68,46 +112,15 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 		},
 		
-		setTopX: function(val){
-			if(this.top){
-				this.top.x = val;
-				this.top.setTopX(val);
-			}
-		},
-		
-		setBottomX: function(val){
-			if(this.bottom){
-				this.bottom.setX(val);
-				this.bottom.setBottomX(val);
-			}
-		},
-		
-		set y(val){
-			
-			var y = this.y;
-			this.setY(val);
-			
-			if(this.isDocked){
-				
-				if(this.top){
-					this.top.height += val - y;
-				}
-			}
-		},
-		
-		setY: function(val){
-			
+		setClearX: function(val){
 			for(var i=0; i<this.joints.length; i++){
-				MT.ui.DomElement.setY.call(this.joints[i], val);
+				MT.ui.DomElement.setX.call(this.joints[i], val);
 			}
-			
 		},
 		
 		setWidth: function(val){
 			
-			for(var i=0; i<this.joints.length; i++){
-				MT.ui.DomElement.setWidth.call(this.joints[i], val);
-			}
+			this.setClearWidth(val)
 			
 			if(this.top && this.top.width != val){
 				this.top.setWidth(val);
@@ -117,18 +130,51 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 		},
 		
-		/* TODO: automatically adjust top members */
+		setClearWidth: function(val){
+			for(var i=0; i<this.joints.length; i++){
+				MT.ui.DomElement.setWidth.call(this.joints[i], val);
+			}
+		},
 		
-		setHeight: function(val, adjustTop){
-			var old = this.height;
+		setY: function(val){
+			
+			if(this.top){
+				this.top.height += val - this.y;
+			}
+			
+			
+			this.setClearY(val);
+		},
+		
+		setClearY: function(val){
+			for(var i=0; i<this.joints.length; i++){
+				MT.ui.DomElement.setY.call(this.joints[i], val);
+			}
+		},
+		
+		setHeight: function(val){
+			
+			if(this.dockPosition == MT.TOP && this.bottom){
+				this.bottom.setClearY(this.bottom.y + (val - this.height));
+			}
+			
+			this.setClearHeight(val);
+			
+			if(this.left && this.left.height != val){
+				this.left.setWidth(val);
+			}
+			if(this.right && this.right.width != val){
+				this.right.setWidth(val);
+			}
+			
+			
+			
+		},
+		
+		setClearHeight: function(val){
 			for(var i=0; i<this.joints.length; i++){
 				MT.ui.DomElement.setHeight.call(this.joints[i], val);
 			}
-			
-			if(this.isDocked && this.top && adjustTop){
-				this.top.height += val - old;
-			}
-			
 		},
 		
 		show: function(parent){
@@ -143,6 +189,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.resize();
 			
 			this.header.showTabs();
+			this.content.fitIn();
+			this.content.y = this.header.el.offsetHeight;
 		},
 		
 		addClass: function(className){
@@ -188,7 +236,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		setLeftRight: function(key, value){
-			console.log("TODO");
+			//console.log("TODO");
 		},
 		
 		unjoin: function(){
@@ -225,19 +273,38 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		_dockPosition: MT.NONE,
 		set dockPosition(pos){
+			var topMost = this.getTopMost();
+			topMost.setDockPosition(pos);
+		},
+		
+		setDockPosition: function(pos, skip){
+			
 			this.removeClassAll("docked-left");
 			this.removeClassAll("docked-right");
 			this.removeClassAll("docked-top");
 			this.removeClassAll("docked-bottom");
+			this.removeClassAll("docked-left-bottom");
+			this.removeClassAll("docked-left-top");
+			this.removeClassAll("docked-center");
 			
 			this.setAll("_dockPosition", pos);
 			
-			if(pos == MT.LEFT){
-				this.addClassAll("docked-left");
-			}
-			
-			if(pos == MT.RIGHT){
-				this.addClassAll("docked-right");
+			if(pos == MT.LEFT || pos == MT.RIGHT){
+				if(!this.top){
+					this.addClassAll("docked-left-top");
+				}
+				
+				if(!this.bottom){
+					this.addClassAll("docked-left-bottom");
+				}
+				
+				if(pos == MT.LEFT){
+					this.addClassAll("docked-left");
+				}
+				
+				if(pos == MT.RIGHT){
+					this.addClassAll("docked-right");
+				}
 			}
 			
 			if(pos == MT.TOP){
@@ -246,6 +313,28 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(pos == MT.BOTTOM){
 				this.addClassAll("docked-bottom");
 			}
+			if(pos == MT.CENTER){
+				this.addClassAll("docked-center");
+			}
+			if(this.bottom){
+				this.bottom.setDockPosition(pos);
+			}
+		},
+		
+		getTopMost: function(){
+			var top = this;
+			while(top.top){
+				top = top.top;
+			}
+			return top;
+		},
+		
+		getBottomMost: function(){
+			var bottom = this;
+			while(bottom.bottom){
+				bottom = bottom.bottom;
+			}
+			return bottom;
 		},
 		
 		get dockPosition(){
@@ -265,14 +354,19 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		
-		updateAllSizes: function(){
-			this.setAll("width", this.width);
-			this.setAll("height", this.height);
-		},
-		
-		joinBottom: function(panel){
+		joinBottom: function(panel, noResize){
+			if(panel == this.bottom){
+				return;
+			}
 			console.log("join bottom");
 			
+			if(!noResize){
+				this.setClearHeight(this.height - panel.height);
+				panel.setClearWidth(this.width);
+				
+				panel.setClearX(this.x);
+				panel.setClearY(this.y + this.height);
+			}
 			
 			if(this.bottom){
 				this.bottom.setAll("top", panel);
@@ -285,42 +379,34 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			panel.setAll("top", panel.top);
 			panel.setAll("bottom", panel.bottom);
 			
-			
-			
-			this.height = this.height - panel.height;
-			panel.width = this.width;
-			
-			panel.x = this.x;
-			panel.y = this.y + this.height;
-			
-			this.updateAllSizes();
-			panel.updateAllSizes();
 		},
 		
-		joinTop: function(panel){
+		joinTop: function(panel, noResize){
+			if(panel == this.top){
+				return;
+			}
 			console.log("join top");
+			
+			if(!noResize){
+				this.setClearHeight(this.height - panel.height);
+				panel.setClearWidth(this.width);
+				
+				panel.setClearX(this.x);
+				
+				
+				var y = this.y + this.height;
+				
+				panel.setClearY(this.y);
+				this.setClearY(y);
+			}
+			
 			if(this.top){
 				this.top.setAll("bottom", panel);
 				panel.setAll("top", this.top);
 			}
 			
-			
-			this.height = this.height - panel.height;
-			panel.width = this.width;
-			
-			panel.x = this.x;
-			
-			
-			var y = this.y + this.height;
-			
-			panel.setY(this.y);
-			this.setY(y);
-			
 			this.setAll("top", panel);
 			panel.setAll("bottom", this);
-			
-			this.updateAllSizes();
-			panel.updateAllSizes();
 			
 		},
 		
@@ -363,24 +449,21 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		breakSideJoints: function(){
+			var pos = this.dockPosition;
 			if(this.bottom){
 				console.log("break bottom");
 				
 				if(this.top){
 					this.top.setAll("bottom", this.bottom);
-					this.bottom.setAll("top", this.top);
 				}
-				else{
-					this.bottom.setAll("top", null);
-				}
+				this.bottom.setAll("top", this.top);
 				
-				this.bottom.setAll("height", this.bottom.height + this.height);
 				
-				this.bottom.setY(this.y);
-				this.joints.forEach(function(){
-					console.log(this);
-					
-				});
+				this.bottom.setClearHeight(this.bottom.height + this.height);
+				this.bottom.setClearY(this.y);
+				
+				this.bottom.setDockPosition(pos);
+				
 			}
 			else if(this.top){
 				console.log("break top");
@@ -388,21 +471,18 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				
 				if(this.bottom){
 					this.bottom.setAll("top", this.top);
-					this.top.setAll("bottom", this.bottom);
 				}
-				else{
-					this.top.setAll("bottom", null);
-				}
+				this.top.setAll("bottom", this.bottom);
 				
-				
-				this.top.setAll("height", this.top.height + this.height);
+				this.top.setClearHeight(this.top.height + this.height);
 			}
 			
 			
-			
-			this.setAll("top",  null);
+			this.setAll("top", null);
 			this.setAll("bottom", null);
-			this.updateAllSizes();
+			this.setAll("left", null);
+			this.setAll("right", null);
+			
 		},
 		
 		_isDocked: false,
@@ -440,12 +520,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				}
 			}
 			
-			
-			
-			//var oldJoints = panel.joints;
-			
 			panel.setAll("joints", this.joints);
-			//panel.header.tabs = this.header.tabs;
 			
 			for(var i=0; i<this.joints.length; i++){
 				this.joints[i].header.tabs = this.header.tabs;
@@ -454,10 +529,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			this.setAll("top", this.top);
 			this.setAll("bottom", this.bottom);
-			
-			/*for(var i=0; i<oldJoints.length; i++){
-				this.addJoint(oldJoints[i]);
-			}*/
 		},
 		
 		removeJoint: function(panel){
@@ -484,7 +555,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		saveBox: function(shallow){
 			if(this.isDocked){
 				console.warn("saving docked panel");
-				debugger;
+				return;
 			}
 			
 			this.savedBox.width = this.width;
@@ -513,8 +584,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		addHeader: function(){
 			this.appendChild(this.header);
 			this.header.show(this.el);
-			this.content.y = this.header.height;
 		},
+		
 		removeHeader: function(){
 			this.header.hide();
 			this.content.y = 0;
@@ -531,8 +602,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 			this.content.addChild(b);
 			this.buttons.push(b);
+			b.show();
 			
-			this.alignButtons();
 			return b;
 		},
 		
@@ -558,7 +629,18 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			this.content.addChild(b);
 			return b;
-		}
+		},
+		
+		getJointNames: function(){
+			var names = [];
+			for(var i=0; i<this.joints.length; i++){
+				if(this.joints[i] == this){
+					continue;
+				}
+				names.push(this.joints[i].name);
+			}
+			
+		},
 		
 	}
 );

@@ -9,7 +9,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		MT.ui.DomElement.call(this);
 		MT.core.Emitter.call(this);
 		
-		this.obj = obj;
+		this.object = obj;
 		this.key = "";
 		this.step = 1;
 		
@@ -40,6 +40,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.addClass("ui-input");
 		
 		this.label = new MT.ui.DomElement();
+		this.label.setAbsolute();
+		
 		this.addChild(this.label).show();
 		
 		this.label.el.innerHTML = this.key;
@@ -48,9 +50,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		
 		this.value = new MT.ui.DomElement();
+		this.value.setAbsolute();
+		
 		this.addChild(this.value).show();
 		
-		this.setValue(obj[this.key], true);
+		this.setValue(this.object[this.key], true);
 		
 		this.value.style.bottom = "initial";
 		this.value.style.left = "initial";
@@ -87,7 +91,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			input.style.top = ( that.value.calcOffsetY(that.value.el.offsetParent) - 9 ) + "px";
 			input.style.left = ( that.value.calcOffsetX(that.value.el.offsetParent) - w + that.value.el.offsetWidth - 25) + "px";
-			input.value = that.obj[that.key];
+			input.value = that.object[that.key];
 			
 			input.isVisible = true;
 			input.width = that.value.offsetWidth + "px";
@@ -118,7 +122,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			var w = e.which;
 			
 			if(w == MT.keys.esc){
-				input.value = obj[that.key];
+				input.value = that.object[that.key];
 				input.blur();
 			}
 			
@@ -136,7 +140,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				if(e.target == that.value.el){
 					
 					var d = ( (e.wheelDelta || -e.deltaY) > 0 ? 1 : -1);
-					var val = that.obj[that.key] + d*that.step;
+					var val = that.object[that.key] + d*that.step;
 					that.setValue(val);
 				}
 				
@@ -150,7 +154,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				if(!down){
 					return;
 				}
-				var val = that.obj[that.key] - events.mouse.my*that.step;
+				var val = that.object[that.key] - events.mouse.my*that.step;
 				that.setValue(val, false);
 			});
 		}
@@ -167,7 +171,13 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		},
 		
 		update: function(){
-			this.setValue(this.obj[this.key], true);
+			this.setValue(this.object[this.key], true);
+		},
+		
+		setObject: function(obj){
+			
+			this.object = obj;
+			this.update();
 		},
 		
 		setValue: function(val, silent){
@@ -179,9 +189,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				val = this.max;
 			}
 			
-			var oldValue = this.obj[this.key];
+			var oldValue = this.object[this.key];
 			
-			this.obj[this.key] = val;
+			this.object[this.key] = val;
 			
 			if(typeof val == "number"){
 				this.value.el.innerHTML = parseFloat(val.toFixed(8));

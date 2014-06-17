@@ -7,7 +7,7 @@ MT(
 		initUI: function(ui){
 			var that = this;
 			this.ui = ui;
-			this.button = this.tools.panel.addButtonV("", "tool."+this.name, function(){
+			this.button = this.tools.panel.addButton("", "tool."+this.name, function(){
 				that.tools.setTool(that);
 			});
 			

@@ -68,9 +68,8 @@
 			var that = this;
 			fs.stat(source, function(err, stats){
 				if(err){
-					console.log("copy", source, target);
-					console.log("--> error -> FS:copy", err);
-					
+					console.log("FS::copy", source + "->" + target);
+					console.log(err);
 					console.trace();
 					cb();
 					return;
@@ -135,7 +134,7 @@
 
 			function done(err) {
 				if(err){
-					console.log("FS.copy error ---> ", err, source + " -> " + target);
+					console.log("FS::copy error ---> ", err, source + " -> " + target);
 					console.trace();
 					return;
 				}
@@ -191,7 +190,6 @@
 							});
 						}
 						else{
-							console.log("removing", dir, d);
 							fs.rmdir(dir + path.sep + d.name, function(){
 								that._rmdir(dir, cb);
 							});
@@ -199,7 +197,6 @@
 						break;
 					}
 					//file
-					
 					fs.unlink(dir + path.sep + d.name, function(){
 						that._rmdir(dir, cb);
 					});
@@ -215,12 +212,6 @@
 		},
 		
 		_readdir: function(dir, recurse, buffer, cb){
-			/*var process = function(e){
-				cb(e);
-			};*/
-			
-			
-			
 			fs.readdir(dir, function(err, files){
 				if(err){
 					console.log("FS:EROR",err);
@@ -273,7 +264,6 @@
  
 		processQueue: function(){
 			if(this.processing){
-				//console.log("prcessing: todo",this.queue.length); 
 				return;
 			}
 			
@@ -286,7 +276,6 @@
 			}
 			else{
 				this.processing = false;
-				//console.log("processed all queue");
 			}
 		},
 		

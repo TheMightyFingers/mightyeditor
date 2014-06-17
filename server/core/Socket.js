@@ -52,7 +52,6 @@ MT(
 			if(this.inGroup(group)){
 				return;
 			}
-			console.log("joined group", group);
 			this.groups.push(group);
 		},
 		

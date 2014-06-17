@@ -38,10 +38,10 @@ MT.extend("core.BasicPlugin")(
 			
 			], ui, true);
 			
-			var b = ui.topPanel.addButton("Help and Support", null, function(){
+			var b = this.project.panel.addButton("Help and Support", null, function(e){
+				e.stopPropagation();
 				that.list.show(document.body);
 			});
-			b.width = 120;
 			
 			
 			this.list.width = 270;

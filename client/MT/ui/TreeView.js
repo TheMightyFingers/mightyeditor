@@ -1,3 +1,7 @@
+"use strict";
+/*
+ * Needs to be reviewed - too many hacks already
+ */
 MT.require("ui.DomElement");
 MT.extend("core.Emitter")(
 	MT.ui.TreeView = function(data, options){
@@ -52,22 +56,47 @@ MT.extend("core.Emitter")(
 		},
 		
 		getData: function(parent, data){
+			
+			return this.data;
+			
 			parent = parent || this.tree;
 			var c = null;
 			var data = [];
-			for(var i=0; i<parent.children.length; i++){
-				c = parent.children[i];
-				if(c.data.contents){
-					c.data.contents = this.getData(c);
+			for(var i=0; i<parent.el.children.length; i++){
+				c = parent.el.children[i];
+				if(!c.ctrl || !c.ctrl.data){
+					continue;
+				}
+				if(c.ctrl.data.contents){
+					c.ctrl.data.contents = this.getData(c.ctrl);
 				}
 				data.push(c.data);
 			}
 			return data;
 		},
 		
+		/*getData: function(parent, data){
+			
+			//return this.data;
+			
+			parent = parent || this.tree;
+			var c = null;
+			var data = [];
+			for(var i=0; i<parent.el.children.length; i++){
+				c = parent.el.children[i];
+				if(!c.ctrl || !c.ctrl.data || c.ctrl.data.skip){
+					continue;
+				}
+				if(c.ctrl.data.contents){
+					c.ctrl.data.contents = this.getData(c.ctrl);
+				}
+				data.push(c.ctrl.data);
+			}
+			return data;
+		},*/
+		
 		update: function(data){
 			this.tree.el.innerHTML = "";
-			
 			this.createObject(data, this.tree);
 		},
    
@@ -99,6 +128,8 @@ MT.extend("core.Emitter")(
 						}
 						item.parent.removeChild(item);
 						parent.addChild(item).show();
+						
+						
 						if(!parent.visible){
 							item.hide();
 						}
@@ -153,11 +184,11 @@ MT.extend("core.Emitter")(
 			
 			head.label = label;
 			
-			head.addChild(label);
+			head.addChild(label).show();
 			
 			label.el.innerHTML = data.name;
 			head.style.position = "relative";
-			label.addChild("ui-treeview-label");
+			label.addClass("ui-treeview-label");
 			
 			label.style.position = "relative";
 			label.style.paddingLeft = "30px";
@@ -178,6 +209,10 @@ MT.extend("core.Emitter")(
 			}
 			
 			parent.addChild(el, el.index);
+			if(!parent.data || !parent.data.isClosed){
+				el.show();
+			}
+			
 			
 			if(type == "folder"){
 				head.addClass("ui-treeview-folder-head");
@@ -188,8 +223,8 @@ MT.extend("core.Emitter")(
 				else{
 					el.addClass("open");
 				}
+				
 				head.el.onclick = function(e){
-					
 					if(e.target != el.head.el && e.target != el.head.label.el){
 						return;
 					}
@@ -209,8 +244,9 @@ MT.extend("core.Emitter")(
 						for(var i=0; i<el.children.length; i++){
 							el.children[i].show();
 						}
+						
 						el.data.isClosed = false;
-						that.emit("open", el);
+						//that.emit("open", el);
 					}
 					else{
 						el.data.isClosed = true;
@@ -219,12 +255,11 @@ MT.extend("core.Emitter")(
 						for(var i=0; i<el.children.length; i++){
 							el.children[i].hide();
 						}
-						that.emit("close", el);
+						
+						//that.emit("close", el);
 					}
-					
-					
 				};
-				
+				el.show();
 				el.isFolder = true;
 			}
 			
@@ -254,6 +289,7 @@ MT.extend("core.Emitter")(
 					el.head = input;
 					
 				}
+				
 			}
 			
 			
@@ -276,7 +312,10 @@ MT.extend("core.Emitter")(
 			}
 			
 			
-			el.el.ondblclick = function(e){
+			head.el.ondblclick = function(e){
+				if(el.isFolder && e.offsetX < 30){
+					return;
+				}
 				console.log("double click", el.data);
 				that.enableRename(el,e);
 				e.stopPropagation();
@@ -289,19 +328,11 @@ MT.extend("core.Emitter")(
 			el.el.onmouseout = function(e){
 				that.emit("mouseout", e, el);
 			};
-			el.show(parent.el);
-			
 			this.items.push(el);
-			if(parent.hasClass("close")){
-				el.hide();
-			}
 			el.needRemove = false;
 			return el;
 		},
    
-		onChange: null,
-		
-		
 		addShowHide: function(){
 			for(var i=0; i<this.items.length; i++){
 				this._mkShowHide(this.items[i]);
@@ -372,14 +403,17 @@ MT.extend("core.Emitter")(
 			return b;
 		},
 		
+		
+		
+		
 		sortable: function(ev){
 			
-			var al = this.addItem({name: "xxx"}, this.tree, 0, true);
+			var dragHelper = this.addItem({name: "xxx", skip: true}, this.tree, 0, true);
 			
-			al.style.position = "absolute";
-			al.style.pointerEvents = "none";
-			al.style.bottom = "auto";
-			al.style.opacity = 0.6;
+			dragHelper.style.position = "absolute";
+			dragHelper.style.pointerEvents = "none";
+			dragHelper.style.bottom = "auto";
+			dragHelper.style.opacity = 0.6;
 			
 			var dd = document.createElement("div");
 			dd.style.position = "absolute";
@@ -391,10 +425,10 @@ MT.extend("core.Emitter")(
 			dd.style.display = "none";
 			
 			
-			var p = al.el.parentNode;
-			al.addClass("active ui-wrap");
-			p.appendChild(al.el);
-			al.style.display = "none";
+			var p = dragHelper.el.parentNode;
+			dragHelper.addClass("active ui-wrap");
+			p.appendChild(dragHelper.el);
+			dragHelper.style.display = "none";
 			
 			p.appendChild(dd);
 			
@@ -410,8 +444,6 @@ MT.extend("core.Emitter")(
 			
 			var scrollTop = 0;
 			
-
-			
 			var dragged = false;
 			var last = null;
 			var bottom = false;
@@ -424,6 +456,7 @@ MT.extend("core.Emitter")(
 				}
 				
 				item.parent.removeChild(item);
+				
 				if(inFolder){
 					last.addChild(item);
 					if(!last.visible){
@@ -432,10 +465,10 @@ MT.extend("core.Emitter")(
 				}
 				else{
 					if(bottom){
-						last.parent.addChild(item, last.index + 1);
+						last.parent.addChild(item, last.index );
 					}
 					else{
-						last.parent.addChild(item, last.index);
+						last.parent.addChild(item, last.index - 1);
 					}
 					if(item.parent.hasClass("close")){
 						item.hide();
@@ -445,6 +478,7 @@ MT.extend("core.Emitter")(
 			};
 			
 			ev.on("click", function(e){
+				
 				if(!e.target.ctrl){
 					return;
 				}
@@ -456,23 +490,7 @@ MT.extend("core.Emitter")(
 				if(that.dragged){
 					return;
 				}
-				var item = null;
-				
-				/*if(e.target.ctrl && e.target.ctrl.hasClass("show-hide")){
-					item = e.target.parentNode.parentNode;
-					console.log(item.ctrl.data);
-					if(e.target.ctrl.hasClass("hidden")){
-						e.target.ctrl.removeClass("hidden")
-					}
-					else{
-						e.target.ctrl.addClass("hidden")
-					}
-					that.emit("show", item.ctrl);
-					return;
-				}*/
-				
-				item = that.getOwnItem(e.target.parentNode.parentNode);
-				
+				var item = that.getOwnItem(e.target.parentNode.parentNode);
 				if(item){
 					that.emit("click", item.data, item);
 				}
@@ -480,20 +498,22 @@ MT.extend("core.Emitter")(
 			
 			ev.on("mousedown", function(e){
 				item = that.getOwnItem(e.target.parentNode.parentNode);
-				if( item ){
-					mdown = true;
-					scrollTop = that.tree.el.parentNode.scrollTop;
-					var y = (item.calcOffsetY(that.tree.el));
-					al.el.style.top = y + "px";
-					my = y - ev.mouse.y;
-					
+				if( !item ){
+					return;
 				}
+				mdown = true;
+				scrollTop = that.tree.el.parentNode.scrollTop;
+				
+				var y = (item.calcOffsetY(that.tree.el));
+				dragHelper.y = y;
+				my = y - ev.mouse.y;
 			});
 			
 			ev.on("mouseup", function(e){
 				
-				al.style.display = "none";
+				dragHelper.style.display = "none";
 				dd.style.display = "none";
+				dragHelper.y = 0;
 				
 				if(!mdown){
 					return;
@@ -518,7 +538,7 @@ MT.extend("core.Emitter")(
 					last = null;
 					return;
 				}
-				
+// 				
 				dropItem(item, last);
 				if(item.hasClass("selected")){
 					for(var i=0; i<that.items.length; i++){
@@ -541,25 +561,25 @@ MT.extend("core.Emitter")(
 					return;
 				}
 				
-				var dy = my - ev.mouse.y ;
+				var dy = my - ev.mouse.y;
+				var p1 = dragHelper.y + ev.mouse.my - (scrollTop - that.tree.el.parentNode.scrollTop);
 				
-				var p1 = parseInt(al.style.top) + ev.mouse.my - (scrollTop - that.tree.el.parentNode.scrollTop);
 				scrollTop = that.tree.el.parentNode.scrollTop;
 				var p2 = 0;
 				var activeItem = that.getOwnItem(e.target.parentNode.parentNode);
 				
-				al.style.top = p1 + "px";
+				dragHelper.y = p1;
 				
 				if(!activeItem || !item  || activeItem == item || activeItem.hasParent(item) ){
 					return;
 				}
 				
 				
-				al.style.display = "block";
-				al.head.el.innerHTML = item.data.name;
+				dragHelper.style.display = "block";
+				dragHelper.head.el.innerHTML = item.data.name;
 				
 				p2 = activeItem.calcOffsetY(dd.parentNode);
-				if(Math.abs(p1-p2) > al.el.offsetHeight){
+				if(Math.abs(p1-p2) > dragHelper.el.offsetHeight){
 					return;
 				}
 				
@@ -572,17 +592,17 @@ MT.extend("core.Emitter")(
 				dd.style.height = "4px";
 				
 				if(p2 < p1){
-					p2 += al.el.offsetHeight;
+					p2 += dragHelper.el.offsetHeight;
 					bottom = true;
 				}
 				
 				if(Math.abs(p2-p1) < 16 && activeItem.isFolder){
-					dd.style.height = al.el.offsetHeight+"px";
+					dd.style.height = dragHelper.el.offsetHeight+"px";
 					dd.style.top = activeItem.el.offsetTop+"px";
 					inFolder = true;
 				}
 				else{
-					dd.style.top = (p2 - 2) +"px";
+					dd.style.top = (p2 - 2)+"px";
 				}
 				
 				last = activeItem;
@@ -591,7 +611,6 @@ MT.extend("core.Emitter")(
 			
 		},
 		
-   
 		enableRename: function(el, ev){
 			var that = this;
 			if(!this.input){
@@ -685,10 +704,12 @@ MT.extend("core.Emitter")(
 		},
 		
 		merge: function(data, oldData){
+			console.log(data);
 			
+			this.data = data;
 			var p = this.tree.el.parentNode;
 			
-			p.removeChild(this.tree.el);
+			//p.removeChild(this.tree.el);
 			
 			this.updateFullPath(data);
 			
@@ -709,7 +730,7 @@ MT.extend("core.Emitter")(
 				}
 			}
 			
-			p.appendChild(this.tree.el);
+			//p.appendChild(this.tree.el);
 			
 		},
    
@@ -742,7 +763,7 @@ MT.extend("core.Emitter")(
 			}
 			
 			if(shouldNotify){
-				this.onChange(null, null);
+				this.emit("change", null, null);
 			}
 			
 		},

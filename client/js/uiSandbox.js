@@ -12,9 +12,7 @@ function createPanel(name, content, width, height, x, y){
 	y = y || 0;
 	
 	var panel = p[name] = ui.createPanel("Panel "+ name, width, height);
-	ui.setMoveable(panel);
-	ui.setDockable(panel);
-	ui.setResizeable(panel);
+	panel.setFree();
 	
 	panel.x = x;
 	panel.y = y;
@@ -25,7 +23,7 @@ function createPanel(name, content, width, height, x, y){
 function main(){
 	var ui = window.ui = new MT.ui.Controller();
 	
-	for(var i=0; i<4; i++){
+	for(var i=0; i<5; i++){
 		createPanel("p"+i, "this is panel number: "+i, 
 					250, 
 					350, 
@@ -34,7 +32,8 @@ function main(){
 		);
 	}
 	
-	ui.joinPanels(p.p0, p.p1);
+	//ui.joinPanels(p.p0, p.p1);
 	ui.joinPanels(p.p2, p.p3);
+	ui.joinPanels(p.p2, p.p4);
 	
 }
