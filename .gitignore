@@ -1,2 +1,5 @@
 server/node_modules
 client/data
+.kateproject
+.directory
+.kateproject.d
