@@ -1,0 +1,4 @@
+#!/bin/bash
+export RELEASE=1
+cd server
+node Server.js

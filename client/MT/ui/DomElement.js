@@ -62,7 +62,11 @@ MT(
 			this.el.parentNode.removeChild(this.el);
 			this.isVisible = false;
 		},
-		
+   
+		hideToTop: function(){
+			this.y = -this.height;
+		},
+   
 		addClass: function(cls){
 			var cl = cls.split(".");
 			if(cl.length > 1){

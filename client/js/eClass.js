@@ -33,17 +33,26 @@
 	var Loader;
 	
 	if(isNodejs){
+		
 		var fs = require("fs");
 		var path = require("path");
 		
-		Loader = function(className, accumulator){};
+		Loader = function(className, accumulator){
+			this.loading = 0;
+			this.acc = new Accumulator();
+		};
 		
 		Loader.prototype = {
 			getScript: function(script, cb){
+				
 				require(path.resolve(script));
 				if(cb){
 					cb();
 				}
+				this.onReady();
+			},
+			onReady: function(cb){
+				this.acc.push(cb);
 			}
 		};
 	}
@@ -51,8 +60,6 @@
 		var isDomReady = false;
 		
 		window.addEventListener('DOMContentLoaded', function(){
-			
-			console.log("dom Ready");
 			isDomReady = true;
 		}, false);
 		
@@ -82,15 +89,10 @@
 			},
 			
 			_onload: function(script){
-				//this.loadings--;
-				//console.log("loadings", this.loadings, script);
-				
 				this.onScriptsLoaded();
 			},
 			
 			getScript: function(url, cb){
-				
-				
 				if(this.cache[url] && this.cache[url].status === 2){
 					this.loadings -= this.cache[url].cbs.length;
 					
@@ -98,8 +100,6 @@
 					this._onload(this);
 					return;
 				}
-				
-				
 				
 				if(this.cache[url]){
 					if(typeof cb === "function"){
@@ -188,6 +188,13 @@
 			basePath = className;
 		}
 		
+		if(classScope[className]){
+			
+			console.warn("Not redefined");
+			return classScope[className];
+		}
+		
+		
 		var final = function(){
 			console.log("final class");
 		};
@@ -195,17 +202,6 @@
 		var resolvedBasePath = (basePath === void(0) ? "src" : basePath);
 		
 		var accumulator = new Accumulator();
-		
-		var checkRequire = function(parent, scope){
-			if(typeof parent == 'function'){
-				return true;
-			}
-			var pfn = parent.split(".").pop();
-			console.log(scope[pfn]);
-			
-			
-			return !!scope[pfn];
-		};
 		
 		var define = function(name){
 			if(scope[name]){
@@ -229,7 +225,21 @@
 		}
 		
 		var require = function(include, path, cb){
-			
+			if(isNodejs){
+				requireGo(include, path, cb);
+				return;
+			}
+			Class.loader.loadings++;
+			setTimeout(function(){
+				Class.loader.loadings--;
+				requireGo(include, path, function(){
+					if(cb){cb();}
+					Class.loader.onScriptsLoaded();
+				});
+			}, 0);
+		};
+		
+		var requireGo = function(include, path, cb){
 			var namespaces = include.split(".");
 			var baseinc = namespaces .pop();
 			var ns = Class;
@@ -246,16 +256,13 @@
 				nsinc = namespaces.length > 0 ? namespaces.join("/")+"/" : "";
 				path = path + Class.basePath + "/" + nsinc + baseinc + ".js";
 				
-				Class.loader.getScript(path, cb);
-				return false;
+				Class.loader.getScript(path, cb, include);
+				return;
 			}
-			else{
-				if(cb){
-					cb();
-				}
-			}
-			return true;
 			
+			if(cb){
+				cb();
+			}
 		};
 		
 		var xx = function(fn, parentClass){
@@ -345,7 +352,6 @@
 					
 					xx(fn, parentClass);
 				};
-				
 				require(parent, null, onrequire);
 				return fn;
 			};
@@ -374,8 +380,6 @@
 				fn.prototype = proto;
 			}
 			addBindings(fn);
-			
-			//accumulator.release();
 			
 			fn.__extended = false;
 			if(!buffer.length){

@@ -13,7 +13,6 @@ MT(
 		
 		
 		this.readData(onReady);
-		
 	},
 	{
 		cache: {},
@@ -32,7 +31,7 @@ MT(
 					}
 					catch(e){
 						console.error("FAILED TO PARSE DB", e);
-						this.fs.writeFile(Date.now()+".db-backup", contents);
+						this.fs.writeFile(this.fs.path.dirname(this.dbfile) + this.fs.path.sep + Date.now()+".db-backup", contents);
 						that.data = {
 							contents: [],
 							count: 0

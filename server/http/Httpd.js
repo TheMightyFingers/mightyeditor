@@ -1,25 +1,31 @@
 "use strict";
 
 MT(
-	MT.http.Httpd = function(root, port, host){
-		this.root = root;
+	MT.http.Httpd = function(config){
+		this.root = config.root;
+		console.log(config);
 		
 		this.http = require("http");
 		this.path = require("path");
 		this.fs = require("fs");
+		
 		this.config = require("./config");
+		
 		this.mimes = this.config.mimes;
 		this.cors = this.config.cors;
 		
-		var that = this;
+		
 		
 		this.cache = {};
 		
 		this.server = this.http.createServer();
 		
+		
+		this.config.index = config.index;
+		
+		
 		var nRoot = this.path.normalize(this.root);
-		
-		
+		var that = this;
 		this.server.on("request", function(req, res) {
 			
 			if(req.method != "GET"){
@@ -43,11 +49,7 @@ MT(
 			that.serve(req, res);
 		});
 		
-		if(port != void(0)){
-			this.listen(port, host);
-		}
-		
-		this.forbidden = ["server"];
+		this.listen(config.port, config.host);
 	},
 	{
 		openSocket: function(handler){
@@ -86,7 +88,7 @@ MT(
 				}
 				
 				if(stats.isDirectory()){
-					req.url += "index.html";
+					req.url += that.config.index;
 					that.serve(req, res);
 					return;
 				}

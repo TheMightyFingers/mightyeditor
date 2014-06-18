@@ -1,0 +1,10 @@
+#!/bin/bash
+toolsPath=`pwd`
+
+cd ../client
+export NODE_PATH=`pwd`/../server/node_modules
+
+
+echo $NODE_PATH
+
+node $toolsPath/build.js ./js/main.js

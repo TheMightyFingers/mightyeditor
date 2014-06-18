@@ -6,11 +6,13 @@ MT.require("http.Httpd");
 MT.require("core.Socket");
 MT.require("core.Project");
 
-var config = require("./config.js").config;
+
+var config = (process.env.RELEASE ? require("./config.js").config : require("./config-dev.js").config);
 
 var maintenance = false;
-var server = new MT.http.Httpd("../client", config.port, config.host);
-var handler = server.openSocket(function(socket){
+var server = new MT.http.Httpd(config);
+
+server.openSocket(function(socket){
 	var s = new MT.core.Socket(socket);
 	
 	if(maintenance){
@@ -20,7 +22,8 @@ var handler = server.openSocket(function(socket){
 		});
 		return;
 	}
-	var project = new MT.core.Project(s);
+	
+	new MT.core.Project(s);
 });
 
 var tm = config.shutdownTimeout;

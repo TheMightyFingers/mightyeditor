@@ -15,9 +15,6 @@
  
 		_writeFile: function(file, contents, cb){
 			fs.writeFile(file, contents, function(e){
-				if(e){
-					console.log("FS::writeFile Error",e);
-				}
 				cb(e);
 			});
 			
@@ -29,10 +26,6 @@
  
 		_readFile: function(file, cb){
 			fs.readFile(file, function(e, contents){
-				if(e){
-					console.log("FS::Readfile", e);
-				}
-				
 				cb(e, contents);
 				that.processQueue();
 			});
@@ -68,10 +61,7 @@
 			var that = this;
 			fs.stat(source, function(err, stats){
 				if(err){
-					console.log("FS::copy", source + "->" + target);
-					console.log(err);
-					console.trace();
-					cb();
+					cb(err);
 					return;
 				}
 				

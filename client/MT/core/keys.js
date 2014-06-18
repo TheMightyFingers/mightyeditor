@@ -1,4 +1,4 @@
-MT.keys = {
+MT.keys = MT.core.keys = {
 	esc: 27,
 	enter: 13,
 	top: 47,
