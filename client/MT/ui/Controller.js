@@ -244,28 +244,28 @@ MT.extend("core.Emitter")(
 			var needResize = false;
 			
 			if(hor/panel.width < 0.5){
-				borderH = parseInt(style.borderLeft) ;
+				borderH = parseInt(style.borderLeftWidth) ;
 				if(borderH && hor < borderH + this.additionalBorder){
 					this.toResize.LEFT = true;
 					needResize = true;
 				}
 			}
 			else{
-				borderH = parseInt(style.borderRight);
+				borderH = parseInt(style.borderRightWidth);
 				if(borderH &&  panel.width - hor < borderH  + this.additionalBorder){
 					this.toResize.RIGHT = true;
 					needResize = true;
 				}
 			}
 			if(ver/panel.height < 0.5){
-				borderV = parseInt(style.borderTop);
+				borderV = parseInt(style.borderTopWidth);
 				if(borderV && ver < borderV  + this.additionalBorder){
 					this.toResize.TOP = true;
 					needResize = true;
 				}
 			}
 			else{
-				borderV = parseInt(style.borderBottom );
+				borderV = parseInt(style.borderBottomWidth );
 				if(borderV &&  panel.height - ver < borderV  + this.additionalBorder){
 					this.toResize.BOTTOM = true;
 					needResize = true;

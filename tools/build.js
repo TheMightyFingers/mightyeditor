@@ -2,9 +2,9 @@
 var path = require("path");
 var fs = require("fs");
 
-process.env.NODE_PATH = path.resolve(process.cwd()+"/../server/node_modules");
+console.log(process.cwd());
 
-require("./client/js/eClass.js");
+require("../client/js/eClass.js");
 var cc = global.createClass;
 
 
@@ -63,7 +63,7 @@ SourceLoader.prototype = {
 			if(that.loadings === 0){
 				that.onReady();
 			}
-		}, 1);
+		}, 0);
 		
 	},
 	
@@ -87,15 +87,15 @@ SourceLoader.prototype = {
 		
 		src += fs.readFileSync(file);
 		
-		fs.writeFile(this.filename, src);
+		fs.writeFileSync(this.name+".js", src);
 		
-		process.env.NODE_PATH = path.resolve(process.cwd()+"/../server/node_modules");
-		console.log(process.env.NODE_PATH);
 		
 		var UglifyJS = require("uglify-js");
-		var result = UglifyJS.minify(src, {fromString: true});
+		var result = UglifyJS.minify(this.name+".js", {outSourceMap: this.filename+".map"});
 		
 		
+		fs.writeFile(this.filename, result.code);
+		fs.writeFile(this.filename+".map", result.map);
 		
 	}
 };

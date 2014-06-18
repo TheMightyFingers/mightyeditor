@@ -26,6 +26,9 @@ MT(
 		
 		var nRoot = this.path.normalize(this.root);
 		var that = this;
+		this.request = {
+			parts: null
+		};
 		this.server.on("request", function(req, res) {
 			
 			if(req.method != "GET"){
@@ -36,11 +39,15 @@ MT(
 			if(req.headers.connection == "keep-alive"){
 				res.setHeader("connection","keep-alive");
 			}
+			
+			that.request.parts = req.url.split("?");
+			
+			req.url = that.request.parts.shift();
 			req.url = decodeURI(that.path.normalize(that.root + req.url));
 			
 			
 			
-			if(req.url.indexOf(that.root)  != 0){
+			if(req.url.indexOf(that.root)  !== 0){
 				console.log("bad request:", req.url, that.root);
 				that.notFound(req, res);
 				return;
@@ -111,13 +118,10 @@ MT(
 		
 		proceed: function(stats, req, res){
 			
-			
-			
 			if(stats.size < 1024){
 				this.sendFile(req, res, stats);
 				return;
 			}
-			
 			
 			this.streamFile(req, res);
 		},

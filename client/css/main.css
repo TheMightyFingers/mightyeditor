@@ -157,6 +157,7 @@ span.panel-head-tab > span{
 	cursor: default;
 	position: relative;
 	z-index: -1;
+	pointer-events: none;
 }
 
 span.panel-head-tab.active {

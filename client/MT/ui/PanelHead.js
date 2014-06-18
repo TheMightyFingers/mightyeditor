@@ -11,9 +11,11 @@ MT.extend("ui.DomElement")(
 			var tab = new MT.ui.DomElement("span");
 			
 			tab.addClass("panel-head-tab");
-			tab.el.innerHTML = "<span>"+title+"</span>";
-			tab.panel = this.panel;
-			tab.el.panel = this.panel;
+			tab.title = document.createElement("span");
+			tab.title.innerHTML = title;
+			tab.el.appendChild(tab.title);
+			
+			tab.panel = tab.el.panel = this.panel;
 			
 			var that = this;
 			tab.el.data = {
