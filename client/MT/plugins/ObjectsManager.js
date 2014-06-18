@@ -275,7 +275,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			return group;
 		},
 		
-		createTileLayer: function(){
+		createTileLayer: function(silent){
 			var data = this.tv.getData();
 			
 			var tmpName= "Tile Layer";
@@ -309,10 +309,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.update();
 				this.sync();
 			}
-			return obj;
 			
+			return obj;
 		},
-		
 		
 		
 		copy: function(obj, x, y, name, silent){

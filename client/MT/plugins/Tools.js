@@ -3,6 +3,7 @@ MT.require("plugins.tools.Select");
 MT.require("plugins.tools.Stamp");
 MT.require("plugins.tools.Brush");
 MT.require("plugins.tools.Text");
+MT.require("plugins.tools.TileTool");
 
 
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
@@ -19,7 +20,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"select": MT.plugins.tools.Select,
 			"Stamp": MT.plugins.tools.Stamp,
 			"Brush": MT.plugins.tools.Brush,
-			"Text": MT.plugins.tools.Text
+			"Text": MT.plugins.tools.Text,
+			"TileTool": MT.plugins.tools.TileTool
 		};
 		
 

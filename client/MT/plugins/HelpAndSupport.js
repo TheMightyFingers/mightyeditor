@@ -41,13 +41,14 @@ MT.extend("core.BasicPlugin")(
 			var b = this.project.panel.addButton("Help and Support", null, function(e){
 				e.stopPropagation();
 				that.list.show(document.body);
+				
+				that.list.y = b.el.offsetHeight;
+				that.list.x = b.el.offsetLeft-5;
+				that.list.el.style.bottom = "initial";
 			});
 			
+			that.list.width = 270;
 			
-			this.list.width = 270;
-			this.list.y = b.el.offsetHeight;
-			this.list.x = b.el.offsetLeft-5;
-			this.list.el.style.bottom = "initial";
 		},
 		
 		openForum: function(){

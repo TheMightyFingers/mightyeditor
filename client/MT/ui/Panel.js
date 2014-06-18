@@ -177,16 +177,18 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 		},
 		
-		show: function(parent){
+		show: function(parent, silent){
+			if(this.isVisible){
+				return;
+			}
 			for(var i=0; i<this.joints.length; i++){
-				this.joints[i].hide();
+				this.joints[i].hide(false);
 			}
 			
 			MT.ui.DomElement.show.call(this, parent);
-			this.alignButtons();
-			this.emit("show");
-			
-			this.resize();
+			if(silent !== false){
+				this.emit("show");
+			}
 			
 			this.header.showTabs();
 			this.content.fitIn();
@@ -495,6 +497,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		addJoint: function(panel){
+			panel.removeClass("animated");
+			this.removeClass("animated");
 			if(panel.joints == this.joints){
 				return;
 			}
@@ -573,12 +577,14 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.height = this.savedBox.height;
 		},
 		
-		hide: function(){
+		hide: function(silent){
 			if(!this.isVisible){
 				return;
 			}
 			MT.ui.DomElement.hide.call(this);
-			this.emit("hide");
+			if(silent !== false){
+				this.emit("hide");
+			}
 		},
 		
 		addHeader: function(){

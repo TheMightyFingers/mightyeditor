@@ -21,6 +21,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		this.groups = [];
 		this.oldGroups = [];
 		
+		this.tilemaps = {};
+		
 		this.dist = {};
 		
 		this.selection = new Phaser.Rectangle();
@@ -60,14 +62,25 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 		},
 		
-		createTileMap: function(){
-			this.tilemap = this.game.add.tilemap(null, 64, 64, 640, 500);
+		getTileMap: function(tileWidth, tileHeight){
+			if(this.tilemaps[tileWidth] && this.tilemaps[tileWidth][tileHeight]){
+				return this.tilemaps[tileWidth][tileHeight];
+			}
+			
+			if(!this.tilemaps[tileWidth]){
+				this.tilemaps[tileWidth] = {};
+			}
+			if(!this.tilemaps[tileWidth][tileHeight]){
+				this.tilemaps[tileWidth][tileHeight] = this.game.add.tilemap(null, tileWidth, tileHeight);
+			}
+			
+			return this.tilemaps[tileWidth][tileHeight];
 		},
 		
-		addLayer: function(obj){
-			this.tilemap.createBlankLayer(obj.name, obj.tileWidth, obj.tileHeight, obj.width * obj.tileWidth, obj.height * obj.tileHeight);
+		addTileLayer: function(obj){
+			var tilemap = this.getTileMap(obj.tileWidth, obj.tileHeight);
 			
-			
+			return tilemap.createBlankLayer(obj.name, obj.tileWidth, obj.tileHeight, obj.width * obj.tileWidth, obj.height * obj.tileHeight);
 		},
 		
 		setZoom: function(zoom){
@@ -200,8 +213,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 					that.setCameraBounds();
 					that.postUpdateSetting();
-					
-					that.createTileMap();
 					
 				},
 				
@@ -747,6 +758,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 					this.objects.push(od);
 					group.add(od);
+					
 					if(od.bringToTop){
 						od.bringToTop();
 					}
@@ -761,10 +773,15 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			if(obj.type == MT.objectTypes.TEXT){
 				var t = this.addText(obj, group);
-				//t.font = "Arial";
 				t.MT_OBJECT = obj;
 				this.objects.push(t);
-				
+				return t;
+			}
+			
+			if(obj.type == MT.objectTypes.TILE_LAYER){
+				var t = this.addTileLayer(obj);
+				t.MT_OBJECT = obj;
+				this.objects.push(t);
 				return t;
 			}
 			

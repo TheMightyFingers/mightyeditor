@@ -21,13 +21,6 @@ MT.extend("ui.DomElement")(
 			tab.el.data = {
 				panel: this.panel
 			};
-			
-			tab.el.onclick = function(){
-				that.panel.show();
-				that.showTabs();
-				that.setActiveTab(tab);
-			};
-			
 			if(this.tabs.length == 0){
 				tab.addClass("active");
 			}
