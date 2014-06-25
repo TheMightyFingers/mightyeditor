@@ -1,3 +1,7 @@
+/* TODO: seperate by object types*/
+
+"use strict";
+
 MT.require("ui.TreeView");
 MT.require("ui.List");
 MT.require("core.Selector");
@@ -68,11 +72,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				showHide: true,
 				lock: true
 			});
-			this.tv.onChange = function(oldItem, newItem){
+			
+			this.tv.on("change", function(oldItem, newItem){
 				console.log("change", oldItem, newItem);
 				that.update();
 				that.sync();
-			};
+			});
 			
 			this.tv.sortable(this.ui.events);
 			this.tv.tree.show(this.panel.content.el);
@@ -292,13 +297,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				name: name,
 				x: 0,
 				y: 0,
+				anchorX: 0,
+				anchorY: 0,
 				angle: 0,
 				data: [],
 				isVisible: 1,
 				isLocked: 0,
 				isFixedToCamera: 0,
 				tileWidth: 64,
-				tileHeight: 64
+				tileHeight: 64,
+				widthInTiles: 10,
+				heightInTiles: 10
 			};
 			
 			data.unshift(obj);

@@ -11,6 +11,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.project = project;
 		
 		this.active = null;
+		this.list = {};
 	},
 	{
 		initUI: function(ui){
@@ -18,9 +19,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panel = ui.createPanel("Assets");
 			this.panel.setFree();
 			
-			window.am = this;
 			var that = this;
-			
 			
 			this.panel.addOptions([
 				{
@@ -310,7 +309,19 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		a_receiveFileList: function(list){
 			this.buildAssetsTree(list);
+			this.buildList(list);
 			this.update();
+		},
+		
+		buildList: function(list){
+			console.log(list);
+			for(var i=0; i<list.length; i++){
+				if(list[i].contents){
+					this.buildList(list[i].contents);
+					continue;
+				}
+				this.list[list[i].id] = list[i];
+			}
 		},
 		
 		handleFiles: function(e){

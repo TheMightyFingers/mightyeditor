@@ -58,7 +58,6 @@ MT.extend("core.Emitter")(
 		
 		var animEnd = function(aa){
 			that.update();
-			console.log("aa",aa);
 			this.removeEventListener("webkitTransitionEnd", animEnd);
 			window.setTimeout(function(){
 				document.addEventListener("webkitTransitionEnd", animEnd, false);
@@ -123,7 +122,7 @@ MT.extend("core.Emitter")(
 			if(e.target.data && e.target.data.panel){
 				activePanel = e.target.data.panel;
 				activePanel.isNeedUnjoin = true;
-				activePanel.show(null, false);
+				activePanel.show(null);
 			}
 			else{
 				activePanel.isNeedUnjoin = false;

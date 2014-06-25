@@ -247,6 +247,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.activeTool.mouseUp(e);
 		},
 		
+		mouseMove: function(e){
+			this.activeTool.mouseMove(e);
+		},
 		
 		lastSelected: null,
 		
@@ -298,8 +301,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		
-		
-		
+
 		
 		
 		

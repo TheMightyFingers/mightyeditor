@@ -186,6 +186,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 			
 			MT.ui.DomElement.show.call(this, parent);
+			this.setAll("_parent", this._parent);
+			
 			if(silent !== false){
 				this.emit("show");
 			}

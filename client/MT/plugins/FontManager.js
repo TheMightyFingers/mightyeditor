@@ -13,7 +13,7 @@ MT.extend("core.BasicPlugin")(
 			link.onload = function(e){
 				var sp = document.createElement("span");
 				sp.style.fontFamily = font;
-				sp.innerHTML = "ignore moi";
+				sp.innerHTML = "ignore";
 				sp.style.visibility = "hidden";
 				document.body.appendChild(sp);
 				window.setTimeout(function(){

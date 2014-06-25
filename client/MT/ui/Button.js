@@ -13,17 +13,17 @@ MT.extend("ui.DomElement")(
 		}
 		
 		if(cb){
-			if(events == null){
+			//if(events == null){
 				this.el.onclick = cb;
-			}
-			else{
+			//}
+			/*else{
 				var that = this;
 				events.on("click", function(e){
 					if(e.target === that.el){
 						cb(e);
 					}
 				});
-			}
+			}*/
 		}
 		
 	},

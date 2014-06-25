@@ -29,6 +29,10 @@ MT(
 			console.log("mouseup");
 		},
    
+		mouseMove: function(){
+			console.log("mouse move");
+		},
+   
 		deactivate: function(){
 			
 		}

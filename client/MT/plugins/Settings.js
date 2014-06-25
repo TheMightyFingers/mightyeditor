@@ -139,7 +139,7 @@ MT(
 			this.clear();
 			
 			
-			this.stack = "objects";
+			
 			this.panel.title = obj.name;
 			var that = this;
 			var cb = function(){
@@ -147,6 +147,7 @@ MT(
 			};
 			//group
 			if(obj.contents){
+				this.stack = "group";
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
 				this.objects.angle = this.addInput( "angle", obj, true, cb);
@@ -158,17 +159,29 @@ MT(
 			// tile layer
 			else if(obj.type == MT.objectTypes.TILE_LAYER){
 				
+				this.stack = "layer";
+				this.addInput("widthInTiles", obj, true, cb);
+				this.addInput("heightInTiles", obj, true, cb);
+				this.addInput("tileWidth", obj, true, cb);
+				this.addInput("tileHeight", obj, true, cb);
 				
 				
+				this.addInput({key:"isFixedToCamera", min: 0, max: 1, step: 1}, obj, true, cb);
 				
-				
-				
-				
+				this.addInput( {
+					key: "anchorX",
+					step: 0.1
+				}, obj, true, cb);
+				this.addInput( {
+					key: "anchorY",
+					step: 0.1
+				}, obj, true, cb);
 				
 				
 			}
 			//sprite
 			else{
+				this.stack = "sprite";
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
 				

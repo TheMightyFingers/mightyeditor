@@ -76,7 +76,9 @@ body{
 	-webkit-transition-delay: 0.1s;*/
 }
 
-
+.borderless{
+	border: none !important;
+}
 .hidden{
 	display: none;
 }

@@ -4,7 +4,7 @@ MT.extend("core.Emitter")(
 	},
 	{
 		add: function(obj, silent){
-			if(!obj){
+			if(obj === void(0)){
 				return;
 			}
 			if(!this.is(obj)){
@@ -41,6 +41,12 @@ MT.extend("core.Emitter")(
 			return false;
 		},
 		
+		get min(){
+			return Math.min.apply(Math, this._selected);
+		},
+		get max(){
+			return Math.max.apply(Math, this._selected);
+		},
 		forEach: function(cb, scope){
 			if(!this._selected){
 				return;
@@ -53,6 +59,10 @@ MT.extend("core.Emitter")(
 					cb(this._selected[i]);
 				}
 			}
+		},
+		
+		sortAsc: function(){
+			this._selected.sort();
 		},
 		
 		clear: function(){

@@ -37,6 +37,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			cameraY: 0,
 			gridX: 64,
 			gridY: 64,
+			
+			gridOffsetX: 0,
+			gridOffsetY: 0,
+			
 			showGrid: 1,
 			backgroundColor: "#111111"
 		};
@@ -62,25 +66,25 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 		},
 		
-		getTileMap: function(tileWidth, tileHeight){
-			if(this.tilemaps[tileWidth] && this.tilemaps[tileWidth][tileHeight]){
-				return this.tilemaps[tileWidth][tileHeight];
-			}
-			
-			if(!this.tilemaps[tileWidth]){
-				this.tilemaps[tileWidth] = {};
-			}
-			if(!this.tilemaps[tileWidth][tileHeight]){
-				this.tilemaps[tileWidth][tileHeight] = this.game.add.tilemap(null, tileWidth, tileHeight);
-			}
-			
-			return this.tilemaps[tileWidth][tileHeight];
+		getTileMap: function(obj){
+			var tileWidth = obj.tileWidth || 64;
+			var tileHeight = obj.tileHeight || 64;
+			return this.game.add.tilemap(null, tileWidth, tileHeight, obj.widthInTiles, obj.heightInTiles);
 		},
 		
 		addTileLayer: function(obj){
-			var tilemap = this.getTileMap(obj.tileWidth, obj.tileHeight);
+			console.log("tilemap");
+			var tilemap = this.getTileMap(obj);
 			
-			return tilemap.createBlankLayer(obj.name, obj.tileWidth, obj.tileHeight, obj.width * obj.tileWidth, obj.height * obj.tileHeight);
+			var tl = tilemap.createBlankLayer(obj.name, obj.widthInTiles, obj.heightInTiles, obj.tileWidth, obj.tileHeight);
+			tl.fixedToCamera = false;
+			return tl;
+		},
+		
+		updateTileMap: function(obj, oldLayer){
+			oldLayer.destroy();
+			
+			return this.addTileLayer(obj);
 		},
 		
 		setZoom: function(zoom){
@@ -198,10 +202,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
 				preload: function(){
+					game.stage.disableVisibilityChange = true;
 					var c = game.canvas;
 					c.parentNode.removeChild(c);
 					that.panel.content.el.appendChild(c);
 					c.style.position = "relative";
+					that.panel.content.style.overflow = "hidden";
 					
 				},
 				create: function(){
@@ -254,8 +260,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.game.camera.bounds.height = Infinity;
 			
 			
-			this.game.canvas.style.width = "100%";
-			this.game.canvas.style.height = "100%";
+			//this.game.canvas.style.width = "100%";
+			//this.game.canvas.style.height = "100%";
 			
 			this.game.camera.view.width = this.game.canvas.width/this.game.camera.scale.x;
 			this.game.camera.view.height = this.game.canvas.height/this.game.camera.scale.y;
@@ -336,57 +342,64 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			//ctx.strokeStyle = "rgba(255,255,255,0.1)";
 			
-			var ox = game.camera.x/this.scale.x % this.settings.gridX;
-			var oy = game.camera.y/this.scale.y % this.settings.gridY;
+			var offx = this.settings.gridOffsetX % this.settings.gridX - this.settings.gridX;
+			var offy = this.settings.gridOffsetY % this.settings.gridY - this.settings.gridY;
 			
-			var width = game.canvas.width/game.camera.scale.x;
-			var height = game.canvas.height/game.camera.scale.y
+			var ox = game.camera.x/this.scale.x % this.settings.gridX - offx;
+			var oy = game.camera.y/this.scale.y % this.settings.gridY - offy;
+			
+			var width = game.canvas.width/game.camera.scale.x - offx;
+			var height = game.canvas.height/game.camera.scale.y - offy;
+			
 			
 			
 			g = this.settings.gridX;
+			
+			ctx.lineWidth = 0.1;
+			ctx.globalAlpha = 0.5;
+			
+			ctx.beginPath();
 			for(var i = -ox; i<width; i += g){
 				if(i < 0){
 					continue;
 				}
-				
-				ctx.beginPath();
-				
-				if(Math.round(i*this.scale.x + game.camera.x) == 0){
-					ctx.lineWidth = 0.5;
-					ctx.globalAlpha = 1;
-				}
-				else{
-					ctx.lineWidth = 0.1;
-					ctx.globalAlpha = 0.5;
-				}
 				ctx.moveTo(i, 0);
 				ctx.lineTo(i, height);
 				
-				ctx.stroke();
+				
 			}
-			
 			
 			g = this.settings.gridY;
 			for(var j = -oy; j<height; j += g){
 				if(j < 0){
 					continue;
 				}
-				
-				ctx.beginPath();
-				if(Math.round(j*this.scale.y + game.camera.y) == 0){
-					ctx.lineWidth = 0.5;
-					ctx.globalAlpha = 1;
-				}
-				else{
-					ctx.lineWidth = 0.1;
-					ctx.globalAlpha = 0.5;
-				}
-				
 				ctx.moveTo(0, j);
 				ctx.lineTo(width, j);
 				
-				ctx.stroke();
+				
 			}
+			ctx.stroke();
+			
+			ctx.lineWidth = 0.5;
+			ctx.globalAlpha = 1;
+			
+			
+			// highlight x = 0; y = 0;
+			
+			ctx.beginPath();
+			
+			ctx.moveTo(0, -game.camera.y);
+			ctx.lineTo(width, -game.camera.y);
+			
+			ctx.moveTo(-game.camera.x, 0);
+			ctx.lineTo(-game.camera.x, height);
+			
+			
+			ctx.stroke();
+			
+			
+			
 			
 			ctx.globalAlpha = alpha;
 			ctx.restore();
@@ -730,7 +743,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			return group;
 		},
-   
+		
+		
+		/* TODO: clean up - and seperate object types by corresponding tools*/
 		addObject: function(obj, group){
 			var oo = null;
 			var od = null;
@@ -742,7 +757,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 					
 				if(oo.id == obj.id ){
-					// fix this;
+					// fix this - workaround for older projects
 					if(oo.type == void(0)){
 						oo.type = MT.objectTypes.SPRITE;
 					}
@@ -754,6 +769,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					if(oo.type == MT.objectTypes.TEXT){
 						od.text = obj.name;
 						od.setStyle(obj.style);
+					}
+					
+					if(oo.type == MT.objectTypes.TILE_LAYER){
+						console.log("TODO: reload TILEMAP");
+						od = this.updateTileMap(obj, od);
+						od.MT_OBJECT = obj;
+						this.project.plugins.tools.tools.tiletool.updateLayer(od);
 					}
 					
 					this.objects.push(od);
@@ -782,6 +804,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				var t = this.addTileLayer(obj);
 				t.MT_OBJECT = obj;
 				this.objects.push(t);
+				this.project.plugins.tools.tools.tiletool.updateLayer(t);
+				console.log("TILE",this.project);
 				return t;
 			}
 			
@@ -898,8 +922,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		get offsetX(){
-			
-			
 			return this.panel.content.calcOffsetX() - this.game.camera.x;
 		},
 		
@@ -922,39 +944,24 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		get oy(){
 			return this.panel.content.calcOffsetY();
 		},
-		/* input handling */
 		
+		/* input handling */
 		handleMouseDown: function(e){
-			
-			
 			if(e.button == 0){
 				for(var i in this.dist){
 					this.dist[i].x = 0;
 					this.dist[i].y = 0;
 				}
-				
-				/*var x = e.x - this.offsetXCam;
-				var y = e.y - this.offsetYCam;
-				
-				var obj = this.pickObject(x,y);
-				
-				this.emit("select", obj);*/
-				
 			}
 			this.tools.mouseDown(e);
 		},
 		
 		handleMouseUp: function(e){
-			console.log("up");
 			this.tools.mouseUp(e);
-			
-			
 		},
 		
 		emptyFn: function(){},
 		 
-		
-		
 		_handleMouseMove: function(){
 			
 		},
@@ -1060,21 +1067,16 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 			}
 			
-			
-			//left
-			if(w == 37){
+			if(w == MT.keys.LEFT){
 				object.x -= inc;
 			}
-			//up
-			if(w == 38){
+			if(w == MT.keys.UP){
 				object.y -= inc;
 			}
-			//right
-			if(w == 39){
+			if(w == MT.keys.RIGHT){
 				object.x += inc;
 			}
-			//down
-			if(w == 40){
+			if(w == MT.keys.DOWN){
 				object.y += inc;
 			}
 			
@@ -1099,9 +1101,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			
 		},
-		
-		
-		
 		
 		/* helper fns */
 		
@@ -1133,6 +1132,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		sync: function(sprite, obj){
+			console.log("sync");
 			sprite = sprite || this.activeObject;
 			obj = obj || sprite.MT_OBJECT;
 			
@@ -1366,7 +1366,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		updateSelected: function(){
-			
+			if(!this.activeObject){
+				return;
+			}
+			this.activeObject = this.getById(this.activeObject.MT_OBJECT.id);
 		},
 		
 		

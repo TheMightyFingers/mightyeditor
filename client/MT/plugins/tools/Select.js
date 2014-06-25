@@ -95,6 +95,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					self.activeState = self.states.NONE;
 				}
 			}
+			
+			this.tools.mouseMove(e);
 		},
 		
 		resizeObject: function(obj, mouse){
@@ -122,7 +124,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		
 		mouseMove: function(e){
-
+			if(!this.mDown){
+				return;
+			}
 			
 			var x = e.x - this.map.offsetX;
 			var y = e.y - this.map.offsetY;
@@ -148,6 +152,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseUp: function(e){
+			this.mDown = false;
 			var map = this.tools.map;
 			
 			map.selectRect(map.selection);
@@ -211,8 +216,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			return true;
 			
 		},
+		
+		mDown: false,
 		mouseDown: function(e){
 			
+			this.mDown = true;
 			if(this.activeState !== this.states.NONE){
 				return;
 			}

@@ -57,18 +57,13 @@ MT.extend("core.Emitter")(
 		
 		getData: function(parent, data){
 			
-			return this.data;
-			
 			parent = parent || this.tree;
 			var c = null;
 			var data = [];
-			for(var i=0; i<parent.el.children.length; i++){
-				c = parent.el.children[i];
-				if(!c.ctrl || !c.ctrl.data){
-					continue;
-				}
-				if(c.ctrl.data.contents){
-					c.ctrl.data.contents = this.getData(c.ctrl);
+			for(var i=0; i<parent.children.length; i++){
+				c = parent.children[i];
+				if(c.data.contents){
+					c.data.contents = this.getData(c);
 				}
 				data.push(c.data);
 			}
@@ -236,17 +231,14 @@ MT.extend("core.Emitter")(
 					e.stopPropagation();
 					
 					el.visible = !el.visible;
-					console.log(e);
-					
 					if(el.visible){
 						el.addClass("open");
 						el.removeClass("close");
 						for(var i=0; i<el.children.length; i++){
 							el.children[i].show();
 						}
-						
 						el.data.isClosed = false;
-						//that.emit("open", el);
+						that.emit("open", el);
 					}
 					else{
 						el.data.isClosed = true;
@@ -255,8 +247,7 @@ MT.extend("core.Emitter")(
 						for(var i=0; i<el.children.length; i++){
 							el.children[i].hide();
 						}
-						
-						//that.emit("close", el);
+						that.emit("close", el);
 					}
 				};
 				el.show();
@@ -316,7 +307,6 @@ MT.extend("core.Emitter")(
 				if(el.isFolder && e.offsetX < 30){
 					return;
 				}
-				console.log("double click", el.data);
 				that.enableRename(el,e);
 				e.stopPropagation();
 				e.preventDefault();
@@ -342,19 +332,6 @@ MT.extend("core.Emitter")(
 		
 		_mkShowHide: function(item){
 			var that = this;
-			/*if(e.target.ctrl && e.target.ctrl.hasClass("show-hide")){
-					item = e.target.parentNode.parentNode;
-					console.log(item.ctrl.data);
-					if(e.target.ctrl.hasClass("hidden")){
-						e.target.ctrl.removeClass("hidden")
-					}
-					else{
-						e.target.ctrl.addClass("hidden")
-					}
-					that.emit("show", item.ctrl);
-					return;
-				}*/
-			
 			var b = new MT.ui.Button("", "show-hide", null,  function(e){
 				item.data.isVisible = !item.data.isVisible;
 				
@@ -627,13 +604,7 @@ MT.extend("core.Emitter")(
 			this.input.type = "text";
 			
 			el.head.label.el.innerHTML = "&nbsp;"
-			
 			document.body.appendChild(this.input);
-			
-			
-			this.input.onclick = function(){
-				console.log("click");
-			};
 			
 			var needSave = true;
 			this.input.onblur = function(){
@@ -704,13 +675,8 @@ MT.extend("core.Emitter")(
 		},
 		
 		merge: function(data, oldData){
-			console.log(data);
-			
 			this.data = data;
 			var p = this.tree.el.parentNode;
-			
-			//p.removeChild(this.tree.el);
-			
 			this.updateFullPath(data);
 			
 			for(var i=0; i<this.items.length; i++){
@@ -725,7 +691,6 @@ MT.extend("core.Emitter")(
 					this.items[i].hide();
 					this.items.splice(i,1);
 					i--;
-					console.log("cleaned up", this.items[i]);
 					this.emit("deleted", this.items[i]);
 				}
 			}
