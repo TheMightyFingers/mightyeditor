@@ -26,8 +26,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				that.unselect();
 			});
 			
-			this.panels = {};
-			
 			this.selection = new MT.core.Selector();
 			
 			this.start = 0;
@@ -50,8 +48,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		createPanels: function(images){
 			var p, pp;
-			
-		
 			var obj = this.active.MT_OBJECT;
 			for(var id in images){
 				if(this.panels[id]){
@@ -69,16 +65,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				p = new MT.ui.Panel(images[id].name);
 				p.fitIn();
 				p.addClass("borderless");
+				
 				if(pp){
 					p.addJoint(pp);
 				}
+				
 				this.createImage(p, images[id]);
-				pp = p;
 				this.panels[id] = p;
-				p.on("show", function(){
-					console.log("visible", p);
-				});
+				pp = p;
 			}
+			
 			if(pp){
 				this.activePanel = pp;
 				pp.show(this.panel.content.el);
@@ -86,11 +82,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		createImage: function(panel, image){
-			console.log("adding canvas", image.name);
 			var that = this;
-			
-			
 			var img = new Image();
+			
 			img.onload = function(){
 				that.drawImage(panel, this);
 			};
@@ -103,7 +97,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				canvas: null,
 				ctx: null
 			};
-			
 			
 			this.addCanvas(panel, img);
 		},
@@ -271,25 +264,19 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		getTile: function(x, y, image){
 			var tx = x/this.active.map.tileWidth | 0;
 			var ty = y/this.active.map.tileHeight | 0;
-			
-			
 			return this.getId(tx, ty, image);
 		},
+		
 		getId: function(x, y, image){
 			return x + y*(image.width / this.active.map.tileWidth);
 		},
 		
-		
-		
 		mouseUp: function(e){
-			
 			if(e.target != this.tools.map.game.canvas){
 				return;
 			}
 			this.mDown = false;
-			console.log("TILE mouse up", e);
 		},
-		
 		
 		mouseDown: function(e){
 			this.mDown = true;
@@ -317,14 +304,13 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var y = (e.y - this.active.y - this.tools.map.offsetY)/scale;
 			
 			if(this.active){
-				if(!this.active.getBounds().contains(x,y)){
+				var bounds = this.active.getBounds();
+				if(!bounds.contains(e.x - this.tools.map.ox, e.y - this.tools.map.oy)){
 					return;
 				}
 			}
 			
 			var p = this.active.getTileXY(x, y, {});
-			
-			console.log("tile:", p);
 			
 			if(e.ctrlKey){
 				that.putTile(null, p.x, p.y, activeLayer);
@@ -352,8 +338,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 			layer.MT_OBJECT.tiles[y][x] = id;
 			layer.map.putTile(id, x, y, layer);
-			
 		},
+		
 		oldSettings: {},
 		init: function(){
 			this.active = this.tools.map.activeObject;
@@ -368,14 +354,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.tools.map.settings.gridX = this.active.MT_OBJECT.tileWidth;
 			this.tools.map.settings.gridY = this.active.MT_OBJECT.tileHeight;
 			
-			
 			this.update();
 			
 			this.panel.show();
+			if(this.activePanel){
+				this.activePanel.hide();
+				this.activePanel.show();
+			}
 		},
 		
 		unselect: function(){
-			console.log("unselect");
 			this.panel.hide();
 			this.restore();
 		},
@@ -409,6 +397,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.drawImage(this.activePanel);
 			}
 		},
+		
 		restore: function(){
 			if(this.oldSettings.gridX){
 				this.tools.map.settings.gridX = this.oldSettings.gridX;
@@ -419,7 +408,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		updateLayer: function(obj){
-			console.log("updateLayer");
 			var data = obj.MT_OBJECT;
 			this.active = obj;
 			if(!data.images || data.images.length == 0){
@@ -439,9 +427,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					obj.map.putTile(tiles[y][x], x, y, obj);
 				}
 			}
-			
-			
 		}
-
 	}
 );

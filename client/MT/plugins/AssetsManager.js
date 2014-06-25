@@ -296,8 +296,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var frame = gx + maxX*gy;
 			
-			console.log("frame", gx, gy, frame);
-			
 			return frame;
 		},
 		
@@ -314,7 +312,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		buildList: function(list){
-			console.log(list);
 			for(var i=0; i<list.length; i++){
 				if(list[i].contents){
 					this.buildList(list[i].contents);
@@ -355,8 +352,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		handleEntry: function(entry){
 			var that = this;
-			console.log(entry.type);
-			
 			
 			if (entry.isFile) {
 				entry.file(function(file){
@@ -427,14 +422,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		deleteAssets: function(){
-			console.log("deleting");
 			this.selector.forEach(function(obj){
 				this.deleteAsset(obj.data.id);
 			}, this);
 		},
 		
 		deleteAsset: function(id, silent){
-			console.log("delete", id);
 			this.send("delete", id);
 			this.emit("deleted", id);
 			//if using silent.. you should call manually sync

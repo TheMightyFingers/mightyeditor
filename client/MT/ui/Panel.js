@@ -244,8 +244,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		unjoin: function(){
-			console.log("unjoin");
-			
 			if(this.joints.length == 1){
 				this.breakSideJoints();
 				return;
@@ -362,8 +360,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(panel == this.bottom){
 				return;
 			}
-			console.log("join bottom");
-			
 			if(!noResize){
 				this.setClearHeight(this.height - panel.height);
 				panel.setClearWidth(this.width);
@@ -389,8 +385,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(panel == this.top){
 				return;
 			}
-			console.log("join top");
-			
 			if(!noResize){
 				this.setClearHeight(this.height - panel.height);
 				panel.setClearWidth(this.width);
@@ -455,8 +449,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		breakSideJoints: function(){
 			var pos = this.dockPosition;
 			if(this.bottom){
-				console.log("break bottom");
-				
 				if(this.top){
 					this.top.setAll("bottom", this.bottom);
 				}
@@ -470,9 +462,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				
 			}
 			else if(this.top){
-				console.log("break top");
-				
-				
 				if(this.bottom){
 					this.bottom.setAll("top", this.top);
 				}

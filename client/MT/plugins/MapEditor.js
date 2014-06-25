@@ -389,11 +389,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			ctx.beginPath();
 			
-			ctx.moveTo(0, -game.camera.y);
-			ctx.lineTo(width, -game.camera.y);
+			ctx.moveTo(0, -game.camera.y/this.scale.y);
+			ctx.lineTo(width, -game.camera.y/this.scale.y);
 			
-			ctx.moveTo(-game.camera.x, 0);
-			ctx.lineTo(-game.camera.x, height);
+			ctx.moveTo(-game.camera.x/this.scale.x, 0);
+			ctx.lineTo(-game.camera.x/this.scale.x, height);
 			
 			
 			ctx.stroke();
@@ -1215,7 +1215,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		
-		pickObject: function(x,y){
+		pickObject: function(x, y){
 			
 			x += this.game.camera.x;
 			y += this.game.camera.y;

@@ -100,7 +100,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		resizeObject: function(obj, mouse){
-			//console.log("resize", mouse);
 			obj = obj || this.map.activeObject;
 			var scale = this.map.game.camera.scale.x;
 			var x = mouse.mx/scale;
@@ -205,16 +204,15 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!this.map.activeObject){
 				return false;
 			}
-			var mt = this.map.activeObject.MT_OBJECT;
-			console.log("double", mt, this.map.objects);
 			
+			var mt = this.map.activeObject.MT_OBJECT;
 			for(var i=0; i<this.map.objects.length; i++){
 				if(this.map.objects[i].MT_OBJECT.assetId == mt.assetId){
 					this.map.selector.add(this.map.objects[i]);
 				}
 			}
-			return true;
 			
+			return true;
 		},
 		
 		mDown: false,
@@ -233,12 +231,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this._lastMD = Date.now();
 			
-			
-			console.log("mouseDown");
-			
 			var that = this;
 			var shift = (e.shiftKey ? true : false);
-			
 			
 			var x = e.x - this.map.offsetXCam;
 			var y = e.y - this.map.offsetYCam;
@@ -250,8 +244,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.initMove(e);
 				return;
 			}
-			
-			console.log(obj);
 			
 			if(obj){
 				if(!shift){
@@ -290,8 +282,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					this.tools.project.plugins.settings.handleScene(this.map.settings);
 				}
 			}
-			
 		}
-
 	}
 );

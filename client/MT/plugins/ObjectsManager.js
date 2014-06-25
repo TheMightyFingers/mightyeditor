@@ -1,4 +1,8 @@
-/* TODO: seperate by object types*/
+/* TODO: 
+ * - seperate by object types
+ * - optimize - so only changed object gets updated not all object chunk
+ * - set correct id instead of tmpXXXXX - probably add event on server side
+ */
 
 "use strict";
 
@@ -41,6 +45,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.createGroup();
+						that.panel.options.list.hide();
 					}
 				},
 				{
@@ -48,6 +53,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.createTileLayer();
+						that.panel.options.list.hide();
 					}
 				},
 				{
@@ -55,6 +61,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.groupSelected();
+						that.panel.options.list.hide();
 					}
 				},
 				{
@@ -62,6 +69,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.deleteSelected();
+						that.panel.options.list.hide();
 					}
 				}
 			], ui, true);
@@ -74,7 +82,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			this.tv.on("change", function(oldItem, newItem){
-				console.log("change", oldItem, newItem);
 				that.update();
 				that.sync();
 			});
@@ -176,10 +183,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				arr = this.activeGroup.contents;
 			}
 			
-			
 			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, arr, 0);
 			
-			console.log("active Object", this.activeGroup);
 			arr.splice(0,0,obj);
 			
 			if(!silent){
@@ -202,8 +207,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var name = asset.name.split(".");
 			name.pop();
 			name = name.join("");
-			
-			console.log("----------->",asset);
 			
 			return  {
 				assetId: asset.id,
@@ -507,7 +510,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					return;
 				}
 				
-				console.log("sync");
 				this._lastData = json;
 				if(!silent){
 					that.emit("beforeSync", data);
