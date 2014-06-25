@@ -238,6 +238,10 @@ MT(
 			console.log("mouseup");
 		},
    
+		mouseMove: function(){
+			console.log("mouse move");
+		},
+   
 		deactivate: function(){
 			
 		}
@@ -626,31 +630,449 @@ MT.extend("core.Emitter")(
 );
 //MT/plugins/tools/TileTool.js
 MT.namespace('plugins.tools');
+"use strict";
+
 MT.extend("core.BasicTool").extend("core.Emitter")(
 	MT.plugins.tools.TileTool = function(tools){
 		MT.core.BasicTool.call(this, tools);
 		this.name = "tileTools";
+		this.active = null;
+		this.activePanel = null;
+		window.tileTool = this;
+		this.panels = {};
 	},{
 		
 		initUI: function(ui){
+			MT.core.BasicTool.initUI.call(this, ui);
 			this.panel = ui.createPanel("Tile tools");
 			this.panel.setFree();
+			this.panel.height = 300;
+			ui.dockToBottom(this.panel);
 			this.panel.hide();
 			
 			var that = this;
 			this.tools.on("selectObject", function(obj){
-				that.select(obj);
+				
 			});
 			this.tools.on("unselectedObject", function(){
-				that.panel.hide();
+				that.unselect();
+			});
+			
+			this.panels = {};
+			
+			this.selection = new MT.core.Selector();
+			
+			this.start = 0;
+			this.stop = 0;
+			
+			
+			this.tools.map.on("objectsAdded", function(map){
+				if(map.activeObject){
+					that.select(map.activeObject);
+					that.update();
+				}
 			});
 		},
-		select: function(obj){
-			if(obj.MT_OBJECT.type != MT.objectTypes.TILE_LAYER){
+		
+		getImageFn: function(img){
+			return function(){return img;};
+		},
+		
+		
+		
+		createPanels: function(images){
+			var p, pp;
+			
+		
+			var obj = this.active.MT_OBJECT;
+			for(var id in images){
+				if(this.panels[id]){
+					if(!map){
+						continue;
+					}
+					
+					p = this.panels[id];
+					p.data.widthInTiles = p.data.image.width / obj.tileWidth | 0;
+					p.data.heightInTiles = p.data.image.height / obj.tileHeight | 0;
+					
+					continue;
+				}
+				
+				p = new MT.ui.Panel(images[id].name);
+				p.fitIn();
+				p.addClass("borderless");
+				if(pp){
+					p.addJoint(pp);
+				}
+				this.createImage(p, images[id]);
+				pp = p;
+				this.panels[id] = p;
+				p.on("show", function(){
+					console.log("visible", p);
+				});
+			}
+			if(pp){
+				this.activePanel = pp;
+				pp.show(this.panel.content.el);
+			}
+		},
+		
+		createImage: function(panel, image){
+			console.log("adding canvas", image.name);
+			var that = this;
+			
+			
+			var img = new Image();
+			img.onload = function(){
+				that.drawImage(panel, this);
+			};
+			img.src = this.tools.project.path + "/" + image.__image;
+			
+			panel.data = {
+				data: image,
+				id: image.id,
+				image: img,
+				canvas: null,
+				ctx: null
+			};
+			
+			
+			this.addCanvas(panel, img);
+		},
+		
+		
+		addImage: function(image){
+			var map = this.active.map;
+			for(var i =0; i<map.tilesets.length; i++){
+				if(map.tilesets[i].name == image.id){
+					return map.tilesets[i].firstgid;
+				}
+			}
+			
+			var map = this.active.map;
+			var nextId = 0;
+			for(var i =0; i<map.tilesets.length; i++){
+				nextId += map.tilesets[i].total+1;
+			}
+			
+			//function (tileset, key, tileWidth, tileHeight, tileMargin, tileSpacing, gid) {
+			var key = ""+image.data.id;
+			var tim = this.active.map.addTilesetImage(key, key, map.tileWidth, map.tileHeight, 0, 0, nextId);
+			
+			if(!this.active.MT_OBJECT.images){
+				this.active.MT_OBJECT.images = [];
+			}
+			
+			this.active.MT_OBJECT.images.push(image.id);
+			
+			return nextId;
+			
+		},
+		
+		addCanvas: function(panel, image){
+			
+			var canvas = document.createElement("canvas");
+			var ctx = canvas.getContext("2d");
+			
+			var map = this.active.map;
+			
+			canvas.width = image.width;
+			canvas.height = image.height;
+			
+			panel.data.canvas = canvas;
+			panel.data.ctx = ctx;
+			
+			panel.data.widthInTiles = image.width / map.tileWidth | 0;
+			panel.data.heightInTiles = image.height / map.tileHeight | 0;
+			
+			
+			
+			var mdown = false;
+			var that = this;
+			
+			canvas.onmousedown = function(e){
+				mdown = true;
+				var tile = that.getTile(e.offsetX, e.offsetY, panel.data.image);
+				
+				that.start = tile;
+				that.drawImage(panel);
+			};
+			
+			canvas.onmousemove = function(e){
+				if(!mdown){
+					return;
+				}
+				var tile = that.getTile(e.offsetX, e.offsetY, panel.data.image);
+				that.stop = tile;
+				
+				that.drawImage(panel);
+			};
+			
+			canvas.onmouseup = function(e){
+				mdown = false;
+				that.stop = that.getTile(e.offsetX, e.offsetY, panel.data.image);
+				that.activePanel = panel;
+			};
+			panel.content.el.appendChild(canvas);
+			
+		},
+		
+		addSelection: function(tileId){
+			this.selection.add(tileId);
+		},
+		
+		selectAdditionalTiles: function(){
+			var min = this.selection.min;
+			var max = this.selection.max;
+		},
+		
+		drawImage: function(panel){
+			var that = this;
+			
+			var image = panel.data.image;
+			var ctx = panel.data.ctx;
+			var tx, ty;
+			var widthInTiles = panel.data.widthInTiles;
+			
+			
+			ctx.clearRect(0,0,image.width, image.height);
+			ctx.drawImage(image, 0, 0, image.width, image.height);
+			
+			var map = this.active.map;
+			ctx.beginPath();
+			for(var i = map.tileWidth; i<image.width; i += map.tileWidth){
+				ctx.moveTo(i+0.5, 0);
+				ctx.lineTo(i+0.5, image.height);
+			}
+			for(var i = map.tileHeight; i<image.height; i += map.tileHeight){
+				ctx.moveTo(0, i+0.5);
+				ctx.lineTo(image.width, i+0.5);
+			}
+			ctx.stroke();
+			
+			
+			
+			ctx.fillStyle = "rgba(0,0,0,0.5)";
+			
+			tx = that.getTileX(this.start, widthInTiles);
+			ty = that.getTileY(this.start, widthInTiles);
+			
+			this.selection.clear();
+			
+			if(this.start == this.stop){
+				ctx.fillRect(map.tileWidth*tx+0.5, map.tileHeight*ty+0.5, map.tileWidth+0.5, map.tileHeight+0.5);
+				this.selection.add({x: tx, y: ty, dx: 0, dy: 0});
+			}
+			else{
+				
+				
+				var endx = that.getTileX(this.stop, widthInTiles);
+				var endy = that.getTileY(this.stop, widthInTiles);
+				
+				var startx = Math.min(tx, endx);
+				var starty = Math.min(ty, endy);
+				
+				endx =  Math.max(tx, endx);
+				endy =  Math.max(ty, endy);
+				
+				for(var i=startx; i<=endx; i++){
+					for(var j=starty; j<=endy; j++){
+						ctx.fillRect(map.tileWidth*i+0.5, map.tileHeight*j+0.5, map.tileWidth+0.5, map.tileHeight+0.5);
+						this.selection.add({x: i, y: j, dx: i-startx, dy: j-starty});
+					}
+				}
+				
+				
+				
+			}
+		},
+		
+		getTileX: function(tile, width){
+			return tile % width;
+		},
+		
+		getTileY: function(tile, width){
+			return tile / width | 0;
+		},
+		
+		getSelection: function(panel, e){
+			var image = panel.data.image;
+			return this.getTile(e.offsetX, e.offsetY, image);
+		},
+		
+		getTile: function(x, y, image){
+			var tx = x/this.active.map.tileWidth | 0;
+			var ty = y/this.active.map.tileHeight | 0;
+			
+			
+			return this.getId(tx, ty, image);
+		},
+		getId: function(x, y, image){
+			return x + y*(image.width / this.active.map.tileWidth);
+		},
+		
+		
+		
+		mouseUp: function(e){
+			
+			if(e.target != this.tools.map.game.canvas){
 				return;
 			}
+			this.mDown = false;
+			console.log("TILE mouse up", e);
+		},
+		
+		
+		mouseDown: function(e){
+			this.mDown = true;
+			this.putTileFromMouse(e);
+		},
+		
+		mouseMove: function(e){
+			if(!this.mDown){
+				return;
+			}
+			this.putTileFromMouse(e);
+		},
+		
+		putTileFromMouse: function(e){
+			if(e.target != this.tools.map.game.canvas){
+				return;
+			}
+			
+			var that = this;
+			var activeLayer = this.active;
+			var map = this.active.map;
+			
+			var scale = this.tools.map.game.camera.scale.x;
+			var x = (e.x - this.active.x - this.tools.map.offsetX)/scale;
+			var y = (e.y - this.active.y - this.tools.map.offsetY)/scale;
+			
+			if(this.active){
+				if(!this.active.getBounds().contains(x,y)){
+					return;
+				}
+			}
+			
+			var p = this.active.getTileXY(x, y, {});
+			
+			console.log("tile:", p);
+			
+			if(e.ctrlKey){
+				that.putTile(null, p.x, p.y, activeLayer);
+				return;
+			}
+			if(!this.activePanel){
+				return;
+			}
+			
+			var id = this.addImage(this.activePanel.data);
+			
+			
+			
+			this.selection.forEach(function(obj){
+				that.putTile(id+that.getId(obj.x, obj.y, that.activePanel.data.image), p.x + obj.dx, p.y + obj.dy, activeLayer);
+			});
+		},
+		
+		putTile: function(id, x, y, layer){
+			if(!layer.MT_OBJECT.tiles){
+				layer.MT_OBJECT.tiles = {};
+			}
+			if(!layer.MT_OBJECT.tiles[y]){
+				layer.MT_OBJECT.tiles[y] = {};
+			}
+			layer.MT_OBJECT.tiles[y][x] = id;
+			layer.map.putTile(id, x, y, layer);
+			
+		},
+		oldSettings: {},
+		init: function(){
+			this.active = this.tools.map.activeObject;
+			if(!this.active){
+				this.tools.setTool(this.tools.tools.select);
+				return;
+			}
+			
+			this.oldSettings.gridX = this.tools.map.settings.gridX;
+			this.oldSettings.gridY = this.tools.map.settings.gridY;
+			
+			this.tools.map.settings.gridX = this.active.MT_OBJECT.tileWidth;
+			this.tools.map.settings.gridY = this.active.MT_OBJECT.tileHeight;
+			
+			
+			this.update();
+			
 			this.panel.show();
-			console.log("select", obj);
+		},
+		
+		unselect: function(){
+			console.log("unselect");
+			this.panel.hide();
+			this.restore();
+		},
+		
+		select: function(obj){
+			if(obj.MT_OBJECT.type != MT.objectTypes.TILE_LAYER){
+				this.restore();
+				return;
+			}
+			
+			this.oldSettings.gridX = this.tools.map.settings.gridX;
+			this.oldSettings.gridY = this.tools.map.settings.gridY;
+			
+			this.tools.map.settings.gridX = obj.MT_OBJECT.tileWidth;
+			this.tools.map.settings.gridY = obj.MT_OBJECT.tileHeight;
+			this.tools.map.settings.gridOffsetX = obj.x;
+			this.tools.map.settings.gridOffsetY = obj.y;
+			
+			this.active = obj;
+			if(this.tools.activeTool == this){
+				
+				this.panel.show();
+				this.update();
+			}
+		},
+		
+		update: function(){
+			var images = this.tools.project.plugins.assetsmanager.list;
+			this.createPanels(images);
+			if(this.activePanel){
+				this.drawImage(this.activePanel);
+			}
+		},
+		restore: function(){
+			if(this.oldSettings.gridX){
+				this.tools.map.settings.gridX = this.oldSettings.gridX;
+				this.tools.map.settings.gridY = this.oldSettings.gridY;
+				this.tools.map.settings.gridOffsetX = 0;
+				this.tools.map.settings.gridOffsetY = 0;
+			}
+		},
+		
+		updateLayer: function(obj){
+			console.log("updateLayer");
+			var data = obj.MT_OBJECT;
+			this.active = obj;
+			if(!data.images || data.images.length == 0){
+				return;
+			}
+			var map = obj.map;
+			var nextId = 0;
+			var im = null;
+			for(var i=0; i<data.images.length; i++){
+				im = map.addTilesetImage(data.images[i], data.images[i], map.tileWidth, map.tileHeight, 0, 0, nextId);
+				nextId += im.total;
+			}
+			
+			var tiles = obj.MT_OBJECT.tiles;
+			for(var y in tiles){
+				for(var x in tiles[y]){
+					obj.map.putTile(tiles[y][x], x, y, obj);
+				}
+			}
+			
+			
 		}
 
 	}
@@ -1685,6 +2107,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					self.activeState = self.states.NONE;
 				}
 			}
+			
+			this.tools.mouseMove(e);
 		},
 		
 		resizeObject: function(obj, mouse){
@@ -1712,7 +2136,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		
 		mouseMove: function(e){
-
+			if(!this.mDown){
+				return;
+			}
 			
 			var x = e.x - this.map.offsetX;
 			var y = e.y - this.map.offsetY;
@@ -1738,6 +2164,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseUp: function(e){
+			this.mDown = false;
 			var map = this.tools.map;
 			
 			map.selectRect(map.selection);
@@ -1801,8 +2228,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			return true;
 			
 		},
+		
+		mDown: false,
 		mouseDown: function(e){
 			
+			this.mDown = true;
 			if(this.activeState !== this.states.NONE){
 				return;
 			}
@@ -2196,7 +2626,7 @@ MT.extend("core.Emitter")(
 	},
 	{
 		add: function(obj, silent){
-			if(!obj){
+			if(obj === void(0)){
 				return;
 			}
 			if(!this.is(obj)){
@@ -2233,6 +2663,12 @@ MT.extend("core.Emitter")(
 			return false;
 		},
 		
+		get min(){
+			return Math.min.apply(Math, this._selected);
+		},
+		get max(){
+			return Math.max.apply(Math, this._selected);
+		},
 		forEach: function(cb, scope){
 			if(!this._selected){
 				return;
@@ -2245,6 +2681,10 @@ MT.extend("core.Emitter")(
 					cb(this._selected[i]);
 				}
 			}
+		},
+		
+		sortAsc: function(){
+			this._selected.sort();
 		},
 		
 		clear: function(){
@@ -2333,18 +2773,13 @@ MT.extend("core.Emitter")(
 		
 		getData: function(parent, data){
 			
-			return this.data;
-			
 			parent = parent || this.tree;
 			var c = null;
 			var data = [];
-			for(var i=0; i<parent.el.children.length; i++){
-				c = parent.el.children[i];
-				if(!c.ctrl || !c.ctrl.data){
-					continue;
-				}
-				if(c.ctrl.data.contents){
-					c.ctrl.data.contents = this.getData(c.ctrl);
+			for(var i=0; i<parent.children.length; i++){
+				c = parent.children[i];
+				if(c.data.contents){
+					c.data.contents = this.getData(c);
 				}
 				data.push(c.data);
 			}
@@ -2512,17 +2947,14 @@ MT.extend("core.Emitter")(
 					e.stopPropagation();
 					
 					el.visible = !el.visible;
-					console.log(e);
-					
 					if(el.visible){
 						el.addClass("open");
 						el.removeClass("close");
 						for(var i=0; i<el.children.length; i++){
 							el.children[i].show();
 						}
-						
 						el.data.isClosed = false;
-						//that.emit("open", el);
+						that.emit("open", el);
 					}
 					else{
 						el.data.isClosed = true;
@@ -2531,8 +2963,7 @@ MT.extend("core.Emitter")(
 						for(var i=0; i<el.children.length; i++){
 							el.children[i].hide();
 						}
-						
-						//that.emit("close", el);
+						that.emit("close", el);
 					}
 				};
 				el.show();
@@ -2592,7 +3023,6 @@ MT.extend("core.Emitter")(
 				if(el.isFolder && e.offsetX < 30){
 					return;
 				}
-				console.log("double click", el.data);
 				that.enableRename(el,e);
 				e.stopPropagation();
 				e.preventDefault();
@@ -2618,19 +3048,6 @@ MT.extend("core.Emitter")(
 		
 		_mkShowHide: function(item){
 			var that = this;
-			/*if(e.target.ctrl && e.target.ctrl.hasClass("show-hide")){
-					item = e.target.parentNode.parentNode;
-					console.log(item.ctrl.data);
-					if(e.target.ctrl.hasClass("hidden")){
-						e.target.ctrl.removeClass("hidden")
-					}
-					else{
-						e.target.ctrl.addClass("hidden")
-					}
-					that.emit("show", item.ctrl);
-					return;
-				}*/
-			
 			var b = new MT.ui.Button("", "show-hide", null,  function(e){
 				item.data.isVisible = !item.data.isVisible;
 				
@@ -2903,13 +3320,7 @@ MT.extend("core.Emitter")(
 			this.input.type = "text";
 			
 			el.head.label.el.innerHTML = "&nbsp;"
-			
 			document.body.appendChild(this.input);
-			
-			
-			this.input.onclick = function(){
-				console.log("click");
-			};
 			
 			var needSave = true;
 			this.input.onblur = function(){
@@ -2980,13 +3391,8 @@ MT.extend("core.Emitter")(
 		},
 		
 		merge: function(data, oldData){
-			console.log(data);
-			
 			this.data = data;
 			var p = this.tree.el.parentNode;
-			
-			//p.removeChild(this.tree.el);
-			
 			this.updateFullPath(data);
 			
 			for(var i=0; i<this.items.length; i++){
@@ -3001,7 +3407,6 @@ MT.extend("core.Emitter")(
 					this.items[i].hide();
 					this.items.splice(i,1);
 					i--;
-					console.log("cleaned up", this.items[i]);
 					this.emit("deleted", this.items[i]);
 				}
 			}
@@ -3619,17 +4024,17 @@ MT.extend("ui.DomElement")(
 		}
 		
 		if(cb){
-			if(events == null){
+			//if(events == null){
 				this.el.onclick = cb;
-			}
-			else{
+			//}
+			/*else{
 				var that = this;
 				events.on("click", function(e){
 					if(e.target === that.el){
 						cb(e);
 					}
 				});
-			}
+			}*/
 		}
 		
 	},
@@ -4199,6 +4604,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.activeTool.mouseUp(e);
 		},
 		
+		mouseMove: function(e){
+			this.activeTool.mouseMove(e);
+		},
 		
 		lastSelected: null,
 		
@@ -4250,8 +4658,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		
-		
-		
+
 		
 		
 		
@@ -4524,7 +4931,7 @@ MT(
 			this.clear();
 			
 			
-			this.stack = "objects";
+			
 			this.panel.title = obj.name;
 			var that = this;
 			var cb = function(){
@@ -4532,6 +4939,7 @@ MT(
 			};
 			//group
 			if(obj.contents){
+				this.stack = "group";
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
 				this.objects.angle = this.addInput( "angle", obj, true, cb);
@@ -4543,17 +4951,29 @@ MT(
 			// tile layer
 			else if(obj.type == MT.objectTypes.TILE_LAYER){
 				
+				this.stack = "layer";
+				this.addInput("widthInTiles", obj, true, cb);
+				this.addInput("heightInTiles", obj, true, cb);
+				this.addInput("tileWidth", obj, true, cb);
+				this.addInput("tileHeight", obj, true, cb);
 				
 				
+				this.addInput({key:"isFixedToCamera", min: 0, max: 1, step: 1}, obj, true, cb);
 				
-				
-				
-				
+				this.addInput( {
+					key: "anchorX",
+					step: 0.1
+				}, obj, true, cb);
+				this.addInput( {
+					key: "anchorY",
+					step: 0.1
+				}, obj, true, cb);
 				
 				
 			}
 			//sprite
 			else{
+				this.stack = "sprite";
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
 				
@@ -4703,6 +5123,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			cameraY: 0,
 			gridX: 64,
 			gridY: 64,
+			
+			gridOffsetX: 0,
+			gridOffsetY: 0,
+			
 			showGrid: 1,
 			backgroundColor: "#111111"
 		};
@@ -4728,25 +5152,25 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 		},
 		
-		getTileMap: function(tileWidth, tileHeight){
-			if(this.tilemaps[tileWidth] && this.tilemaps[tileWidth][tileHeight]){
-				return this.tilemaps[tileWidth][tileHeight];
-			}
-			
-			if(!this.tilemaps[tileWidth]){
-				this.tilemaps[tileWidth] = {};
-			}
-			if(!this.tilemaps[tileWidth][tileHeight]){
-				this.tilemaps[tileWidth][tileHeight] = this.game.add.tilemap(null, tileWidth, tileHeight);
-			}
-			
-			return this.tilemaps[tileWidth][tileHeight];
+		getTileMap: function(obj){
+			var tileWidth = obj.tileWidth || 64;
+			var tileHeight = obj.tileHeight || 64;
+			return this.game.add.tilemap(null, tileWidth, tileHeight, obj.widthInTiles, obj.heightInTiles);
 		},
 		
 		addTileLayer: function(obj){
-			var tilemap = this.getTileMap(obj.tileWidth, obj.tileHeight);
+			console.log("tilemap");
+			var tilemap = this.getTileMap(obj);
 			
-			return tilemap.createBlankLayer(obj.name, obj.tileWidth, obj.tileHeight, obj.width * obj.tileWidth, obj.height * obj.tileHeight);
+			var tl = tilemap.createBlankLayer(obj.name, obj.widthInTiles, obj.heightInTiles, obj.tileWidth, obj.tileHeight);
+			tl.fixedToCamera = false;
+			return tl;
+		},
+		
+		updateTileMap: function(obj, oldLayer){
+			oldLayer.destroy();
+			
+			return this.addTileLayer(obj);
 		},
 		
 		setZoom: function(zoom){
@@ -4864,10 +5288,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
 				preload: function(){
+					game.stage.disableVisibilityChange = true;
 					var c = game.canvas;
 					c.parentNode.removeChild(c);
 					that.panel.content.el.appendChild(c);
 					c.style.position = "relative";
+					that.panel.content.style.overflow = "hidden";
 					
 				},
 				create: function(){
@@ -4920,8 +5346,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.game.camera.bounds.height = Infinity;
 			
 			
-			this.game.canvas.style.width = "100%";
-			this.game.canvas.style.height = "100%";
+			//this.game.canvas.style.width = "100%";
+			//this.game.canvas.style.height = "100%";
 			
 			this.game.camera.view.width = this.game.canvas.width/this.game.camera.scale.x;
 			this.game.camera.view.height = this.game.canvas.height/this.game.camera.scale.y;
@@ -5002,57 +5428,64 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			//ctx.strokeStyle = "rgba(255,255,255,0.1)";
 			
-			var ox = game.camera.x/this.scale.x % this.settings.gridX;
-			var oy = game.camera.y/this.scale.y % this.settings.gridY;
+			var offx = this.settings.gridOffsetX % this.settings.gridX - this.settings.gridX;
+			var offy = this.settings.gridOffsetY % this.settings.gridY - this.settings.gridY;
 			
-			var width = game.canvas.width/game.camera.scale.x;
-			var height = game.canvas.height/game.camera.scale.y
+			var ox = game.camera.x/this.scale.x % this.settings.gridX - offx;
+			var oy = game.camera.y/this.scale.y % this.settings.gridY - offy;
+			
+			var width = game.canvas.width/game.camera.scale.x - offx;
+			var height = game.canvas.height/game.camera.scale.y - offy;
+			
 			
 			
 			g = this.settings.gridX;
+			
+			ctx.lineWidth = 0.1;
+			ctx.globalAlpha = 0.5;
+			
+			ctx.beginPath();
 			for(var i = -ox; i<width; i += g){
 				if(i < 0){
 					continue;
 				}
-				
-				ctx.beginPath();
-				
-				if(Math.round(i*this.scale.x + game.camera.x) == 0){
-					ctx.lineWidth = 0.5;
-					ctx.globalAlpha = 1;
-				}
-				else{
-					ctx.lineWidth = 0.1;
-					ctx.globalAlpha = 0.5;
-				}
 				ctx.moveTo(i, 0);
 				ctx.lineTo(i, height);
 				
-				ctx.stroke();
+				
 			}
-			
 			
 			g = this.settings.gridY;
 			for(var j = -oy; j<height; j += g){
 				if(j < 0){
 					continue;
 				}
-				
-				ctx.beginPath();
-				if(Math.round(j*this.scale.y + game.camera.y) == 0){
-					ctx.lineWidth = 0.5;
-					ctx.globalAlpha = 1;
-				}
-				else{
-					ctx.lineWidth = 0.1;
-					ctx.globalAlpha = 0.5;
-				}
-				
 				ctx.moveTo(0, j);
 				ctx.lineTo(width, j);
 				
-				ctx.stroke();
+				
 			}
+			ctx.stroke();
+			
+			ctx.lineWidth = 0.5;
+			ctx.globalAlpha = 1;
+			
+			
+			// highlight x = 0; y = 0;
+			
+			ctx.beginPath();
+			
+			ctx.moveTo(0, -game.camera.y);
+			ctx.lineTo(width, -game.camera.y);
+			
+			ctx.moveTo(-game.camera.x, 0);
+			ctx.lineTo(-game.camera.x, height);
+			
+			
+			ctx.stroke();
+			
+			
+			
 			
 			ctx.globalAlpha = alpha;
 			ctx.restore();
@@ -5396,7 +5829,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			return group;
 		},
-   
+		
+		
+		/* TODO: clean up - and seperate object types by corresponding tools*/
 		addObject: function(obj, group){
 			var oo = null;
 			var od = null;
@@ -5408,7 +5843,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 					
 				if(oo.id == obj.id ){
-					// fix this;
+					// fix this - workaround for older projects
 					if(oo.type == void(0)){
 						oo.type = MT.objectTypes.SPRITE;
 					}
@@ -5420,6 +5855,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					if(oo.type == MT.objectTypes.TEXT){
 						od.text = obj.name;
 						od.setStyle(obj.style);
+					}
+					
+					if(oo.type == MT.objectTypes.TILE_LAYER){
+						console.log("TODO: reload TILEMAP");
+						od = this.updateTileMap(obj, od);
+						od.MT_OBJECT = obj;
+						this.project.plugins.tools.tools.tiletool.updateLayer(od);
 					}
 					
 					this.objects.push(od);
@@ -5448,6 +5890,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				var t = this.addTileLayer(obj);
 				t.MT_OBJECT = obj;
 				this.objects.push(t);
+				this.project.plugins.tools.tools.tiletool.updateLayer(t);
+				console.log("TILE",this.project);
 				return t;
 			}
 			
@@ -5564,8 +6008,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		get offsetX(){
-			
-			
 			return this.panel.content.calcOffsetX() - this.game.camera.x;
 		},
 		
@@ -5588,39 +6030,24 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		get oy(){
 			return this.panel.content.calcOffsetY();
 		},
-		/* input handling */
 		
+		/* input handling */
 		handleMouseDown: function(e){
-			
-			
 			if(e.button == 0){
 				for(var i in this.dist){
 					this.dist[i].x = 0;
 					this.dist[i].y = 0;
 				}
-				
-				/*var x = e.x - this.offsetXCam;
-				var y = e.y - this.offsetYCam;
-				
-				var obj = this.pickObject(x,y);
-				
-				this.emit("select", obj);*/
-				
 			}
 			this.tools.mouseDown(e);
 		},
 		
 		handleMouseUp: function(e){
-			console.log("up");
 			this.tools.mouseUp(e);
-			
-			
 		},
 		
 		emptyFn: function(){},
 		 
-		
-		
 		_handleMouseMove: function(){
 			
 		},
@@ -5726,21 +6153,16 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 			}
 			
-			
-			//left
-			if(w == 37){
+			if(w == MT.keys.LEFT){
 				object.x -= inc;
 			}
-			//up
-			if(w == 38){
+			if(w == MT.keys.UP){
 				object.y -= inc;
 			}
-			//right
-			if(w == 39){
+			if(w == MT.keys.RIGHT){
 				object.x += inc;
 			}
-			//down
-			if(w == 40){
+			if(w == MT.keys.DOWN){
 				object.y += inc;
 			}
 			
@@ -5765,9 +6187,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			
 		},
-		
-		
-		
 		
 		/* helper fns */
 		
@@ -5799,6 +6218,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		sync: function(sprite, obj){
+			console.log("sync");
 			sprite = sprite || this.activeObject;
 			obj = obj || sprite.MT_OBJECT;
 			
@@ -6032,7 +6452,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		updateSelected: function(){
-			
+			if(!this.activeObject){
+				return;
+			}
+			this.activeObject = this.getById(this.activeObject.MT_OBJECT.id);
 		},
 		
 		
@@ -6057,6 +6480,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 
 //MT/plugins/ObjectsManager.js
 MT.namespace('plugins');
+/* TODO: seperate by object types*/
+
+"use strict";
+
 MT.require("ui.TreeView");
 MT.require("ui.List");
 MT.require("core.Selector");
@@ -6127,11 +6554,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				showHide: true,
 				lock: true
 			});
-			this.tv.onChange = function(oldItem, newItem){
+			
+			this.tv.on("change", function(oldItem, newItem){
 				console.log("change", oldItem, newItem);
 				that.update();
 				that.sync();
-			};
+			});
 			
 			this.tv.sortable(this.ui.events);
 			this.tv.tree.show(this.panel.content.el);
@@ -6351,13 +6779,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				name: name,
 				x: 0,
 				y: 0,
+				anchorX: 0,
+				anchorY: 0,
 				angle: 0,
 				data: [],
 				isVisible: 1,
 				isLocked: 0,
 				isFixedToCamera: 0,
 				tileWidth: 64,
-				tileHeight: 64
+				tileHeight: 64,
+				widthInTiles: 10,
+				heightInTiles: 10
 			};
 			
 			data.unshift(obj);
@@ -6596,6 +7028,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.project = project;
 		
 		this.active = null;
+		this.list = {};
 	},
 	{
 		initUI: function(ui){
@@ -6603,9 +7036,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panel = ui.createPanel("Assets");
 			this.panel.setFree();
 			
-			window.am = this;
 			var that = this;
-			
 			
 			this.panel.addOptions([
 				{
@@ -6895,7 +7326,19 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		a_receiveFileList: function(list){
 			this.buildAssetsTree(list);
+			this.buildList(list);
 			this.update();
+		},
+		
+		buildList: function(list){
+			console.log(list);
+			for(var i=0; i<list.length; i++){
+				if(list[i].contents){
+					this.buildList(list[i].contents);
+					continue;
+				}
+				this.list[list[i].id] = list[i];
+			}
 		},
 		
 		handleFiles: function(e){
@@ -7277,6 +7720,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 			
 			MT.ui.DomElement.show.call(this, parent);
+			this.setAll("_parent", this._parent);
+			
 			if(silent !== false){
 				this.emit("show");
 			}
@@ -8126,7 +8571,7 @@ MT.extend("core.BasicPlugin")(
 			link.onload = function(e){
 				var sp = document.createElement("span");
 				sp.style.fontFamily = font;
-				sp.innerHTML = "ignore moi";
+				sp.innerHTML = "ignore";
 				sp.style.visibility = "hidden";
 				document.body.appendChild(sp);
 				window.setTimeout(function(){
@@ -8508,7 +8953,6 @@ MT.extend("core.Emitter")(
 		
 		var animEnd = function(aa){
 			that.update();
-			console.log("aa",aa);
 			this.removeEventListener("webkitTransitionEnd", animEnd);
 			window.setTimeout(function(){
 				document.addEventListener("webkitTransitionEnd", animEnd, false);
@@ -8573,7 +9017,7 @@ MT.extend("core.Emitter")(
 			if(e.target.data && e.target.data.panel){
 				activePanel = e.target.data.panel;
 				activePanel.isNeedUnjoin = true;
-				activePanel.show(null, false);
+				activePanel.show(null);
 			}
 			else{
 				activePanel.isNeedUnjoin = false;
