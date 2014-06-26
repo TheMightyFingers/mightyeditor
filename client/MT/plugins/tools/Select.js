@@ -96,7 +96,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				}
 			}
 			if(this.tools.activeTool !== self){
-				console.log("xxx");
 				this.tools.mouseMove(e);
 			}
 		},
