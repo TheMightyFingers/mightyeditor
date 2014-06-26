@@ -157,6 +157,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				var tile = that.getTile(e.offsetX, e.offsetY, panel.data.image);
 				
 				that.start = tile;
+				that.stop = tile;
 				that.drawImage(panel);
 			};
 			
