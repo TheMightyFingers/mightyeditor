@@ -225,7 +225,13 @@ MT(
 		// called when tool has been selected
 		init: function(){
 			console.log("TODO: init");
+			this.activate();
 		},
+		// proxy for init - probably better naming
+		activate: function(){
+			
+		},
+		
 		// called when object has been selected and tool is active
 		select: function(object){
 			console.log("TODO: select", object);
@@ -245,6 +251,12 @@ MT(
 		// called before another tool has been selected
 		deactivate: function(){
 			console.log("TODO: deactivate");
+			this.deinit();
+		},
+		
+		// proxy to deactivate - probably better naming
+		deinit: function(){
+			
 		}
 
 	}
@@ -653,7 +665,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			var that = this;
 			this.tools.on("selectObject", function(obj){
-				
+				if(!obj){
+					return;
+				}
+				that.select(obj);
 			});
 			this.tools.on("unselectedObject", function(){
 				that.unselect();
@@ -999,6 +1014,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		adjustGrid: function(obj){
+			this.restore();
 			this.oldSettings.gridX = this.tools.map.settings.gridX;
 			this.oldSettings.gridY = this.tools.map.settings.gridY;
 			
@@ -1011,6 +1027,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		unselect: function(){
 			this.panel.hide();
 			this.restore();
+			this.tools.setTool(this.tools.tools.select);
+		},
+		
+		deactivate: function(){
+			this.restore();
 		},
 		
 		select: function(obj){
@@ -1018,12 +1039,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.restore();
 				return;
 			}
-			
-			
-			
 			this.active = obj;
-			this.adjustGrid(this.active.MT_OBJECT);
+			this.tools.setTool(this);
 			
+			this.adjustGrid(this.active.MT_OBJECT);
 			if(this.tools.activeTool == this){
 				
 				this.panel.show();
@@ -2036,6 +2055,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.map.handleMouseMove = this.mouseMoveFree;
 		},
 		
+		deactivate: function(){
+			this.mDown = false;
+			console.log("select deactivated");
+			this.map.handleMouseMove = this.mouseMoveFree;
+		},
+		
 		select: function(obj){
 			
 			var shift = (this.ui.events.mouse.lastEvent && this.ui.events.mouse.lastEvent.shiftKey ? true : false);
@@ -2260,11 +2285,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 						this.initMove(e);
 					}
 					else{
-						this.select(obj);
-						
 						if(this.map.selector.is(obj)){
 							this.initMove(e);
 						}
+						this.select(obj);
 					}
 				}
 				else{
@@ -4099,7 +4123,7 @@ MT.extend("core.BasicPlugin")(
 			ga('send', 'pageview');
 			
 			var lastUpdate = Date.now();
-			
+			var that = this;
 			this.project.plugins.tools.on("select", function(tool){
 				lastUpdate = Date.now();
 				ga('send', 'event', 'tool-selected', tool);
@@ -4128,7 +4152,7 @@ MT.extend("core.BasicPlugin")(
 			var minute = 1000*60;
 			window.setInterval(function(){
 				if(lastUpdate < Date.now() - minute){
-					ga('send', 'event', 'idle', "true");
+					ga('send', 'event', 'idle', that.project.id);
 				}
 			}, minute);
 		}
@@ -4401,6 +4425,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			var select =  function(object){
+				if(!object){
+					console.error("Failed to select an object");
+					return;
+				}
 				that.select(object);
 			};
 			map.on("select",select);
@@ -5154,7 +5182,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var tilemap = this.getTileMap(obj);
 			
 			var tl = tilemap.createBlankLayer(obj.name, obj.widthInTiles, obj.heightInTiles, obj.tileWidth, obj.tileHeight);
-			tl.fixedToCamera = false;
+			tl.fixedToCamera = obj.isFixedToCamera;
 			return tl;
 		},
 		
@@ -5645,7 +5673,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		/* assets n objects */
 		isAssetsAdded: false,
 		assetsTimeout: 0,
-		addAssets: function(assets){
+		addAssets: function(assets, inDepth){
 			if(!this.game.isBooted){
 				var that = this;
 				window.clearTimeout(this.assetsTimeout);
@@ -5660,7 +5688,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var game = this.game;
 			var that = this;
 			var asset = null;
-			this.isAssetsAdded = !assets.length;
+			if(!inDepth){
+				this.isAssetsAdded = !assets.length;
+			}
 			for(var i=0; i<assets.length; i++){
 				this.addAsset(assets[i], function(){
 					that.assetsToLoad--;
@@ -5668,7 +5698,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						that.isAssetsAdded = true;
 						that.reloadObjects();
 					}
-					
 				});
 			}
 		},
@@ -5676,7 +5705,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		assetsToLoad: 0,
 		addAsset: function(asset, cb){
 			if(asset.contents){
-				this.addAssets(asset.contents);
+				this.addAssets(asset.contents, true);
 				return;
 			}
 			
@@ -7061,6 +7090,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.newFolder();
+						that.panel.options.list.hide();
 					}
 				},
 				{
@@ -7068,6 +7098,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.deleteAssets();
+						that.panel.options.list.hide();
 					}
 				}
 			]);
@@ -8623,6 +8654,13 @@ MT.extend("core.BasicPlugin")(
 					cb: function(){
 						that.openFonts();
 					}
+				},
+				{
+					label: "Found a bug? Report on github",
+					className: "",
+					cb: function(){
+						that.openLink("https://github.com/TheMightyFingers/mightyeditor/issues/new");
+					}
 				}
 			
 			], ui, true);
@@ -8636,7 +8674,7 @@ MT.extend("core.BasicPlugin")(
 				that.list.el.style.bottom = "initial";
 			});
 			
-			that.list.width = 270;
+			that.list.width = 300;
 			
 		},
 		
@@ -8662,6 +8700,11 @@ MT.extend("core.BasicPlugin")(
 			//https://www.youtube.com/watch?v=7dk2naCCePc
 			var w = window.open("about:blank","_newTab");
 			w.opener=null; w.location.href="https://www.google.com/fonts";
+		},
+		
+		openLink: function(link){
+			var w = window.open("about:blank","_newTab");
+			w.opener=null; w.location.href=link;
 		}
 	}
 );
