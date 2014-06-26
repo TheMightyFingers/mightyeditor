@@ -9,6 +9,7 @@ MT(
 		
 		this.objects = {};
 		
+		this.activeId = 0;
 	},
 	{
 		initUI: function(ui){
@@ -18,7 +19,7 @@ MT(
 			
 			var that = this;
 			ui.events.on("keyup", function(e){
-				if(e.which == MT.keys.esc){
+				if(e.which == MT.keys.ESC){
 					that.clear();
 				}
 			});
@@ -38,6 +39,7 @@ MT(
 			
 			this.project.plugins.tools.on("selectObject", function(obj){
 				that.handleObjects(obj.MT_OBJECT);
+				that.active = obj.MT_OBJECT.id;
 			});
 			
 			var map = this.project.plugins.mapeditor;
@@ -160,6 +162,8 @@ MT(
 			else if(obj.type == MT.objectTypes.TILE_LAYER){
 				
 				this.stack = "layer";
+				this.objects.x = this.addInput( "x", obj, true, cb);
+				this.objects.y = this.addInput( "y", obj, true, cb);
 				this.addInput("widthInTiles", obj, true, cb);
 				this.addInput("heightInTiles", obj, true, cb);
 				this.addInput("tileWidth", obj, true, cb);
@@ -253,6 +257,9 @@ MT(
 		},
    
 		updateObjects: function(obj){
+			if(obj.id != this.activeId){
+				return;
+			}
 			for(var i in this.objects){
 				this.objects[i].obj = obj;
 				this.objects[i].setValue(obj[i], true);

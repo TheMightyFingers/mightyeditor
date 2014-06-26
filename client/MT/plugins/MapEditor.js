@@ -149,7 +149,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				
 				//escape
-				if(w == MT.keys.esc){
+				if(w == MT.keys.ESC){
 					that.activeObject = null;
 					that.selector.clear();
 					return;
@@ -336,9 +336,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				xx = "#000000";
 			}
 			
-			ctx.lineWidth = 0.1;
 			ctx.strokeStyle = "#"+xx;
-			ctx.globalAlpha = 0.5;
 			
 			//ctx.strokeStyle = "rgba(255,255,255,0.1)";
 			
@@ -355,29 +353,36 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			g = this.settings.gridX;
 			
-			ctx.lineWidth = 0.1;
-			ctx.globalAlpha = 0.5;
+			ctx.lineWidth = 0.2;
+			ctx.globalAlpha = 1;
+			
+			ctx.shadowColor = '#000';
+			ctx.shadowBlur = 0;
+			ctx.shadowOffsetX = 0.5;
+			ctx.shadowOffsetY = 0;
+			
 			
 			ctx.beginPath();
 			for(var i = -ox; i<width; i += g){
 				if(i < 0){
 					continue;
 				}
-				ctx.moveTo(i, 0);
-				ctx.lineTo(i, height);
-				
-				
+				ctx.moveTo(i+0.5, 0.5);
+				ctx.lineTo(i+0.5, height+0.5);
 			}
+			ctx.stroke();
 			
+			ctx.shadowOffsetX = 0;
+			ctx.shadowOffsetY = 0.5;
+			
+			ctx.beginPath();
 			g = this.settings.gridY;
 			for(var j = -oy; j<height; j += g){
 				if(j < 0){
 					continue;
 				}
-				ctx.moveTo(0, j);
-				ctx.lineTo(width, j);
-				
-				
+				ctx.moveTo(0.5, j+0.5);
+				ctx.lineTo(width+0.5, j+0.5);
 			}
 			ctx.stroke();
 			
@@ -633,7 +638,23 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			image.src = path;
 		},
-   
+		
+		checkId: function(){
+			var o = null;
+			for(var i=0; i<this.objects.length; i++){
+				o = this.objects[i];
+				for(var j=0; j<this.objects.length; j++){
+					if(o == this.objects[j]){
+						continue;
+					}
+					if(o.MT_OBJECT.id == this.objects[j].MT_OBJECT.id){
+						console.error("dublicate id");
+					}
+				}
+			}
+			
+			
+		},
 		
 		_addTimeout: 0,
 		addObjects: function(objs, group){

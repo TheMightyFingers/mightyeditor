@@ -213,6 +213,7 @@ MT(
 		this.project = tools.project;
 	},
 	{
+		// called once per tool - by default adds tool button on side panel
 		initUI: function(ui){
 			var that = this;
 			this.ui = ui;
@@ -221,29 +222,29 @@ MT(
 			});
 			
 		},
-		
+		// called when tool has been selected
 		init: function(){
-			console.log("init");
+			console.log("TODO: init");
 		},
-   
+		// called when object has been selected and tool is active
 		select: function(object){
-			console.log("select", object);
+			console.log("TODO: select", object);
 		},
-		
+		// on mouse down
 		mouseDown: function(e){
-			console.log("mousedown");
+			console.log("TODO: mousedown");
 		},
-   
+		// on mouse up
 		mouseUp: function(e){
-			console.log("mouseup");
+			console.log("TODO: mouseup");
 		},
-   
+		// on mouse move
 		mouseMove: function(){
-			console.log("mouse move");
+			console.log("TODO: mouse move");
 		},
-   
+		// called before another tool has been selected
 		deactivate: function(){
-			
+			console.log("TODO: deactivate");
 		}
 
 	}
@@ -464,7 +465,7 @@ MT.extend("core.Emitter")(
 		input.className = "ui-input ui-input-helper";
 		
 		input.onkeyup = function(e){
-			if(e.which == MT.keys.enter){
+			if(e.which == MT.keys.ENTER){
 				if(this.value != ""){
 					button.text = this.value;
 				}
@@ -658,8 +659,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				that.unselect();
 			});
 			
-			this.panels = {};
-			
 			this.selection = new MT.core.Selector();
 			
 			this.start = 0;
@@ -682,8 +681,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		createPanels: function(images){
 			var p, pp;
-			
-		
 			var obj = this.active.MT_OBJECT;
 			for(var id in images){
 				if(this.panels[id]){
@@ -701,16 +698,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				p = new MT.ui.Panel(images[id].name);
 				p.fitIn();
 				p.addClass("borderless");
+				
 				if(pp){
 					p.addJoint(pp);
 				}
+				
 				this.createImage(p, images[id]);
-				pp = p;
 				this.panels[id] = p;
-				p.on("show", function(){
-					console.log("visible", p);
-				});
+				pp = p;
 			}
+			
 			if(pp){
 				this.activePanel = pp;
 				pp.show(this.panel.content.el);
@@ -718,11 +715,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		createImage: function(panel, image){
-			console.log("adding canvas", image.name);
 			var that = this;
-			
-			
 			var img = new Image();
+			
 			img.onload = function(){
 				that.drawImage(panel, this);
 			};
@@ -735,7 +730,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				canvas: null,
 				ctx: null
 			};
-			
 			
 			this.addCanvas(panel, img);
 		},
@@ -903,25 +897,19 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		getTile: function(x, y, image){
 			var tx = x/this.active.map.tileWidth | 0;
 			var ty = y/this.active.map.tileHeight | 0;
-			
-			
 			return this.getId(tx, ty, image);
 		},
+		
 		getId: function(x, y, image){
 			return x + y*(image.width / this.active.map.tileWidth);
 		},
 		
-		
-		
 		mouseUp: function(e){
-			
 			if(e.target != this.tools.map.game.canvas){
 				return;
 			}
 			this.mDown = false;
-			console.log("TILE mouse up", e);
 		},
-		
 		
 		mouseDown: function(e){
 			this.mDown = true;
@@ -949,14 +937,13 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var y = (e.y - this.active.y - this.tools.map.offsetY)/scale;
 			
 			if(this.active){
-				if(!this.active.getBounds().contains(x,y)){
+				var bounds = this.active.getBounds();
+				if(!bounds.contains(e.x - this.tools.map.ox, e.y - this.tools.map.oy)){
 					return;
 				}
 			}
 			
 			var p = this.active.getTileXY(x, y, {});
-			
-			console.log("tile:", p);
 			
 			if(e.ctrlKey){
 				that.putTile(null, p.x, p.y, activeLayer);
@@ -984,8 +971,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 			layer.MT_OBJECT.tiles[y][x] = id;
 			layer.map.putTile(id, x, y, layer);
-			
 		},
+		
 		oldSettings: {},
 		init: function(){
 			this.active = this.tools.map.activeObject;
@@ -1000,14 +987,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.tools.map.settings.gridX = this.active.MT_OBJECT.tileWidth;
 			this.tools.map.settings.gridY = this.active.MT_OBJECT.tileHeight;
 			
-			
 			this.update();
 			
 			this.panel.show();
+			if(this.activePanel){
+				this.activePanel.hide();
+				this.activePanel.show();
+			}
 		},
 		
 		unselect: function(){
-			console.log("unselect");
 			this.panel.hide();
 			this.restore();
 		},
@@ -1041,6 +1030,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.drawImage(this.activePanel);
 			}
 		},
+		
 		restore: function(){
 			if(this.oldSettings.gridX){
 				this.tools.map.settings.gridX = this.oldSettings.gridX;
@@ -1051,7 +1041,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		updateLayer: function(obj){
-			console.log("updateLayer");
 			var data = obj.MT_OBJECT;
 			this.active = obj;
 			if(!data.images || data.images.length == 0){
@@ -1071,10 +1060,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					obj.map.putTile(tiles[y][x], x, y, obj);
 				}
 			}
-			
-			
 		}
-
 	}
 );
 //MT/plugins/tools/Text.js
@@ -2112,7 +2098,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		resizeObject: function(obj, mouse){
-			//console.log("resize", mouse);
 			obj = obj || this.map.activeObject;
 			var scale = this.map.game.camera.scale.x;
 			var x = mouse.mx/scale;
@@ -2217,16 +2202,15 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!this.map.activeObject){
 				return false;
 			}
-			var mt = this.map.activeObject.MT_OBJECT;
-			console.log("double", mt, this.map.objects);
 			
+			var mt = this.map.activeObject.MT_OBJECT;
 			for(var i=0; i<this.map.objects.length; i++){
 				if(this.map.objects[i].MT_OBJECT.assetId == mt.assetId){
 					this.map.selector.add(this.map.objects[i]);
 				}
 			}
-			return true;
 			
+			return true;
 		},
 		
 		mDown: false,
@@ -2245,12 +2229,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this._lastMD = Date.now();
 			
-			
-			console.log("mouseDown");
-			
 			var that = this;
 			var shift = (e.shiftKey ? true : false);
-			
 			
 			var x = e.x - this.map.offsetXCam;
 			var y = e.y - this.map.offsetYCam;
@@ -2262,8 +2242,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.initMove(e);
 				return;
 			}
-			
-			console.log(obj);
 			
 			if(obj){
 				if(!shift){
@@ -2302,9 +2280,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					this.tools.project.plugins.settings.handleScene(this.map.settings);
 				}
 			}
-			
 		}
-
 	}
 );
 //MT/ui/List.js
@@ -2510,12 +2486,12 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 			var w = e.which;
 			
-			if(w == MT.keys.esc){
+			if(w == MT.keys.ESC){
 				input.value = that.object[that.key];
 				input.blur();
 			}
 			
-			if(w == MT.keys.enter){
+			if(w == MT.keys.ENTER){
 				input.blur();
 			}
 			
@@ -3894,9 +3870,6 @@ MT(
 				cb(action, data);
 			}
 		}
-
-
-
 	}
 );
 //MT/ui/PanelHead.js
@@ -4449,7 +4422,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.ui.events.on("keyup", function(e){
 				
-				if(lastKey == MT.keys.esc){
+				if(lastKey == MT.keys.ESC){
 					that.setTool(that.tools.select);
 					window.getSelection().removeAllRanges();
 					lastKey = 0;
@@ -4457,7 +4430,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				
 				
-				if(e.which == MT.keys.delete){
+				if(e.which == MT.keys.DELETE){
 					
 					var data = om.tv.getData();
 					
@@ -5475,11 +5448,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			ctx.beginPath();
 			
-			ctx.moveTo(0, -game.camera.y);
-			ctx.lineTo(width, -game.camera.y);
+			ctx.moveTo(0, -game.camera.y/this.scale.y);
+			ctx.lineTo(width, -game.camera.y/this.scale.y);
 			
-			ctx.moveTo(-game.camera.x, 0);
-			ctx.lineTo(-game.camera.x, height);
+			ctx.moveTo(-game.camera.x/this.scale.x, 0);
+			ctx.lineTo(-game.camera.x/this.scale.x, height);
 			
 			
 			ctx.stroke();
@@ -6301,7 +6274,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		
-		pickObject: function(x,y){
+		pickObject: function(x, y){
 			
 			x += this.game.camera.x;
 			y += this.game.camera.y;
@@ -6480,7 +6453,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 
 //MT/plugins/ObjectsManager.js
 MT.namespace('plugins');
-/* TODO: seperate by object types*/
+/* TODO: 
+ * - seperate by object types
+ * - optimize - so only changed object gets updated not all object chunk
+ * - set correct id instead of tmpXXXXX - probably add event on server side
+ */
 
 "use strict";
 
@@ -6523,6 +6500,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.createGroup();
+						that.panel.options.list.hide();
 					}
 				},
 				{
@@ -6530,6 +6508,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.createTileLayer();
+						that.panel.options.list.hide();
 					}
 				},
 				{
@@ -6537,6 +6516,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.groupSelected();
+						that.panel.options.list.hide();
 					}
 				},
 				{
@@ -6544,6 +6524,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.deleteSelected();
+						that.panel.options.list.hide();
 					}
 				}
 			], ui, true);
@@ -6556,7 +6537,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			this.tv.on("change", function(oldItem, newItem){
-				console.log("change", oldItem, newItem);
 				that.update();
 				that.sync();
 			});
@@ -6658,10 +6638,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				arr = this.activeGroup.contents;
 			}
 			
-			
 			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, arr, 0);
 			
-			console.log("active Object", this.activeGroup);
 			arr.splice(0,0,obj);
 			
 			if(!silent){
@@ -6684,8 +6662,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var name = asset.name.split(".");
 			name.pop();
 			name = name.join("");
-			
-			console.log("----------->",asset);
 			
 			return  {
 				assetId: asset.id,
@@ -6989,7 +6965,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					return;
 				}
 				
-				console.log("sync");
 				this._lastData = json;
 				if(!silent){
 					that.emit("beforeSync", data);
@@ -7313,8 +7288,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var frame = gx + maxX*gy;
 			
-			console.log("frame", gx, gy, frame);
-			
 			return frame;
 		},
 		
@@ -7331,7 +7304,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		buildList: function(list){
-			console.log(list);
 			for(var i=0; i<list.length; i++){
 				if(list[i].contents){
 					this.buildList(list[i].contents);
@@ -7372,8 +7344,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		handleEntry: function(entry){
 			var that = this;
-			console.log(entry.type);
-			
 			
 			if (entry.isFile) {
 				entry.file(function(file){
@@ -7444,14 +7414,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		deleteAssets: function(){
-			console.log("deleting");
 			this.selector.forEach(function(obj){
 				this.deleteAsset(obj.data.id);
 			}, this);
 		},
 		
 		deleteAsset: function(id, silent){
-			console.log("delete", id);
 			this.send("delete", id);
 			this.emit("deleted", id);
 			//if using silent.. you should call manually sync
@@ -7778,8 +7746,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		unjoin: function(){
-			console.log("unjoin");
-			
 			if(this.joints.length == 1){
 				this.breakSideJoints();
 				return;
@@ -7896,8 +7862,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(panel == this.bottom){
 				return;
 			}
-			console.log("join bottom");
-			
 			if(!noResize){
 				this.setClearHeight(this.height - panel.height);
 				panel.setClearWidth(this.width);
@@ -7923,8 +7887,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(panel == this.top){
 				return;
 			}
-			console.log("join top");
-			
 			if(!noResize){
 				this.setClearHeight(this.height - panel.height);
 				panel.setClearWidth(this.width);
@@ -7989,8 +7951,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		breakSideJoints: function(){
 			var pos = this.dockPosition;
 			if(this.bottom){
-				console.log("break bottom");
-				
 				if(this.top){
 					this.top.setAll("bottom", this.bottom);
 				}
@@ -8004,9 +7964,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				
 			}
 			else if(this.top){
-				console.log("break top");
-				
-				
 				if(this.bottom){
 					this.bottom.setAll("top", this.top);
 				}

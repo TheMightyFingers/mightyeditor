@@ -170,6 +170,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.insertObject(no);
 		},
 		
+		
 		insertObject: function(obj, silent, data){
 			data = data || this.tv.getData();
 			
@@ -352,6 +353,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				name = obj.name + this.getNewNameId(obj.name, data);
 				clone = JSON.parse(JSON.stringify(obj));
 				clone.name = name;
+				this.cleanUpClone(clone);
+				
 				if(cb){
 					cb(clone);
 				}
@@ -391,7 +394,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.selector.clear();
 			this.tv.merge(data);
-			this.ui.events.simulateKey(MT.keys.esc);
+			this.ui.events.simulateKey(MT.keys.ESC);
 			this.sync();
 		},
 		
@@ -403,7 +406,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			//if using silent.. you should call manually sync
 			if(!silent){
-				this.ui.events.simulateKey(MT.keys.esc);
+				this.ui.events.simulateKey(MT.keys.ESC);
 				this.sync();
 				this.update();
 			}

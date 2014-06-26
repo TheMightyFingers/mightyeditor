@@ -348,11 +348,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			
-			this.oldSettings.gridX = this.tools.map.settings.gridX;
-			this.oldSettings.gridY = this.tools.map.settings.gridY;
-			
-			this.tools.map.settings.gridX = this.active.MT_OBJECT.tileWidth;
-			this.tools.map.settings.gridY = this.active.MT_OBJECT.tileHeight;
+			this.adjustGrid(this.active.MT_OBJECT);
 			
 			this.update();
 			
@@ -361,6 +357,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.activePanel.hide();
 				this.activePanel.show();
 			}
+		},
+		
+		adjustGrid: function(obj){
+			this.oldSettings.gridX = this.tools.map.settings.gridX;
+			this.oldSettings.gridY = this.tools.map.settings.gridY;
+			
+			this.tools.map.settings.gridX = obj.tileWidth;
+			this.tools.map.settings.gridY = obj.tileHeight;
+			this.tools.map.settings.gridOffsetX = obj.x;
+			this.tools.map.settings.gridOffsetY = obj.y;
 		},
 		
 		unselect: function(){
@@ -374,15 +380,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			
-			this.oldSettings.gridX = this.tools.map.settings.gridX;
-			this.oldSettings.gridY = this.tools.map.settings.gridY;
 			
-			this.tools.map.settings.gridX = obj.MT_OBJECT.tileWidth;
-			this.tools.map.settings.gridY = obj.MT_OBJECT.tileHeight;
-			this.tools.map.settings.gridOffsetX = obj.x;
-			this.tools.map.settings.gridOffsetY = obj.y;
 			
 			this.active = obj;
+			this.adjustGrid(this.active.MT_OBJECT);
+			
 			if(this.tools.activeTool == this){
 				
 				this.panel.show();
@@ -392,7 +394,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		update: function(){
 			var images = this.tools.project.plugins.assetsmanager.list;
-			this.createPanels(images);
+			if(this.active){
+				this.createPanels(images);
+			}
 			if(this.activePanel){
 				this.drawImage(this.activePanel);
 			}

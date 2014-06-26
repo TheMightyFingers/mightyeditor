@@ -92,7 +92,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.ui.events.on("keyup", function(e){
 				
-				if(lastKey == MT.keys.esc){
+				if(lastKey == MT.keys.ESC){
 					that.setTool(that.tools.select);
 					window.getSelection().removeAllRanges();
 					lastKey = 0;
@@ -100,7 +100,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				
 				
-				if(e.which == MT.keys.delete){
+				if(e.which == MT.keys.DELETE){
 					
 					var data = om.tv.getData();
 					
@@ -122,7 +122,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					lastKey = 0;
 				}, 500);
 				
-				if(e.which === MT.keys.esc){
+				if(e.which === MT.keys.ESC){
 					that.activeTool.deactivate();
 				}
 				

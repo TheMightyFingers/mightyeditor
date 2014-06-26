@@ -211,7 +211,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			ui.events.on("keydown", function(e){
 				var w = e.which;
-				if(w == MT.keys.esc){
+				if(w == MT.keys.ESC){
 					that.selector.forEach(function(obj){
 						obj.removeClass("active.selected");
 					});
@@ -432,7 +432,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.emit("deleted", id);
 			//if using silent.. you should call manually sync
 			if(!silent){
-				this.ui.events.simulateKey(MT.keys.esc);
+				this.ui.events.simulateKey(MT.keys.ESC);
 			}
 		},
 		

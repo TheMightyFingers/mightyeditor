@@ -95,8 +95,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					self.activeState = self.states.NONE;
 				}
 			}
-			
-			this.tools.mouseMove(e);
+			if(this.tools.activeTool !== self){
+				console.log("xxx");
+				this.tools.mouseMove(e);
+			}
 		},
 		
 		resizeObject: function(obj, mouse){

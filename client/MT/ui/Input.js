@@ -121,12 +121,12 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 			var w = e.which;
 			
-			if(w == MT.keys.esc){
+			if(w == MT.keys.ESC){
 				input.value = that.object[that.key];
 				input.blur();
 			}
 			
-			if(w == MT.keys.enter){
+			if(w == MT.keys.ENTER){
 				input.blur();
 			}
 			

@@ -11,7 +11,7 @@ MT.extend("core.Emitter")(
 		input.className = "ui-input ui-input-helper";
 		
 		input.onkeyup = function(e){
-			if(e.which == MT.keys.enter){
+			if(e.which == MT.keys.ENTER){
 				if(this.value != ""){
 					button.text = this.value;
 				}
