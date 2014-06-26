@@ -77,7 +77,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var tilemap = this.getTileMap(obj);
 			
 			var tl = tilemap.createBlankLayer(obj.name, obj.widthInTiles, obj.heightInTiles, obj.tileWidth, obj.tileHeight);
-			tl.fixedToCamera = false;
+			tl.fixedToCamera = obj.isFixedToCamera;
 			return tl;
 		},
 		
@@ -568,7 +568,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		/* assets n objects */
 		isAssetsAdded: false,
 		assetsTimeout: 0,
-		addAssets: function(assets){
+		addAssets: function(assets, inDepth){
 			if(!this.game.isBooted){
 				var that = this;
 				window.clearTimeout(this.assetsTimeout);
@@ -583,7 +583,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var game = this.game;
 			var that = this;
 			var asset = null;
-			this.isAssetsAdded = !assets.length;
+			if(!inDepth){
+				this.isAssetsAdded = !assets.length;
+			}
 			for(var i=0; i<assets.length; i++){
 				this.addAsset(assets[i], function(){
 					that.assetsToLoad--;
@@ -591,7 +593,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						that.isAssetsAdded = true;
 						that.reloadObjects();
 					}
-					
 				});
 			}
 		},
@@ -599,7 +600,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		assetsToLoad: 0,
 		addAsset: function(asset, cb){
 			if(asset.contents){
-				this.addAssets(asset.contents);
+				this.addAssets(asset.contents, true);
 				return;
 			}
 			

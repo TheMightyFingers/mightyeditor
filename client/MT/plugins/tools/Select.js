@@ -28,6 +28,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.map.handleMouseMove = this.mouseMoveFree;
 		},
 		
+		deactivate: function(){
+			this.mDown = false;
+			console.log("select deactivated");
+			this.map.handleMouseMove = this.mouseMoveFree;
+		},
+		
 		select: function(obj){
 			
 			var shift = (this.ui.events.mouse.lastEvent && this.ui.events.mouse.lastEvent.shiftKey ? true : false);
@@ -252,11 +258,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 						this.initMove(e);
 					}
 					else{
-						this.select(obj);
-						
 						if(this.map.selector.is(obj)){
 							this.initMove(e);
 						}
+						this.select(obj);
 					}
 				}
 				else{

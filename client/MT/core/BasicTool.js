@@ -16,7 +16,13 @@ MT(
 		// called when tool has been selected
 		init: function(){
 			console.log("TODO: init");
+			this.activate();
 		},
+		// proxy for init - probably better naming
+		activate: function(){
+			
+		},
+		
 		// called when object has been selected and tool is active
 		select: function(object){
 			console.log("TODO: select", object);
@@ -36,6 +42,12 @@ MT(
 		// called before another tool has been selected
 		deactivate: function(){
 			console.log("TODO: deactivate");
+			this.deinit();
+		},
+		
+		// proxy to deactivate - probably better naming
+		deinit: function(){
+			
 		}
 
 	}

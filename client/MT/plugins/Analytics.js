@@ -13,7 +13,7 @@ MT.extend("core.BasicPlugin")(
 			ga('send', 'pageview');
 			
 			var lastUpdate = Date.now();
-			
+			var that = this;
 			this.project.plugins.tools.on("select", function(tool){
 				lastUpdate = Date.now();
 				ga('send', 'event', 'tool-selected', tool);
@@ -42,7 +42,7 @@ MT.extend("core.BasicPlugin")(
 			var minute = 1000*60;
 			window.setInterval(function(){
 				if(lastUpdate < Date.now() - minute){
-					ga('send', 'event', 'idle', "true");
+					ga('send', 'event', 'idle', that.project.id);
 				}
 			}, minute);
 		}

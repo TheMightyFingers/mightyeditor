@@ -11,8 +11,11 @@
 	
 	global.mt = {
 		
+		SPRITE: 0,
+		GROUP: 1,
 		TEXT: 2,
-
+		TILE_LAYER: 3,
+		
 		knownFonts: [
 			"Arial",
 			"Comic Sans MS",
@@ -37,10 +40,17 @@
 		preload: function(game){
 			this.game = game;
 			this.game.load.crossOrigin = "anonymous";
-			
 			this.game.load.script("hacks","phaserHacks.js");
 			
 			this._loadAssets(this.data.assets.contents, this.assets, "");
+			if(this.data.map.backgroundColor){
+				var tmp = this.data.map.backgroundColor.substring(1);
+				var bg = parseInt(tmp, 16);
+				
+				if(this.game.stage.backgroundColor != bg){
+					this.game.stage.setBackgroundColor(bg);
+				}
+			}
 		},
 	
 		create: function(){
@@ -92,6 +102,25 @@
 			
 		},
 		
+		getAssetById: function(id, container){
+			container = container || this.assets;
+			var ret = null;
+			
+			for(var i in container){
+				if(container[i].id == id){
+					return container[i];
+				}
+				if(container[i].contents){
+					ret = this.getAssetById(id);
+					if(ret){
+						return ret;
+					}
+				}
+			}
+			
+			return ret;
+		},
+ 
 		_loadObjects: function(data, container, path, group){
 			group = group || this.game.world;
 			path = path !== "" ? "." + path : path;
@@ -103,29 +132,36 @@
 		},
 		
 		_add: function(object, container, path, group){
+			var createdObject = null;
 			
 			if(object.contents){
-				var tmpGroup = this._addGroup(object, container);
-				group.add(tmpGroup);
+				createdObject = this._addGroup(object, container);
+				group.add(createdObject);
 				
 				if(!container[object.name]){
 					container[object.name] = {
 						get self(){
-							return tmpGroup
+							return createdObject
 						}
 					};
 				}
 				
-				this._loadObjects(object.contents, container[object.name], path + object.name, tmpGroup );
+				this._loadObjects(object.contents, container[object.name], path + object.name, createdObject);
 			}
 			else{
+				
 				if(object.type == this.TEXT){
-					this._addText(object, container, group);
+					createdObject = this._addText(object, container, group);
+				}
+				if(object.type == this.TILE_LAYER){
+					createdObject = this._addTileLayer(object, container, group);
 				}
 				else{
-					this._addObject(object, container, group);
+					createdObject = this._addObject(object, container, group);
 				}
 			}
+			
+			this._updateCommonProperties(object, createdObject);
 		},
 		
 		_addGroup: function(object){
@@ -169,6 +205,51 @@
 			return t;
 		},
 		
+		_addTileLayer: function(object, container, group){
+			group = group || this.game.world;
+			var map = this.game.add.tilemap(null, object.tileWidth, object.tileHeight, object.widthInTiles, object.heightInTiles);
+			
+			var tl = map.createBlankLayer(object.name, object.widthInTiles, object.heightInTiles, object.tileWidth, object.tileHeight);
+			
+			var nextId = 0;
+			var im = null;
+			var asset = "";
+			for(var i=0; i<object.images.length; i++){
+				asset = this.getAssetById(object.images[i]);
+				
+				if(asset){
+					im = map.addTilesetImage(asset.key, asset.key, map.tileWidth, map.tileHeight, 0, 0, nextId);
+					nextId += im.total;
+				}
+				else{
+					console.warn("cannot find image", object.images[i]);
+				}
+			}
+			
+			var tiles = object.tiles;
+			for(var y in tiles){
+				for(var x in tiles[y]){
+					map.putTile(tiles[y][x], x, y, tl);
+				}
+			}
+			
+			
+			if(container.hasOwnProperty(object.name)){
+				console.warn("dublicate object name - ", object.name);
+			}
+			else{
+			
+				Object.defineProperty(container, object.name, {
+					get : function(){ 
+						return tl;
+					},
+					enumerable: true
+				});
+			}
+			
+			return tl;
+		},
+		
 		_addObject: function(object, container, group){
 			
 			var sp = null;
@@ -187,20 +268,6 @@
 				sp.frame = object.frame;
 			}
 			
-			
-			if(object.angle){
-				sp.angle = object.angle;
-			}
-			
-			sp.anchor.x = object.anchorX;
-			sp.anchor.y = object.anchorY;
-			
-			
-			sp.x = object.x;
-			sp.y = object.y;
-			sp.scale.x = object.scaleX;
-			sp.scale.y = object.scaleY;
-			
 			if(container.hasOwnProperty(object.name)){
 				console.warn("dublicate object name - ", object.name);
 			}
@@ -215,6 +282,25 @@
 			
 			return sp;
 		},
+ 
+		_updateCommonProperties: function(template, object){
+			
+			
+			if(template.angle){
+				object.angle = object.angle;
+			}
+			
+			object.anchor.x = template.anchorX;
+			object.anchor.y = template.anchorY;
+			
+			
+			object.x = template.x;
+			object.y = template.y;
+			object.scale.x = template.scaleX;
+			object.scale.y = template.scaleY;
+			object.fixedToCamera = template.isFixedToCamera;
+		},
+ 
 		_fontsToLoad: 0,
 		getFontFamily: function(font){
 			if(!this.autoLoadFonts){

@@ -34,6 +34,13 @@ MT.extend("core.BasicPlugin")(
 					cb: function(){
 						that.openFonts();
 					}
+				},
+				{
+					label: "Found a bug? Report on github",
+					className: "",
+					cb: function(){
+						that.openLink("https://github.com/TheMightyFingers/mightyeditor/issues/new");
+					}
 				}
 			
 			], ui, true);
@@ -47,7 +54,7 @@ MT.extend("core.BasicPlugin")(
 				that.list.el.style.bottom = "initial";
 			});
 			
-			that.list.width = 270;
+			that.list.width = 300;
 			
 		},
 		
@@ -73,6 +80,11 @@ MT.extend("core.BasicPlugin")(
 			//https://www.youtube.com/watch?v=7dk2naCCePc
 			var w = window.open("about:blank","_newTab");
 			w.opener=null; w.location.href="https://www.google.com/fonts";
+		},
+		
+		openLink: function(link){
+			var w = window.open("about:blank","_newTab");
+			w.opener=null; w.location.href=link;
 		}
 	}
 );

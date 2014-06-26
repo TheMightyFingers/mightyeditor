@@ -20,7 +20,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			var that = this;
 			this.tools.on("selectObject", function(obj){
-				
+				if(!obj){
+					return;
+				}
+				that.select(obj);
 			});
 			this.tools.on("unselectedObject", function(){
 				that.unselect();
@@ -366,6 +369,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		adjustGrid: function(obj){
+			this.restore();
 			this.oldSettings.gridX = this.tools.map.settings.gridX;
 			this.oldSettings.gridY = this.tools.map.settings.gridY;
 			
@@ -378,6 +382,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		unselect: function(){
 			this.panel.hide();
 			this.restore();
+			this.tools.setTool(this.tools.tools.select);
+		},
+		
+		deactivate: function(){
+			this.restore();
 		},
 		
 		select: function(obj){
@@ -385,12 +394,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.restore();
 				return;
 			}
-			
-			
-			
 			this.active = obj;
-			this.adjustGrid(this.active.MT_OBJECT);
+			this.tools.setTool(this);
 			
+			this.adjustGrid(this.active.MT_OBJECT);
 			if(this.tools.activeTool == this){
 				
 				this.panel.show();

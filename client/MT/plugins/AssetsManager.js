@@ -27,6 +27,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.newFolder();
+						that.panel.options.list.hide();
 					}
 				},
 				{
@@ -34,6 +35,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.deleteAssets();
+						that.panel.options.list.hide();
 					}
 				}
 			]);

@@ -60,6 +60,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			var select =  function(object){
+				if(!object){
+					console.error("Failed to select an object");
+					return;
+				}
 				that.select(object);
 			};
 			map.on("select",select);
