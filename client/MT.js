@@ -981,11 +981,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			
-			this.oldSettings.gridX = this.tools.map.settings.gridX;
-			this.oldSettings.gridY = this.tools.map.settings.gridY;
-			
-			this.tools.map.settings.gridX = this.active.MT_OBJECT.tileWidth;
-			this.tools.map.settings.gridY = this.active.MT_OBJECT.tileHeight;
+			this.adjustGrid(this.active.MT_OBJECT);
 			
 			this.update();
 			
@@ -994,6 +990,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.activePanel.hide();
 				this.activePanel.show();
 			}
+		},
+		
+		adjustGrid: function(obj){
+			this.oldSettings.gridX = this.tools.map.settings.gridX;
+			this.oldSettings.gridY = this.tools.map.settings.gridY;
+			
+			this.tools.map.settings.gridX = obj.tileWidth;
+			this.tools.map.settings.gridY = obj.tileHeight;
+			this.tools.map.settings.gridOffsetX = obj.x;
+			this.tools.map.settings.gridOffsetY = obj.y;
 		},
 		
 		unselect: function(){
@@ -1007,15 +1013,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			
-			this.oldSettings.gridX = this.tools.map.settings.gridX;
-			this.oldSettings.gridY = this.tools.map.settings.gridY;
 			
-			this.tools.map.settings.gridX = obj.MT_OBJECT.tileWidth;
-			this.tools.map.settings.gridY = obj.MT_OBJECT.tileHeight;
-			this.tools.map.settings.gridOffsetX = obj.x;
-			this.tools.map.settings.gridOffsetY = obj.y;
 			
 			this.active = obj;
+			this.adjustGrid(this.active.MT_OBJECT);
+			
 			if(this.tools.activeTool == this){
 				
 				this.panel.show();
@@ -1025,7 +1027,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		update: function(){
 			var images = this.tools.project.plugins.assetsmanager.list;
-			this.createPanels(images);
+			if(this.active){
+				this.createPanels(images);
+			}
 			if(this.activePanel){
 				this.drawImage(this.activePanel);
 			}
@@ -2093,8 +2097,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					self.activeState = self.states.NONE;
 				}
 			}
-			
-			this.tools.mouseMove(e);
+			if(this.tools.activeTool !== self){
+				console.log("xxx");
+				this.tools.mouseMove(e);
+			}
 		},
 		
 		resizeObject: function(obj, mouse){
@@ -4452,7 +4458,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					lastKey = 0;
 				}, 500);
 				
-				if(e.which === MT.keys.esc){
+				if(e.which === MT.keys.ESC){
 					that.activeTool.deactivate();
 				}
 				
@@ -4774,6 +4780,7 @@ MT(
 		
 		this.objects = {};
 		
+		this.activeId = 0;
 	},
 	{
 		initUI: function(ui){
@@ -4783,7 +4790,7 @@ MT(
 			
 			var that = this;
 			ui.events.on("keyup", function(e){
-				if(e.which == MT.keys.esc){
+				if(e.which == MT.keys.ESC){
 					that.clear();
 				}
 			});
@@ -4803,6 +4810,7 @@ MT(
 			
 			this.project.plugins.tools.on("selectObject", function(obj){
 				that.handleObjects(obj.MT_OBJECT);
+				that.active = obj.MT_OBJECT.id;
 			});
 			
 			var map = this.project.plugins.mapeditor;
@@ -4925,6 +4933,8 @@ MT(
 			else if(obj.type == MT.objectTypes.TILE_LAYER){
 				
 				this.stack = "layer";
+				this.objects.x = this.addInput( "x", obj, true, cb);
+				this.objects.y = this.addInput( "y", obj, true, cb);
 				this.addInput("widthInTiles", obj, true, cb);
 				this.addInput("heightInTiles", obj, true, cb);
 				this.addInput("tileWidth", obj, true, cb);
@@ -5018,6 +5028,9 @@ MT(
 		},
    
 		updateObjects: function(obj){
+			if(obj.id != this.activeId){
+				return;
+			}
 			for(var i in this.objects){
 				this.objects[i].obj = obj;
 				this.objects[i].setValue(obj[i], true);
@@ -5208,7 +5221,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				
 				//escape
-				if(w == MT.keys.esc){
+				if(w == MT.keys.ESC){
 					that.activeObject = null;
 					that.selector.clear();
 					return;
@@ -5395,9 +5408,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				xx = "#000000";
 			}
 			
-			ctx.lineWidth = 0.1;
 			ctx.strokeStyle = "#"+xx;
-			ctx.globalAlpha = 0.5;
 			
 			//ctx.strokeStyle = "rgba(255,255,255,0.1)";
 			
@@ -5414,29 +5425,36 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			g = this.settings.gridX;
 			
-			ctx.lineWidth = 0.1;
-			ctx.globalAlpha = 0.5;
+			ctx.lineWidth = 0.2;
+			ctx.globalAlpha = 1;
+			
+			ctx.shadowColor = '#000';
+			ctx.shadowBlur = 0;
+			ctx.shadowOffsetX = 0.5;
+			ctx.shadowOffsetY = 0;
+			
 			
 			ctx.beginPath();
 			for(var i = -ox; i<width; i += g){
 				if(i < 0){
 					continue;
 				}
-				ctx.moveTo(i, 0);
-				ctx.lineTo(i, height);
-				
-				
+				ctx.moveTo(i+0.5, 0.5);
+				ctx.lineTo(i+0.5, height+0.5);
 			}
+			ctx.stroke();
 			
+			ctx.shadowOffsetX = 0;
+			ctx.shadowOffsetY = 0.5;
+			
+			ctx.beginPath();
 			g = this.settings.gridY;
 			for(var j = -oy; j<height; j += g){
 				if(j < 0){
 					continue;
 				}
-				ctx.moveTo(0, j);
-				ctx.lineTo(width, j);
-				
-				
+				ctx.moveTo(0.5, j+0.5);
+				ctx.lineTo(width+0.5, j+0.5);
 			}
 			ctx.stroke();
 			
@@ -5692,7 +5710,23 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			image.src = path;
 		},
-   
+		
+		checkId: function(){
+			var o = null;
+			for(var i=0; i<this.objects.length; i++){
+				o = this.objects[i];
+				for(var j=0; j<this.objects.length; j++){
+					if(o == this.objects[j]){
+						continue;
+					}
+					if(o.MT_OBJECT.id == this.objects[j].MT_OBJECT.id){
+						console.error("dublicate id");
+					}
+				}
+			}
+			
+			
+		},
 		
 		_addTimeout: 0,
 		addObjects: function(objs, group){
@@ -6625,6 +6659,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.insertObject(no);
 		},
 		
+		
 		insertObject: function(obj, silent, data){
 			data = data || this.tv.getData();
 			
@@ -6807,6 +6842,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				name = obj.name + this.getNewNameId(obj.name, data);
 				clone = JSON.parse(JSON.stringify(obj));
 				clone.name = name;
+				this.cleanUpClone(clone);
+				
 				if(cb){
 					cb(clone);
 				}
@@ -6846,7 +6883,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.selector.clear();
 			this.tv.merge(data);
-			this.ui.events.simulateKey(MT.keys.esc);
+			this.ui.events.simulateKey(MT.keys.ESC);
 			this.sync();
 		},
 		
@@ -6858,7 +6895,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			//if using silent.. you should call manually sync
 			if(!silent){
-				this.ui.events.simulateKey(MT.keys.esc);
+				this.ui.events.simulateKey(MT.keys.ESC);
 				this.sync();
 				this.update();
 			}
@@ -7203,7 +7240,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			ui.events.on("keydown", function(e){
 				var w = e.which;
-				if(w == MT.keys.esc){
+				if(w == MT.keys.ESC){
 					that.selector.forEach(function(obj){
 						obj.removeClass("active.selected");
 					});
@@ -7424,7 +7461,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.emit("deleted", id);
 			//if using silent.. you should call manually sync
 			if(!silent){
-				this.ui.events.simulateKey(MT.keys.esc);
+				this.ui.events.simulateKey(MT.keys.ESC);
 			}
 		},
 		
@@ -8706,13 +8743,13 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 //MT/core/keys.js
 MT.namespace('core');
 MT.keys = MT.core.keys = {
-	esc: 27,
-	enter: 13,
-	top: 47,
-	right: 48,
-	bottom: 49,
-	right: 50,
-	delete: 46,
+	ESC: 27,
+	ENTER: 13,
+	UP: 38,
+	LEFT: 37,
+	RIGHT: 39,
+	DOWN: 40,
+	DELETE: 46,
 	A: 65,
 	B: 66,
 	C: 67,
