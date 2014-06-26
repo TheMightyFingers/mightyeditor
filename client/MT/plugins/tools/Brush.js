@@ -2,16 +2,29 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 	MT.plugins.tools.Brush = function(tools){
 		MT.core.BasicTool.call(this, tools);
 		this.name = "brush";
+		this.activeFrame = 0;
 	},{
 		
 		initUI: function(ui){
 			MT.core.BasicTool.initUI.call(this, ui);
+			this.activeFrame = 0;
+			var that = this;
+			this.tools.on("changeFrame", function(asset, frame){
+				that.activeFrame = frame;
+				if(that.tools.activeTool != that){
+					return;
+				}
+				that.tools.initActiveObject(that.tools.activeAsset);
+				that.tools.activeObject.frame = frame;
+			});
 		},
 		
 		lastX: 0,
 		lastY: 0,
 		
 		init: function(asset){
+			this.activeFrame = 0;
+			
 			this.tools.unselectObjects();
 			asset = asset || this.tools.activeAsset;
 			if(!asset){
@@ -44,17 +57,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.init(this.tools.lastAsset);
 				return;
 			}
-			
-			var om = this.project.plugins.objectsmanager;
-			
-			this.tools.map.sync(this.tools.activeObject);
-			
-			om.insertObject(this.tools.activeObject.MT_OBJECT);
-			
-			this.lastX = this.tools.activeObject.x;
-			this.lastY = this.tools.activeObject.y;
-			
-			this.tools.initActiveObject();
+			this.insertObject();
 		},
 		
 		mouseMove: function(e){
@@ -71,18 +74,24 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(this.ui.events.mouse.down){
 				
 				if(this.tools.activeObject.x != this.lastX || this.tools.activeObject.y != this.lastY){
-					
-					console.log("ADD brush");
-					
-					var om = this.project.plugins.objectsmanager;
-					this.tools.map.sync(this.tools.activeObject, this.tools.activeObject.MT_OBJECT);
-					om.insertObject(this.tools.activeObject.MT_OBJECT);
-					
-					this.lastX = this.tools.activeObject.x;
-					this.lastY = this.tools.activeObject.y;
-					this.tools.initActiveObject();
+					this.insertObject();
 				}
 			}
+		},
+		
+		insertObject: function(){
+			var om = this.project.plugins.objectsmanager;
+			this.tools.map.sync(this.tools.activeObject, this.tools.activeObject.MT_OBJECT);
+			
+			this.tools.activeObject.MT_OBJECT.frame = this.activeFrame;
+			om.insertObject(this.tools.activeObject.MT_OBJECT);
+			
+			this.lastX = this.tools.activeObject.x;
+			this.lastY = this.tools.activeObject.y;
+			this.tools.initActiveObject();
+			
+			this.tools.activeObject.frame = this.activeFrame;
+			this.tools.unselectObjects();
 		},
 		
 		mouseUp: function(e){

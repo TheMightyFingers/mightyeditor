@@ -145,7 +145,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					prev.show(document.body);
 					prev.width = data.width;
 					prev.height = data.height;
-					grid.style.cssText = that.makeGridCss(data.frameWidth, data.frameHeight);
+					grid.style.cssText = that.makeGridCss(data.frameWidth + data.spacing, data.frameHeight + data.spacing);
 					
 					prev.x = el.calcOffsetX() - data.width;
 					prev.y = el.calcOffsetY() - (data.height*0.5 - el.el.offsetHeight*0.5);
@@ -207,7 +207,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.project.plugins.objectsmanager.update();
 				that.project.plugins.objectsmanager.sync();
 				
-				
+				that.emit("changeFrame", data, frame);
 				
 			};
 			
@@ -282,21 +282,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.project.om.tv.on("select", select);
 		},
 		
-		makeGridCss: function(w, h){
+		makeGridCss: function(w, h, margin){
+			margin = margin | 0;
 			return "background-size: "+w+"px "+h+"px; \
+					background-position: "+margin+"px "+margin+"px; \
 					background-image:repeating-linear-gradient(0deg, #fff, #fff 1px, transparent 1px, transparent "+h+"px),\
 					repeating-linear-gradient(-90deg, #fff, #fff 1px, transparent 1px, transparent "+w+"px); width: 100%; height: 100%; position: absolute;";
 		},
 		
 		getFrame: function(o, x, y){
 			
-			
-			var gx = Math.floor(x/(o.frameWidth));
-			var gy = Math.floor(y/(o.frameHeight));
+			var gx = Math.floor(x/(o.frameWidth + o.spacing));
+			var gy = Math.floor(y/(o.frameHeight + o.spacing));
 			
 			var maxX = Math.floor( o.width / o.frameWidth);
 			
 			var frame = gx + maxX*gy;
+			
+			console.log("getrame", frame);
 			
 			return frame;
 		},

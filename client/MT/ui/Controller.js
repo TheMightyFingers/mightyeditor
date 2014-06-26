@@ -56,15 +56,20 @@ MT.extend("core.Emitter")(
 		this.oldScreenSize.width = window.innerWidth;
 		this.oldScreenSize.height = window.innerHeight;
 		
+		//transitionend
+		var transitionend = "transitionend";
+		if(window.navigator.userAgent.indexOf("Chrome") > 1){
+			transitionend = "webkitTransitionEnd";
+		}
 		var animEnd = function(aa){
 			that.update();
-			this.removeEventListener("webkitTransitionEnd", animEnd);
+			this.removeEventListener(transitionend, animEnd);
 			window.setTimeout(function(){
-				document.addEventListener("webkitTransitionEnd", animEnd, false);
+				document.addEventListener(transitionend, animEnd, false);
 			}, 1);
 		};
 		
-		document.addEventListener("webkitTransitionEnd", animEnd, false);
+		document.addEventListener(transitionend, animEnd, false);
 		
 		this.events.on(this.events.RESIZE, function(e){
 			that.reloadSize(e);

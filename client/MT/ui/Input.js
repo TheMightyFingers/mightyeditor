@@ -136,14 +136,12 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		if(this.type == "number"){
 		
 			this.onwheel = events.on("wheel", function(e){
-				console.log("wheel",e.wheelDelta);
-				if(e.target == that.value.el){
-					
-					var d = ( (e.wheelDelta || -e.deltaY) > 0 ? 1 : -1);
-					var val = that.object[that.key] + d*that.step;
-					that.setValue(val);
+				if(e.target !== that.value.el){
+					return;
 				}
-				
+				var d = ( (e.wheelDelta || -e.deltaY) > 0 ? 1 : -1);
+				var val = that.object[that.key] + d*that.step;
+				that.setValue(val);
 			});
 			
 			this.mouseup = events.on("mouseup",function(){

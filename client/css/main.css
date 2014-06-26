@@ -515,6 +515,7 @@ input.ui-input.ui-input-helper{
 	bottom: 0;
 	right: 0;
 	text-shadow:-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+	pointer-events: none;
 }
 .ui-panel.toolbox{
 	margin: 0;

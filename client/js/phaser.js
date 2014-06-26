@@ -41248,7 +41248,8 @@ Phaser.AnimationParser = {
     spriteSheet: function (game, key, frameWidth, frameHeight, frameMax, margin, spacing) {
 
         //  How big is our image?
-        var img = game.cache.getImage(key);
+
+		var img = game.cache.getImage(key);
 
         if (img == null)
         {
@@ -41268,8 +41269,8 @@ Phaser.AnimationParser = {
             frameHeight = Math.floor(-height / Math.min(-1, frameHeight));
         }
 
-        var row = Math.floor((width - margin) / (frameWidth + spacing));
-        var column = Math.floor((height - margin) / (frameHeight + spacing));
+        var row = Math.floor((width - margin + spacing) / (frameWidth + spacing));
+        var column = Math.floor((height - margin + spacing) / (frameHeight + spacing));
         var total = row * column;
 
         if (frameMax !== -1)

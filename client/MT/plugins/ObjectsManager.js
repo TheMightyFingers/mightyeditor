@@ -192,7 +192,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.tv.merge(data);
 				this.update();
 				this.sync();
-				this.emit("added", obj.name);
+				this.emit("added", obj);
 			}
 			
 			return data;

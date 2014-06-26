@@ -128,6 +128,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 			};
 			
+			this.isCtrlDown = false;
 			
 			ui.events.on("mouseup", function(e){
 				that.handleMouseUp(e);
@@ -143,6 +144,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			ui.events.on("keydown", function(e){
 				var w = e.which;
+				
+				if(e.ctrlKey){
+					that.isCtrlDown = true;
+				}
 				
 				if( (e.target != game.canvas && e.target != document.body) ){
 					return;
@@ -162,6 +167,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			});
 			
 			ui.events.on("keyup", function(e){
+				that.isCtrlDown = false;
 				om.sync();
 			});
 			
@@ -230,6 +236,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					that.selector.forEach(drawObjects);
 					
 					that.drawSelection(ctx);
+					
+					that.highlightDublicates(ctx);
 					
 				}
 			});
@@ -564,6 +572,34 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 		},
 		
+		highlightDublicates: function(ctx){
+			if(!this.isCtrlDown){
+				return;
+			}
+			var o1 = null;
+			var o2 = null;
+			var bounds = null;
+			ctx.save();
+			ctx.fillStyle = "rgba(150, 70, 20, 0.2)";
+			for(var j=0; j<this.objects.length; j++){
+				o1 = this.objects[j];
+				if(!this.isVisible(o1)){
+					continue;
+				}
+				for(var i=0; i<this.objects.length; i++){
+					o2 = this.objects[i];
+					if(o1 == o2){
+						continue;
+					}
+					if(o1.x == o2.x && o1.y == o2.y && o1.MT_OBJECT.assetId == o2.MT_OBJECT.assetId){
+						bounds = o1.getBounds();
+						ctx.fillRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
+					}
+				}
+			}
+			ctx.restore();
+		},
+		
 		
 		/* assets n objects */
 		isAssetsAdded: false,
@@ -602,7 +638,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.assetsToLoad++;
 			if(asset.contents){
 				this.addAssets(asset.contents, true);
-				cb();
+				if(typeof cb == "function"){
+					window.setTimeout(cb, 0);
+				}
 				return;
 			}
 			
@@ -794,7 +832,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					}
 					
 					if(oo.type == MT.objectTypes.TILE_LAYER){
-						console.log("TODO: reload TILEMAP");
 						od = this.updateTileMap(obj, od);
 						od.MT_OBJECT = obj;
 						this.project.plugins.tools.tools.tiletool.updateLayer(od);
@@ -863,12 +900,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var frameData = game.cache.getFrameData(obj.assetId);
 			
 			if(frameData){
-				var arr = [];
-				for(var i=0; i<frameData.total; i++){
-					arr.push(i);
-				}
-				sp.animations.add("default", arr, 10, false);
-				obj._framesCount = frameData.total;
+				//sp.animations.add("default");
 			}
 			
 			return sp;

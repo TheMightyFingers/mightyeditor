@@ -56,7 +56,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			am.tv.on("click", function(asset, element){
 				that.activeAsset = asset;
-				that.activeTool.init(asset);
+				that.emit("assetSelected", asset);
+			});
+			
+			am.on("changeFrame", function(asset, frame){
+				that.activeAsset = asset;
+				that.emit("assetSelected", asset);
+				that.emit("changeFrame", asset, frame);
 			});
 			
 			var select =  function(object){
@@ -88,6 +94,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(map.activeObject){
 					select(map.activeObject);
 				}
+				that.emit("update");
 			});
 			
 			var lastKey = 0;
@@ -221,8 +228,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			if(this.activeTool){
-				this.activeTool.button.removeClass("active");
-				this.activeTool.deactivate();
+				var oldTool = this.activeTool;
+				this.activeTool = null;
+				
+				oldTool.button.removeClass("active");
+				oldTool.deactivate();
 			}
 			
 			this.activeTool = tool;

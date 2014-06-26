@@ -2,15 +2,41 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 	MT.plugins.tools.Stamp = function(tools){
 		MT.core.BasicTool.call(this, tools);
 		this.name = "stamp";
+		this.activeFrame = 0;
 	},{
 		
 		initUI: function(ui){
 			MT.core.BasicTool.initUI.call(this, ui);
+			var that = this;
+			this.tools.on("assetSelected", function(asset){
+				if(that.tools.activeTool != that){
+					return;
+				}
+				that.init(asset);
+			});
+			
+			this.activeFrame = 0;
+			this.tools.on("changeFrame", function(asset, frame){
+				console.log("change Frame");
+				that.activeFrame = frame;
+				if(that.tools.activeTool != that){
+					return;
+				}
+				
+				that.tools.initActiveObject(that.tools.activeAsset);
+				that.tools.activeObject.frame = frame;
+			});
+			
+			this.tools.on("update", function(){
+				if(that.tools.activeTool != that){
+					return;
+				}
+			});
 		},
 		
 		init: function(asset){
-			this.map = this.tools.map;
 			
+			this.map = this.tools.map;
 			
 			this.tools.unselectObjects();
 			asset = asset || this.tools.activeAsset;
@@ -18,11 +44,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!asset || asset.contents){
 				return;
 			}
-			
-			console.log("init stamp");
-			
+			this.activeFrame = 0;
 			this.tools.initActiveObject(asset);
-			this.tools.setTool(this);
 			
 			this.map.handleMouseMove = this.map._followMouse;
 		},
@@ -47,9 +70,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.map.sync(this.tools.activeObject);
 			
+			this.tools.activeObject.MT_OBJECT.frame = this.activeFrame;
 			om.insertObject(this.tools.activeObject.MT_OBJECT);
 			
 			this.tools.initActiveObject();
+			this.tools.activeObject.frame = this.activeFrame;
+			this.tools.unselectObjects();
 		},
 		
 		mouseUp: function(e){
