@@ -719,6 +719,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var img = new Image();
 			
 			img.onload = function(){
+				that.addCanvas(panel, this);
 				that.drawImage(panel, this);
 			};
 			img.src = this.tools.project.path + "/" + image.__image;
@@ -731,7 +732,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				ctx: null
 			};
 			
-			this.addCanvas(panel, img);
+			
 		},
 		
 		
@@ -825,6 +826,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			var image = panel.data.image;
 			var ctx = panel.data.ctx;
+			//image is loading
+			if(ctx == null){
+				return;
+			}
 			var tx, ty;
 			var widthInTiles = panel.data.widthInTiles;
 			
@@ -2098,7 +2103,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				}
 			}
 			if(this.tools.activeTool !== self){
-				console.log("xxx");
 				this.tools.mouseMove(e);
 			}
 		},
