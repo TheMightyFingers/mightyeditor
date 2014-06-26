@@ -29,7 +29,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.id = Date.now();
 		
 		this.activeGroup = null;
-		
 	},
 	{
 		initUI: function(ui){

@@ -433,7 +433,15 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var map = obj.map;
 			var nextId = 0;
 			var im = null;
+			
+			var images = this.tools.project.plugins.assetsmanager.list;
+			
 			for(var i=0; i<data.images.length; i++){
+				if(!images[data.images[i]]){
+					data.images.splice(i, 1);
+					i--;
+					continue;
+				}
 				im = map.addTilesetImage(data.images[i], data.images[i], map.tileWidth, map.tileHeight, 0, 0, nextId);
 				nextId += im.total;
 			}
@@ -441,6 +449,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var tiles = obj.MT_OBJECT.tiles;
 			for(var y in tiles){
 				for(var x in tiles[y]){
+					if(tiles[y][x] >= nextId){
+						delete tiles[y][x];
+						console.warn("tile out of range: ", tiles[y][x]);
+						continue;
+					}
+					
 					obj.map.putTile(tiles[y][x], x, y, obj);
 				}
 			}

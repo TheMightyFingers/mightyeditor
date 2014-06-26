@@ -599,12 +599,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		assetsToLoad: 0,
 		addAsset: function(asset, cb){
+			this.assetsToLoad++;
 			if(asset.contents){
 				this.addAssets(asset.contents, true);
+				cb();
 				return;
 			}
-			
-			this.assetsToLoad++;
 			
 			var game = this.game;
 			var path = this.project.path + "/" + asset.__image;
