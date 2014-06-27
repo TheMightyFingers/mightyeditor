@@ -5224,7 +5224,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		this.groups = [];
 		this.oldGroups = [];
 		
-		this.tilemaps = {};
+		this.tileLayers = [];
 		
 		this.dist = {};
 		
@@ -5429,6 +5429,43 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					that.setCameraBounds();
 					that.postUpdateSetting();
 					
+					that.game.plugins.add({
+						preUpdate: function(){
+							for(var i=0; i<that.tileLayers.length; i++){
+								var layer = that.tileLayers[i];
+								if(layer.fixedToCamera){
+									continue;
+								}
+								if(layer._mc.x || layer._mc.y){
+									layer._ox = layer.x;
+									layer._oy = layer.y;
+									layer.x += layer._mc.x;
+									layer.y += layer._mc.y;
+								}
+								
+							}
+							
+						},
+						postRender: function(){
+							
+							for(var i=0; i<that.tileLayers.length; i++){
+								var layer = that.tileLayers[i];
+								if(layer.fixedToCamera){
+									continue;
+								}
+								if(layer._ox !== void(0)){
+									layer.x = layer._ox;
+									layer.ox = void(0);
+								}
+								if(layer._oy !== void(0)){
+									layer.y = layer._oy;
+									layer.oy = void(0);
+								}
+								
+							}
+						}
+						
+					});
 				},
 				
 				
@@ -5488,7 +5525,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				this.settings[i] = obj[i];
 			}
 			
-			if(!this.game.isBooted){
+			if(!this.game.isBooted || !this.game.width){
 				return;
 			}
 			
@@ -5808,7 +5845,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		isAssetsAdded: false,
 		assetsTimeout: 0,
 		addAssets: function(assets, inDepth){
-			if(!this.game.isBooted){
+			if(!this.game.isBooted || !this.game.width){
 				var that = this;
 				window.clearTimeout(this.assetsTimeout);
 				this.assetsTimeout = window.setTimeout(function(){
@@ -5919,6 +5956,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			this.oldObjects.length = 0;
 			this.oldObjects = this.objects.slice(0);
+			
+			this.tileLayers.length = 0;
 			
 			for(var i=0; i<this.groups.length; i++){
 				if(this.groups[i].parent){
@@ -6038,6 +6077,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						od = this.updateTileMap(obj, od);
 						od.MT_OBJECT = obj;
 						this.project.plugins.tools.tools.tiletool.updateLayer(od);
+						this.tileLayers.push(od);
 					}
 					
 					this.objects.push(od);
@@ -6068,6 +6108,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				this.objects.push(t);
 				this.project.plugins.tools.tools.tiletool.updateLayer(t);
 				console.log("TILE",this.project);
+				this.tileLayers.push(t);
 				return t;
 			}
 			
@@ -6142,8 +6183,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				if(sp.scale.x != obj.scaleX || sp.scale.y != obj.scaleY){
 					sp.scale.x = obj.scaleX;
 					sp.scale.y = obj.scaleY;
-					obj.width = sp.width;
-					obj.height = sp.height;
+					//obj.width = sp.width;
+					//obj.height = sp.height;
 				}
 			}
 			
