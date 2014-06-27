@@ -697,15 +697,17 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		createPanels: function(images){
 			var p, pp;
 			var obj = this.active.MT_OBJECT;
+			var image = null;
 			for(var id in images){
 				if(this.panels[id]){
 					if(!map){
 						continue;
 					}
 					
+					image = images[id];
 					p = this.panels[id];
-					p.data.widthInTiles = (p.data.image.width - obj.margin*2) / (obj.tileWidth + obj.spacing) | 0;
-					p.data.heightInTiles = (p.data.image.height - obj.margin*2) / (obj.tileHeight + obj.spacing) | 0;
+					p.data.widthInTiles = (p.data.image.width - image.margin*2) / (obj.tileWidth + image.spacing) | 0;
+					p.data.heightInTiles = (p.data.image.height - image.margin*2) / (obj.tileHeight + image.spacing) | 0;
 					
 					continue;
 				}
