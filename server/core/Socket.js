@@ -83,6 +83,10 @@ MT(
 		},
    
 		send: function(channel, action, data){
+			if(this.socket.readyState != this.socket.OPEN){
+				console.log(console.log("socket not ready"));
+				return;
+			}
 			this.sendObject.channel = channel;
 			this.sendObject.action = action;
 			this.sendObject.data = data;
