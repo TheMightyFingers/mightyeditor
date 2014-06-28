@@ -5,7 +5,7 @@ createClass("MT", global, require("path").resolve(""));
 MT.require("http.Httpd");
 MT.require("core.Socket");
 MT.require("core.Project");
-
+MT.require("core.Logger");
 
 var config = (process.env.RELEASE ? require("./config.js").config : require("./config-dev.js").config);
 
@@ -43,14 +43,12 @@ function gracefulExit(){
 }
 
 function errorShutdown(error){
-	console.error((new Date).toISOString()+": SERVER SHUTDOWN");
-	console.log(error.stack);
-	console.log("\n");
+	MT.debug(error, "SERVER SHUTDOWN");
 	gracefulExit();
 }
 
+
 process.on('SIGINT', gracefulExit).on('SIGTERM', gracefulExit); 
 process.on('uncaughtException', errorShutdown);
-
 
 

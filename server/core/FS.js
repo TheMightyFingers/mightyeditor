@@ -35,14 +35,7 @@
 			this.addQueue([this._mkdir, path, this.mkcb(cb)]);//no arguments
 		},
 		_mkdir: function(path, cb){
-			fs.stat(path, function(err){
-				if(err && err.errno !== errors.ENOENT){
-					console.log("FS::mkdir err", err);
-				}
-				
-				fs.mkdir(path, cb);
-			});
-			
+			fs.mkdir(path, cb);
 		},
 		
 		move: function(a, b, cb){
@@ -124,8 +117,7 @@
 
 			function done(err) {
 				if(err){
-					console.log("FS::copy error ---> ", err, source + " -> " + target);
-					console.trace();
+					MT.debug(err, "FS::copy error ---> ", source + " -> " + target);
 					return;
 				}
 				if(typeof cb == "function"){
@@ -142,8 +134,8 @@
 		_rm: function(file, cb){
 			fs.lstat(file, function(err, stats){
 				if(err){
-					console.log("FS::rm error", err);
-					cb();
+					MT.log("FS::rm error", err);
+					cb(err);
 					return;
 				}
 				if(stats.isDirectory()){
@@ -204,8 +196,8 @@
 		_readdir: function(dir, recurse, buffer, cb){
 			fs.readdir(dir, function(err, files){
 				if(err){
-					console.log("FS:EROR",err);
-					cb(buffer);
+					MT.error(err);
+					cb(buffer, err);
 					return;
 				}
 				that._readdir_stat(dir, files, 0, cb, buffer, recurse);
@@ -222,8 +214,12 @@
 			var file = list[index];
 			var toRead = 0;
 			fs.lstat(dir + path.sep + file, function(err, stats){
-				
-				var p = dir + path.sep + file;//path.normalize( path.relative( "../client", dir + path.sep + file));
+				if(err){
+					MT.error(err);
+					cb(buffer, err);
+					return;
+				}
+				var p = dir + path.sep + file;
 				
 				if(stats.isDirectory()){
 					buffer.push({

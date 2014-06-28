@@ -59,7 +59,7 @@ MT.extend("core.SocketManager")(
 				return;
 			}
 			
-			console.log("unsupported command", command);
+			MT.log("unsupported command", command);
 		},
 		
 		exec_copy: function(projectId){

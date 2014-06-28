@@ -84,7 +84,7 @@ MT(
    
 		send: function(channel, action, data){
 			if(this.socket.readyState != this.socket.OPEN){
-				console.log(console.log("socket not ready"));
+				MT.log("socket not ready", this.socket.readyState);
 				return;
 			}
 			this.sendObject.channel = channel;
@@ -135,7 +135,7 @@ MT(
    
 		emit: function(channel, action, data){
 			if(!this.channels[channel]){
-				console.error("Socket::Unknown channel", channel);
+				MT.error("Socket::Unknown channel", channel);
 				return;
 			}
 			var chns = this.channels[channel];

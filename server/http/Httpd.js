@@ -1,9 +1,9 @@
 "use strict";
-
+MT.require("core.Logger");
 MT(
 	MT.http.Httpd = function(config){
 		this.root = config.root;
-		console.log(config);
+		MT.log("Starting server", config);
 		
 		this.http = require("http");
 		this.path = require("path");
@@ -48,7 +48,7 @@ MT(
 			
 			
 			if(req.url.indexOf(that.root)  !== 0){
-				console.log("bad request:", req.url, that.root);
+				MT.log("bad request:", req.url, that.root);
 				that.notFound(req, res);
 				return;
 			}
@@ -111,7 +111,7 @@ MT(
 		},
 		
 		notFound: function(req, res, err){
-			console.log("not found: " + req.url);
+			MT.log("not found: " + req.url);
 			res.writeHead(404);
 			res.end('not found: ' + "\n" + req.url);
 		},

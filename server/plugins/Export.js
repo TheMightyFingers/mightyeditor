@@ -110,7 +110,7 @@ MT.extend("core.SocketManager")(
 			this.fs.mkdir(this.dir + this.sep + this.assetsPath);
 			
 			this.phaser(function(error, stdout, stderr){
-				console.log("Export::exec", error, stdout, stderr);
+				MT.log("Export::exec", error, stdout, stderr);
 				that.send("complete", {
 					file:  that.zipName,
 					action: "phaser"

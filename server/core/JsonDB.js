@@ -30,7 +30,7 @@ MT(
 						that.data = JSON.parse(contents);
 					}
 					catch(e){
-						console.error("FAILED TO PARSE DB", e);
+						MT.error(e, "FAILED TO PARSE DB");
 						this.fs.writeFile(this.fs.path.dirname(this.dbfile) + this.fs.path.sep + Date.now()+".db-backup", contents);
 						that.data = {
 							contents: [],

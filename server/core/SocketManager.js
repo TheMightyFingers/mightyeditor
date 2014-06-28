@@ -9,7 +9,7 @@ MT(
 				that["a_"+action](data);
 			}
 			else{
-				console.log("unknown function", channel, action);
+				MT.log("unknown function", channel, action);
 			}
 		});
 	},
