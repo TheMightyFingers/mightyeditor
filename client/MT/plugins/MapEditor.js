@@ -1187,8 +1187,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return;
 			}
 			
-			this.activeObject.x = e.x - this.ox + this.game.camera.x;
-			this.activeObject.y = e.y - this.oy + this.game.camera.y;
+			this.activeObject.x = (e.x - this.ox + this.game.camera.x)/this.scale.x;
+			this.activeObject.y = (e.y - this.oy + this.game.camera.y)/this.scale.y;
 			
 			if(e.ctrlKey || snapToGrid){
 				this.activeObject.x = Math.round(this.activeObject.x / this.settings.gridX) * this.settings.gridX;

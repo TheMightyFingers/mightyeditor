@@ -61,8 +61,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					
 					image = images[id];
 					p = this.panels[id];
-					p.data.widthInTiles = (p.data.image.width - image.margin*2) / (obj.tileWidth + image.spacing) | 0;
-					p.data.heightInTiles = (p.data.image.height - image.margin*2) / (obj.tileHeight + image.spacing) | 0;
+					//p.data.widthInTiles = (p.data.image.width - image.margin*2) / (obj.tileWidth + image.spacing) | 0;
+					//p.data.heightInTiles = (p.data.image.height - image.margin*2) / (obj.tileHeight + image.spacing) | 0;
 					
 					continue;
 				}
@@ -327,16 +327,28 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var map = this.active.map;
 			
 			var scale = this.tools.map.game.camera.scale.x;
-			var x = (e.x - this.active.x - this.tools.map.offsetX)/scale;
-			var y = (e.y - this.active.y - this.tools.map.offsetY)/scale;
 			
-			if(this.active){
-				var bounds = this.active.getBounds();
-				if(!bounds.contains(e.x - this.tools.map.ox, e.y - this.tools.map.oy)){
-					return;
-				}
+			var x = 0;
+			var y = 0;
+			
+			
+			if(!this.active || !this.active.game){
+				return;
 			}
 			
+			var bounds = this.active.getBounds();
+			if(!bounds.contains(e.x - this.tools.map.ox, e.y - this.tools.map.oy)){
+				return;
+			}
+			
+			if(!this.active.fixedToCamera){
+				x = (e.x - this.active.x - this.tools.map.offsetX)/scale;
+				y = (e.y - this.active.y - this.tools.map.offsetY)/scale;
+			}
+			else{
+				x = (e.x  - this.active.x + this.tools.map.game.camera.x - this.tools.map.ox)/scale;
+				y = (e.y  - this.active.y + this.tools.map.game.camera.y - this.tools.map.oy)/scale;
+			}
 			var p = this.active.getTileXY(x, y, {});
 			
 			if(e.ctrlKey){
