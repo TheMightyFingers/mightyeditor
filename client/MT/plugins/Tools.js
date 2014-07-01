@@ -226,18 +226,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(this.activeTool == tool){
 				return;
 			}
-			
+			var oldTool = null;
 			if(this.activeTool){
-				var oldTool = this.activeTool;
+				oldTool = this.activeTool;
 				this.activeTool = null;
 				
 				oldTool.button.removeClass("active");
-				oldTool.deactivate();
+				
 			}
 			
 			this.activeTool = tool;
 			this.activeTool.button.addClass("active");
-			this.activeTool.init()
+			
+			if(oldTool){
+				oldTool.deactivate();
+			}
+			
+			
+			this.activeTool.init();
 			this.emit("select", tool);
 		},
 		

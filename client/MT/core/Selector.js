@@ -51,12 +51,16 @@ MT.extend("core.Emitter")(
 			if(!this._selected){
 				return;
 			}
+			var last = false;
 			for(var i=0; i<this._selected.length; i++){
+				if(i == this._selected.length - 1){
+					last = true;
+				}
 				if(scope){
-					cb.call(scope, this._selected[i]);
+					cb.call(scope, this._selected[i], last);
 				}
 				else{
-					cb(this._selected[i]);
+					cb(this._selected[i], last);
 				}
 			}
 		},

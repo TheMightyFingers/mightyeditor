@@ -1,12 +1,12 @@
 MT.require("core.FS");
 
 
-MT.extend("core.SocketManager")(
+MT.extend("core.BasicPlugin")(
 	MT.plugins.AssetsManager = function(socket, project){
-		MT.core.SocketManager.call(this, socket, "Assets");
+		MT.core.BasicPlugin.call(this, socket, "assets");
 		this.project = project;
 		
-		this.db = this.project.db.get("assets");
+		this.db = this.project.db.get(this.name);
 		this.fs = MT.core.FS;
 		
 	},
@@ -23,7 +23,7 @@ MT.extend("core.SocketManager")(
 				name = "/"+name;
 			}
 			
-			var item = this.project.db.get("assets" + name);
+			var item = this.project.db.get(this.name + name);
 			var iname = name.split("/").pop();
 			
 			item.name = iname;

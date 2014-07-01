@@ -123,7 +123,7 @@ body{
 }
 
 .ui-panel-header{
-	line-height: 21px;
+	line-height: 18px;
 	color: #171717;
 	border-right: solid 39px transparent;
 	font-size: 10px;
@@ -140,7 +140,7 @@ div.ui-panel-header:after {
 	top: 0;
 	right: 0;
 	width: 100%;
-	height: 20px;
+	height: 17px;
 	z-index: 0;
 	border-bottom: solid 1px #000;
 }
@@ -333,6 +333,7 @@ div.ui-treeview-folder.open > .ui-treeView-folder-head:last-child > div{
 	margin-top: -1px;
 	padding-top: 1px;
 }
+
 .ui-treeview-item.active{
 	font-weight: bold;
 }
@@ -376,6 +377,26 @@ div.ui-treeview-folder.open > .ui-treeView-folder-head:last-child > div{
 	border-top: solid 1px rgba(255,255,255,0.1);
 	position: absolute;
 	top: 0;
+}
+.ui-treeView .selected .show-hide{
+	border-top: solid 1px rgba(0,0,0,0.7);
+	border-bottom: solid 1px rgba(0,0,0,0.5);
+	margin-top: -2px;
+	padding-top: 1px;
+	height: 28px;
+}
+
+.ui-treeView .show-hide:after{
+	width: 29px;
+	position: absolute;
+	content: "";
+	height: 29px;
+	background-color: rgba(0,0,0,0.1);
+	top: 0;
+	left: 0
+}
+.ui-treeView .active .show-hide:after{
+	background-color: rgba(0,0,0,0.3);
 }
 
 

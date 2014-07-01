@@ -124,7 +124,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			//function (tileset, key, tileWidth, tileHeight, tileMargin, tileSpacing, gid) {
 			var key = ""+image.data.id;
-			var tim = this.active.map.addTilesetImage(key, key, map.tileWidth, map.tileHeight, 0, 0, nextId);
+			var tim = this.active.map.addTilesetImage(key, key, image.data.frameWidth, image.data.frameHeight, 0, 0, nextId);
 			
 			if(!this.active.MT_OBJECT.images){
 				this.active.MT_OBJECT.images = [];
@@ -495,7 +495,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					continue;
 				}
 				//addTilesetImage(tileset, key, tileWidth, tileHeight, tileMargin, tileSpacing, gid) → {Phaser.Tileset}
-				tilesetImage = map.addTilesetImage(image.id, image.id, map.tileWidth, map.tileHeight, image.margin, image.spacing, nextId);
+				tilesetImage = map.addTilesetImage(image.id, image.id, image.frameWidth, image.frameHeight, image.margin, image.spacing, nextId);
 				nextId += tilesetImage.total;
 			}
 			

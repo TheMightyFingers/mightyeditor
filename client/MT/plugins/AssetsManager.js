@@ -34,7 +34,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					label: "delete selected",
 					className: "",
 					cb: function(){
-						that.deleteAssets();
+						that.deleteSelected();
 						that.panel.options.list.hide();
 					}
 				}
@@ -426,15 +426,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.merge(data);
 		},
 		
-		deleteAssets: function(){
-			this.selector.forEach(function(obj){
-				this.deleteAsset(obj.data.id);
+		deleteSelected: function(){
+			this.selector.forEach(function(obj, last){
+				this.deleteAsset(obj.data.id, !last);
 			}, this);
 		},
 		
 		deleteAsset: function(id, silent){
 			this.send("delete", id);
 			this.emit("deleted", id);
+			
 			//if using silent.. you should call manually sync
 			if(!silent){
 				this.ui.events.simulateKey(MT.keys.ESC);

@@ -53,19 +53,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	{
 		_mousedown: false,
 		
-		createTestMap: function(img, x, y){
-			x = x || 0;
-			y = y || 0;
-			if(!this.tm){
-				var tm = this.tm = this.game.add.tilemap(null, 64, 100, 640, 500);
-				tm.addTilesetImage(img);
-				this.layer = tm.createBlankLayer("level1", 10, 10, 64, 100);
-				this.layer.fixedToCamera = false;
-			}
-			this.tm.putTile(1, x, y, "level1");
-			
-		},
-		
 		getTileMap: function(obj){
 			var tileWidth = obj.tileWidth || 64;
 			var tileHeight = obj.tileHeight || 64;
