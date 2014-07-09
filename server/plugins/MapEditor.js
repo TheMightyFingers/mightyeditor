@@ -1,8 +1,8 @@
-MT.extend("core.SocketManager")(
-	MT.plugins.MapEditor = function(socket, project){
-		MT.core.SocketManager.call(this, socket, "MapEditor");
-		this.project = project;
-		this.data = this.project.db.get("map");
+MT.extend("core.BasicPlugin")(
+	MT.plugins.MapEditor = function(project){
+		MT.core.BasicPlugin.call(this, project, "map");
+		
+		this.data = this.project.db.get(this.name);
 	},
 	{
 		readData: function(){

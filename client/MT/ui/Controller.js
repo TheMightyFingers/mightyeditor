@@ -63,6 +63,14 @@ MT.extend("core.Emitter")(
 		}
 		var animEnd = function(aa){
 			that.update();
+			var prop = aa.propertyName;
+			console.log(prop);
+			//
+			
+			if(prop == "width" || prop == "height"){
+				that.emit(that.events.RESIZE);
+			}
+			
 			this.removeEventListener(transitionend, animEnd);
 			window.setTimeout(function(){
 				document.addEventListener(transitionend, animEnd, false);
@@ -92,6 +100,8 @@ MT.extend("core.Emitter")(
 				activePanel = panel;
 				return;
 			}
+			e.preventDefault();
+			e.stopPropagation();
 			
 			if(!activePanel){
 				return;
@@ -163,6 +173,19 @@ MT.extend("core.Emitter")(
 			that.sortPanels();
 			that.update();
 		});
+		
+		
+		// delay a little bit first animation - sometimes game do not resize well 
+		// ( probably because of css animation event hasn't been triggered properly )
+		// hackinsh - need to figure out better way
+		var updateInt = window.setInterval(function(){
+			that.emit(that.events.RESIZE);
+		}, 200);
+		
+		// after 5 seconds should all be loaded and all animations stopped
+		window.setTimeout(function(){
+			window.clearInterval(updateInt);
+		}, 5000);
 	},
 	{
    
@@ -216,7 +239,7 @@ MT.extend("core.Emitter")(
 			});
 			p.on("show", function(){
 				console.log("show");
-				that.beforeShow(p);
+				//that.beforeShow(p);
 			});
 			p.addClass("animated");
 			
@@ -277,18 +300,27 @@ MT.extend("core.Emitter")(
 			
 			this.sortPanels();
 			var p = null;
-			for(var i=0; i<this.panels.length; i++){
+			for(var i=this.panels.length-1; i>0; i--){
 				p = this.panels[i];
 				if(!p.isDocked){
-					p.style.zIndex = i+10;
+					if(p.style.zIndex != i+10){
+						p.style.zIndex = i+10;
+					}
 				}
 				else{
-					p.style.zIndex = i;
+					if(p.style.zIndex != i){
+						p.style.zIndex = i;
+					}
 				}
 			}
 			this.zIndex = this.panels.length;
 			if(panel){
-				panel.style.zIndex = this.zIndex + 1;
+				if(panel.isDocked){
+					panel.style.zIndex = this.zIndex + 1;
+				}
+				else{
+					panel.style.zIndex = this.zIndex + 10;
+				}
 			}
 		},
 		
@@ -787,13 +819,22 @@ MT.extend("core.Emitter")(
 			/*
 			 * Joints will automatically update rest panels
 			 */
-			centerPanel.x = this.box.x;
-			centerPanel.y = this.box.y;
-			centerPanel.width = this.box.width - this.box.x;
-			centerPanel.height = this.box.height - this.box.y;
 			
-			if(!skipEmit){
-				this.emit(this.events.RESIZE);
+			if(
+					centerPanel.x != this.box.x 
+						|| centerPanel.y != this.box.y 
+						|| centerPanel.width != this.box.width - this.box.x 
+						|| centerPanel.height != this.box.height - this.box.y
+			){
+			
+				centerPanel.x = this.box.x;
+				centerPanel.y = this.box.y;
+				centerPanel.width = this.box.width - this.box.x;
+				centerPanel.height = this.box.height - this.box.y;
+				
+				if(!skipEmit){
+					this.emit(this.events.RESIZE);
+				}
 			}
 		},
 		
@@ -1223,11 +1264,16 @@ MT.extend("core.Emitter")(
 				panel.dockPosition = obj.dockPosition;
 				panel.isDocked = obj.isDocked;
 				
-				panel.isResizeable = obj.isResizeable;
+				//panel.isResizeable = obj.isResizeable;
 				panel.isDockable = obj.isDockable;
 				panel.isJoinable = obj.isJoinable;
 				panel.isPickable = obj.isPickable;
-				panel.isVisible = obj.isVisible;
+				/*if(obj.isVisible){
+					panel.show();
+				}
+				else{
+					panel.hide();
+				}*/
 				panel.acceptsPanels = obj.acceptsPanels;
 			
 				panel.savedBox = obj.savedBox;

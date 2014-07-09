@@ -19,22 +19,22 @@ MT.extend("core.BasicPlugin")(
 				ga('send', 'event', 'tool-selected', tool);
 			});
 			
-			this.project.plugins.assetsmanager.on("added", function(image){
+			this.project.plugins.assetmanager.on("added", function(image){
 				lastUpdate = Date.now();
 				ga('send', 'event', 'image-added', image);
 			});
 			
-			this.project.plugins.objectsmanager.on("added", function(obj){
+			this.project.plugins.objectmanager.on("added", function(obj){
 				lastUpdate = Date.now();
 				ga('send', 'event', 'object-added', obj);
 			});
 			
-			this.project.plugins.objectsmanager.on("changed", function(obj){
+			this.project.plugins.objectmanager.on("changed", function(obj){
 				lastUpdate = Date.now();
 				ga('send', 'event', 'object-changed', obj);
 			});
 			
-			this.project.plugins.objectsmanager.on("beforeSync", function(){
+			this.project.plugins.objectmanager.on("beforeSync", function(){
 				lastUpdate = Date.now();
 				ga('send', 'event', 'working-with-map', "sync");
 			});

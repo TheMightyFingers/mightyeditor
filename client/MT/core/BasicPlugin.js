@@ -10,6 +10,10 @@ MT(
 		},
 		
 		initSocket: function(socket){
+			if(this.channel == void(0)){
+				return;
+			}
+			
 			var that = this;
 			this.socket = socket;
 			

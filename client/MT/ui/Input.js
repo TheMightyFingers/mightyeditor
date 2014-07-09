@@ -9,6 +9,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		MT.ui.DomElement.call(this);
 		MT.core.Emitter.call(this);
 		
+		
 		this.object = obj;
 		this.key = "";
 		this.step = 1;
@@ -35,14 +36,14 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 		}
 		
-		
-		this.input = document.createElement("input");
-		this.addClass("ui-input");
-		
 		this.label = new MT.ui.DomElement();
 		this.label.setAbsolute();
 		
 		this.addChild(this.label).show();
+		
+		this.input = document.createElement("input");
+		this.addClass("ui-input");
+		
 		
 		this.label.el.innerHTML = this.key;
 		this.label.style.bottom = "initial";
@@ -52,18 +53,41 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.value = new MT.ui.DomElement();
 		this.value.setAbsolute();
 		
-		this.addChild(this.value).show();
+		
+		var that = this;
+		if(this.type == "upload"){
+			this.input.type = "file";
+			this.addClass("upload");
+			if(properties.accept){
+				this.input.setAttribute("accept", properties.accept);
+			}
+			this.input.onchange = function(e){
+				that.emit("change", e, that.object);
+			};
+			
+			this.label.style.right = "0";
+			this.label.el.onclick = function(e){
+				that.input.click();
+			};
+			if(this.object[this.key] !== void(0)){
+				this.setValue(this.object[this.key], true);
+				this.addChild(this.value).show();
+				this.value.style.bottom = "initial";
+				this.value.style.left = "initial";
+				this.value.style.right = 0;
+				this.value.addClass("ui-input-value");
+			}
+			return;
+		}
 		
 		this.setValue(this.object[this.key], true);
 		
+		this.addChild(this.value).show();
 		this.value.style.bottom = "initial";
 		this.value.style.left = "initial";
 		this.value.style.right = 0;
 		this.value.addClass("ui-input-value");
 		
-		
-		
-		var that = this;
 		
 		var down = false;
 		this.value.el.onmousedown = function(){

@@ -33,8 +33,8 @@ MT.extend("core.BasicPlugin")(
 			}
 			
 			
-			this.om = this.project.plugins.objectsmanager;
-			this.om.on("beforeSync", function(data){
+			this.om = this.project.plugins.objectmanager;
+			this.om.on(MT.OBJECTS_SYNC, function(data){
 				
 				var str = JSON.stringify(data);
 				
@@ -53,7 +53,7 @@ MT.extend("core.BasicPlugin")(
 				that.save();
 			});
 			
-			this.om.on("afterSync", function(data){
+			this.om.on(MT.OBJECTS_UPDATED, function(data){
 				if(that.buffer.length == 0){
 					that.buffer.push(JSON.stringify(data));
 					that.step++;
@@ -61,7 +61,7 @@ MT.extend("core.BasicPlugin")(
 			});
 			
 			
-			this.ui.events.on("keydown", function(e){
+			this.ui.events.on(this.ui.events.KEYDOWN, function(e){
 				if(e.which == "Z".charCodeAt(0)){
 					if(!e.shiftKey){
 							

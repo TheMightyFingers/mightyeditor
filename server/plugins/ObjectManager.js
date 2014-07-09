@@ -1,15 +1,12 @@
 MT.require("core.FS");
 
-MT.extend("core.SocketManager")(
-	MT.plugins.ObjectsManager = function(socket, project){
-		MT.core.SocketManager.call(this, socket, "ObjectsManager");
-		this.project = project;
+MT.extend("core.BasicPlugin")(
+	MT.plugins.ObjectManager = function(project){
+		MT.core.BasicPlugin.call(this, project, "om");
 		
 		this.fs = MT.core.FS;
 		
-		var that = this;
 		this.data = this.project.db.get("objects");
-		
 	},
 	{
 		readData: function(){

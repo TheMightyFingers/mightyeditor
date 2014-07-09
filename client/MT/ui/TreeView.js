@@ -150,6 +150,17 @@ MT.extend("core.Emitter")(
 						}
 					}
 					
+					if(data.__image){
+						if(item.img){
+							item.img.src = this.rootPath + "/" + data.__image + "?"+Date.now();
+						}
+						else{
+							console.log("WHERE IS IMG?");
+						}
+							
+						
+						
+					}
 					
 					return item;
 				}
@@ -266,8 +277,8 @@ MT.extend("core.Emitter")(
 					
 					
 					head.el.appendChild(im);
-					el.image = im;
 					im.style.pointerEvents = "none";
+					el.img = im;
 				}
 				
 				if(data.type == "input"){
@@ -676,6 +687,8 @@ MT.extend("core.Emitter")(
 		
 		merge: function(data, oldData){
 			this.data = data;
+			this.tree.hide();
+			
 			var p = this.tree.el.parentNode;
 			this.updateFullPath(data);
 			
@@ -695,7 +708,9 @@ MT.extend("core.Emitter")(
 				}
 			}
 			
-			//p.appendChild(this.tree.el);
+			if(data.length !== 0){
+				this.tree.show();
+			}
 			
 		},
    

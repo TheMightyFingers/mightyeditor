@@ -1,0 +1,9 @@
+#!/bin/bash
+cp ../../phaser/dist/phaser.js ../client/js/
+cp ../../phaser/dist/phaser.js ../server/phaser/
+
+cp ../../phaser/dist/phaser.min.js ../client/js/
+cp ../../phaser/dist/phaser.min.js ../server/phaser/
+
+cp ../../phaser/dist/phaser.map ../client/js/
+cp ../../phaser/dist/phaser.map ../server/phaser/

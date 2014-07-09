@@ -27,8 +27,6 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		});
 		this.fill.width = "auto";
 		
-		
-		
 		this.stroke = new MT.ui.Button("Stroke", "ui-text-colorpicker-stroke", null, function(){
 			that.select("stroke");
 		});
@@ -128,7 +126,10 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		change: function(color){
 			if(color){
 				this.colorInput.setValue(color);
+				this.data[this.active] = color;
 			}
+			
+			this.color = this.data[this.active];
 			this[this.active+"_change"]();
 		},
 		select: function(type){

@@ -32,12 +32,20 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		//this.fontSize = new MT.ui.Button(null, "font-size", 
 		
 		
-		this.tools.on("selectObject", function(obj){
+		this.tools.on(MT.OBJECT_SELECTED, function(obj){
 			that.select(obj);
 		});
 		
-		this.tools.on("unselectedObject", function(){
+		this.tools.on(MT.OBJECT_UNSELECTED, function(){
 			that.panel.hide();
+		});
+		
+		var ev = this.tools.ui.events;
+		ev.on(ev.KEYUP, function(e){
+			var w = e.which;
+			if(w == MT.keys.ESC){
+				that.textPopup.hide(true);
+			}
 		});
 		
 		this.manager = this.tools.project.plugins.fontmanager;
@@ -104,7 +112,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					width: "auto"
 				},
 				listStyle: {
-					width: 25
+					width: 50
 				},
 				onchange: function(val){
 					that.setFontSize(val);
@@ -226,7 +234,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var r = this.colorButton.el.getBoundingClientRect();
 			this.colorPicker.y = r.top + r.height;
 			this.colorPicker.x = r.left;
-			
+			this.colorPicker.style.zIndex = this.ui.zIndex*10+1;
 			
 		},
 		
@@ -561,7 +569,15 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 		},
 		
-		select: function(obj){
+		select: function(objTemplate){
+			/* fix this */
+			var obj = null;
+			if(!objTemplate.MT_OBJECT){
+				obj = this.tools.map.getById(objTemplate.id);
+			}
+			else{
+				obj = objTemplate;
+			}
 			
 			if(!obj || !obj.MT_OBJECT || obj.MT_OBJECT.type != MT.objectTypes.TEXT){
 				this.panel.hide();

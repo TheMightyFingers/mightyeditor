@@ -2,32 +2,29 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 	MT.plugins.tools.Stamp = function(tools){
 		MT.core.BasicTool.call(this, tools);
 		this.name = "stamp";
-		this.activeFrame = 0;
 	},{
 		
 		initUI: function(ui){
 			MT.core.BasicTool.initUI.call(this, ui);
 			var that = this;
-			this.tools.on("assetSelected", function(asset){
+			this.tools.on(MT.ASSET_SELECTED, function(asset){
 				if(that.tools.activeTool != that){
 					return;
 				}
 				that.init(asset);
 			});
 			
-			this.activeFrame = 0;
-			this.tools.on("changeFrame", function(asset, frame){
+			this.tools.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				console.log("change Frame");
-				that.activeFrame = frame;
 				if(that.tools.activeTool != that){
 					return;
 				}
 				
-				that.tools.initActiveObject(that.tools.activeAsset);
-				that.tools.activeObject.frame = frame;
+				that.tools.initTmpObject(that.tools.activeAsset);
+				that.tools.tmpObject.frame = frame;
 			});
 			
-			this.tools.on("update", function(){
+			this.tools.on(MT.TOOL_SELECTED, function(){
 				if(that.tools.activeTool != that){
 					return;
 				}
@@ -44,38 +41,44 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!asset || asset.contents){
 				return;
 			}
-			this.activeFrame = 0;
-			this.tools.initActiveObject(asset);
+			this.tools.initTmpObject(asset);
+			this.tools.tmpObject.frame = this.tools.activeFrame;
+			
 			
 			this.map.handleMouseMove = this.map._followMouse;
 		},
 		
 		mouseDown: function(e){
 			
-			if(!this.tools.activeObject){
+			if(!this.tools.tmpObject){
 				if(!this.map.activeObject){
-					if(this.project.plugins.assetsmanager.active){
-						this.tools.lastAsset = this.project.plugins.assetsmanager.active.data;
+					if(this.project.plugins.assetmanager.active){
+						this.tools.lastAsset = this.project.plugins.assetmanager.active.data;
 					}
 					return;
 				}
 				if(!this.tools.lastAsset){
-					this.tools.lastAsset = this.project.plugins.assetsmanager.getById(this.map.activeObject.MT_OBJECT.assetId);
+					this.tools.lastAsset = this.project.plugins.assetmanager.getById(this.map.activeObject.MT_OBJECT.assetId);
 				}
 				this.init(this.tools.lastAsset);
 				return;
 			}
 			
-			var om = this.project.plugins.objectsmanager;
+			var om = this.project.plugins.objectmanager;
 			
-			this.map.sync(this.tools.activeObject);
+			this.map.sync(this.tools.tmpObject);
 			
-			this.tools.activeObject.MT_OBJECT.frame = this.activeFrame;
-			om.insertObject(this.tools.activeObject.MT_OBJECT);
+			this.tools.tmpObject.MT_OBJECT.frame = this.tools.activeFrame;
 			
-			this.tools.initActiveObject();
-			this.tools.activeObject.frame = this.activeFrame;
-			this.tools.unselectObjects();
+			var newObj = om.insertObject(this.tools.tmpObject.MT_OBJECT);
+			
+			this.tools.initTmpObject();
+			this.tools.tmpObject.frame = this.tools.activeFrame;
+			
+			this.tools.tmpObject.x = newObj.x;
+			this.tools.tmpObject.y = newObj.y;
+			
+			//this.tools.unselectObjects();
 		},
 		
 		mouseUp: function(e){
@@ -84,14 +87,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		deactivate: function(){
 			
-			if(this.tools.activeObject){
-				this.map.removeObject(this.tools.activeObject);
-				this.tools.activeObject = null;
-				this.tools.lastAsset = null;
-			}
+			this.tools.removeTmpObject();
 			
 			this.map.handleMouseMove = this.map.emptyFn;
-			this.project.plugins.objectsmanager.update();
+			this.project.plugins.objectmanager.update();
 		},
 	}
 );

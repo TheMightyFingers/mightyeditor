@@ -17,11 +17,21 @@ MT.objectTypes = {
 	TILE_LAYER: 3
 };
 
+MT.OBJECT_ADDED = "OBJECT_ADDED";
+MT.OBJECT_SELECTED = "OBJECT_SELECTED";
+MT.OBJECT_UNSELECTED = "OBJECT_UNSELECTED";
+MT.OBJECT_DELETED = "OBJECT_DELETED";
+MT.OBJECT_UPDATED = "OBJECT_UPDATED";
+MT.OBJECTS_RECEIVED = "OBJECTS_RECEIVED";
+
+MT.OBJECTS_UPDATED = "OBJECTS_UPDATED";
+MT.OBJECTS_SYNC = "OBJECTS_SYNC";
+
 
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
-	MT.plugins.ObjectsManager = function(project){
+	MT.plugins.ObjectManager = function(project){
 		MT.core.Emitter.call(this);
-		MT.core.BasicPlugin.call(this, "ObjectsManager");
+		MT.core.BasicPlugin.call(this, "om");
 		this.project = project;
 		
 		this.selector = new MT.core.Selector();
@@ -96,6 +106,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.on("lock", function(item){
 				that.update();
 			});
+			
+			this.tv.on("click", function(data, el){
+				that.emit(MT.OBJECT_SELECTED, data);
+			});
+			
+			
 		},
 		
 		
@@ -104,9 +120,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var tools = this.project.plugins.tools;
 			
-			
-			tools.on("selectedObject", function(id){
-				var el = that.tv.getById(id);
+			tools.on(MT.OBJECT_SELECTED, function(obj){
+				var el = that.tv.getById(obj.id);
 				
 				if(el){
 					if(el.isFolder){
@@ -117,10 +132,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
-			tools.on("unselectedObject", function(id){
-				var el = that.tv.getById(id);
+			tools.on(MT.OBJECT_UNSELECTED, function(obj){
+				// deleted
+				if(!obj){
+					return;
+				}
+				var el = that.tv.getById(obj.id);
 				if(el){
-					if(that.activeGroup && that.activeGroup.id == id){
+					if(that.activeGroup && that.activeGroup.id == obj.id){
 						that.activeGroup = null;
 					}
 					el.removeClass("selected.active");
@@ -128,7 +147,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 
-			this.ui.events.on("mouseup", function(e){
+			ui.events.on(ui.events.MOUSEUP, function(e){
 				that.sync();
 			});
 			
@@ -151,7 +170,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.merge(data);
 			
 			if(!silent){
-				this.emit("afterSync", this.tv.getData());
+				this.emit(MT.OBJECTS_UPDATED, this.tv.getData());
 			}
 			this.update();
 		},
@@ -185,17 +204,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, arr, 0);
 			
-			arr.splice(0,0,obj);
+			arr.splice(0, 0, obj);
 			
 			if(!silent){
 				this.tv.rootPath = this.project.path
 				this.tv.merge(data);
 				this.update();
 				this.sync();
-				this.emit("added", obj);
+				this.emit(MT.OBJECT_ADDED, obj);
 			}
 			
-			return data;
+			return obj;
 		},
 		
 		createObject: function(asset, x, y){
@@ -410,7 +429,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.update();
 			}
 			
-			this.emit("deleted", id);
+			this.emit(MT.OBJECT_DELETED, id);
 		},
 		
 		_delete: function(id, data){
@@ -459,7 +478,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		update: function(){
-			this.emit("update", this.tv.getData());
+			this.emit(MT.OBJECTS_UPDATED, this.tv.getData());
 		},
 		
 		select: function(id){
@@ -514,7 +533,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				this._lastData = json;
 				if(!silent){
-					that.emit("beforeSync", data);
+					that.emit(MT.OBJECTS_SYNC, data);
 				}
 				
 				that.send("updateData", data);

@@ -1,3 +1,5 @@
+"use strict";
+
 MT.require("ui.List");
 MT.require("plugins.tools.Select");
 MT.require("plugins.tools.Stamp");
@@ -5,11 +7,12 @@ MT.require("plugins.tools.Brush");
 MT.require("plugins.tools.Text");
 MT.require("plugins.tools.TileTool");
 
+MT.TOOL_SELECTED = "TOOL_SELECTED";
+
 
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.Tools = function(project){
 		MT.core.Emitter.call(this);
-		
 		
 		this.project = project;
 		
@@ -24,8 +27,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"TileTool": MT.plugins.tools.TileTool
 		};
 		
-
-
+		this.tmpObject = null;
+		this.activeAsset = null;
+		this.activeFrame = 0;
 	},
 	{
 		
@@ -45,24 +49,31 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		installUI: function(){
 			var that = this;
-			var am = this.project.plugins.assetsmanager;
+			var am = this.project.plugins.assetmanager;
 			var map = this.map = this.project.plugins.mapeditor;
-			var om = this.om = this.project.plugins.objectsmanager;
+			var om = this.om = this.project.plugins.objectmanager;
 			
 			for(var i in this.toolsAvailable){
 				this.tools[i.toLowerCase()] = new this.toolsAvailable[i](this);
 			}
 			
 			
-			am.tv.on("click", function(asset, element){
+			am.on(MT.ASSET_SELECTED, function(asset, element){
 				that.activeAsset = asset;
-				that.emit("assetSelected", asset);
+				that.activeFrame = am.activeFrame;
+				that.emit(MT.ASSET_SELECTED, asset);
 			});
 			
-			am.on("changeFrame", function(asset, frame){
+			am.on(MT.ASSET_UNSELECTED, function(asset){
+				that.activeAsset = null;
+				that.emit(MT.ASSET_UNSELECTED, asset);
+			});
+			
+			am.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				that.activeAsset = asset;
-				that.emit("assetSelected", asset);
-				that.emit("changeFrame", asset, frame);
+				that.activeFrame = frame;
+				
+				that.emit(MT.ASSET_FRAME_CHANGED, asset, frame);
 			});
 			
 			var select =  function(object){
@@ -72,36 +83,41 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				that.select(object);
 			};
-			map.on("select",select);
 			
+			map.on(MT.TOOL_SELECTED, select);
 			
-			om.tv.on("click",function(data){
-				//that.setTool(that.tools.select);
+			om.on(MT.OBJECT_SELECTED, function(data){
 				select(map.getById(data.id));
 			});
 			
 			
+			/*om.tv.on("click",function(data){
+				//that.setTool(that.tools.select);
+				select(map.getById(data.id));
+			});
+			*/
+			
 			
 			map.selector.on("select", function(obj){
-				that.emit("selectedObject", obj.MT_OBJECT.id);
+				that.emit(MT.OBJECT_SELECTED, om.getById(obj.MT_OBJECT.id));
 			});
 			
 			map.selector.on("unselect", function(obj){
-				that.emit("unselectedObject", obj.MT_OBJECT.id);
+				that.emit(MT.OBJECT_UNSELECTED, om.getById(obj.MT_OBJECT.id));
 			});
 			
-			om.on("update", function(){
-				if(map.activeObject){
+			om.on(MT.OBJECTS_UPDATED, function(){
+				if(map.activeObject && that.tmpObject && map.activeObject.MT_OBJECT.id != that.tmpObject.MT_OBJECT.id){
 					select(map.activeObject);
 				}
-				that.emit("update");
+				that.emit(MT.OBJECTS_UPDATED);
 			});
 			
 			var lastKey = 0;
 			
 			var toCopy = [];
 			
-			this.ui.events.on("keyup", function(e){
+			this.ui.events.on(this.ui.events.KEYUP, function(e){
 				
 				if(lastKey == MT.keys.ESC){
 					that.setTool(that.tools.select);
@@ -112,7 +128,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				
 				if(e.which == MT.keys.DELETE){
-					
 					var data = om.tv.getData();
 					
 					that.map.selector.forEach(function(obj){
@@ -179,13 +194,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
-			
-			
-			
 			for(var i in this.tools){
 				this.tools[i].initUI(this.ui);
 			}
-			
 			
 			this.setTool(this.tools.select);
 			
@@ -244,7 +255,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			this.activeTool.init();
-			this.emit("select", tool);
+			this.emit(MT.TOOL_SELECTED, tool);
 		},
 		
 		mouseDown: function(e){
@@ -282,45 +293,51 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.map.selector.clear();
 			}
 			
-			this.map.selector.add(obj);
 			this.map.activeObject = obj;
+			this.map.selector.add(obj);
 			
-			this.emit("selectObject", obj);
+			// next line will be launched from selector listeer
+			// this.emit(MT.OBJECT_SELECTED, obj);
 		},
 		
 		
-		initActiveObject: function(asset){
+		initTmpObject: function(asset){
 			
 			asset = asset || this.lastAsset;
 			this.lastAsset = asset;
 			
-			if(this.activeObject){
-				this.map.removeObject(this.activeObject);
+			if(this.tmpObject){
+				this.map.removeObject(this.tmpObject);
 			}
 			
 			var x = this.ui.events.mouse.x;
 			var y = this.ui.events.mouse.y;
-			var om = this.project.plugins.objectsmanager;
+			var om = this.project.plugins.objectmanager;
 			
 			var dx = 0;
 			var dy = 0;
 			
-			if(this.activeObject){
-				dx = this.activeObject.x;
-				dy = this.activeObject.y;
+			if(this.tmpObject){
+				dx = this.tmpObject.x;
+				dy = this.tmpObject.y;
 			}
 			
-			this.activeObject =  this.map.createObject(om.createObject(asset));
-			this.map.activeObject = this.activeObject;
+			this.tmpObject =  this.map.createObject(om.createObject(asset));
+			this.map.activeObject = this.tmpObject;
 			
 			
-			this.activeObject.x = dx || x;
-			this.activeObject.y = dy || y;
+			this.tmpObject.x = dx || x;
+			this.tmpObject.y = dy || y;
 			
 			
 		},
 		
-		
+		removeTmpObject: function(){
+			if(this.tmpObject){
+				this.map.removeObject(this.tmpObject);
+			}
+			this.tmpObject = null;
+		},
 
 		
 		

@@ -32,14 +32,18 @@ MT(
 			var that = this;
 			
 			//return;
-			
-			this.assetsManager = this.project.plugins.assetsmanager.tv.on(["click"], function(obj){
+			/*
+			this.assetmanager = this.project.plugins.assetmanager.tv.on(["click"], function(obj){
 				that.handleAssets(obj);
 			});
+			*/
 			
-			this.project.plugins.tools.on("selectObject", function(obj){
-				that.handleObjects(obj.MT_OBJECT);
-				that.active = obj.MT_OBJECT.id;
+			this.project.plugins.tools.on(MT.ASSET_SELECTED, function(obj){
+				that.handleAssets(obj);
+			});
+			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
+				that.handleObjects(obj);
+				that.active = obj.id;
 			});
 			
 			var map = this.project.plugins.mapeditor;
@@ -72,7 +76,7 @@ MT(
 			
 		},
 		
-		addInput: function(key, toControl, right, cb){
+		addInput: function(key, object, right, cb){
 			if(!this.inputs[this.stack]){
 				this.inputs[this.stack] = {};
 			}
@@ -83,7 +87,7 @@ MT(
 				k = key.key;
 			}
 			if(stack[k]){
-				stack[k].setObject(toControl);
+				stack[k].setObject(object);
 				stack[k].show();
 				return stack[k];
 			}
@@ -91,7 +95,7 @@ MT(
 			
 			var p = this.panel.content;
 			
-			var fw = new MT.ui.Input(this.project.ui.events, key, toControl);
+			var fw = new MT.ui.Input(this.project.ui.events, key, object);
 			fw.show(p.el);
 			
 			fw.style.position = "relative";
@@ -108,6 +112,7 @@ MT(
 				return;
 			}
 			
+			var that = this;
 			this.clear();
 			
 			this.panel.title = obj.name;
@@ -131,6 +136,17 @@ MT(
 			this.addInput( {key: "anchorX", step: 0.5}, obj, true, cb);
 			this.addInput( {key: "anchorY", step: 0.5}, obj, true, cb);
 			this.addInput( {key: "fps", step: 1}, obj, true, cb);
+			
+			this.addInput({key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, obj){
+				console.log("atlas", obj);
+				
+				that.project.am.addAtlas(obj, e);
+			});
+			
+			this.addInput({key: "update", type: "upload", accept: MT.const.IMAGES}, obj, true, function(e){
+				that.project.am.updateImage(obj, e);
+			});
+			
 			
 		},
    

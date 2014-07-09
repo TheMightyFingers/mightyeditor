@@ -2,6 +2,8 @@ MT.require("ui.Panel");
 MT.extend("core.Emitter").extend("ui.DomElement")(
 	MT.ui.List = function(list, ui, autohide){
 		MT.ui.DomElement.call(this);
+		this._items = [];
+		
 		this.setAbsolute();
 		this.addClass("ui-list");
 		
@@ -29,22 +31,27 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		});
 		
 		this.isVisible = false;
-		
-		this.update(list);
+		this.list = list;
+		this.update();
 		
 		this.addChild(this.panel).show();
 	},
 	{
-		update: function(list){
-			this.clear();
-			this.list = list;
-			
-			for(var i=0; i<list.length; i++){
-				this.addItem(list[i]);
+		update: function(){
+			//this.clear();
+			while(this._items.length){
+				this._items.pop().remove();
+			}
+			for(var i=0; i<this.list.length; i++){
+				this.addItem(this.list[i]);
 			}
 		},
 		
 		addItem: function(item){
+			if(item.check && !item.check()){
+				return;
+			}
+			
 			var b = this.panel.addButton(item.label, item.className, item.cb);
 			b.style.position = "relative";
 			b.addClass("ui-list-button");
@@ -52,12 +59,14 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(item.create){
 				item.create(b);
 			}
+			this._items.push(b);
 		},
 		
 		show: function(parent){
 			if(this.isVisible){
 				return;
 			}
+			this.update();
 			this.isVisible = true;
 			MT.ui.DomElement.show.call(this, parent);
 			this.emit("show");

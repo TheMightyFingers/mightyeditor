@@ -12,14 +12,17 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			
 			this.panel = this.ui.createPanel("Map Manager");
+			this.panel.isDockable = true;
+			this.panel.isJoinable = false;
+			this.panel.isResizeable = false;
+			
+			this.panel.removeHeader();
+			this.panel.height = 25;
+			ui.dockToBottom(this.panel);
 			
 			this.locateObject = this.panel.addButton("", "map-locate", function(){
 				that.locate();
 			});
-			this.panel.isDockable = true;
-			this.panel.removeHeader();
-			this.panel.height = 25;
-			ui.dockToBottom(this.panel);
 			
 			this.map = this.project.plugins.mapeditor;
 			

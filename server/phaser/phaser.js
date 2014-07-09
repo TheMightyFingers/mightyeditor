@@ -7,7 +7,7 @@
 *
 * Phaser - http://phaser.io
 *
-* v2.0.5 "Tanchico" - Built: Fri Jun 27 2014 16:48:02
+* v2.0.5 "Tanchico" - Built: Tue Jul 01 2014 21:43:31
 *
 * By Richard Davey http://www.photonstorm.com @photonstorm
 *
@@ -9790,7 +9790,7 @@ PIXI.RenderTexture.tempMatrix = new PIXI.Matrix();
 *
 * Phaser - http://phaser.io
 *
-* v2.0.5 "Tanchico" - Built: Fri Jun 27 2014 16:48:02
+* v2.0.5 "Tanchico" - Built: Tue Jul 01 2014 21:43:31
 *
 * By Richard Davey http://www.photonstorm.com @photonstorm
 *
@@ -55037,7 +55037,7 @@ Object.defineProperty(Phaser.TilemapLayer.prototype, "scrollX", {
             this.dirty = true;
         }
         // restore back to 0
-        else if(this._mc.x - value > 0)
+        else if(this._mc.x !== 0 && this._mc.x - value > 0)
         {
             this.scrollX = 0;
         }

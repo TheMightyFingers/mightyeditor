@@ -6,9 +6,13 @@ MT.requireFile("js/phaser.js", function(){
 MT.require("core.Helper");
 MT.require("core.Selector");
 
+MT.MAP_OBECTS_ADDED = "MAP_OBECTS_ADDED";
+MT.SYNC = "SYNC";
+
+
 MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	function(project){
-		MT.core.BasicPlugin.call(this, "MapEditor");
+		MT.core.BasicPlugin.call(this, "map");
 		
 		this.project = project;
 		
@@ -54,6 +58,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		_mousedown: false,
 		
 		getTileMap: function(obj){
+			console.log("tilemap?");
 			var tileWidth = obj.tileWidth || 64;
 			var tileHeight = obj.tileHeight || 64;
 			return this.game.add.tilemap(null, tileWidth, tileHeight, obj.widthInTiles, obj.heightInTiles);
@@ -94,15 +99,15 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			});
 			
 			this.selector.on("unselect", function(obj){
-				that.emit("unselect", obj);
+				that.emit(MT.OBJECT_UNSELECTED, obj);
 			});
 			
 			this.createMap();
 			
 			var tools = this.project.plugins.tools;
-			var om = this.project.plugins.objectsmanager;
+			var om = this.project.plugins.objectmanager;
 			
-			ui.events.on("mousedown", function(e){
+			ui.events.on(ui.events.MOUSEDOWN, function(e){
 				if(e.target != game.canvas){
 					return;
 				}
@@ -117,19 +122,19 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			this.isCtrlDown = false;
 			
-			ui.events.on("mouseup", function(e){
+			ui.events.on(ui.events.MOUSEUP, function(e){
 				that.handleMouseUp(e);
 			});
 			
 			
 			var dx = 0;
 			var dy = 0;
-			ui.events.on("mousemove", function(e){
+			ui.events.on(ui.events.MOUSEMOVE, function(e){
 				that.handleMouseMove(e);
 			});
 			
 			
-			ui.events.on("keydown", function(e){
+			ui.events.on(ui.events.KEYDOWN, function(e){
 				var w = e.which;
 				
 				if(e.ctrlKey){
@@ -153,7 +158,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				});
 			});
 			
-			ui.events.on("keyup", function(e){
+			ui.events.on(ui.events.KEYUP, function(e){
 				that.isCtrlDown = false;
 				om.sync();
 			});
@@ -165,12 +170,19 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			this.tools = this.project.plugins.tools;
 			
-			this.project.plugins.assetsmanager.on("update",function(data){
+			this.project.plugins.assetmanager.on(MT.ASSETS_UPDATED, function(data){
 				that.addAssets(data);
 			});
 			
-			this.project.plugins.objectsmanager.on("update", function(data){
+			this.project.plugins.objectmanager.on(MT.OBJECTS_UPDATED, function(data){
 				that.addObjects(data);
+			});
+			
+			this.tools.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
+				if(that.activeObject){
+					that.activeObject.frame = frame;
+					that.sync();
+				}
 			});
 			
 		},
@@ -186,9 +198,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.activeObject = null;
 			
 			var ctx = null;
-			
-			
-			
 			var drawObjects = function(obj){
 				that.highlightObject(ctx, obj);
 			};
@@ -214,15 +223,15 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					that.postUpdateSetting();
 					
 					that.game.plugins.add({
-						preUpdate: function(){
+						postUpdate: function(){
 							for(var i=0; i<that.tileLayers.length; i++){
 								var layer = that.tileLayers[i];
 								if(layer.fixedToCamera){
 									continue;
 								}
 								if(layer._mc.x || layer._mc.y){
-									layer._ox = layer.x;
-									layer._oy = layer.y;
+									layer._ox = layer._mc.x;
+									layer._oy = layer._mc.y;
 									layer.x += layer._mc.x;
 									layer.y += layer._mc.y;
 								}
@@ -238,12 +247,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 									continue;
 								}
 								if(layer._ox !== void(0)){
-									layer.x = layer._ox;
-									layer.ox = void(0);
+									layer.x -= layer._ox;
+									layer._ox = void(0);
 								}
 								if(layer._oy !== void(0)){
-									layer.y = layer._oy;
-									layer.oy = void(0);
+									layer.y -= layer._oy;
+									layer._oy = void(0);
 								}
 								
 							}
@@ -615,7 +624,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					if(o1 == o2){
 						continue;
 					}
-					if(o1.x == o2.x && o1.y == o2.y && o1.MT_OBJECT.assetId == o2.MT_OBJECT.assetId){
+					if(o1.x == o2.x && o1.y == o2.y && o1.MT_OBJECT.assetId == o2.MT_OBJECT.assetId && o1.width == o2.width){
 						bounds = o1.getBounds();
 						ctx.fillRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
 					}
@@ -677,7 +686,29 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return;
 			}
 			
+			var that = this;
 			
+			
+			if(asset.atlas){
+				//game.cache.addTextureAtlas(asset.id, asset.__image, this);
+				//game.load.onLoadComplete.addOnce(cb);
+				
+				var i=0;
+				game.load.onFileComplete.addOnce(function(){
+					i++;
+					that.findAtlasNames(asset.id);
+					cb();
+				});
+				if(asset.atlas.split(".").pop() == "xml"){
+					game.load.atlasXML(asset.id, path+"?"+Date.now(), that.project.path + "/" + asset.atlas+"?"+Date.now());
+				}
+				else{
+					game.load.atlas(asset.id, path+"?"+Date.now(), that.project.path + "/" + asset.atlas+"?"+Date.now());
+				}
+				
+				game.load.start();
+				return;
+			}
 			var image = new Image();
 			image.onload = function(){
 				if(asset.width != asset.frameWidth || asset.width != asset.frameHeight){
@@ -687,6 +718,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					game.cache.addImage(asset.id, asset.__image, this);
 				}
 				
+				
+				//document.body.appendChild(image);
+				//image.style.cssText = "position: absolute; z-index: 9999;"
 				
 				if(typeof cb === "function"){
 					cb();
@@ -699,7 +733,63 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 			};
 			
-			image.src = path;
+			
+			
+			image.src = path + "?" + Date.now();
+			
+			/*
+			//if(this.lastImage){
+				document.body.removeChild(this.lastImage);
+			}
+			
+			this.lastImage = image;
+			*/
+			
+		},
+		
+		
+		atlasNames: {},
+		
+		findAtlasNames: function(id){
+			
+			var names = Object.keys(game.cache._images[id].frameData._frameNames);
+			names.sort();
+			
+			var name = "";
+			var possibleNames = {};
+			var shortName = "";
+			var frame = 0;
+			var lastName = "";
+			
+			for(var i=0; i<names.length; i++){
+				name = names[i];
+				shortName = name.substring(0, name.indexOf(0));
+				
+				if(possibleNames[shortName] === void(0)){
+					possibleNames[shortName] = {
+						start: frame,
+						end: frame
+					};
+				}
+				
+				if(lastName && lastName != shortName){
+					possibleNames[lastName].end = frame;
+				}
+				
+				lastName = shortName;
+				
+				frame++;
+			}
+			possibleNames[lastName].end = frame;
+			
+			this.atlasNames[id] = possibleNames;
+			
+			this.project.plugins.assetmanager.selectActiveAsset();
+		},
+		
+		cleanImage: function(id){
+			console.log("clean images");
+			game.cache.removeImage(id);
 		},
 		
 		checkId: function(){
@@ -782,7 +872,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			
 			this.updateSelected();
-			this.emit("objectsAdded", this);
+			this.emit(MT.MAP_OBECTS_ADDED, this);
 			this._addTimeout = 0;
 		},
 		
@@ -891,7 +981,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				t.MT_OBJECT = obj;
 				this.objects.push(t);
 				this.project.plugins.tools.tools.tiletool.updateLayer(t);
-				console.log("TILE",this.project);
 				this.tileLayers.push(t);
 				return t;
 			}
@@ -1229,12 +1318,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			obj.width = sprite.width;
 			obj.height = sprite.height;
 			
+			obj.frame = sprite.frame;
 			
 			if(sprite == this.activeObject){
 				this.project.settings.update();
 			}
 			
-			this.emit("sync", this);
+			this.emit(MT.SYNC, this);
 		},
    
 		createObject: function(obj){
@@ -1255,12 +1345,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 
 		updateScene: function(obj){
 			this.updateSettings(obj);
-			
-			//console.log("save settings");
-			
-			
 			this.sendDelayed("updateData", this.settings, 100);
-			//this.settingsgridX = obj.gridX;
 		},
 		
 		received: false,

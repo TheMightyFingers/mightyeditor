@@ -20,14 +20,12 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			var b = this.project.panel.addButton(link, "datalink", function(e){
-				console.log("DataLink", e);
 				that.selectElementContents(b.el);
 				e.preventDefault();
 			});
 			
 			b.el.onmouseleave = function(){
 				window.getSelection().removeAllRanges();
-				console.log("leave");
 			};
 			
 			b.style.left = "auto";

@@ -170,6 +170,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		initMove: function(e){
+			if(this.tools.activeTool != this){
+				return;
+			}
 			this.map.handleMouseMove = this.map._objectMove;
 			
 			if(e.altKey){
@@ -262,6 +265,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 							this.initMove(e);
 						}
 						this.select(obj);
+						this.initMove(e);
 					}
 				}
 				else{

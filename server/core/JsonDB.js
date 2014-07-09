@@ -51,7 +51,7 @@ MT(
 		},
 		save: function(cb){
 			var that = this;
-			this.fs.writeFile(this.dbfile, JSON.stringify(this.data), function(){
+			this.fs.writeFile(this.dbfile, JSON.stringify(this.data, null, "\t"), function(){
 				if(typeof cb == "function"){
 					cb();
 				}
@@ -59,6 +59,9 @@ MT(
 		},
 		
 		get: function(name){
+			if(name == "" || name == "/"){
+				return this.data;
+			}
 			var folders = name.split("/");
 			var fi = 0;
 			var ret = this.data;

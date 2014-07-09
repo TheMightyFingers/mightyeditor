@@ -37,6 +37,9 @@ MT(
 		MOUSEUP: "mouseup",
 		MOUSEDOWN: "mousedown",
 		RESIZE: "resize",
+		KEYDOWN: "keydown",
+		KEYUP: "keyup",
+		DROP: "drop",
 		
 		enable: function(){
 			var that = this;
@@ -57,8 +60,10 @@ MT(
 				this.events[type] = [];
 				this.addEvent(type);
 			}
-			
-			this.events[type].push(cb);
+			var that = this;
+			window.setTimeout(function(){
+				that.events[type].push(cb);
+			}, 0);
 			return cb;
 		},
    
@@ -83,7 +88,7 @@ MT(
 		},
    
 		simulateKey: function(which){
-			this.emit("keydown",{
+			this.emit(this.KEYDOWN,{
 				which: which,
 				target: document.body
 			});
@@ -91,15 +96,15 @@ MT(
 		},
 		
 		emit: function(type, data){
+			
+			
 			if(!this.events[type]){
 				console.warn("unknown event", type);
 			}
 			var ev = this.events[type];
-			var e = null;
 			
 			for(var i=0; i<ev.length; i++){
-				e = ev[i];
-				e(data);
+				ev[i](data);
 			}
 		},
    
@@ -123,9 +128,9 @@ MT(
 				
 				that.mouse.lastEvent = e;
 				
-				that.emit("mousemove", e);
+				that.emit(that.MOUSEMOVE, e);
 			};
-			cb.type = "mousemove";
+			cb.type = that.MOUSEMOVE;
 			return cb;
 			
 		},
@@ -138,9 +143,9 @@ MT(
 				that.mouse.down = true;
 				that.mouse.lastClick = e;
 				
-				that.emit("mousedown", e);
+				that.emit(that.MOUSEDOWN, e);
 			};
-			cb.type = "mousedown";
+			cb.type = that.MOUSEDOWN;
 			return cb;
 		},
 		_mk_mouseup: function(){
@@ -152,23 +157,23 @@ MT(
 				that.mouse.down = false;
 				that.mouse.lastClick = e;
 				
-				that.emit("mouseup", e);
+				that.emit(that.MOUSEUP, e);
 			};
-			cb.type = "mouseup";
+			cb.type = that.MOUSEUP;
 			return cb;
 		},
    
    
 		_mk_cb: function(type){
-			if(type == "mousemove"){
+			if(type == this.MOUSEMOVE){
 				return this._mk_mousemove();
 			}
 			
-			if(type == "mouseup"){
+			if(type == this.MOUSEUP){
 				return this._mk_mouseup();
 			}
 			
-			if(type == "mousedown"){
+			if(type == this.MOUSEDOWN){
 				return this._mk_mousedown();
 			}
 			
@@ -191,7 +196,6 @@ MT(
 		
 		_mk_drop: function(e){
 			e.preventDefault();
-			
 		}
 	   
 	   

@@ -13,6 +13,7 @@ MT.extend("ui.DomElement")(
 			tab.addClass("panel-head-tab");
 			tab.title = document.createElement("span");
 			tab.title.innerHTML = title;
+			tab.el.setAttribute("title", title);
 			tab.el.appendChild(tab.title);
 			
 			tab.panel = tab.el.panel = this.panel;

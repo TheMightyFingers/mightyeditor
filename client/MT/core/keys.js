@@ -12,3 +12,8 @@ MT.keys = MT.core.keys = {
 	D: 68,
 	V: 86
 };
+
+MT.const = {
+	IMAGES: ".png,.jpg,.jpeg,.gif",
+	DATA: ".json,.xml"
+};

@@ -1,29 +1,29 @@
-MT.require("plugins.AssetsManager");
-MT.require("plugins.ObjectsManager");
+MT.require("plugins.AssetManager");
+MT.require("plugins.ObjectManager");
 MT.require("plugins.Export");
 MT.require("plugins.MapEditor");
 
 MT.require("core.JsonDB");
 MT.require("core.FS");
 
-MT.extend("core.SocketManager")(
+MT.extend("core.BasicPlugin")(
 	MT.core.Project = function(socket){
-		var that = this;
+		this.socket = socket;
 		
-		MT.core.SocketManager.call(this, socket, "Project");
+		MT.core.BasicPlugin.call(this, this, "Project");
+		
 		
 		this.root = "../client/data/projects";
-		
 		this.fs = MT.core.FS;
-		
 		this.dbObject  = null;
 		
+		
+		var that = this;
 		socket.onClose(function(){
 			if(that.db){
 				that.db.close();
 			}
 		});
-		
 	},
 	{
 		a_newProject: function(){
@@ -80,12 +80,12 @@ MT.extend("core.SocketManager")(
 		},
 		
 		loadPlugins: function(){
-			this.export = new MT.plugins.Export(this.socket, this);
+			this.export = new MT.plugins.Export(this);
 			
-			this.assets = new MT.plugins.AssetsManager(this.socket, this);
-			this.objects = new MT.plugins.ObjectsManager(this.socket, this);
+			this.assets = new MT.plugins.AssetManager(this);
+			this.objects = new MT.plugins.ObjectManager(this);
 			
-			this.map = new MT.plugins.MapEditor(this.socket, this);
+			this.map = new MT.plugins.MapEditor(this);
 		},
 		
 		openProject: function(pid, cb){

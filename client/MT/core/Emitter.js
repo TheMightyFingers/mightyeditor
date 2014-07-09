@@ -3,12 +3,17 @@ MT(
 		this.callbacks = {};
 	},
 	{
-		on: function(action, cb){
+		on: function(action, cb, priority){
+			
+			if(action == void(0)){
+				console.error("undefined action");
+				return;
+			}
+			
 			if(typeof cb != "function"){
 				console.error("event",action,"not a function:",cb);
 				return;
 			}
-			
 			if(Array.isArray(action)){
 				for(var i=0; i<action.length; i++){
 					this.on(action[i], cb);
@@ -24,7 +29,13 @@ MT(
 				this.callbacks[action] = [];
 			}
 			
+			
 			this.callbacks[action].push(cb);
+			cb.priority = priority || this.callbacks[action].length;
+			this.callbacks[action].sort(function(a, b){
+				return a.priority - b.priority;
+			});
+			
 			return cb;
 		},
 		
@@ -81,20 +92,36 @@ MT(
 		},
 		
 		emit: function(type, action, data){
+			//console.log("emit:", type, action);
 			if(!this.callbacks){
 				return;
 			}
+			
 			if(!this.callbacks[type]){
 				//console.warn("received unhandled data", type, data);
 				return;
 			}
 			
 			var cbs = this.callbacks[type];
-			var cb = null;
+			//this.debug(type);
+			
+			
 			for(var i=0; i<cbs.length; i++){
-				cb = cbs[i];
-				cb(action, data);
+				cbs[i](action, data);
 			}
+		},
+   
+		debug: function(type){
+			try{
+				throw new Error();
+			}catch(e){
+				var stack = e.stack.split("\n");
+				//remove self and emit
+				stack.splice(0, 3);
+				console.log("EMIT: ", type);
+				console.log(stack.join("\n"));
+			}
+			
 		}
 	}
 );

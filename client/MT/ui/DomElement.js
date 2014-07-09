@@ -278,7 +278,12 @@ MT(
 			}
 			else{
 				if(child.isVisible){
-					this.el.appendChild(child.el);
+					if(child.el.parentNode && child.el.parentNode != this.el){
+						child.el.parentNode.removeChild(child.el);
+					}
+					if(child.el.parentNode !== this.el){
+						this.el.appendChild(child.el);
+					}
 				}
 			}
 			child.parent = this;
@@ -308,7 +313,14 @@ MT(
 		},
 		
 		clear: function(){
-			this.el.innerHTML = "";
+			while(this.el.children.length){
+				if(this.el.children[0].ctrl){
+					this.el.children[0].ctrl.hide();
+				}
+				else{
+					this.el.removeChild(this.el.children[0]);
+				}
+			}
 		},
    
 		get bounds(){

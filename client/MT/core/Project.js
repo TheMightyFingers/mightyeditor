@@ -15,8 +15,8 @@ MT.extend("core.BasicPlugin")(
 		this.plugins = {};
 		
 		this.pluginsEnabled = [
-			"AssetsManager",
-			"ObjectsManager",
+			"AssetManager",
+			"ObjectManager",
 			"MapEditor",
 			"Tools",
 			"Settings",
@@ -38,8 +38,8 @@ MT.extend("core.BasicPlugin")(
 		
 		
 		
-		this.am = this.plugins.assetsmanager;
-		this.om = this.plugins.objectsmanager;
+		this.am = this.plugins.assetmanager;
+		this.om = this.plugins.objectmanager;
 		this.map = this.plugins.mapeditor;
 		this.settings = this.plugins.settings;
 		

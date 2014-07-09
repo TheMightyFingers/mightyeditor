@@ -2,20 +2,26 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 	MT.plugins.tools.Brush = function(tools){
 		MT.core.BasicTool.call(this, tools);
 		this.name = "brush";
-		this.activeFrame = 0;
 	},{
 		
 		initUI: function(ui){
 			MT.core.BasicTool.initUI.call(this, ui);
-			this.activeFrame = 0;
 			var that = this;
-			this.tools.on("changeFrame", function(asset, frame){
-				that.activeFrame = frame;
+			
+			this.tools.on(MT.ASSET_SELECTED, function(asset){
 				if(that.tools.activeTool != that){
 					return;
 				}
-				that.tools.initActiveObject(that.tools.activeAsset);
-				that.tools.activeObject.frame = frame;
+				that.init(asset);
+			});
+			
+			this.tools.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
+				if(that.tools.activeTool != that){
+					return;
+				}
+				
+				that.tools.initTmpObject(that.tools.activeAsset);
+				that.tools.tmpObject.frame = that.tools.activeFrame;
 			});
 		},
 		
@@ -23,7 +29,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		lastY: 0,
 		
 		init: function(asset){
-			this.activeFrame = 0;
 			
 			this.tools.unselectObjects();
 			asset = asset || this.tools.activeAsset;
@@ -35,7 +40,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(asset.contents){
 				return;
 			}
-			this.tools.initActiveObject(asset);
+			this.tools.initTmpObject(asset);
+			this.tools.tmpObject.frame = this.tools.activeFrame;
+			
 			this.tools.setTool(this);
 			
 			var that = this;
@@ -47,16 +54,18 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		mouseDown: function(e){
 			
-			if(!this.tools.activeObject){
+			if(!this.tools.tmpObject){
 				if(!this.tools.map.activeObject){
 					return;
 				}
 				if(!this.tools.lastAsset){
-					this.tools.lastAsset = this.project.plugins.assetsmanager.getById(this.tools.map.activeObject.MT_OBJECT.assetId);
+					this.tools.lastAsset = this.project.plugins.assetmanager.getById(this.tools.map.activeObject.MT_OBJECT.assetId);
 				}
 				this.init(this.tools.lastAsset);
+				
 				return;
 			}
+			
 			this.insertObject();
 		},
 		
@@ -66,51 +75,45 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			
-			var x = this.tools.activeObject.x;
-			var y = this.tools.activeObject.y;
+			var x = this.tools.tmpObject.x;
+			var y = this.tools.tmpObject.y;
 			
 			this.tools.map._followMouse(e, true);
 			
 			if(this.ui.events.mouse.down){
 				
-				if(this.tools.activeObject.x != this.lastX || this.tools.activeObject.y != this.lastY){
+				if(this.tools.tmpObject.x != this.lastX || this.tools.tmpObject.y != this.lastY){
 					this.insertObject();
 				}
 			}
 		},
 		
 		insertObject: function(){
-			var om = this.project.plugins.objectsmanager;
-			this.tools.map.sync(this.tools.activeObject, this.tools.activeObject.MT_OBJECT);
+			var om = this.project.plugins.objectmanager;
+			this.tools.map.sync(this.tools.tmpObject, this.tools.tmpObject.MT_OBJECT);
 			
-			this.tools.activeObject.MT_OBJECT.frame = this.activeFrame;
-			om.insertObject(this.tools.activeObject.MT_OBJECT);
+			this.tools.tmpObject.MT_OBJECT.frame = this.tools.activeFrame;
+			om.insertObject(this.tools.tmpObject.MT_OBJECT);
 			
-			this.lastX = this.tools.activeObject.x;
-			this.lastY = this.tools.activeObject.y;
-			this.tools.initActiveObject();
+			this.lastX = this.tools.tmpObject.x;
+			this.lastY = this.tools.tmpObject.y;
+			this.tools.initTmpObject();
 			
-			this.tools.activeObject.frame = this.activeFrame;
-			this.tools.unselectObjects();
+			this.tools.tmpObject.frame = this.tools.activeFrame;
+			this.tools.tmpObject.x = this.lastX;
+			this.tools.tmpObject.y = this.lastY;
+			
 		},
 		
 		mouseUp: function(e){
-			console.log("upp", e);
-			
+			//console.log("upp", e);
 		},
 		
-		
 		deactivate: function(){
-			
-			if(this.tools.activeObject){
-				this.tools.map.removeObject(this.tools.activeObject);
-				this.tools.activeObject = null;
-				this.tools.lastAsset = null;
-			}
-			
+			this.tools.removeTmpObject();
 			
 			this.tools.map.handleMouseMove = this.tools.map.emptyFn;
-			this.project.plugins.objectsmanager.update();
+			this.project.plugins.objectmanager.update();
 		},
 		
 		

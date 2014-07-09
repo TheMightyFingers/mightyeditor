@@ -85,7 +85,10 @@
 			if(!asset.key){
 				return;
 			}
-			if(asset.width != asset.frameWidth || asset.height != asset.frameHeight){
+			if(asset.atlas){
+				this.game.load.atlas(asset.key, this.assetsPath + asset.fullPath, this.assetsPath + "/" + asset.atlas);
+			}
+			else if(asset.width != asset.frameWidth || asset.height != asset.frameHeight){
 				this.game.load.spritesheet(asset.key, this.assetsPath + asset.fullPath, asset.frameWidth, asset.frameHeight, asset.frameMax, asset.margin, asset.spacing);
 			}
 			else{
@@ -153,7 +156,7 @@
 				if(object.type == this.TEXT){
 					createdObject = this._addText(object, container, group);
 				}
-				if(object.type == this.TILE_LAYER){
+				else if(object.type == this.TILE_LAYER){
 					createdObject = this._addTileLayer(object, container, group);
 				}
 				else{

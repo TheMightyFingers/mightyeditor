@@ -3,10 +3,10 @@ MT.require("core.FS");
 
 var exec = require('child_process').exec;
 
-MT.extend("core.SocketManager")(
-	MT.plugins.Export = function(socket, project){
-		MT.core.SocketManager.call(this, socket, "Export");
-		this.project = project;
+MT.extend("core.BasicPlugin")(
+	MT.plugins.Export = function(project){
+		MT.core.BasicPlugin.call(this, project, "Export");
+		
 		this.fs = MT.core.FS;
 		
 		this.zipName = "mightytools.zip";
@@ -52,23 +52,23 @@ MT.extend("core.SocketManager")(
 			delete o._framesCount;
 		},
 		
-		phaserDataOnly: function(cb){
+		phaserDataOnly: function(cb, contents){
 			var that = this;
 			
 			this.dir = this.project.path + this.sep + this.phaserPath;
 			
 			this.fs.mkdir(this.dir);
-			
-			var contents = JSON.stringify({
+			var data;
+			if(contents == void(0)){
+				data = JSON.parse(JSON.stringify({
 					assets: this.project.db.get("assets"),
 					objects: this.project.db.get("objects"),
 					map: this.project.db.get("map").contents[0]
-				}, null, "\t");
-			
-			
-			
-			var data = JSON.parse(contents);
-			
+				}, null, "\t"));
+			}
+			else{
+				data = contents;
+			}
 			
 			
 			this.createIdList(data.assets.contents, this.dir + this.sep + this.assetsPath);
@@ -126,19 +126,33 @@ MT.extend("core.SocketManager")(
 			this.dir = this.project.path + this.sep + this.phaserPath;
 			this.fs.mkdir(this.dir);
 			
-			this.assets = this.project.db.get("assets");
-			this.objects = this.project.db.get("objects");
-			this.map = this.project.db.get("map").contents[0];
+			
+			
+			this.assets = JSON.parse( JSON.stringify(this.project.db.get("assets")) );
+			this.objects = JSON.parse( JSON.stringify(this.project.db.get("objects")) );
+			
+			if(this.project.db.get("map").contents && this.project.db.get("map").contents.length > 0){
+				this.map = JSON.parse( JSON.stringify(this.project.db.get("map").contents[0]) );
+			}
+			else{
+				this.map = {};
+			}
 			
 			
 			this.parseAssets(this.assets.contents);
+			
+			var contents = {
+					assets: this.assets,
+					objects: this.objects,
+					map: this.map
+			};
 			
 			this.phaserDataOnly(function(err, local, pub){
 				
 				//zip -9 -r <zip file> <folder name>
 				exec("zip -9 -r ../" + that.zipName + " ./", { cwd: that.dir }, cb);
 				
-			});
+			}, contents);
 		},
 		
 		createIdList: function(assets, path){
@@ -168,13 +182,27 @@ MT.extend("core.SocketManager")(
 				asset = assets[i];
 				
 				if(asset.contents){
-					this.fs.mkdir(path + +asset.name);
+					if(!asset.name || asset.name == "NaN"){
+						MT.log("unknow name", asset);
+						continue;
+					}
 					this.parseAssets(asset.contents, path + this.sep + asset.name);
 					continue;
 				}
 				
 				asset.source = path + this.sep + asset.name;
 				this.fs.copy(this.project.path + this.sep + asset.__image, asset.source);
+				if(asset.atlas){
+					var aext = asset.atlas.split(".").pop();
+					console.log("ASSET ATLAS:", this.project.path + this.sep + asset.atlas);
+					console.log("ASSET ATLAS TO:", asset.source + "." + aext);
+					
+					
+					this.fs.copy(this.project.path + this.sep + asset.atlas, asset.source + "." + aext);
+					asset.atlas = asset.name + "." + aext;
+					
+					console.log("ASSET ATLAS", asset.atlas);
+				}
 			}
 		},
 		

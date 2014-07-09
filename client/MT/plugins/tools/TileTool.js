@@ -12,20 +12,22 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		initUI: function(ui){
 			MT.core.BasicTool.initUI.call(this, ui);
-			this.panel = ui.createPanel("Tile tools");
-			this.panel.setFree();
-			this.panel.height = 300;
-			ui.dockToBottom(this.panel);
-			this.panel.hide();
+			//this.panel = ui.createPanel("Tile tools");
+			//this.panel.setFree();
+			//this.panel.height = 300;
+			//ui.dockToBottom(this.panel);
+			
+			this.panel = this.tools.project.plugins.assetmanager.preview;
+			//this.panel.hide();
 			
 			var that = this;
-			this.tools.on("selectObject", function(obj){
+			this.tools.on(MT.OBJECT_SELECTED, function(obj){
 				if(!obj){
 					return;
 				}
 				that.select(obj);
 			});
-			this.tools.on("unselectedObject", function(){
+			this.tools.on(MT.OBJECT_UNSELECTED, function(){
 				that.unselect();
 			});
 			
@@ -35,7 +37,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.stop = 0;
 			
 			
-			this.tools.map.on("objectsAdded", function(map){
+			this.tools.map.on(MT.MAP_OBECTS_ADDED, function(map){
 				if(map.activeObject){
 					that.select(map.activeObject);
 					that.update();
@@ -149,8 +151,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			panel.data.canvas = canvas;
 			panel.data.ctx = ctx;
 			
-			panel.data.widthInTiles = image.width / map.tileWidth | 0;
-			panel.data.heightInTiles = image.height / map.tileHeight | 0;
+			var imgData = panel.data.data;
+			
+			panel.data.widthInTiles = image.width / imgData.frameWidth | 0;
+			panel.data.heightInTiles = image.height / imgData.frameHeight | 0;
 			
 			
 			
@@ -216,11 +220,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var map = this.active.map;
 			ctx.beginPath();
 			
-			for(var i = map.tileWidth; i<image.width; i += map.tileWidth + imgData.spacing){
+			for(var i = imgData.frameWidth; i<image.width; i += imgData.frameWidth + imgData.spacing){
 				ctx.moveTo(imgData.margin + i+0.5, imgData.margin);
 				ctx.lineTo(i+0.5, image.height);
 			}
-			for(var i = map.tileHeight; i<image.height; i += map.tileHeight + imgData.spacing){
+			for(var i = imgData.frameHeight; i<image.height; i += imgData.frameHeight + imgData.spacing){
 				ctx.moveTo(imgData.margin + 0, imgData.margin + i+0.5);
 				ctx.lineTo(image.width, i+0.5);
 			}
@@ -237,9 +241,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			if(this.start == this.stop){
 				
-				ctx.fillRect(imgData.margin + map.tileWidth * tx + tx * imgData.spacing + 0.5,
-							imgData.margin + map.tileHeight * ty + ty * imgData.spacing + 0.5,
-							map.tileWidth+0.5, map.tileHeight+0.5
+				ctx.fillRect(imgData.margin + imgData.frameWidth * tx + tx * imgData.spacing + 0.5,
+							imgData.margin + imgData.frameHeight * ty + ty * imgData.spacing + 0.5,
+							imgData.frameWidth+0.5, imgData.frameHeight+0.5
 				);
 				this.selection.add({x: tx, y: ty, dx: 0, dy: 0});
 			}
@@ -258,17 +262,14 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				for(var i=startx; i<=endx; i++){
 					for(var j=starty; j<=endy; j++){
 						ctx.fillRect(
-							imgData.margin + map.tileWidth * i  + i * imgData.spacing + 0.5,
-							map.tileHeight * j + j * imgData.spacing + 0.5,
-							map.tileWidth + 0.5,
-							map.tileHeight + 0.5
+							imgData.margin + imgData.frameWidth * i  + i * imgData.spacing + 0.5,
+							imgData.frameHeight * j + j * imgData.spacing + 0.5,
+							imgData.frameWidth + 0.5,
+							imgData.frameHeight + 0.5
 						);
 						this.selection.add({x: i, y: j, dx: i-startx, dy: j-starty});
 					}
 				}
-				
-				
-				
 			}
 		},
 		
@@ -287,13 +288,13 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		getTile: function(x, y, image, imageData){
-			var tx = (x + imageData.margin - imageData.spacing) / (this.active.map.tileWidth + imageData.spacing ) | 0;
-			var ty = (y + imageData.margin - imageData.spacing) / (this.active.map.tileHeight + imageData.spacing ) | 0;
+			var tx = (x + imageData.margin - imageData.spacing) / (imageData.frameWidth + imageData.spacing ) | 0;
+			var ty = (y + imageData.margin - imageData.spacing) / (imageData.frameHeight + imageData.spacing ) | 0;
 			return this.getId(tx, ty, image, imageData);
 		},
 		
 		getId: function(tx, ty, image, imageData){
-			var y = ty * ( (image.width + imageData.spacing) / (this.active.map.tileWidth + imageData.spacing) );
+			var y = ty * ( (image.width + imageData.spacing) / (imageData.frameWidth + imageData.spacing) );
 			var ret = (tx + y | 0);
 			return ret;
 		},
@@ -379,9 +380,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				layer.MT_OBJECT.tiles[y] = {};
 			}
 			layer.MT_OBJECT.tiles[y][x] = id;
-			
-			console.log("put tile", id);
-			
 			layer.map.putTile(id, x, y, layer);
 		},
 		
@@ -433,7 +431,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		unselect: function(){
 			
-			this.panel.hide();
+			//this.panel.hide();
+			this.panel.content.clear();
 			this.restore();
 			console.log("unselect");
 			if(this.tools.activeTool == this && this.oldSettings.activeTool && this.tools.activeTool != this.oldSettings.activeTool){
@@ -449,22 +448,30 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		select: function(obj){
-			if(obj.MT_OBJECT.type != MT.objectTypes.TILE_LAYER){
+			if(obj.type != MT.objectTypes.TILE_LAYER){
 				this.restore();
 				return;
 			}
-			this.active = obj;
+			this.active = this.tools.map.getById(obj.id);
+			if(this.tools.map.activeObject != this.active){
+				this.restore();
+				return;
+			}
 			
-			
-			this.adjustSettings(this.active.MT_OBJECT);
+			this.adjustSettings(this.active);
 			
 			this.tools.setTool(this);
+			if(!this.active){
+				return;
+			}
+			
+			
 			this.panel.show();
 			this.update();
 		},
 		
 		update: function(){
-			var images = this.tools.project.plugins.assetsmanager.list;
+			var images = this.tools.project.plugins.assetmanager.list;
 			if(this.active){
 				this.createPanels(images);
 			}
@@ -484,7 +491,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var nextId = 0;
 			var tilesetImage = null;
 			
-			var images = this.tools.project.plugins.assetsmanager.list;
+			var images = this.tools.project.plugins.assetmanager.list;
 			var image = null;
 			
 			for(var i=0; i<data.images.length; i++){

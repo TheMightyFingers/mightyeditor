@@ -67,7 +67,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			var list = this.options.list = new MT.ui.List(options, this.ui, true);
 			
 			list.addClass("settings-list");
-			list.fitIn();
+			//list.fitIn();
 			
 			var that = this;
 			
@@ -90,7 +90,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			});
 			
 			this.header.addChild(this.options);
-			list.fitIn();
+			
+			list.style.left = 0;
+			list.style.right = 0;
 			
 			return this.options;
 		},
@@ -572,6 +574,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(!this.isVisible){
 				return;
 			}
+			this.isVisible = false;
 			MT.ui.DomElement.hide.call(this);
 			if(silent !== false){
 				this.emit("hide");
