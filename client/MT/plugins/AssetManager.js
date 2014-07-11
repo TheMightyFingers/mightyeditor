@@ -347,6 +347,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					
 					
 					var image = this.project.plugins.mapeditor.game.cache.getImage(asset.id+"");
+					// called while loading
+					if(!image){
+						return;
+					}
 					var canvas = document.createElement("canvas");
 					canvas.width = image.width;
 					canvas.height = image.height;
