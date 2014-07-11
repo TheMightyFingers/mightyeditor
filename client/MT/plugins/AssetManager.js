@@ -374,6 +374,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			panels.active.hide();
 			panels.active.show(this.preview.content.el);
+			if(panels.active.data.scrollLeft){
+				panels.active.content.el.scrollLeft = panels.active.data.scrollLeft;
+			}
+			if(panels.active.data.scrollTop){
+				panels.active.content.el.scrollTop = panels.active.data.scrollTop;
+			}
+			
 			this.panels[asset.id] = panels;
 		},
 		
@@ -750,6 +757,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(frame == that.activeFrame){
 					return;
 				}
+				
+				panel.data.scrollTop = panel.content.el.scrollTop;
+				panel.data.scrollLeft = panel.content.el.scrollLeft;
 				
 				that.activeFrame = frame;
 				panel.data.group.active = panel;
