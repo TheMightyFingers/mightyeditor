@@ -290,7 +290,7 @@
 			
 			
 			if(template.angle){
-				object.angle = object.angle;
+				object.angle = template.angle;
 			}
 			
 			if(template.type !== mt.GROUP && template.contents === void(0) ){
