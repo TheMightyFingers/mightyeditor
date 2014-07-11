@@ -100,13 +100,13 @@ MT.extend("core.Emitter")(
 				activePanel = panel;
 				return;
 			}
-			e.preventDefault();
-			e.stopPropagation();
+			
 			
 			if(!activePanel){
 				return;
 			}
-			
+			e.preventDefault();
+			e.stopPropagation();
 			if(needResize){
 				that.resizePanel(activePanel, e);
 				return;
