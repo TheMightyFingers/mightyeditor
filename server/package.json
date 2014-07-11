@@ -1,0 +1,30 @@
+{
+  "name": "MightyEditor",
+  "version": "0.92.1",
+  "description": "Map editor for Phaser.io game framework",
+  "main": "Server.js",
+  "dependencies": {
+    "uglify-js": "^2.4.14",
+    "ws": "^0.4.31"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:TheMightyFingers/mightyeditor.git"
+  },
+  "keywords": [
+    "game editor",
+    "map editor",
+    "phaser",
+    "gamemaker"
+  ],
+  "author": "MightyFingers",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TheMightyFingers/mightyeditor/issues"
+  },
+  "homepage": "http://mightyfingers.com"
+}
