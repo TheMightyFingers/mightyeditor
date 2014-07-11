@@ -866,6 +866,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
 				if(obj){
+					
+					that.active = that.getById(obj.assetId);
 					that.activeFrame = obj.frame;
 					
 					that.selectAssetById(obj.assetId);
@@ -931,6 +933,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(redraw){
 				this.setPreviewAssets(asset);
 			}
+			return asset;
 		},
 		
 		selectActiveAsset: function(active){
