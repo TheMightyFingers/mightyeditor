@@ -709,6 +709,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					/*
 					 * Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY
 					 * Phaser.Loader.TEXTURE_ATLAS_JSON_HASH
+					 * Phaser.Loader.TEXTURE_ATLAS_XML_STARLING
 					 */
 					if(ext == "json"){
 						data = that.parseJSON(dataString);
@@ -734,41 +735,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 							that.findAtlasNames(asset.id);
 						});
 					}
-					
-						//this.game.cache.addTextureAtlas(file.key, file.url, file.data, file.atlasData, file.format);
-					
-					
 				});
-				
-				//game.cache.addTextureAtlas(asset.id, asset.__image, this);
-				//game.load.onLoadComplete.addOnce(cb);
-				
-				//var i=0;
-				//var fn;
-				
-				/*
-				game.load.onFileComplete.add(fn = function(a, key){
-					if(key !== asset.id){
-						console.log("skipping key", key);
-						return;
-					}
-					
-					i++;
-					that.findAtlasNames(asset.id);
-					cb();
-					game.load.onFileComplete.remove(fn);
-				});
-				
-				if(asset.atlas.split(".").pop() == "xml"){
-					game.load.atlasXML(asset.id, path+"?"+Date.now(), that.project.path + "/" + asset.atlas+"?"+Date.now());
-				}
-				else{
-					game.load.atlas(asset.id, path+"?"+Date.now(), that.project.path + "/" + asset.atlas+"?"+Date.now() );
-				}
-				
-				game.load.start();
 				return;
-				*/
 			}
 			
 			this.loadImage(path + "?" + Date.now(), function(){
