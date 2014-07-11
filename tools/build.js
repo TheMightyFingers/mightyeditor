@@ -10,6 +10,7 @@ var cc = global.createClass;
 
 var ignore = [
 	"js/phaser.js",
+	"js/phaser.min.js",
 	"js/phaserHacks.js"
 ];
 
