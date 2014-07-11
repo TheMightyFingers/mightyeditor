@@ -128,7 +128,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var dx = 0;
 			var dy = 0;
 			ui.events.on(ui.events.MOUSEMOVE, function(e){
-				if(e.target !== that.game.canvas){
+				if(e.target !== that.game.canvas && e.button != 2){
 					return;
 				}
 				
