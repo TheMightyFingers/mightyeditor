@@ -11,6 +11,7 @@ MT.extend("core.BasicPlugin")(
 		
 		this.zipName = "mightytools.zip";
 		this.phaserSrc = "phaser.js";
+		this.phaserMinSrc = "phaser.min.js";
 		
 		this.importFile = "mt.import.js";
 		this.dataFile = "mt.data.js";
@@ -85,6 +86,7 @@ MT.extend("core.BasicPlugin")(
 			this.fs.copy("phaser/mt.export.js", this.dir + this.sep + this.importFile);
 			
 			this.fs.copy("phaser" + this.sep + this.phaserSrc, this.dir + this.sep + this.phaserSrc);
+			this.fs.copy("phaser" + this.sep + this.phaserSrc, this.dir + this.sep + this.phaserMinSrc);
 			this.fs.copy("phaser" + this.sep + this.exampleFile, this.dir + this.sep + this.exampleFile);
 			this.fs.copy("phaser" + this.sep + this.hacksFile, this.dir + this.sep + this.hacksFile);
 			
