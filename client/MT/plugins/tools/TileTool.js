@@ -393,6 +393,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 			
 			this.adjustSettings(this.active.MT_OBJECT);
+			this.panel.content.clear();
 			
 			this.update();
 			

@@ -106,7 +106,7 @@
 		},
 		
 		getAssetById: function(id, container){
-			container = container || this.assets;
+			container = container || this.data.assets.contents;
 			var ret = null;
 			
 			for(var i in container){
@@ -114,7 +114,7 @@
 					return container[i];
 				}
 				if(container[i].contents){
-					ret = this.getAssetById(id);
+					ret = this.getAssetById(id, container[i].contents);
 					if(ret){
 						return ret;
 					}
@@ -221,7 +221,7 @@
 				asset = this.getAssetById(object.images[i]);
 				
 				if(asset){
-					im = map.addTilesetImage(asset.key, asset.key, map.tileWidth, map.tileHeight, 0, 0, nextId);
+					im = map.addTilesetImage(asset.key, asset.key, asset.frameWidth, asset.frameHeight, asset.margin, asset.spacing, nextId);
 					nextId += im.total;
 				}
 				else{
@@ -293,14 +293,16 @@
 				object.angle = object.angle;
 			}
 			
-			object.anchor.x = template.anchorX;
-			object.anchor.y = template.anchorY;
-			
+			if(template.type !== mt.GROUP && template.contents === void(0) ){
+				object.anchor.x = template.anchorX;
+				object.anchor.y = template.anchorY;
+				object.scale.x = template.scaleX;
+				object.scale.y = template.scaleY;
+			}
 			
 			object.x = template.x;
 			object.y = template.y;
-			object.scale.x = template.scaleX;
-			object.scale.y = template.scaleY;
+			
 			object.fixedToCamera = template.isFixedToCamera;
 		},
  

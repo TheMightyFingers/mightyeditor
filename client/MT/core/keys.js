@@ -14,6 +14,6 @@ MT.keys = MT.core.keys = {
 };
 
 MT.const = {
-	IMAGES: ".png,.jpg,.jpeg,.gif",
-	DATA: ".json,.xml"
+	IMAGES: "image/*",
+	DATA: "application/json|application/xml"
 };

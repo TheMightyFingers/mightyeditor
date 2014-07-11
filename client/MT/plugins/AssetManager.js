@@ -1,5 +1,7 @@
 "use strict";
-
+/* TODO: split this file in submodules
+ * more time spending to scroll than coding
+ */
 MT.require("ui.TreeView");
 MT.require("ui.List");
 
@@ -32,6 +34,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		this.panels = {};
 		
+		this.scale = 0;
 	},
 	{
 		
@@ -199,6 +202,35 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.preview = ui.createPanel("assetPreview");
 			this.preview.setFree();
 			
+			
+			this.scale = 1;
+			
+			this.preview.addOptions(this.mkScaleOptions());
+			var pce = window.pce = this.preview.content;
+			
+			ui.events.on(ui.events.WHEEL, function(e){
+				if(!pce.isParentTo(e.target)){
+					return;
+				}
+				if(!e.shiftKey){
+					return;
+				}
+				e.preventDefault();
+				e.stopPropagation();
+				
+				console.log("WHEEL", e, e.target.parentElement, pce);
+				that.scale += 0.1*(e.wheelDelta/Math.abs(e.wheelDelta));
+				if(that.scale > 2){
+					that.scale = 0;
+				}
+				if(that.scale < 0.1){
+					that.scale = 0.1;
+				}
+				that.setPreviewAssets();
+			});
+			
+			
+			
 			ui.events.on(ui.events.DROP, function(e){
 				that.handleDrop(e);
 			});
@@ -210,6 +242,31 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.unselectAll();
 				}
 			});
+		},
+		
+		
+		mkScaleOptions: function(){
+			var ret = [];
+			var o;
+			for(var i=100; i>0; i-=10){
+				o = {
+					label: i,
+					className: "",
+					cb: this._mkZoomCB(i)
+				};
+				ret.push(o);
+			}
+			return ret;
+		},
+		
+		
+		_mkZoomCB: function(zoom){
+			var that = this;
+			return function(){
+				that.scale = zoom*0.01;
+				that.preview.options.list.hide();
+				that.setPreviewAssets();
+			};
 		},
 		
 		unselectAll: function(){
@@ -233,15 +290,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		_previewCache: null,
 		setPreviewAssets: function(asset){
+			console.log("preview");
+			
 			if(asset == void(0)){
 				if(this.active){
 					asset = this.active.data;
 				}
 			}
-			if(asset == void(0)){
+			if(asset == void(0) || asset.contents){
 				return;
 			}
-			this.preview.content.clear();
+			//this.preview.content.clear();
 			
 			var map = this.project.plugins.mapeditor;
 			var panels;
@@ -259,49 +318,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(asset.atlas){
 				var images = map.atlasNames[asset.id];
 				
+				if(images.all_frames){
+					panel = this.createPreviewPanel("all_frames", panels, asset, images, true);
+					this.drawAtlasImage(panel);
+				}
 				
 				for(var i in images){
-					found = false;
-					
-					for(var j=0; j<panels.length; j++){
-						if(panels[j].title == i){
-							this.drawAtlasImage(panels[j]);
-							found = true;
-							break;
-						}
-					}
-					
-					if(found){
-						continue;
-					}
-					
-					panel = new MT.ui.Panel(i);
-					panels.push(panel);
-					panel.fitIn();
-					panel.addClass("borderless");
-					
-					if(pp){
-						pp.addJoint(panel);
-					}
-					
-					panel.data = {
-						frames: images[i],
-						asset: asset,
-						group: panels,
-						canvas: document.createElement("canvas"),
-						ctx: null
-					};
-					panel.data.ctx = panel.data.canvas.getContext("2d");
-					this.addAtlasEvents(panel);
-					
+					panel = this.createPreviewPanel(i || "xxx", panels, asset, images, true);
 					this.drawAtlasImage(panel);
-					
-					pp = panel;
 				}
 			}
 			else{
 				if(panels.length > 0){
 					this.drawSpritesheet(panels[0]);
+					panels.active = panels[0];
+					this.preview.content.clear();
 				}
 				else{
 					panel = new MT.ui.Panel(asset.name);
@@ -327,7 +358,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					};
 					
 					panel.content.el.appendChild(panel.data.canvas);
-					this.addSpriteEvents(panel);
+					
 					
 					this.drawSpritesheet(panel);
 				}
@@ -346,10 +377,53 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panels[asset.id] = panels;
 		},
 		
+		createPreviewPanel: function(name, panels, asset, images, isAtlas){
+			for(var j=0; j<panels.length; j++){
+				if(panels[j].title == name){
+					return panels[j];
+				}
+			}
+
+			var panel = new MT.ui.Panel(name);
+			
+			var pp = panels[panels.length - 1];
+			
+			
+			panels.push(panel);
+			panel.fitIn();
+			panel.addClass("borderless");
+			
+			panel.data = {
+				frames: images[name],
+				asset: asset,
+				group: panels,
+				canvas: document.createElement("canvas"),
+				ctx: null
+			};
+			panel.data.ctx = panel.data.canvas.getContext("2d");
+			
+			if(pp){
+				pp.addJoint(panel);
+			}
+			
+			if(isAtlas){
+				this.addAtlasEvents(panel);
+			}
+			else{
+				this.addSpriteEvents(panel);
+			}
+			
+			return panel;
+		},
+		
+		
 		drawAtlasImage: function(panel){
 			var asset = panel.data.asset;
 			var isxml = (asset.atlas.split(".").pop().toLowerCase().indexOf("xml") !== -1);
 			this.drawAtlasJSONImage(panel);
+			
+			panel.data.canvas.style.cssText = "width: "+(panel.data.canvas.width*this.scale)+"px";//"transform: scale("+this.scale+","+this.scale+"); transform-origin: 0 0;";
+			
 			return;
 			
 			if(isxml){
@@ -379,6 +453,49 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var width = 0;
 			var height = 0;
 			var pixi;
+			panel.data.rectangles = [];
+			var active = panel.data.group.active;
+			
+			if(panel.title == "all_frames"){
+				console.log(cache);
+				var image = cache.data;
+				
+				panel.data.canvas.width = image.width;
+				panel.data.canvas.height = image.height;
+				
+				ctx.clearRect(0, 0, image.width, image.height);
+				
+				ctx.drawImage(image, 0, 0);
+				
+				ctx.strokeStyle = "rgba(0,0,0,0.5);"
+				
+				
+				for(var i=0; i<frames._frames.length; i++){
+					
+					frame = frames.getFrame(i);
+					pixi = PIXI.TextureCache[frame.uuid];
+					
+					panel.data.rectangles.push(new Phaser.Rectangle(frame.x, frame.y, pixi.width, pixi.height));
+					if(this.activeFrame == i){
+						ctx.fillStyle = "rgba(0,0,0,0.5);"
+						ctx.fillRect(frame.x,  frame.y, pixi.width, pixi.height);
+						
+						if(!active || i < active.data.frames.start ||  i > active.data.frames.end){
+							panel.data.group.active = panel;
+						}
+						
+					}
+					
+					ctx.strokeRect(frame.x+0.5,  frame.y+0.5, pixi.width, pixi.height);
+					
+				}
+				
+				panel.content.el.appendChild(panel.data.canvas);
+				//panel.show(this.preview.content.el);
+				//panel.removeHeader();
+				return;
+			}
+			
 			
 			for(var i=panel.data.frames.start; i<panel.data.frames.end; i++){
 				frame = frames.getFrame(i);
@@ -389,11 +506,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					height = pixi.height;
 				}
 			}
+			
 			if(panel.data.canvas.width != width){
 				panel.data.canvas.width = width;
 				panel.data.canvas.height = height;
 			}
-			panel.data.rectangles = [];
+			
 			
 			
 			ctx.clearRect(0, 0, width, height);
@@ -421,7 +539,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(this.activeFrame == i){
 					ctx.fillStyle = "rgba(0,0,0,0.5);"
 					ctx.fillRect(startX, 0, pixi.width, height);
-					panel.data.group.active = panel;
+					if(!active || i < active.data.frames.start ||  i > active.data.frames.end){
+						panel.data.group.active = panel;
+					}
 				}
 				
 				startX += pixi.width;
@@ -575,6 +695,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(!mdown){
 					return;
 				}
+				
 				select(e);
 			};
 			
@@ -595,41 +716,62 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				var total = panel.data.frames.end - panel.data.frames.start  - 1;
 				var width = panel.data.canvas.width;
 				
-				var x = e.offsetX;
-				var y = e.offsetY;
+				var x = e.offsetX / that.scale;
+				var y = e.offsetY / that.scale;
 				var frame = panel.data.frames.start;
+				var found = false;
+				
 				
 				for(var i=0; i<panel.data.rectangles.length; i++){
 					if(panel.data.rectangles[i].contains(x, y)){
 						frame += i;
+						found = true;
 						break;
 					}
 				}
+				if(!found){
+					return;
+				}
+				
 				if(frame == that.activeFrame){
 					return;
 				}
 				
 				that.activeFrame = frame;
-				
+				panel.data.group.active = panel;
 				
 				console.log("FRAME changed", frame);
 				that.emit(MT.ASSET_FRAME_CHANGED, panel.data.asset, frame);
 			};
+			panel.data.canvas.oncontextmenu = function(e){
+				return false;
+			};
 			
 			panel.data.canvas.onmousedown = function(e){
+				e.preventDefault();
+				if(e.button != 0){
+					return;
+				}
 				mdown = true;
 				select(e);
 			};
 			
 			panel.data.canvas.onmousemove = function(e){
+				if(e.button == 2){
+					console.log("HERE", e);
+					this.parentNode.scrollTop -= that.ui.events.mouse.my;
+					this.parentNode.scrollLeft -= that.ui.events.mouse.mx;
+					return;
+				}
 				if(!mdown){
 					return;
 				}
+				
 				select(e);
 			};
 			
 			this.ui.events.on(this.ui.events.MOUSEUP, function(e){
-				if(!mdown){
+				if(!mdown || e.button != 0){
 					return;
 				}
 				mdown = false;

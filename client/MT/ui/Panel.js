@@ -490,6 +490,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		addJoint: function(panel){
+			console.log("join", this.title, panel.title)
 			panel.removeClass("animated");
 			this.removeClass("animated");
 			if(panel.joints == this.joints){

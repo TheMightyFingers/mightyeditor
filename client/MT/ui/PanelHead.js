@@ -11,6 +11,7 @@ MT.extend("ui.DomElement")(
 			var tab = new MT.ui.DomElement("span");
 			
 			tab.addClass("panel-head-tab");
+			
 			tab.title = document.createElement("span");
 			tab.title.innerHTML = title;
 			tab.el.setAttribute("title", title);

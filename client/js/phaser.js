@@ -43972,7 +43972,7 @@ Phaser.Loader.prototype = {
     * @protected
     */
     addToFileList: function (type, key, url, properties) {
-
+		console.log("ADDED", key);
         var entry = {
             type: type,
             key: key,
@@ -44507,6 +44507,7 @@ Phaser.Loader.prototype = {
 
         if (file !== false)
         {
+			console.log("REMOVE", type, key);
             this._fileList.splice(file.index, 1);
         }
 
@@ -44814,7 +44815,7 @@ Phaser.Loader.prototype = {
         }
 
         var file = this._fileList[index];
-        file.loaded = true;
+       
 
         var loadNext = true;
         var _this = this;
@@ -44847,12 +44848,14 @@ Phaser.Loader.prototype = {
                     if (file.format == Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY || file.format == Phaser.Loader.TEXTURE_ATLAS_JSON_HASH)
                     {
                         this._xhr.onload = function () {
+							 file.loaded = true;
                             return _this.jsonLoadComplete(index);
                         };
                     }
                     else if (file.format == Phaser.Loader.TEXTURE_ATLAS_XML_STARLING)
                     {
                         this._xhr.onload = function () {
+							 file.loaded = true;
                             return _this.xmlLoadComplete(index);
                         };
                     }
@@ -44882,10 +44885,12 @@ Phaser.Loader.prototype = {
                     this._xhr.responseType = "text";
 
                     this._xhr.onload = function () {
+						file.loaded = true;
                         return _this.xmlLoadComplete(index);
                     };
 
                     this._xhr.onerror = function () {
+						file.loaded = true;
                         return _this.dataLoadError(index);
                     };
                     this._xhr.send();
@@ -44963,6 +44968,7 @@ Phaser.Loader.prototype = {
 
         if (loadNext)
         {
+			file.loaded = true;
             this.nextFile(index, true);
         }
 

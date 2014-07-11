@@ -139,7 +139,7 @@ body:before {
 	font-size: 10px;
 	font-weight: bold;
 	letter-spacing: 0.1;
-	overflow: hidden;
+	/*overflow: hidden;*/
 	background: inherit;
 }
 div.ui-panel-header:after {
@@ -156,8 +156,6 @@ div.ui-panel-header:after {
 }
 span.panel-head-tab {
 	display: inline-block;
-	overflow: hidden;
-	text-overflow: ellipsis;
 	white-space: pre;
 	text-align: center;
 	max-width: 100px;
@@ -168,11 +166,42 @@ span.panel-head-tab {
 	z-index: 1;
 	padding: 0 3px;
 }
+/*
+.panel-head-tab:after{
+	position: absolute;
+	content: attr(data-title);
+	left: 2px;
+	
+	padding: 2px 5px;
+	background-image: inherit;
+	background-color: rgba(0,0,0,0.8);
+	color: #eee;
+	text-shadow: none;
+	top: -10px;
+	opacity: 0;
+	
+	transition-duration: 0.3s;
+	transition-delay: 0.0s;
+	-webkit-transition-delay: 0.0s;
+	
+}
+
+.panel-head-tab:hover:after{
+	top: 20px;
+	opacity: 1;
+	-webkit-transition-delay: 0.5s;
+	transition-delay: 0.5s;
+}
+*/
 span.panel-head-tab > span{
 	cursor: default;
 	position: relative;
 	z-index: -1;
 	pointer-events: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: inline-block;
+	width: 100%;
 }
 
 span.panel-head-tab.active {
@@ -347,7 +376,7 @@ div.ui-treeview-folder.open > .ui-treeView-folder-head:last-child > div{
 .ui-treeview-item.active{
 	font-weight: bold;
 }
-.ui-treeview-item-head  *, .ui-wrap{
+.ui-treeview-item-head  *{
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;

@@ -15,7 +15,8 @@ MT(
 			drag: [],
 			dragover:[],
 			click: [],
-			resize: []
+			resize: [],
+			wheel: []
 		};
 		
 		this._cbs = [];
@@ -40,6 +41,7 @@ MT(
 		KEYDOWN: "keydown",
 		KEYUP: "keyup",
 		DROP: "drop",
+		WHEEL: "wheel",
 		
 		enable: function(){
 			var that = this;

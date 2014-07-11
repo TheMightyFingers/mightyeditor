@@ -31,6 +31,18 @@ MT(
 			}
 		},
 		
+		isParentTo: function(el){
+			var p = el;
+			
+			while(p){
+				if(p == this.el){
+					return true;
+				}
+				p = p.parentNode;
+			}
+			return false;
+		},
+   
 		remove: function(){
 			if(this.el.parentNode){
 				this.el.parentNode.removeChild(this.el);

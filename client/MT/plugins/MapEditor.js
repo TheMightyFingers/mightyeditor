@@ -130,6 +130,16 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var dx = 0;
 			var dy = 0;
 			ui.events.on(ui.events.MOUSEMOVE, function(e){
+				if(e.target !== that.game.canvas){
+					return;
+				}
+				
+				//strange chrome bug
+				if(that.handleMouseMove === void(0)){
+					console.log("chrome bugging");
+					return;
+				}
+				
 				that.handleMouseMove(e);
 			});
 			
@@ -690,70 +700,167 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			if(asset.atlas){
+				var ext = asset.atlas.split(".").pop().toLowerCase();
+				
+				this.ajax(that.project.path + "/" + asset.atlas+"?"+Date.now(), function(dataString){
+					console.log("ajax cb");
+					var data = null;
+					var type = Phaser.Loader.TEXTURE_ATLAS_XML_STARLING;
+					/*
+					 * Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY
+					 * Phaser.Loader.TEXTURE_ATLAS_JSON_HASH
+					 */
+					if(ext == "json"){
+						data = that.parseJSON(dataString);
+						console.log(data);
+						if(data.frames){
+							type = Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY;
+						}
+						else{
+							type = Phaser.Loader.TEXTURE_ATLAS_JSON_HASH;
+						}
+						
+					}
+					else{
+						data = that.parseXML(dataString);
+					}
+					
+					if(!data){
+						console.error("failed to parse atlas");
+					}
+					else{
+						that.loadImage(path + "?" + Date.now(), function(){
+							that.game.cache.addTextureAtlas(asset.id, asset.__image, this, data, type);
+							that.findAtlasNames(asset.id);
+						});
+					}
+					
+						//this.game.cache.addTextureAtlas(file.key, file.url, file.data, file.atlasData, file.format);
+					
+					
+				});
+				
 				//game.cache.addTextureAtlas(asset.id, asset.__image, this);
 				//game.load.onLoadComplete.addOnce(cb);
 				
-				var i=0;
-				game.load.onFileComplete.addOnce(function(){
+				//var i=0;
+				//var fn;
+				
+				/*
+				game.load.onFileComplete.add(fn = function(a, key){
+					if(key !== asset.id){
+						console.log("skipping key", key);
+						return;
+					}
+					
 					i++;
 					that.findAtlasNames(asset.id);
 					cb();
+					game.load.onFileComplete.remove(fn);
 				});
+				
 				if(asset.atlas.split(".").pop() == "xml"){
 					game.load.atlasXML(asset.id, path+"?"+Date.now(), that.project.path + "/" + asset.atlas+"?"+Date.now());
 				}
 				else{
-					game.load.atlas(asset.id, path+"?"+Date.now(), that.project.path + "/" + asset.atlas+"?"+Date.now());
+					game.load.atlas(asset.id, path+"?"+Date.now(), that.project.path + "/" + asset.atlas+"?"+Date.now() );
 				}
 				
 				game.load.start();
 				return;
+				*/
 			}
-			var image = new Image();
-			image.onload = function(){
+			
+			this.loadImage(path + "?" + Date.now(), function(){
 				if(asset.width != asset.frameWidth || asset.width != asset.frameHeight){
-					game.cache.addSpriteSheet(asset.id, asset.__image, this, asset.frameWidth, asset.frameHeight, asset.frameMax, asset.margin, asset.spacing);
+					that.game.cache.addSpriteSheet(asset.id, asset.__image, this, asset.frameWidth, asset.frameHeight, asset.frameMax, asset.margin, asset.spacing);
 				}
 				else{
-					game.cache.addImage(asset.id, asset.__image, this);
+					that.game.cache.addImage(asset.id, asset.__image, this);
 				}
-				
-				
-				//document.body.appendChild(image);
-				//image.style.cssText = "position: absolute; z-index: 9999;"
-				
-				if(typeof cb === "function"){
-					cb();
+				cb();
+			});
+			
+		},
+		// from Phaser source
+		parseXML: function(data){
+			var xml;
+			try {
+				if (window['DOMParser']) {
+					
+					var domparser = new DOMParser();
+					xml = domparser.parseFromString(data, "text/xml");
 				}
-			};
-			image.onerror = function(){
-				console.error("couldn't load asset", path);
-				if(typeof cb === "function"){
-					cb();
+				else {
+					xml = new ActiveXObject("Microsoft.XMLDOM");
+					xml.async = 'false';
+					xml.loadXML(data);
 				}
-			};
-			
-			
-			
-			image.src = path + "?" + Date.now();
-			
-			/*
-			//if(this.lastImage){
-				document.body.removeChild(this.lastImage);
+			}
+			catch (e) {
+				xml = void(0);
+			}
+
+			if (!xml || !xml.documentElement || xml.getElementsByTagName("parsererror").length){
+				throw new Error("Phaser.Loader. Invalid Texture Atlas XML given");
 			}
 			
-			this.lastImage = image;
-			*/
+			return xml;
+		},
+		
+		parseJSON: function(data){
+			var json = null;
+			try{
+				json = JSON.parse(data);
+			}
+			catch(e){
+				console.error(e);
+				json = null;
+			}
 			
+			return json;
+		},
+		
+		ajax: function(src, cb){
+			var xhr = new XMLHttpRequest();
+			xhr.open('get', src);
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState === 4){
+					console.log(xhr);
+					//var text = xhr.responseText;
+					cb(xhr.responseText);
+				}
+			};
+			xhr.onerror = function(){
+				console.error("couldn't load asset", path);
+				cb();
+			};
+			xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+			xhr.send(null); 
+		},
+		
+		loadImage: function(src, cb){
+			var image = new Image();
+			image.onload = cb;
+			image.onerror = function(){
+				console.error("couldn't load asset", path);
+				cb();
+			};
+			image.src = src;
 		},
 		
 		
 		atlasNames: {},
 		
 		findAtlasNames: function(id){
+			if(!this.game.cache._images[id] || !this.game.cache._images[id].frameData){
+				console.error("Failed to parse atlas");
+				return;
+			}
 			
-			var names = Object.keys(game.cache._images[id].frameData._frameNames);
-			names.sort();
+			var frameData = this.game.cache._images[id].frameData;
+			var names = Object.keys(frameData._frameNames);
+			
 			
 			var name = "";
 			var possibleNames = {};
@@ -761,9 +868,16 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var frame = 0;
 			var lastName = "";
 			
+			
+			
 			for(var i=0; i<names.length; i++){
-				name = names[i];
+				name = names[i] || "unnamed";
+				
 				shortName = name.substring(0, name.indexOf(0));
+				if(!shortName){
+					shortName = name;
+				}
+				
 				
 				if(possibleNames[shortName] === void(0)){
 					possibleNames[shortName] = {
@@ -780,16 +894,38 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				frame++;
 			}
-			possibleNames[lastName].end = frame;
+			if(names.length == 0){
+				possibleNames["unnamed"] = {
+						start: 0,
+						end: 0
+					};
+			}
+			else{
+				possibleNames[lastName].end = frame;
+				
+			}
+			
+			
+			if(names.length > 20){
+				possibleNames["all_frames"] = {
+						start: 0,
+						end: frameData._frames.length
+				};
+				this.atlasNames[id] = possibleNames;
+				this.project.plugins.assetmanager.selectActiveAsset();
+				
+				console.log("too many panels will proceed with simple preview");
+				
+				//return;
+			}
 			
 			this.atlasNames[id] = possibleNames;
-			
 			this.project.plugins.assetmanager.selectActiveAsset();
 		},
 		
 		cleanImage: function(id){
 			console.log("clean images");
-			game.cache.removeImage(id);
+			this.game.cache.removeImage(id);
 		},
 		
 		checkId: function(){

@@ -139,7 +139,9 @@ MT(
 			
 			this.addInput({key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, obj){
 				console.log("atlas", obj);
-				
+				if(e.target.files.length === 0){
+					return;
+				}
 				that.project.am.addAtlas(obj, e);
 			});
 			

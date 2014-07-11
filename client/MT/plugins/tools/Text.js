@@ -55,7 +55,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			that.tools.map.off(ready);
 		};
-		this.tools.map.on("objectsAdded", ready);
+		this.tools.map.on(MT.MAP_OBECTS_ADDED, ready);
 		
 		
 		this.createPanel();
