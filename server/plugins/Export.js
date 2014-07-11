@@ -194,14 +194,8 @@ MT.extend("core.BasicPlugin")(
 				this.fs.copy(this.project.path + this.sep + asset.__image, asset.source);
 				if(asset.atlas){
 					var aext = asset.atlas.split(".").pop();
-					console.log("ASSET ATLAS:", this.project.path + this.sep + asset.atlas);
-					console.log("ASSET ATLAS TO:", asset.source + "." + aext);
-					
-					
 					this.fs.copy(this.project.path + this.sep + asset.atlas, asset.source + "." + aext);
 					asset.atlas = asset.name + "." + aext;
-					
-					console.log("ASSET ATLAS", asset.atlas);
 				}
 			}
 		},

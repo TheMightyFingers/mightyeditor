@@ -372,19 +372,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(!panels.active){
 				panels.active = panels[0];
 			}
-			
+			panels.active.hide();
 			panels.active.show(this.preview.content.el);
 			this.panels[asset.id] = panels;
 		},
 		
 		createPreviewPanel: function(name, panels, asset, images, isAtlas){
+			var panel = null;
+			
 			for(var j=0; j<panels.length; j++){
 				if(panels[j].title == name){
-					return panels[j];
+					panel = panels[j];
+					panel.data.frames = images[name];
+					
+					return panel;
 				}
 			}
 
-			var panel = new MT.ui.Panel(name);
+			panel = new MT.ui.Panel(name);
 			
 			var pp = panels[panels.length - 1];
 			
@@ -456,6 +461,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			panel.data.rectangles = [];
 			var active = panel.data.group.active;
 			
+			// old spritesheet
+			if(active && !active.data.frames){
+				active.unjoin();
+				active.remove();
+				var index = panel.data.group.indexOf(active);
+				panel.data.group.splice(index, 1);
+			}
+			
+			
 			if(panel.title == "all_frames"){
 				console.log(cache);
 				var image = cache.data;
@@ -480,7 +494,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						ctx.fillStyle = "rgba(0,0,0,0.5);"
 						ctx.fillRect(frame.x,  frame.y, pixi.width, pixi.height);
 						
-						if(!active || i < active.data.frames.start ||  i > active.data.frames.end){
+						if(!active || !active.data.frames || i < active.data.frames.start ||  i > active.data.frames.end){
 							panel.data.group.active = panel;
 						}
 						
