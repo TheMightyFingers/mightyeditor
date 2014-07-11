@@ -867,7 +867,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
 				if(obj){
 					
-					that.active = that.getById(obj.assetId);
+					that.active = that.tv.getById(obj.assetId);
 					that.activeFrame = obj.frame;
 					
 					that.selectAssetById(obj.assetId);
@@ -1204,6 +1204,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			return null;
 		},
+		
 		
 		readFile: function(file, cb){
 			var fr  = new FileReader();
