@@ -733,6 +733,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						that.loadImage(path + "?" + Date.now(), function(){
 							that.game.cache.addTextureAtlas(asset.id, asset.__image, this, data, type);
 							that.findAtlasNames(asset.id);
+							cb();
 						});
 					}
 				});
