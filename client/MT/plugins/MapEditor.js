@@ -713,7 +713,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					if(ext == "json"){
 						data = that.parseJSON(dataString);
 						console.log(data);
-						if(data.frames){
+						if(Array.isArray(data.frames)){
 							type = Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY;
 						}
 						else{
@@ -905,19 +905,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 			}
 			
-			
-			if(names.length > 20){
-				possibleNames["all_frames"] = {
-						start: 0,
-						end: frameData._frames.length
-				};
-				this.atlasNames[id] = possibleNames;
-				this.project.plugins.assetmanager.selectActiveAsset();
-				
-				console.log("too many panels will proceed with simple preview");
-				
-				//return;
-			}
+			possibleNames["all_frames"] = {
+					start: 0,
+					end: frameData._frames.length
+			};
+			this.atlasNames[id] = possibleNames;
+			this.project.plugins.assetmanager.selectActiveAsset();
 			
 			this.atlasNames[id] = possibleNames;
 			this.project.plugins.assetmanager.selectActiveAsset();

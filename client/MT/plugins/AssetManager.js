@@ -318,6 +318,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(asset.atlas){
 				var images = map.atlasNames[asset.id];
 				
+				// called while loading new atlas
+				if(!images){
+					return;
+				}
+				
 				if(images.all_frames){
 					panel = this.createPreviewPanel("all_frames", panels, asset, images, true);
 					this.drawAtlasImage(panel);
