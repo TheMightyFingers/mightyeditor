@@ -35,6 +35,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.panels = {};
 		
 		this.scale = 0;
+		
+		//hack
+		this.pendingFrame = -1;
 	},
 	{
 		
@@ -98,7 +101,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						that.uploadFolder();
 					},
 					check: function(){
-						console.log("checking");
 						if(window.navigator.userAgent.indexOf("WebKit") > -1){
 							return true;
 						}
@@ -126,12 +128,19 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					return;
 				}
 				
-					
+				
+				
 				if(that.active){
 					that.active.removeClass("selected");
 				}
 				
 				that.active = element;
+				// hack - debug this
+				if(that.pendingFrame > -1){
+					that.activeFrame = that.pendingFrame
+					that.pendingFrame = -1;
+				}
+				
 				that.active.addClass("selected");
 				that.emit(MT.ASSET_SELECTED, that.active.data);
 				that.setPreviewAssets(that.active.data);
@@ -218,7 +227,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				e.preventDefault();
 				e.stopPropagation();
 				
-				console.log("WHEEL", e, e.target.parentElement, pce);
 				that.scale += 0.1*(e.wheelDelta/Math.abs(e.wheelDelta));
 				if(that.scale > 2){
 					that.scale = 0;
@@ -290,8 +298,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		_previewCache: null,
 		setPreviewAssets: function(asset){
-			console.log("preview");
-			
 			if(asset == void(0)){
 				if(this.active){
 					asset = this.active.data;
@@ -457,7 +463,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		drawAtlasJSONImage: function(panel){
-			console.log("DRAW atlas image");
 			var map = this.project.plugins.mapeditor;
 			var game = map.game;
 			var cache = game.cache._images[panel.data.asset.id];
@@ -487,7 +492,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			if(panel.title == "all_frames"){
-				console.log(cache);
 				var image = cache.data;
 				
 				panel.data.canvas.width = image.width;
@@ -547,7 +551,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			ctx.clearRect(0, 0, width, height);
 			
 			for(var i=panel.data.frames.start; i<panel.data.frames.end; i++){
-				//console.log(frame);
 				frame = frames.getFrame(i);
 				var r = frame.getRect();
 				pixi = PIXI.TextureCache[frame.uuid];
@@ -586,7 +589,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		
 		drawAtlasXMLImage: function(panel){
-			console.log("DRAW atlas image");
 			var map = this.project.plugins.mapeditor;
 			var game = map.game;
 			var cache = game.cache._images[panel.data.asset.id];
@@ -621,7 +623,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			ctx.clearRect(0, 0, width, height);
 			
 			for(var i=panel.data.frames.start; i<panel.data.frames.end; i++){
-				//console.log(frame);
 				frame = frames.getFrame(i);
 				var r = frame.getRect();
 				
@@ -712,7 +713,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				that.activeFrame = frame;
 				
-				console.log("FRAME changed", that.activeFrame);
 				that.emit(MT.ASSET_FRAME_CHANGED, panel.data.asset, that.activeFrame);
 			};
 			
@@ -773,7 +773,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.activeFrame = frame;
 				panel.data.group.active = panel;
 				
-				console.log("FRAME changed", frame);
 				that.emit(MT.ASSET_FRAME_CHANGED, panel.data.asset, frame);
 			};
 			panel.data.canvas.oncontextmenu = function(e){
@@ -791,7 +790,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			panel.data.canvas.onmousemove = function(e){
 				if(e.button == 2){
-					console.log("HERE", e);
 					this.parentNode.scrollTop -= that.ui.events.mouse.my;
 					this.parentNode.scrollLeft -= that.ui.events.mouse.mx;
 					return;
@@ -866,10 +864,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
 				if(obj){
-					
-					that.active = that.tv.getById(obj.assetId);
-					that.activeFrame = obj.frame;
-					
+					that.pendingFrame = obj.frame;
 					that.selectAssetById(obj.assetId);
 					
 					//that.setPreviewAssets(obj);
@@ -945,7 +940,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		updateImage: function(asset, e){
-			console.log("update image", asset, e);
 			var that = this;
 			this.project.plugins.mapeditor.cleanImage(asset.id);
 			
@@ -961,9 +955,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.guessFrameWidth(asset);
 				 
 					that.send("updateImage", {__image: asset.__image, data: fr.result});
-					
-					console.log("UPDATE:", asset == that.getById(asset.id));
-					
 				};
 				img.src = that.toPng(fr.result);
 			});
@@ -1057,9 +1048,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		handleFile: function(file){
 			var path = file.webkitRelativePath || file.path || file.name;
-			
-			console.log("handle file", path);
-			
+
 			//folder
 			if(file.size == 0){
 				this.send("newFolder", path);
@@ -1072,14 +1061,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		
 		upload: function(){
-			console.log("upload");
-			
 			
 			var that = this;
 			var input = document.createElement("input");
 			input.type = "file";
 			input.onchange = function(e){
-				console.log("uploading:", e, this.files);
 				that.handleFiles(this.files);
 			};
 			input.click();
@@ -1088,7 +1074,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		uploadFolder: function(){
-			console.log("upload folder");
 			var that = this;
 			
 			var input = document.createElement("input");

@@ -58,14 +58,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		_mousedown: false,
 		
 		getTileMap: function(obj){
-			console.log("tilemap?");
 			var tileWidth = obj.tileWidth || 64;
 			var tileHeight = obj.tileHeight || 64;
 			return this.game.add.tilemap(null, tileWidth, tileHeight, obj.widthInTiles, obj.heightInTiles);
 		},
 		
 		addTileLayer: function(obj){
-			console.log("tilemap");
 			var tilemap = this.getTileMap(obj);
 			
 			var tl = tilemap.createBlankLayer(obj.name, obj.widthInTiles, obj.heightInTiles, obj.tileWidth, obj.tileHeight);
@@ -703,7 +701,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				var ext = asset.atlas.split(".").pop().toLowerCase();
 				
 				this.ajax(that.project.path + "/" + asset.atlas+"?"+Date.now(), function(dataString){
-					console.log("ajax cb");
 					var data = null;
 					var type = Phaser.Loader.TEXTURE_ATLAS_XML_STARLING;
 					/*
@@ -713,7 +710,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					 */
 					if(ext == "json"){
 						data = that.parseJSON(dataString);
-						console.log(data);
 						if(Array.isArray(data.frames)){
 							type = Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY;
 						}
@@ -795,8 +791,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			xhr.open('get', src);
 			xhr.onreadystatechange = function() {
 				if (xhr.readyState === 4){
-					console.log(xhr);
-					//var text = xhr.responseText;
 					cb(xhr.responseText);
 				}
 			};
@@ -886,7 +880,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		cleanImage: function(id){
-			console.log("clean images");
 			this.game.cache.removeImage(id);
 		},
 		
@@ -1401,7 +1394,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		sync: function(sprite, obj){
-			console.log("sync");
 			sprite = sprite || this.activeObject;
 			obj = obj || sprite.MT_OBJECT;
 			
