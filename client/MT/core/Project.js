@@ -5,6 +5,7 @@ MT.require("ui.Popup");
 MT.require("plugins.HelpAndSupport");
 MT.require("plugins.FontManager");
 MT.require("plugins.MapManager");
+MT.require("plugins.SourceEditor");
 
 MT.extend("core.BasicPlugin")(
 	MT.core.Project = function(ui, socket){
@@ -27,7 +28,8 @@ MT.extend("core.BasicPlugin")(
 			"Analytics",
 			"HelpAndSupport",
 			"FontManager",
-			"MapManager"
+			"MapManager",
+			"SourceEditor"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){

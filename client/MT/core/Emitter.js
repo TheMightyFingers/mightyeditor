@@ -103,7 +103,7 @@ MT(
 			}
 			
 			var cbs = this.callbacks[type];
-			//this.debug(type);
+			this.debug(type);
 			
 			
 			for(var i=0; i<cbs.length; i++){

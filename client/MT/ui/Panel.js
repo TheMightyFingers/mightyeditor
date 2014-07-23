@@ -130,6 +130,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(this.bottom && this.bottom.width != val){
 				this.bottom.setWidth(val);
 			}
+			
+			this.emit("resize", this.width, this.height);
 		},
 		
 		setClearWidth: function(val){
@@ -170,7 +172,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 			
 			
-			
+			this.emit("resize", this.width, this.height);
 		},
 		
 		setClearHeight: function(val){
@@ -181,7 +183,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		show: function(parent, silent){
 			if(this.isVisible){
-				return;
+				return this;
 			}
 			for(var i=0; i<this.joints.length; i++){
 				this.joints[i].hide(false);
@@ -197,6 +199,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.header.showTabs();
 			this.content.fitIn();
 			this.content.y = this.header.el.offsetHeight;
+			return this;
 		},
 		
 		addClass: function(className){
@@ -573,13 +576,17 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		hide: function(silent){
 			if(!this.isVisible){
-				return;
+				return this;
 			}
 			this.isVisible = false;
 			MT.ui.DomElement.hide.call(this);
 			if(silent !== false){
 				this.emit("hide");
 			}
+			else{
+				this.emit("unselect");
+			}
+			return this;
 		},
 		
 		addHeader: function(){

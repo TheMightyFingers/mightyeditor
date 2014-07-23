@@ -2,27 +2,24 @@
 MT.require("core.Logger");
 MT(
 	MT.http.Httpd = function(config){
-		this.root = config.root;
 		MT.log("Starting server", config);
 		
 		this.http = require("http");
 		this.path = require("path");
 		this.fs = require("fs");
 		
+		this.root = config.root.replace(/\//gi, this.path.sep);
+		
 		this.config = require("./config");
 		
 		this.mimes = this.config.mimes;
 		this.cors = this.config.cors;
 		
-		
-		
 		this.cache = {};
 		
 		this.server = this.http.createServer();
 		
-		
 		this.config.index = config.index;
-		
 		
 		var nRoot = this.path.normalize(this.root);
 		var that = this;
@@ -69,6 +66,7 @@ MT(
 			});
 			
 		},
+		
 		removeSocket: function(ws){
 			for(var i=0; i<this.sockets.length; i++){
 				if(this.sockets[i] == ws){

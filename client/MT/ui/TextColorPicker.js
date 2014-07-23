@@ -47,7 +47,7 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		this.addClass("ui-text-colorpicker");
 		
 		this.width = 252;
-		this.height = 260;
+		this.height = 280;
 		
 		
 		this.colorPalette = new MT.ui.ColorPalette(function(color){
@@ -72,7 +72,7 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		this.colorInput.on("change", function(val){
 			that.change();
 		});
-		this.addChild(this.colorInput);
+		this.addChild(this.colorInput).show();
 		
 		
 		// add stroke options

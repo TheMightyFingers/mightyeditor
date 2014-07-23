@@ -12,6 +12,47 @@ MT.extend("core.BasicPlugin")(
 		this.capacity = 0;
 		this.currentOffset = 0;
 		
+		
+		var that = this;
+		this.onKeyDown = function(e){
+			if(e.which !== "Z".charCodeAt(0)){
+				return;
+			}
+			
+			if(!e.shiftKey){
+				if(that.step > 0){
+					that.step--;
+					var data = that.buffer[that.step-1];
+					if(data){
+						that.om.a_receive(JSON.parse(data), true);
+					}
+					else{
+						that.step++;
+					}
+				}
+				else{
+					console.log("nothing to undo");
+				}
+				return;
+			}
+			
+			if(that.step < that.buffer.length){
+				var data = that.buffer[that.step];
+				if(data){
+					
+					that.om.a_receive(JSON.parse(data), true);
+					that.step++;
+				}
+				else{
+					console.log("nothing to redo - no data?");
+				}
+			}
+			else{
+				console.log("nothing to redo");
+			}
+		};
+		
+		
 		this.checkLocalStorageCapacity();
 	},
 	{
@@ -21,6 +62,15 @@ MT.extend("core.BasicPlugin")(
 		
 		get step(){
 			return this._step;
+		},
+		
+		disable: function(){
+			console.log("UR disabled");
+			this.ui.events.off(this.ui.events.KEYDOWN, this.onKeyDown);
+		},
+		enable: function(){
+			console.log("UR enabled");
+			this.ui.events.on(this.ui.events.KEYDOWN, this.onKeyDown);
 		},
 		
 		installUI: function(){
@@ -61,44 +111,7 @@ MT.extend("core.BasicPlugin")(
 			});
 			
 			
-			this.ui.events.on(this.ui.events.KEYDOWN, function(e){
-				if(e.which == "Z".charCodeAt(0)){
-					if(!e.shiftKey){
-							
-							if(that.step > 0){
-								that.step--;
-								var data = that.buffer[that.step-1];
-								if(data){
-									that.om.a_receive(JSON.parse(data), true);
-								}
-								else{
-									that.step++;
-								}
-							}
-							else{
-								console.log("nothing to undo");
-							}
-					}
-					else{
-						if(that.step < that.buffer.length){
-							
-							
-							var data = that.buffer[that.step];
-							if(data){
-								
-								that.om.a_receive(JSON.parse(data), true);
-								that.step++;
-							}
-							else{
-								console.log("nothing to redo - no data?");
-							}
-						}
-						else{
-							console.log("nothing to redo");
-						}
-					}
-				}
-			});
+			this.enable();
 			
 		},
 		

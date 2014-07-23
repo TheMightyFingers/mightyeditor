@@ -128,13 +128,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					return;
 				}
 				
-				
-				
 				if(that.active){
 					that.active.removeClass("selected");
 				}
 				
 				that.active = element;
+				
 				// hack - debug this
 				if(that.pendingFrame > -1){
 					that.activeFrame = that.pendingFrame
@@ -144,8 +143,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active.addClass("selected");
 				that.emit(MT.ASSET_SELECTED, that.active.data);
 				that.setPreviewAssets(that.active.data);
-				
-				
 			};
 			
 			

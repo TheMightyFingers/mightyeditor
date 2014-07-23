@@ -87,7 +87,7 @@ body:before {
 }
 
 .borderless{
-	border: none !important;
+	border: none;/* !important;*/
 }
 .hidden{
 	display: none;
@@ -98,6 +98,9 @@ body:before {
 	border: solid 1px rgba(0,0,0,0.9);
 	background-color: inherit;
 	background-image: linear-gradient(to bottom, rgba(50, 50, 50, 0.4) 0%,rgba(50,50,50,0.4) 100%);
+}
+.ui-panel.borderLess{
+	border: none;
 }
 .ui-panel.animated{
 	transition-duration: 0.3s;

@@ -76,8 +76,20 @@ MT(
 			
 		},
 		
-		off: function(cb){
+		off: function(type, cb){
 			var ev = null;
+			
+			if(cb !== void(0)){
+				ev = this.events[type];
+				for(var j=0; j<ev.length; j++){
+					if(ev[j] == cb){
+						ev[j] = ev[ev.length-1];
+						ev.length = ev.length-1;
+					}
+				}
+				return;
+			}
+			
 			for(var i in this.events){
 				ev = this.events[i];
 				for(var j=0; j<ev.length; j++){

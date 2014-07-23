@@ -21,7 +21,6 @@ MT.extend("core.Emitter")(
 		}
 		
 		this._onDrop = [];
-		
 	},
 	{
 		
@@ -94,10 +93,18 @@ MT.extend("core.Emitter")(
 			this.tree.el.innerHTML = "";
 			this.createObject(data, this.tree);
 		},
-   
+		
+		_nextId: 1,
+		mkid: function(){
+			return ++this._nextId;
+		},
+		
 		addItem: function(data, parent, index, isVirtual){
 			
 			for(var i=0; i<this.items.length; i++){
+				if(data.id == void(0)){
+					data.id = this.mkid();
+				}
 				if(this.items[i].data.id == data.id){
 					this.items[i].needRemove = false;
 					var item = this.items[i];
@@ -485,6 +492,9 @@ MT.extend("core.Emitter")(
 			});
 			
 			ev.on("mousedown", function(e){
+				if(!e.target.parentNode){
+					return;
+				}
 				item = that.getOwnItem(e.target.parentNode.parentNode);
 				if( !item ){
 					return;
@@ -607,7 +617,7 @@ MT.extend("core.Emitter")(
 			}
 			
 			this.input.style.left = (el.head.calcOffsetX(document.body))+"px";
-			this.input.style.top = (el.calcOffsetY(document.body)) + "px";
+			this.input.style.top = (el.calcOffsetY(document.body) - 2) + "px";
 			
 			this.input.value = el.data.name;
 			var lastValue = el.data.name;

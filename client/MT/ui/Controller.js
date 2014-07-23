@@ -64,11 +64,12 @@ MT.extend("core.Emitter")(
 		var animEnd = function(aa){
 			that.update();
 			var prop = aa.propertyName;
-			//console.log(prop);
+			console.log(prop);
 			//
 			
 			if(prop == "width" || prop == "height"){
-				that.emit(that.events.RESIZE);
+				that.refresh();
+				
 			}
 			
 			this.removeEventListener(transitionend, animEnd);
@@ -85,7 +86,7 @@ MT.extend("core.Emitter")(
 		
 		this.events.on(this.events.MOUSEMOVE, function(e){
 			if(!mDown){
-				var panel = that.pickPanel(e);
+				var panel = e.target.panel || that.pickPanel(e);
 				if(!panel){
 					that.resetResizeCursor();
 					activePanel = null;
@@ -197,7 +198,9 @@ MT.extend("core.Emitter")(
 		},
    
 		zIndex: 1,
-		
+		refresh: function(){
+			this.emit(this.events.RESIZE);
+		},
 		setCenter: function(panel){
 			
 			if(this._centerPanels.length > 0){
@@ -239,7 +242,7 @@ MT.extend("core.Emitter")(
 			});
 			p.on("show", function(){
 				console.log("show");
-				//that.beforeShow(p);
+				that.beforeShow(p);
 			});
 			p.addClass("animated");
 			

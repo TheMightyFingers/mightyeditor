@@ -89,9 +89,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var that = this;
 			
 			this.panel = ui.createPanel("Map editor");
+			this.panel.on("show", function(){
+				that.ui.refresh();
+			});
 			ui.setCenter(this.panel);
 			
-			this.project.ui.on(ui.events.RESIZE,function(){
+			this.ui.on(ui.events.RESIZE,function(){
 				that.resize();
 			});
 			

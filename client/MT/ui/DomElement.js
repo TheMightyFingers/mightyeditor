@@ -150,6 +150,9 @@ MT(
 		},
    
 		get x(){
+			if(this.isFitted){
+				return this.calcOffsetX();
+			}
 			return this._x;
 		},
    
@@ -165,11 +168,18 @@ MT(
 		},
    
 		get y(){
+			if(this.isFitted){
+				return this.calcOffsetY();
+			}
 			return this._y;
 		},
    
 		_height: 0,
 		get height(){
+			if(this.isFitted){
+				return this.el.offsetHeight;
+			}
+			
 			if(this._height){
 				return this._height;
 			}
@@ -192,6 +202,9 @@ MT(
    
 		_width: 0,
 		get width(){
+			if(this.isFitted){
+				return this.el.offsetWidth;
+			}
 			if(this._width){
 				return this._width;
 			}
@@ -245,7 +258,8 @@ MT(
 			this.style.top = 0;
 			this.style.left = 0;
 		},
-   
+		
+		isFitted: false,
 		fitIn: function(){
 			this.style.position = "absolute";
 			this.style.top = 0;
@@ -253,6 +267,11 @@ MT(
 			this.style.bottom = 0;
 			this.style.left = 0;
 			this.style.height = "auto";
+			this.isFitted = true;
+		},
+		
+		unfit: function(){
+			this.isFitted = false;
 		},
    
 		inheritSize: function(el){
