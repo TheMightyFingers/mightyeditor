@@ -8,7 +8,14 @@
 		path: path,
 		fs: fs,
 		queue: [],
- 
+		
+		exists: function(file, cb){
+			this.addQueue([this._exists, file, this.mkcb(cb)]);
+		},
+		
+		_exists: function(file, cb){
+			fs.exists(file, cb);
+		},
 		writeFile: function(file, contents, cb){
 			this.addQueue([this._writeFile, file, contents, this.mkcb(cb) ]);//no arguments
 		},

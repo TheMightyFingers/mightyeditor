@@ -256,26 +256,79 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			this.removeSideJoints();
 			var oldJoints = this.joints;
-			
-			this.header.removeTab(this.mainTab);
-			
+			this.joints = [this];
 			for(var i=0; i<oldJoints.length; i++){
 				if(oldJoints[i] == this){
-					continue;
+					oldJoints.splice(i, 1);
+					break;
 				}
-				oldJoints[i].removeJoint(this);
 			}
 			
-			this.joints = [this];
+			
+			
+			this.header.removeTab(this.mainTab);
 			
 			this.header.setTabs([this.mainTab]);
 			
 			for(var i=0; i<oldJoints.length; i++){
 				if(oldJoints[i] != this){
 					oldJoints[i].show();
+					oldJoints[i].header.showTabs();
+					
 					break;
 				}
 			}
+		},
+		
+		addJoint: function(panel){
+			console.log("join", this.title, panel.title);
+			
+			panel._parent = this._parent;
+			
+			panel.removeClass("animated");
+			this.removeClass("animated");
+			
+			if(panel.joints == this.joints){
+				return;
+			}
+			
+			for(var i=0; i<panel.joints.length; i++){
+				this.joints.push(panel.joints[i]);
+			}
+			panel.setAll("joints", this.joints);
+			
+			if(this.header.tabs != panel.header.tabs){
+				
+				var tabs = panel.header.tabs;
+				var needPush = true;
+				for(var i=tabs.length-1; i>-1; i--){
+					for(var j=0; j<this.header.tabs.length; j++){
+						if(this.header.tabs[j] == tabs[i]){
+							needPush = false;
+							break;
+						}
+					}
+					if(needPush){
+						this.header.tabs.push(tabs[i]);
+					}
+				}
+			}
+			
+			
+			
+			for(var i=0; i<this.joints.length; i++){
+				this.joints[i].header.tabs = this.header.tabs;
+			}
+			
+			
+			this.setAll("top", this.top);
+			this.setAll("bottom", this.bottom);
+			
+			
+			if(!panel.isVisible && this.isVisible){
+				panel.show();
+			}
+			
 		},
 		
 		_dockPosition: MT.NONE,
@@ -492,45 +545,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			return this._isDocked;
 		},
 		
-		addJoint: function(panel){
-			console.log("join", this.title, panel.title)
-			panel.removeClass("animated");
-			this.removeClass("animated");
-			if(panel.joints == this.joints){
-				return;
-			}
-			for(var i=0; i<panel.joints.length; i++){
-				this.joints.push(panel.joints[i]);
-			}
-			
-			
-			if(this.header.tabs != panel.header.tabs){
-				
-				var tabs = panel.header.tabs;
-				var needPush = true;
-				for(var i=tabs.length-1; i>-1; i--){
-					for(var j=0; j<this.header.tabs.length; j++){
-						if(this.header.tabs[j] == tabs[i]){
-							needPush = false;
-							break;
-						}
-					}
-					if(needPush){
-						this.header.tabs.push(tabs[i]);
-					}
-				}
-			}
-			
-			panel.setAll("joints", this.joints);
-			
-			for(var i=0; i<this.joints.length; i++){
-				this.joints[i].header.tabs = this.header.tabs;
-			}
-			
-			
-			this.setAll("top", this.top);
-			this.setAll("bottom", this.bottom);
-		},
+
 		
 		removeJoint: function(panel){
 			var j = null;

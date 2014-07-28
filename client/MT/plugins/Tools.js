@@ -185,10 +185,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						midY /= toCopy.length;
 						midX /= toCopy.length;
 						
+						var cop = null;
 						for(var i=0; i<toCopy.length; i++){
 							bounds = toCopy[i].getBounds();
-							that.copy(toCopy[i].MT_OBJECT, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
-							that.map.selector.add(this.map.getById(toCopy[i].id));
+							cop = that.copy(toCopy[i].MT_OBJECT, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
+							that.map.selector.add(cop);
 						}
 					}
 				}

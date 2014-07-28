@@ -95,7 +95,9 @@
 			getScript: function(url, cb){
 				if(this.cache[url] && this.cache[url].status === 2){
 					this.loadings -= this.cache[url].cbs.length;
-					
+					if(typeof cb === "function"){
+						cb();
+					}
 					this.cache[url].cbs.release();
 					this._onload(this);
 					return;

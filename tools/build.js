@@ -11,7 +11,9 @@ var cc = global.createClass;
 var ignore = [
 	"js/phaser.js",
 	"js/phaser.min.js",
-	"js/phaserHacks.js"
+	"js/phaserHacks.js",
+	"js/cm/lib/codemirror.js",
+	
 ];
 
 var fileList = [];
@@ -32,7 +34,9 @@ var SourceLoader = function(name){
 SourceLoader.prototype = {
 	getScript: function(script, cb, inc){
 		if(ignore.indexOf(script) > -1){
-			if(cb){cb();}
+			console.log("ignored "+ script);
+			// skip callback - as callback will be launched in release version
+			//if(cb){cb();}
 			return;
 		}
 		

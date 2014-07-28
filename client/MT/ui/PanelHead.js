@@ -36,7 +36,7 @@ MT.extend("ui.DomElement")(
 		removeTab: function(tab){
 			for(var i=0; i<this.tabs.length; i++){
 				if(this.tabs[i] == tab){
-					this.tabs.splice(i,1);
+					this.tabs.splice(i, 1);
 					return;
 				}
 			}

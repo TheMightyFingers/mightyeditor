@@ -41,7 +41,7 @@ MT(
 		
 		once: function(action, cb){
 			if(typeof cb != "function"){
-				console.error("event",action,"not a function:",cb);
+				console.error("event", action, "not a function:", cb);
 				return;
 			}
 			
@@ -92,6 +92,9 @@ MT(
 		},
 		
 		emit: function(type, action, data){
+			
+			//this.debug(type);
+			
 			//console.log("emit:", type, action);
 			if(!this.callbacks){
 				return;
@@ -103,7 +106,7 @@ MT(
 			}
 			
 			var cbs = this.callbacks[type];
-			this.debug(type);
+			
 			
 			
 			for(var i=0; i<cbs.length; i++){

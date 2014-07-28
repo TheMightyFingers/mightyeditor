@@ -312,7 +312,7 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		this.addClass("ui-text-colorpicker");
 		
 		this.width = 252;
-		this.height = 260;
+		this.height = 280;
 		
 		
 		this.colorPalette = new MT.ui.ColorPalette(function(color){
@@ -337,7 +337,7 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		this.colorInput.on("change", function(val){
 			that.change();
 		});
-		this.addChild(this.colorInput);
+		this.addChild(this.colorInput).show();
 		
 		
 		// add stroke options
@@ -2916,7 +2916,6 @@ MT.extend("core.Emitter")(
 		}
 		
 		this._onDrop = [];
-		
 	},
 	{
 		
@@ -2989,10 +2988,18 @@ MT.extend("core.Emitter")(
 			this.tree.el.innerHTML = "";
 			this.createObject(data, this.tree);
 		},
-   
+		
+		_nextId: 1,
+		mkid: function(){
+			return ++this._nextId;
+		},
+		
 		addItem: function(data, parent, index, isVirtual){
 			
 			for(var i=0; i<this.items.length; i++){
+				if(data.id == void(0)){
+					data.id = this.mkid();
+				}
 				if(this.items[i].data.id == data.id){
 					this.items[i].needRemove = false;
 					var item = this.items[i];
@@ -3380,6 +3387,9 @@ MT.extend("core.Emitter")(
 			});
 			
 			ev.on("mousedown", function(e){
+				if(!e.target.parentNode){
+					return;
+				}
 				item = that.getOwnItem(e.target.parentNode.parentNode);
 				if( !item ){
 					return;
@@ -3502,7 +3512,7 @@ MT.extend("core.Emitter")(
 			}
 			
 			this.input.style.left = (el.head.calcOffsetX(document.body))+"px";
-			this.input.style.top = (el.calcOffsetY(document.body)) + "px";
+			this.input.style.top = (el.calcOffsetY(document.body) - 2) + "px";
 			
 			this.input.value = el.data.name;
 			var lastValue = el.data.name;
@@ -3821,6 +3831,9 @@ MT(
 		},
    
 		get x(){
+			if(this.isFitted){
+				return this.calcOffsetX();
+			}
 			return this._x;
 		},
    
@@ -3836,11 +3849,18 @@ MT(
 		},
    
 		get y(){
+			if(this.isFitted){
+				return this.calcOffsetY();
+			}
 			return this._y;
 		},
    
 		_height: 0,
 		get height(){
+			if(this.isFitted){
+				return this.el.offsetHeight;
+			}
+			
 			if(this._height){
 				return this._height;
 			}
@@ -3863,6 +3883,9 @@ MT(
    
 		_width: 0,
 		get width(){
+			if(this.isFitted){
+				return this.el.offsetWidth;
+			}
 			if(this._width){
 				return this._width;
 			}
@@ -3916,7 +3939,8 @@ MT(
 			this.style.top = 0;
 			this.style.left = 0;
 		},
-   
+		
+		isFitted: false,
 		fitIn: function(){
 			this.style.position = "absolute";
 			this.style.top = 0;
@@ -3924,6 +3948,11 @@ MT(
 			this.style.bottom = 0;
 			this.style.left = 0;
 			this.style.height = "auto";
+			this.isFitted = true;
+		},
+		
+		unfit: function(){
+			this.isFitted = false;
 		},
    
 		inheritSize: function(el){
@@ -4119,7 +4148,7 @@ MT(
 			}
 			
 			var cbs = this.callbacks[type];
-			//this.debug(type);
+			this.debug(type);
 			
 			
 			for(var i=0; i<cbs.length; i++){
@@ -4455,6 +4484,47 @@ MT.extend("core.BasicPlugin")(
 		this.capacity = 0;
 		this.currentOffset = 0;
 		
+		
+		var that = this;
+		this.onKeyDown = function(e){
+			if(e.which !== "Z".charCodeAt(0)){
+				return;
+			}
+			
+			if(!e.shiftKey){
+				if(that.step > 0){
+					that.step--;
+					var data = that.buffer[that.step-1];
+					if(data){
+						that.om.a_receive(JSON.parse(data), true);
+					}
+					else{
+						that.step++;
+					}
+				}
+				else{
+					console.log("nothing to undo");
+				}
+				return;
+			}
+			
+			if(that.step < that.buffer.length){
+				var data = that.buffer[that.step];
+				if(data){
+					
+					that.om.a_receive(JSON.parse(data), true);
+					that.step++;
+				}
+				else{
+					console.log("nothing to redo - no data?");
+				}
+			}
+			else{
+				console.log("nothing to redo");
+			}
+		};
+		
+		
 		this.checkLocalStorageCapacity();
 	},
 	{
@@ -4464,6 +4534,15 @@ MT.extend("core.BasicPlugin")(
 		
 		get step(){
 			return this._step;
+		},
+		
+		disable: function(){
+			console.log("UR disabled");
+			this.ui.events.off(this.ui.events.KEYDOWN, this.onKeyDown);
+		},
+		enable: function(){
+			console.log("UR enabled");
+			this.ui.events.on(this.ui.events.KEYDOWN, this.onKeyDown);
 		},
 		
 		installUI: function(){
@@ -4504,44 +4583,7 @@ MT.extend("core.BasicPlugin")(
 			});
 			
 			
-			this.ui.events.on(this.ui.events.KEYDOWN, function(e){
-				if(e.which == "Z".charCodeAt(0)){
-					if(!e.shiftKey){
-							
-							if(that.step > 0){
-								that.step--;
-								var data = that.buffer[that.step-1];
-								if(data){
-									that.om.a_receive(JSON.parse(data), true);
-								}
-								else{
-									that.step++;
-								}
-							}
-							else{
-								console.log("nothing to undo");
-							}
-					}
-					else{
-						if(that.step < that.buffer.length){
-							
-							
-							var data = that.buffer[that.step];
-							if(data){
-								
-								that.om.a_receive(JSON.parse(data), true);
-								that.step++;
-							}
-							else{
-								console.log("nothing to redo - no data?");
-							}
-						}
-						else{
-							console.log("nothing to redo");
-						}
-					}
-				}
-			});
+			this.enable();
 			
 		},
 		
@@ -5484,9 +5526,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var that = this;
 			
 			this.panel = ui.createPanel("Map editor");
+			this.panel.on("show", function(){
+				that.ui.refresh();
+			});
 			ui.setCenter(this.panel);
 			
-			this.project.ui.on(ui.events.RESIZE,function(){
+			this.ui.on(ui.events.RESIZE,function(){
 				that.resize();
 			});
 			
@@ -7733,13 +7778,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					return;
 				}
 				
-				
-				
 				if(that.active){
 					that.active.removeClass("selected");
 				}
 				
 				that.active = element;
+				
 				// hack - debug this
 				if(that.pendingFrame > -1){
 					that.activeFrame = that.pendingFrame
@@ -7749,8 +7793,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active.addClass("selected");
 				that.emit(MT.ASSET_SELECTED, that.active.data);
 				that.setPreviewAssets(that.active.data);
-				
-				
 			};
 			
 			
@@ -9004,6 +9046,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(this.bottom && this.bottom.width != val){
 				this.bottom.setWidth(val);
 			}
+			
+			this.emit("resize", this.width, this.height);
 		},
 		
 		setClearWidth: function(val){
@@ -9044,7 +9088,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 			
 			
-			
+			this.emit("resize", this.width, this.height);
 		},
 		
 		setClearHeight: function(val){
@@ -9055,7 +9099,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		show: function(parent, silent){
 			if(this.isVisible){
-				return;
+				return this;
 			}
 			for(var i=0; i<this.joints.length; i++){
 				this.joints[i].hide(false);
@@ -9071,6 +9115,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.header.showTabs();
 			this.content.fitIn();
 			this.content.y = this.header.el.offsetHeight;
+			return this;
 		},
 		
 		addClass: function(className){
@@ -9447,13 +9492,17 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		hide: function(silent){
 			if(!this.isVisible){
-				return;
+				return this;
 			}
 			this.isVisible = false;
 			MT.ui.DomElement.hide.call(this);
 			if(silent !== false){
 				this.emit("hide");
 			}
+			else{
+				this.emit("unselect");
+			}
+			return this;
 		},
 		
 		addHeader: function(){
@@ -9600,8 +9649,20 @@ MT(
 			
 		},
 		
-		off: function(cb){
+		off: function(type, cb){
 			var ev = null;
+			
+			if(cb !== void(0)){
+				ev = this.events[type];
+				for(var j=0; j<ev.length; j++){
+					if(ev[j] == cb){
+						ev[j] = ev[ev.length-1];
+						ev.length = ev.length-1;
+					}
+				}
+				return;
+			}
+			
 			for(var i in this.events){
 				ev = this.events[i];
 				for(var j=0; j<ev.length; j++){
@@ -9728,6 +9789,197 @@ MT(
 	}
 );
 
+//MT/plugins/SourceEditor.js
+MT.namespace('plugins');
+(function(){
+	var cmPath = "js/cm";
+	MT.requireFile(cmPath+"/lib/codemirror.js",function(){
+		cmPath += "/addon";
+		MT.requireFile(cmPath+"/fold/foldcode.js");
+		MT.requireFile(cmPath+"/fold/foldgutter.js");
+		MT.requireFile(cmPath+"/fold/brace-fold.js");
+		MT.requireFile(cmPath+"/fold/xml-fold.js");
+		MT.requireFile(cmPath+"/edit/matchbrackets.js");
+		MT.requireFile(cmPath+"/search/searchcursor.js");
+		MT.requireFile(cmPath+"/search/search.js");
+		MT.requireFile(cmPath+"/dialog/dialog.js");
+		
+		
+		MT.requireFile(cmPath+"/search/match-highlighter.js");
+		MT.requireFile(cmPath+"/hint/show-hint.js");
+		MT.requireFile(cmPath+"/hint/javascript-hint.js");
+		MT.requireFile(cmPath+"/hint/anyword-hint.js");
+		MT.requireFile(cmPath+"/comment/comment.js");
+		MT.requireFile(cmPath+"/selection/active-line.js");
+		MT.requireFile(cmPath+"/scroll/scrollpastend.js");
+		MT.requireFile("js/jshint.js");
+		
+		var style = document.createElement("link");
+		//<link rel="stylesheet" type="text/css" href="css/main.css" />
+		style.setAttribute("rel", "stylesheet");
+		style.setAttribute("type", "text/scc");
+		style.setAttribute("href", "css/codemirror.css");
+		
+		document.head.appendChild(style);
+	});
+})();
+
+MT.extend("core.BasicPlugin")(
+	MT.plugins.SourceEditor = function(project){
+		//MT.core.BasicPlugin.call(this, "SourceEditor");
+		this.project = project;
+	},
+	{
+		initUI: function(ui){
+			this.ui = ui;
+			this.panel = this.ui.createPanel("SourceEditor");
+			this.el = this.panel.content;
+			
+			
+		},
+		
+		installUI: function(){
+			this.ui.joinPanels(this.project.plugins.mapeditor.panel, this.panel);
+			this.project.plugins.mapeditor.panel.show();
+			
+			
+			this.addPanels();
+			this.addTreeView();
+			
+			
+
+			this.addEditor();
+			
+			var that = this;
+			var ampv = that.project.plugins.assetmanager.preview;
+			var tools = that.project.plugins.tools;
+			var zoombox = this.project.plugins.mapmanager.panel;
+			//var map = this.project.plugins.mapeditor.panel;
+			var undoredo = this.project.plugins.undoredo;
+			
+			this.panel.on("show", function(){
+				tools.panel.content.hide();
+				zoombox.hide();
+				ampv.hide();
+				undoredo.disable();
+				MT.events.simulateKey(MT.keys.ESC);
+			});
+			this.panel.on("unselect", function(){
+				tools.panel.content.show();
+				zoombox.show();
+				ampv.show();
+				undoredo.enable();
+				window.getSelection().removeAllRanges();
+			});
+		},
+		
+		addPanels: function(){
+			
+			this.leftPanel = this.ui.createPanel("file-list-holder");
+			this.rightPanel = this.ui.createPanel("source-editor");
+			
+			this.leftPanel.addClass("borderless");
+			this.leftPanel.hide().show(this.el.el);
+			
+			this.leftPanel.fitIn();
+			this.leftPanel.width = 200;
+			this.leftPanel.style.setProperty("border-right", "solid 1px #000");
+			this.leftPanel.isResizeable = true;
+			this.leftPanel.removeHeader();
+			
+			var that = this;
+			this.leftPanel.on("resize", function(w, h){
+				that.rightPanel.style.left = w +"px";
+			});
+			
+			
+			this.rightPanel.addClass("borderless");
+			this.rightPanel.hide().show(this.el.el);
+			
+			this.rightPanel.fitIn();
+			this.rightPanel.style.left = 200+"px";
+			this.rightPanel.style.width = "auto";
+			this.rightPanel.removeHeader();
+		},
+		
+		activeTreeItem: null,
+		addTreeView: function(){
+			
+			this.tv = new MT.ui.TreeView([
+				{
+					name: "index.html"
+				},
+				{
+					name: "src",
+					contents: [
+						{
+							name: "xxx.js"
+							
+						},
+						{
+							name: "yyy"
+						}
+					]
+				}
+			],{
+				root: this.project.path
+			});
+			this.tv.tree.show(this.leftPanel.content.el);
+			
+			
+			var that = this;
+			this.tv.on("click", function(data, element){
+				console.log("click", data, element);
+				if(that.activeTreeItem){
+					that.activeTreeItem.removeClass("selected");
+				}
+				that.activeTreeItem = element;
+				//that.loadDocument(data);
+				element.addClass("selected");
+			});
+			this.tv.sortable(this.ui.events);
+		},
+		
+		addEditor: function(){
+			var defaultCfg = {
+				indentUnit: 4,
+				extraKeys: {
+					"Ctrl-S": function(cm) {
+						sourceEditor.onSave(that.editor.getValue());
+					},
+					"Ctrl-/": "toggleComment"
+				},
+				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-jslint"],
+				highlightSelectionMatches: {showToken: /\w/},
+				
+				onCursorActivity: function() {
+					editor.matchHighlight("CodeMirror-matchhighlight");
+					//delayAutoPopup();
+				},
+				
+				tabMode: "shift",
+				indentWithTabs: true,
+				lineNumbers: true,
+				
+				foldGutter: true,
+				styleActiveLine: true,
+				matchBrackets: true,
+				autofocus: true,
+				dragDrop: true,
+				showTabs: true,
+				undoDepth: 500,
+				scrollPastEnd: true,
+				historyEventDelay: 200,
+				tabSize: 4,
+				cursorBlinkRate: 530
+			};
+			
+			this.editor = CodeMirror(this.rightPanel.content.el, defaultCfg);
+			
+		}
+		
+	}
+);
 //MT/plugins/MapManager.js
 MT.namespace('plugins');
 /*
@@ -10318,11 +10570,12 @@ MT.extend("core.Emitter")(
 		var animEnd = function(aa){
 			that.update();
 			var prop = aa.propertyName;
-			//console.log(prop);
+			console.log(prop);
 			//
 			
 			if(prop == "width" || prop == "height"){
-				that.emit(that.events.RESIZE);
+				that.refresh();
+				
 			}
 			
 			this.removeEventListener(transitionend, animEnd);
@@ -10339,7 +10592,7 @@ MT.extend("core.Emitter")(
 		
 		this.events.on(this.events.MOUSEMOVE, function(e){
 			if(!mDown){
-				var panel = that.pickPanel(e);
+				var panel = e.target.panel || that.pickPanel(e);
 				if(!panel){
 					that.resetResizeCursor();
 					activePanel = null;
@@ -10451,7 +10704,9 @@ MT.extend("core.Emitter")(
 		},
    
 		zIndex: 1,
-		
+		refresh: function(){
+			this.emit(this.events.RESIZE);
+		},
 		setCenter: function(panel){
 			
 			if(this._centerPanels.length > 0){
@@ -10493,7 +10748,7 @@ MT.extend("core.Emitter")(
 			});
 			p.on("show", function(){
 				console.log("show");
-				//that.beforeShow(p);
+				that.beforeShow(p);
 			});
 			p.addClass("animated");
 			
@@ -11680,6 +11935,7 @@ MT.require("ui.Popup");
 MT.require("plugins.HelpAndSupport");
 MT.require("plugins.FontManager");
 MT.require("plugins.MapManager");
+MT.require("plugins.SourceEditor");
 
 MT.extend("core.BasicPlugin")(
 	MT.core.Project = function(ui, socket){
@@ -11702,7 +11958,8 @@ MT.extend("core.BasicPlugin")(
 			"Analytics",
 			"HelpAndSupport",
 			"FontManager",
-			"MapManager"
+			"MapManager",
+			"SourceEditor"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){

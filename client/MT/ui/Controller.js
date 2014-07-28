@@ -123,6 +123,13 @@ MT.extend("core.Emitter")(
 		
 		this.events.on(this.events.MOUSEDOWN, function(e){
 			if(e.button != 0){
+				if(e.button == 1){
+					console.log(e.target.data);
+					if(e.target.data && e.target.data.panel){
+						e.target.data.panel.unjoin();
+						e.target.data.panel.hide();
+					}
+				}
 				return;
 			}
 			mDown = true;

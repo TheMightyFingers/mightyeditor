@@ -1,5 +1,5 @@
 "use strict";
-MT.requireFile("js/phaser.min.js", function(){
+MT.requireFile("js/phaser.js", function(){
 	MT.requireFile("js/phaserHacks.js");
 });
 MT.require("core.Helper");
@@ -231,7 +231,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 					that.setCameraBounds();
 					that.postUpdateSetting();
-					
+					//return;
 					that.game.plugins.add({
 						postUpdate: function(){
 							for(var i=0; i<that.tileLayers.length; i++){
@@ -524,7 +524,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					ctx.strokeRect(bounds.x | 0, bounds.y | 0, width | 0, bounds.height | 0);
 				}
 				else{
-					if(obj.type != Phaser.GROUP){
+					if(obj.type == Phaser.SPRITE){
 						ctx.strokeRect(sx, sy, off, off);
 						ctx.strokeRect(sx, dy, off, off);
 						ctx.strokeRect(dx, sy, off, off);
@@ -544,10 +544,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						
 						
 						ctx.stroke();
-						
 					}
-					else{
+					
+					else{ //(obj.type == Phaser.GROUP ){
 						ctx.strokeRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
+					}
+					if(obj.type != Phaser.TILE_LAYER){
+					//	ctx.strokeRect((bounds.x  - this.game.camera.x) | 0, (bounds.y - this.game.camera.y) | 0 , bounds.width | 0, bounds.height | 0);
 					}
 					
 					

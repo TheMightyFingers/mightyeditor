@@ -325,7 +325,7 @@ MT.extend("core.Emitter")(
 				if(el.isFolder && e.offsetX < 30){
 					return;
 				}
-				that.enableRename(el,e);
+				that.enableRename(el, e);
 				e.stopPropagation();
 				e.preventDefault();
 			};
@@ -609,7 +609,9 @@ MT.extend("core.Emitter")(
 			
 		},
 		
-		enableRename: function(el, ev){
+		
+		
+		enableRename: function(el){
 			var that = this;
 			if(!this.input){
 				this.input = document.createElement("input");
@@ -617,7 +619,7 @@ MT.extend("core.Emitter")(
 			}
 			
 			this.input.style.left = (el.head.calcOffsetX(document.body))+"px";
-			this.input.style.top = (el.calcOffsetY(document.body) - 2) + "px";
+			this.input.style.top = (el.calcOffsetY(document.body) - 2) + "px"; // check padding here instead of 2 :)
 			
 			this.input.value = el.data.name;
 			var lastValue = el.data.name;
@@ -630,9 +632,10 @@ MT.extend("core.Emitter")(
 			var needSave = true;
 			this.input.onblur = function(){
 				try{
-				if(this.parentNode){
-					this.parentNode.removeChild(this);
-				}}
+					if(this.parentNode){
+						this.parentNode.removeChild(this);
+					}
+				}
 				catch(e){}
 				
 				if(needSave && this.value != ""){
@@ -646,9 +649,8 @@ MT.extend("core.Emitter")(
 					el.data.fullPath = part+"/"+this.value;
 					el.data.name = this.value;
 					el.head.label.el.innerHTML = this.value;
-					if(that.onChange){
-						that.onChange(part + "/" + op, part+"/"+this.value);
-					}
+					
+					that.emit("change", part + "/" + op, part + "/" + this.value);
 				}
 				else{
 					el.head.label.el.innerHTML = lastValue;
@@ -656,11 +658,11 @@ MT.extend("core.Emitter")(
 			};
 			
 			this.input.onkeyup = function(e){
-				if(e.which == 27){
+				if(e.which == MT.keys.ESC){
 					needSave = false;
 					this.blur();
 				}
-				if(e.which == 13){
+				if(e.which == MT.keys.ENTER){
 					this.blur();
 				}
 			};

@@ -2,6 +2,7 @@ MT.require("plugins.AssetManager");
 MT.require("plugins.ObjectManager");
 MT.require("plugins.Export");
 MT.require("plugins.MapEditor");
+MT.require("plugins.SourceEditor");
 
 MT.require("core.JsonDB");
 MT.require("core.FS");
@@ -16,6 +17,7 @@ MT.extend("core.BasicPlugin")(
 		this.root = "../client/data/projects";
 		this.fs = MT.core.FS;
 		this.dbObject  = null;
+		this.dbName = ".db.json";
 		
 		
 		var that = this;
@@ -86,20 +88,40 @@ MT.extend("core.BasicPlugin")(
 			this.objects = new MT.plugins.ObjectManager(this);
 			
 			this.map = new MT.plugins.MapEditor(this);
+			
+			this.sourceeditor = new MT.plugins.SourceEditor(this);
 		},
 		
 		openProject: function(pid, cb){
 			var that = this;
 			that.path = that.root + MT.core.FS.path.sep + pid;
 			
-			this.fs.fs.exists(this.path, function(yes){
+			this.fs.exists(this.path, function(yes){
 				if(!yes){
 					that.a_newProject();
 					return;
 				}
 				
 				that.id = pid;
-				new MT.core.JsonDB(that.path + "/JsonDB.json", function(data){
+				
+				
+				/* fallback for old objects */
+				that.fs.exists(that.path + that.fs.path.sep + that.dbName, function(yes){
+					if(yes){
+						return;
+					}
+					
+					that.fs.exists(that.path + "/JsonDB.json", function(yes){
+						if(yes){
+							that.fs.copy(that.path + "/JsonDB.json", that.path + that.fs.path.sep + that.dbName);
+							that.fs.rm(that.path + "/JsonDB.json");
+						}
+					});
+				});
+				
+				
+				
+				new MT.core.JsonDB(that.path + that.fs.path.sep + that.dbName, function(data){
 					that.loadData(data);
 					
 					

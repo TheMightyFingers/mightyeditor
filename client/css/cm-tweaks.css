@@ -1,0 +1,89 @@
+.cm-matchhighlight {
+	background-color: rgba(0,0,0,0.15);
+}
+.cm-variable {
+	color: #3333ff;
+}
+.cm-property {
+	color: #6D6D00;
+}
+div.CodeMirror span.CodeMirror-matchingbracket {
+	color: #080;
+	font-weight: bold;
+}
+
+.CodeMirror-scroll::-webkit-scrollbar-thumb {
+	visibility: hidden;
+	background-color: transparent;
+}
+
+.CodeMirror {
+	background: rgba(255, 255, 255, 0.6);
+	height: auto;
+}
+.CodeMirror-scroll {
+	margin-right: 0;
+	margin-bottom: 0;
+	padding-bottom: 0;
+	background: inherit;
+}
+.CodeMirror-sizer {
+	border-right: 0;
+}
+.CodeMirror pre {
+	padding: 0 2px;
+}
+.CodeMirror-gutters {
+	background: inherit;
+	background-color: rgba(255, 255, 255, 0.5);
+	padding-bottom: 0;
+}
+.CodeMirror-gutter{
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+.CodeMirror-dialog.CodeMirror-dialog-top{
+	position: absolute;
+	bottom: 0;
+	background: white;
+	z-index: 10;
+	width: 100%;
+	padding: 5px;
+}
+.CodeMirror-vscrollbar {
+	bottom: 10px !important;
+}
+
+.CodeMirror-hscrollbar {
+	right: 10px !important;
+}
+
+.CodeMirror-linenumber {
+	background-color: #eee;
+}
+.CodeMirror:before {
+content: "";
+position: absolute;
+top: -10px;
+height: 10px;
+background: #f00;
+z-index: 10;
+width: 100%;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

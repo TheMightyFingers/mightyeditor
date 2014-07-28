@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>mt example</title>
+	<!--
+	to prevent font flickering
+	e.g. for font family "Indie Flower"
+	uncomment this code
+	<script type="text/javascript">
+		WebFontConfig = {
+			google: { families: [ "Indie+Flower::latin" ] }
+		};
+		(function() {
+			var wf = document.createElement('script');
+			wf.src = '//ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+			wf.type = 'text/javascript';
+			wf.async = 'true';
+			var s = document.getElementsByTagName('script')[0];
+			s.parentNode.insertBefore(wf, s);
+		})();
+	</script>
+	-->
+
+	<script src="phaser.min.js"></script>
+	<script src="mt.import.js"></script>
+	<script src="mt.data.js"></script>
+</head>
+<body>
+<script>
+	var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { 
+			preload: function(){
+				mt.preload(this.game);
+			},
+			create: function(){
+				mt.create();
+			}
+	});
+
+</script>
+</body>
+</html>

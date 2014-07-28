@@ -72,9 +72,6 @@ body:before {
 	width: 0;
 }
 
-::-webkit-scrollbar-corner {
-    background: #000;
-}
 
 .ui-main-helper{
 	background-color: rgba(200,0,0,0.5);
@@ -483,6 +480,14 @@ div.ui-treeview-folder.open > .ui-treeView-folder-head:last-child > div{
 .ui-button{
 	cursor: pointer;
 	height: 24px;
+}
+
+.ui-button.tool{
+	line-height: 24px;
+	text-align: center;
+}
+.ui-button.tool:hover{
+	background-color: rgba(0,0,0,0.3);
 }
 
 .ui-panel.top .ui-button.logo{
