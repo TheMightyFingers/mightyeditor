@@ -25,7 +25,7 @@ MT(
 		this.topPanel.addClass("top");
 		
 		var logo = this.topPanel.addButton(null, "logo",  function(e){
-			console.log("clicked", e);
+			//console.log("clicked", e);
 		});
 		logo.width = 70;
 		logo.height = 27;

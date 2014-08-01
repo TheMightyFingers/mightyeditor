@@ -431,11 +431,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		unselect: function(){
-			
-			//this.panel.hide();
 			this.panel.content.clear();
 			this.restore();
-			console.log("unselect");
 			if(this.tools.activeTool == this && this.oldSettings.activeTool && this.tools.activeTool != this.oldSettings.activeTool){
 				this.tools.setTool(this.oldSettings.activeTool);
 			}
@@ -443,9 +440,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		deactivate: function(){
 			this.restore();
-			/*if(this.oldSettings.activeTool && this.tools.activeTool != this.oldSettings.activeTool){
-				this.tools.setTool(this.oldSettings.activeTool);
-			}*/
 		},
 		
 		select: function(obj){

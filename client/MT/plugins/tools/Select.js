@@ -30,7 +30,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		deactivate: function(){
 			this.mDown = false;
-			console.log("select deactivated");
 			this.map.handleMouseMove = this.mouseMoveFree;
 		},
 		

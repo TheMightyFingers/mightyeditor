@@ -9,7 +9,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		this.createPalette();
 		this.el.onclick = function(e){
-			console.log("clicked", e.target.style.backgroundColor);
 			if(onChange && e.target.color){
 				onChange(e.target.color);
 				that.emit("change", e.target.color);

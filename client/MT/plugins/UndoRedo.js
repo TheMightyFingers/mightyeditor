@@ -31,7 +31,7 @@ MT.extend("core.BasicPlugin")(
 					}
 				}
 				else{
-					console.log("nothing to undo");
+					//console.log("nothing to undo");
 				}
 				return;
 			}
@@ -65,11 +65,9 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		disable: function(){
-			console.log("UR disabled");
 			this.ui.events.off(this.ui.events.KEYDOWN, this.onKeyDown);
 		},
 		enable: function(){
-			console.log("UR enabled");
 			this.ui.events.on(this.ui.events.KEYDOWN, this.onKeyDown);
 		},
 		
@@ -89,7 +87,6 @@ MT.extend("core.BasicPlugin")(
 				var str = JSON.stringify(data);
 				
 				if(that.buffer[that.step-1] == str){
-					//console.log("nothing changed", that.buffer.length);
 					return;
 				}
 				
@@ -125,9 +122,6 @@ MT.extend("core.BasicPlugin")(
 				str = JSON.stringify(this.buffer.slice(off, this.step));
 			}
 			this.currentOffset = off;
-			
-			
-			console.log("saved last",this.step - off,"steps");
 			
 			try{
 				localStorage.setItem(this.project.id, str);

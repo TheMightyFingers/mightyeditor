@@ -285,8 +285,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		addJoint: function(panel){
-			console.log("join", this.title, panel.title);
-			
 			panel._parent = this._parent;
 			
 			panel.removeClass("animated");

@@ -241,8 +241,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					data.path = item.data.fullPath + data.path;
 				}
 				that.createImage(data);
-				
-				console.log("dropped File", e, data);
 			});
 			
 			ui.events.on(ui.events.KEYDOWN, function(e){

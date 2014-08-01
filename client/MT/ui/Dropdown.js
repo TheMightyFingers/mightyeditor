@@ -70,8 +70,6 @@ MT.extend("core.Emitter")(
 			
 			list.on("show", function(){
 				var b = button.el.getBoundingClientRect();
-				console.log(b);
-				
 				list.style.top = (b.top + b.height)+"px";
 				list.style.left = b.left+"px";
 				

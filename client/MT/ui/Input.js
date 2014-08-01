@@ -274,7 +274,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		evalValue: function(val){
 			if(this.type != "number"){
-				console.log("num", val);
 				return val;
 			}
 			var ret = null;

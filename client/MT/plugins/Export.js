@@ -56,7 +56,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		export: function(dest, cb){
-			console.log("export", dest);
 			this.send(dest);
 			this.once("done", cb);
 		},
@@ -92,7 +91,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		a_complete: function(data){
-			console.log("data",data);
 			this.emit("done", data);
 		}
 		

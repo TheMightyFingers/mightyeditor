@@ -300,7 +300,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		change: function(e){
-			console.log("TEXT:: change", e);
+			//console.log("TEXT:: change", e);
 		},
 		
 		setFill: function(color){
@@ -544,14 +544,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			obj.font = this.tester.style.fontFamily.replace(/'/gi,"");
 			obj.fontWeight = this.tester.style.fontWeight.replace(/normal/gi,'');
 			if(this.tester.style.fontStyle == "italic"){
-				console.log("italic");
 				obj.fontWeight += " "+this.tester.style.fontStyle.replace(/normal/gi,"");;
 			}
 			obj.fontSize = this.tester.style.fontSize;
 		},
 		
 		init: function(){
-			console.log("init text");
 			this.map = this.tools.map;
 			
 			if(this.isInitialized){
@@ -618,8 +616,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.italic.addClass("active");
 			}
 			else{
-				console.log("not italic");
-				
 				this.italic.style.fontStyle = "normal";
 				this.italic.removeClass("active");
 			}
@@ -722,8 +718,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseDown: function(e){
-			console.log("mouse down");
-			
+			//console.log("mouse down");
 		},
 		
 		mouseUp: function(e){
@@ -737,8 +732,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var obj = this.map.pickObject(e.x - this.map.offsetXCam, e.y - this.map.offsetYCam);
 			
 			if(obj && obj.MT_OBJECT.type == MT.objectTypes.TEXT){
-				console.log("text selected", obj.MT_OBJECT);
-				
 				this.tools.tools.select.select(obj);
 				this.tools.select(obj);
 				this.tools.tools.text.showTextEdit();

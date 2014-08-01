@@ -35,8 +35,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!asset){
 				return;
 			}
-			
-			console.log("init brush");
 			if(asset.contents){
 				return;
 			}

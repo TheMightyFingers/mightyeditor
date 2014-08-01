@@ -90,8 +90,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.newProject();
 		},
 		a_needUpdate: function(){
-			console.log("old project - need update");
-			
 			var that = this;
 			var pop = new MT.ui.Popup("Update Project", "");
 			pop.removeHeader();
@@ -186,7 +184,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			pop.addButton("Create", function(){
-				console.log("createProject", prop);
 				that.send("newProject", prop);
 				pop.hide();
 			});
@@ -278,7 +275,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var className = "ui-dragover";
 			
 			this.ui.events.on("dragover", function(e){
-				console.log("dragged Over");
 				if(lastTarget){
 					MT.ui.removeClass(lastTarget, className);
 				}
@@ -305,17 +301,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		handleDrop: function(e){
-			console.log("DROPPED", e);
 			var files = e.dataTransfer.files;
 			this.handleFiles(files, e.dataTransfer, e);
 			
 		},
 		
 		handleFiles: function(files, dataTransfer, e){
-			for(var i=0; i<files.length; i++){
-				console.log("FILE:",files[i]);
-			}
-			
 			for(var i=0; i<files.length; i++){
 				//chrome
 				if(dataTransfer){

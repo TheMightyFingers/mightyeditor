@@ -580,7 +580,6 @@ MT.extend("core.Emitter")(
 				
 				p2 = activeItem.calcOffsetY(dd.parentNode);
 				
-				console.log(p2);
 				if(Math.abs(p1-p2) > dragHelper.el.offsetHeight){
 					return;
 				}

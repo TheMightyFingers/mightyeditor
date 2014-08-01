@@ -84,12 +84,10 @@ MT.extend("core.BasicPlugin")(
 			
 			this.buttons = {
 				newFile: new MT.ui.Button("", "ui-button.tool.ui-new-file", null, function(){
-					console.log("new File");
 					that.newFile();
 				}),
 				
 				newFolder: new MT.ui.Button("", "ui-button.tool.ui-new-folder", null, function(){
-					console.log("new Folder");
 					that.newFolder();
 				}),
 				
@@ -137,10 +135,6 @@ MT.extend("core.BasicPlugin")(
 				}
 				
 				that.uploadFile(data);
-				
-				console.log(item);
-				
-				console.log("SOURCE dropped File", data);
 			});
 			
 		},
@@ -154,8 +148,6 @@ MT.extend("core.BasicPlugin")(
 			this.send("getFiles");
 		},
 		a_receiveFiles: function(files){
-			console.log(files);
-			
 			this.tv.merge(files);
 			var data = this.tv.getData();
 		},
@@ -176,8 +168,6 @@ MT.extend("core.BasicPlugin")(
 			}
 			data.src = data.doc.getValue();
 			this.checkChanges();
-			
-			console.log("saving", panel.data.data, this.editor.getValue());
 			this.send("save", {
 				path: panel.data.data.fullPath, 
 				src: this.editor.getValue()
@@ -256,7 +246,6 @@ MT.extend("core.BasicPlugin")(
 		
 		
 		loadDocument: function(data, needFocus){
-			console.log("LOAD:", data);
 			var that = this;
 			
 			var panel = this.documents[data.fullPath];
@@ -323,7 +312,6 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		a_fileContent: function(data){
-			console.log("received", data);
 			var ext = data.name.split(".").pop();
 			var mode = this.guessMode(ext);
 			
@@ -415,9 +403,6 @@ MT.extend("core.BasicPlugin")(
 			
 			var that = this;
 			var select =  function(data, element){
-				console.log("click", data, element);
-				
-				
 				
 				if(that.activeTreeItem){
 					that.activeTreeItem.removeClass("selected");
@@ -548,8 +533,6 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			this.editor.operation(function(){
 				that.editor.clearGutter("CodeMirror-jslint");
-				console.log(that.editor.mode);
-				
 				if(that.editor.options.mode.name != "javascript"){
 					return;
 				}

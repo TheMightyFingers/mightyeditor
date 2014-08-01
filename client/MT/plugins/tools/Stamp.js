@@ -15,7 +15,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			});
 			
 			this.tools.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
-				console.log("change Frame");
 				if(that.tools.activeTool != that){
 					return;
 				}
@@ -82,7 +81,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseUp: function(e){
-			console.log("upp", e);
+			//console.log("upp", e);
 		},
 		
 		deactivate: function(){

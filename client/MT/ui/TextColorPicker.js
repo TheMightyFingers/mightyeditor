@@ -51,7 +51,6 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		
 		
 		this.colorPalette = new MT.ui.ColorPalette(function(color){
-			console.log("picked color", color, that.active);
 			that.change(color);
 		});
 		this.colorPalette.show();

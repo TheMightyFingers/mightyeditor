@@ -69,8 +69,6 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		exec_copy: function(projectId){
-			console.log("EXEC COPY", projectId);
-			
 			this.id = this.makeID(this.knownProjects.length);
 			var that = this;
 			this.fs.copy(this.root + "/" + projectId, this.root + "/" + this.id, function(){
@@ -112,7 +110,6 @@ MT.extend("core.BasicPlugin")(
 			
 			this.fs.exists(this.path, function(yes){
 				if(!yes){
-					console.log("NEW PROJECT!");
 					that.send("newProject");
 					return;
 				}
@@ -272,8 +269,6 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		makeSource: function(info, data, cb){
-			console.log("make source", data.fullPath);
-			
 			var relPath = data.fullPath.substring(("templates/default/").length);
 			
 			var path = this.path + this.fs.path.sep + relPath;
@@ -283,7 +278,6 @@ MT.extend("core.BasicPlugin")(
 			if(relPath.indexOf("src/js/lib") === 0 || relPath.indexOf("src/") !== 0){
 				that.fs.mkdir(that.fs.path.dirname(path), function(){
 					that.fs.copy(data.fullPath, path, function(err){
-						console.log("skipping", data.fullPath);
 						cb();
 					});
 				});

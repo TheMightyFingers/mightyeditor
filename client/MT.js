@@ -9911,6 +9911,8 @@ MT.extend("core.BasicPlugin")(
 	},
 	{
 		initUI: function(ui){
+			
+			return;
 			this.ui = ui;
 			this.panel = this.ui.createPanel("GamePreview");
 			this.el = this.panel.content;
@@ -9920,6 +9922,8 @@ MT.extend("core.BasicPlugin")(
 		},
 
 		installUI: function(){
+			
+			return;
 			this.ui.joinPanels(this.project.plugins.mapeditor.panel, this.panel);
 			this.project.plugins.mapeditor.panel.show();
 			
@@ -10048,21 +10052,21 @@ MT.extend("core.BasicPlugin")(
 			this.buttonPanel.addClass("ui-panel-content");
 			
 			this.buttons = {
-				newFile: new MT.ui.Button("N", "ui-button.tool.ui-new-file", null, function(){
+				newFile: new MT.ui.Button("", "ui-button.tool.ui-new-file", null, function(){
 					console.log("new File");
 					that.newFile();
 				}),
 				
-				newFolder: new MT.ui.Button("F", "ui-button.tool.ui-new-folder", null, function(){
+				newFolder: new MT.ui.Button("", "ui-button.tool.ui-new-folder", null, function(){
 					console.log("new Folder");
 					that.newFolder();
 				}),
 				
-				save: new MT.ui.Button("S", "ui-button.tool.ui-save-file", null, function(){
+				save: new MT.ui.Button("", "ui-button.tool.ui-save-file", null, function(){
 					that.save();
 				}),
 				
-				deleteFile: new MT.ui.Button("D", "ui-button.tool.ui-delete-file", null, function(){
+				deleteFile: new MT.ui.Button("", "ui-button.tool.ui-delete-file", null, function(){
 					that.deleteFile();
 				}),
 			};
@@ -10162,7 +10166,7 @@ MT.extend("core.BasicPlugin")(
 		},
 		deleteFile: function(){
 			var pop = new MT.ui.Popup("Delete file?", "Are you sure you want to delete file?");
-			
+			var that = this;
 			pop.addButton("no", function(){
 				pop.hide();
 			});
@@ -12778,7 +12782,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var pop = new MT.ui.Popup("Update Project", "");
 			pop.removeHeader();
 			
-			pop.el.style.width = "60%";
+			pop.el.style.width = "50%";
 			pop.el.style.height= "40%";
 			pop.el.style["min-height"] = "200px"
 			pop.el.style.top= "20%";
@@ -12830,7 +12834,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			
-			pop.el.style.width = "60%";
+			pop.el.style.width = "50%";
 			pop.el.style.height= "40%";
 			pop.el.style["min-height"] = "200px"
 			pop.el.style.top= "20%";
@@ -13061,43 +13065,53 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		}
 	}
 );
-var MT = createClass("MT");
+(function(window){
+	"use strict";
+	
+	window.MT = createClass("MT");
+	MT.require("core.Project");
+	MT.require("ui.Controller");
+	MT.require("Socket");
 
-MT.require("core.Project");
-MT.require("ui.Controller");
-MT.require("Socket");
-
-MT.onReady(main);
-
-function main(){
-	var socket = new MT.Socket();
-	var hasClosed = false;
+	MT.onReady(main);
+	
 	var loaded = false;
-	var img = new Image();
-	img.onload = function(){
-		if(!loaded){
-			document.body.appendChild(img);
-		}
-	};
-	img.src = "img/icons/loadingbar.gif";
-	img.className = "loadingImage";
-	
-	
-	socket.on("core", function(type){
-		if(type == "open"){
-			if(hasClosed){
-				window.location.reload();
-				return;
+	// hack for minimiser
+	if(typeof Image !== "undefined"){
+		var img = new Image();
+		img.onload = function(){
+			if(!loaded){
+				document.body.appendChild(img);
 			}
-			if(img.parentNode){
-				img.parentNode.removeChild(img);
+		};
+		img.src = "img/icons/loadingbar.gif";
+		img.className = "loadingImage";
+	}
+
+	function main(){
+		var socket = new MT.Socket();
+		var hasClosed = false;
+		var loaded = false;
+		
+		
+		
+		socket.on("core", function(type){
+			if(type == "open"){
+				if(hasClosed){
+					window.location.reload();
+					return;
+				}
+				if(img.parentNode){
+					img.parentNode.removeChild(img);
+				}
+				
+				new MT.core.Project(new MT.ui.Controller(), socket);
 			}
-			
-			new MT.core.Project(new MT.ui.Controller(), socket);
-		}
-		if(type == "close"){
-			document.body.innerHTML = "";
-			hasClosed = true;
-		}
-	});
-}
+			if(type == "close"){
+				document.body.innerHTML = "";
+				hasClosed = true;
+			}
+		});
+	}
+	
+})(window);

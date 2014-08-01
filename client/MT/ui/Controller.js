@@ -102,8 +102,6 @@ MT.extend("core.Emitter")(
 		var animEnd = function(aa){
 			that.update();
 			var prop = aa.propertyName;
-			console.log(prop);
-			//
 			
 			if(prop == "width" || prop == "height"){
 				that.refresh();
@@ -162,7 +160,6 @@ MT.extend("core.Emitter")(
 		this.events.on(this.events.MOUSEDOWN, function(e){
 			if(e.button != 0){
 				if(e.button == 1){
-					console.log(e.target.data);
 					if(e.target.data && e.target.data.panel && e.target.data.panel.isCloseable){
 						e.target.data.panel.close();
 					}
@@ -285,7 +282,6 @@ MT.extend("core.Emitter")(
 				that.beforeHide(p);
 			});
 			p.on("show", function(){
-				console.log("show");
 				that.beforeShow(p);
 			});
 			p.addClass("animated");
@@ -1132,7 +1128,6 @@ MT.extend("core.Emitter")(
 		},
 		
 		joinPanels: function(target, panel){
-			console.log("join");
 			panel.inheritSize(target);
 			target.addJoint(panel);
 			target.removeClass("active");
@@ -1185,7 +1180,6 @@ MT.extend("core.Emitter")(
 			}
 			
 			helper = helper || this.helper;
-			console.log("dock");
 			if(!helper.isDocked){
 				panel.saveBox();
 			}
@@ -1204,11 +1198,8 @@ MT.extend("core.Emitter")(
    
 		undock: function(panel){
 			if(!panel.isDocked){
-				console.log("not docked");
 				return;
 			}
-			console.log("undock");
-			
 			var p = null;
 			
 			panel.isDocked = false;
@@ -1302,7 +1293,6 @@ MT.extend("core.Emitter")(
 				panel = this.getByName(i);
 				
 				if(!panel){
-					console.log("cannot find panel", i);
 					continue;
 				}
 				
@@ -1352,7 +1342,6 @@ MT.extend("core.Emitter")(
 		
 		
 		resetLayout: function(){
-			//console.log("todo");
 			var toLoad =  {"__box":{"x":40,"y":29,"width":837,"height":656},"__oldScreenSize":{"width":1087,"height":982},"Project":{"x":0,"y":0,"width":1087,"height":29,"dockPosition":3,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":29},"top":null,"bottom":null},"Assets":{"x":837,"y":29,"width":250,"height":193.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":"Objects"},"assetPreview":{"x":40,"y":656,"width":797,"height":300,"dockPosition":4,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"Objects":{"x":837,"y":222.25,"width":250,"height":168.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Assets","bottom":"Settings"},"Map editor":{"x":40,"y":29,"width":797,"height":627,"dockPosition":5,"isDocked":true,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":false,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null},"toolbox":{"x":0,"y":29,"width":40,"height":953,"dockPosition":1,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":40,"height":400},"top":null,"bottom":null},"Settings":{"x":837,"y":390.5,"width":250,"height":591.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Objects","bottom":null},"Map Manager":{"x":40,"y":956,"width":797,"height":26,"dockPosition":4,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":26},"top":null,"bottom":null},"Text":{"x":40,"y":29,"width":797,"height":30,"dockPosition":0,"isDocked":false,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":false,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null}};
 			this.loadLayout(toLoad);
 			//this.saveLayout();
