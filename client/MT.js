@@ -12764,15 +12764,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.id = id;
 			window.location.hash = id;
 			this.path = "data/projects/"+id;
+			
 			this.initUI(this.ui);
-			
-			
 			this.initPlugins();
 		},
 		a_newProject: function(){
 			this.newProject();
 		},
 		a_needUpdate: function(){
+			console.log("old project - need update");
+			
 			var that = this;
 			var pop = new MT.ui.Popup("Update Project", "");
 			pop.removeHeader();
@@ -12935,6 +12936,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		initPlugins: function(){
 			
 			for(var i in this.plugins){
+				if(this.plugins[i].initSocket){
+					this.plugins[i].initSocket(this.socket);
+				}
+			}
+			
+			for(var i in this.plugins){
 				this.plugins[i].initUI(this.ui);
 			}
 			
@@ -12944,11 +12951,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			}
 			
-			for(var i in this.plugins){
-				if(this.plugins[i].initSocket){
-					this.plugins[i].initSocket(this.socket);
-				}
-			}
+			
 			
 			
 			var that = this;

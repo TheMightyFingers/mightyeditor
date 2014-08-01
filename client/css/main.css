@@ -39,6 +39,11 @@ body:before {
 	content: "";
 	z-index: -1;
 }
+
+.loadingImage{
+	margin: 30% auto;
+	display: block;
+}
 ::-webkit-scrollbar {
     height: 10px;
     width: 10px;
