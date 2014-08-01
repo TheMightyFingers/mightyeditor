@@ -96,7 +96,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var pop = new MT.ui.Popup("Update Project", "");
 			pop.removeHeader();
 			
-			pop.el.style.width = "60%";
+			pop.el.style.width = "50%";
 			pop.el.style.height= "40%";
 			pop.el.style["min-height"] = "200px"
 			pop.el.style.top= "20%";
@@ -148,7 +148,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			
-			pop.el.style.width = "60%";
+			pop.el.style.width = "50%";
 			pop.el.style.height= "40%";
 			pop.el.style["min-height"] = "200px"
 			pop.el.style.top= "20%";

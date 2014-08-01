@@ -4,6 +4,8 @@ MT.extend("core.BasicPlugin")(
 	},
 	{
 		initUI: function(ui){
+			
+			return;
 			this.ui = ui;
 			this.panel = this.ui.createPanel("GamePreview");
 			this.el = this.panel.content;
@@ -13,6 +15,8 @@ MT.extend("core.BasicPlugin")(
 		},
 
 		installUI: function(){
+			
+			return;
 			this.ui.joinPanels(this.project.plugins.mapeditor.panel, this.panel);
 			this.project.plugins.mapeditor.panel.show();
 			

@@ -659,11 +659,32 @@ input.ui-input.ui-input-helper{
 	border-right: 1px solid rgba(255,255,255,0.1);
 	background: url("../img/tools/stamp.png")  no-repeat 50%;
 }
-
 .tool.tileTools{
 	border-right: 1px solid rgba(255,255,255,0.1);
 	background: url("../img/tools/tileTools.png")  no-repeat 50%;
 }
+
+
+.tool.ui-new-file{
+	border-right: 1px solid rgba(255,255,255,0.1);
+	background: url("../img/tools/new_file.png")  no-repeat 50%;
+}
+
+.tool.ui-new-folder{
+	border-right: 1px solid rgba(255,255,255,0.1);
+	background: url("../img/tools/new_folder.png")  no-repeat 50%;
+}
+
+.tool.ui-save-file{
+	border-right: 1px solid rgba(255,255,255,0.1);
+	background: url("../img/tools/save.png")  no-repeat 50%;
+}
+
+.tool.ui-delete-file{
+	border-right: 1px solid rgba(255,255,255,0.1);
+	background: url("../img/tools/trash.png")  no-repeat 50%;
+}
+
 
 .ui-button.datalink{
 	padding: 0 5px;

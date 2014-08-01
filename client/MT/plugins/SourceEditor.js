@@ -83,21 +83,21 @@ MT.extend("core.BasicPlugin")(
 			this.buttonPanel.addClass("ui-panel-content");
 			
 			this.buttons = {
-				newFile: new MT.ui.Button("N", "ui-button.tool.ui-new-file", null, function(){
+				newFile: new MT.ui.Button("", "ui-button.tool.ui-new-file", null, function(){
 					console.log("new File");
 					that.newFile();
 				}),
 				
-				newFolder: new MT.ui.Button("F", "ui-button.tool.ui-new-folder", null, function(){
+				newFolder: new MT.ui.Button("", "ui-button.tool.ui-new-folder", null, function(){
 					console.log("new Folder");
 					that.newFolder();
 				}),
 				
-				save: new MT.ui.Button("S", "ui-button.tool.ui-save-file", null, function(){
+				save: new MT.ui.Button("", "ui-button.tool.ui-save-file", null, function(){
 					that.save();
 				}),
 				
-				deleteFile: new MT.ui.Button("D", "ui-button.tool.ui-delete-file", null, function(){
+				deleteFile: new MT.ui.Button("", "ui-button.tool.ui-delete-file", null, function(){
 					that.deleteFile();
 				}),
 			};
@@ -197,7 +197,7 @@ MT.extend("core.BasicPlugin")(
 		},
 		deleteFile: function(){
 			var pop = new MT.ui.Popup("Delete file?", "Are you sure you want to delete file?");
-			
+			var that = this;
 			pop.addButton("no", function(){
 				pop.hide();
 			});

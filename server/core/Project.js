@@ -69,6 +69,8 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		exec_copy: function(projectId){
+			console.log("EXEC COPY", projectId);
+			
 			this.id = this.makeID(this.knownProjects.length);
 			var that = this;
 			this.fs.copy(this.root + "/" + projectId, this.root + "/" + this.id, function(){
@@ -110,6 +112,7 @@ MT.extend("core.BasicPlugin")(
 			
 			this.fs.exists(this.path, function(yes){
 				if(!yes){
+					console.log("NEW PROJECT!");
 					that.send("newProject");
 					return;
 				}
@@ -160,9 +163,6 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		initProject: function(cb){
-			
-			console.log("load plugins");
-			
 			this.loadPlugins();
 			this.socket.leaveAllGroups();
 			this.socket.joinGroup(this.id);
