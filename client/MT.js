@@ -12,7 +12,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		this.createPalette();
 		this.el.onclick = function(e){
-			console.log("clicked", e.target.style.backgroundColor);
 			if(onChange && e.target.color){
 				onChange(e.target.color);
 				that.emit("change", e.target.color);
@@ -316,7 +315,6 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		
 		
 		this.colorPalette = new MT.ui.ColorPalette(function(color){
-			console.log("picked color", color, that.active);
 			that.change(color);
 		});
 		this.colorPalette.show();
@@ -537,8 +535,6 @@ MT.extend("core.Emitter")(
 			
 			list.on("show", function(){
 				var b = button.el.getBoundingClientRect();
-				console.log(b);
-				
 				list.style.top = (b.top + b.height)+"px";
 				list.style.left = b.left+"px";
 				
@@ -1077,11 +1073,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		unselect: function(){
-			
-			//this.panel.hide();
 			this.panel.content.clear();
 			this.restore();
-			console.log("unselect");
 			if(this.tools.activeTool == this && this.oldSettings.activeTool && this.tools.activeTool != this.oldSettings.activeTool){
 				this.tools.setTool(this.oldSettings.activeTool);
 			}
@@ -1089,9 +1082,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		deactivate: function(){
 			this.restore();
-			/*if(this.oldSettings.activeTool && this.tools.activeTool != this.oldSettings.activeTool){
-				this.tools.setTool(this.oldSettings.activeTool);
-			}*/
 		},
 		
 		select: function(obj){
@@ -1472,7 +1462,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		change: function(e){
-			console.log("TEXT:: change", e);
+			//console.log("TEXT:: change", e);
 		},
 		
 		setFill: function(color){
@@ -1716,14 +1706,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			obj.font = this.tester.style.fontFamily.replace(/'/gi,"");
 			obj.fontWeight = this.tester.style.fontWeight.replace(/normal/gi,'');
 			if(this.tester.style.fontStyle == "italic"){
-				console.log("italic");
 				obj.fontWeight += " "+this.tester.style.fontStyle.replace(/normal/gi,"");;
 			}
 			obj.fontSize = this.tester.style.fontSize;
 		},
 		
 		init: function(){
-			console.log("init text");
 			this.map = this.tools.map;
 			
 			if(this.isInitialized){
@@ -1790,8 +1778,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.italic.addClass("active");
 			}
 			else{
-				console.log("not italic");
-				
 				this.italic.style.fontStyle = "normal";
 				this.italic.removeClass("active");
 			}
@@ -1894,8 +1880,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseDown: function(e){
-			console.log("mouse down");
-			
+			//console.log("mouse down");
 		},
 		
 		mouseUp: function(e){
@@ -1909,8 +1894,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var obj = this.map.pickObject(e.x - this.map.offsetXCam, e.y - this.map.offsetYCam);
 			
 			if(obj && obj.MT_OBJECT.type == MT.objectTypes.TEXT){
-				console.log("text selected", obj.MT_OBJECT);
-				
 				this.tools.tools.select.select(obj);
 				this.tools.select(obj);
 				this.tools.tools.text.showTextEdit();
@@ -1971,8 +1954,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!asset){
 				return;
 			}
-			
-			console.log("init brush");
 			if(asset.contents){
 				return;
 			}
@@ -2075,7 +2056,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			});
 			
 			this.tools.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
-				console.log("change Frame");
 				if(that.tools.activeTool != that){
 					return;
 				}
@@ -2142,7 +2122,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseUp: function(e){
-			console.log("upp", e);
+			//console.log("upp", e);
 		},
 		
 		deactivate: function(){
@@ -2188,7 +2168,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		deactivate: function(){
 			this.mDown = false;
-			console.log("select deactivated");
 			this.map.handleMouseMove = this.mouseMoveFree;
 		},
 		
@@ -2818,7 +2797,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		evalValue: function(val){
 			if(this.type != "number"){
-				console.log("num", val);
 				return val;
 			}
 			var ret = null;
@@ -3537,7 +3515,6 @@ MT.extend("core.Emitter")(
 				
 				p2 = activeItem.calcOffsetY(dd.parentNode);
 				
-				console.log(p2);
 				if(Math.abs(p1-p2) > dragHelper.el.offsetHeight){
 					return;
 				}
@@ -4591,7 +4568,7 @@ MT.extend("core.BasicPlugin")(
 					}
 				}
 				else{
-					console.log("nothing to undo");
+					//console.log("nothing to undo");
 				}
 				return;
 			}
@@ -4625,11 +4602,9 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		disable: function(){
-			console.log("UR disabled");
 			this.ui.events.off(this.ui.events.KEYDOWN, this.onKeyDown);
 		},
 		enable: function(){
-			console.log("UR enabled");
 			this.ui.events.on(this.ui.events.KEYDOWN, this.onKeyDown);
 		},
 		
@@ -4649,7 +4624,6 @@ MT.extend("core.BasicPlugin")(
 				var str = JSON.stringify(data);
 				
 				if(that.buffer[that.step-1] == str){
-					//console.log("nothing changed", that.buffer.length);
 					return;
 				}
 				
@@ -4685,9 +4659,6 @@ MT.extend("core.BasicPlugin")(
 				str = JSON.stringify(this.buffer.slice(off, this.step));
 			}
 			this.currentOffset = off;
-			
-			
-			console.log("saved last",this.step - off,"steps");
 			
 			try{
 				localStorage.setItem(this.project.id, str);
@@ -5161,7 +5132,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		export: function(dest, cb){
-			console.log("export", dest);
 			this.send(dest);
 			this.once("done", cb);
 		},
@@ -5197,7 +5167,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		a_complete: function(data){
-			console.log("data",data);
 			this.emit("done", data);
 		}
 		
@@ -5345,7 +5314,6 @@ MT(
 			this.addInput( {key: "fps", step: 1}, obj, true, cb);
 			
 			this.addInput({key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, obj){
-				console.log("atlas", obj);
 				if(e.target.files.length === 0){
 					return;
 				}
@@ -8061,8 +8029,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					data.path = item.data.fullPath + data.path;
 				}
 				that.createImage(data);
-				
-				console.log("dropped File", e, data);
 			});
 			
 			ui.events.on(ui.events.KEYDOWN, function(e){
@@ -9290,8 +9256,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		addJoint: function(panel){
-			console.log("join", this.title, panel.title);
-			
 			panel._parent = this._parent;
 			
 			panel.removeClass("animated");
@@ -10053,12 +10017,10 @@ MT.extend("core.BasicPlugin")(
 			
 			this.buttons = {
 				newFile: new MT.ui.Button("", "ui-button.tool.ui-new-file", null, function(){
-					console.log("new File");
 					that.newFile();
 				}),
 				
 				newFolder: new MT.ui.Button("", "ui-button.tool.ui-new-folder", null, function(){
-					console.log("new Folder");
 					that.newFolder();
 				}),
 				
@@ -10106,10 +10068,6 @@ MT.extend("core.BasicPlugin")(
 				}
 				
 				that.uploadFile(data);
-				
-				console.log(item);
-				
-				console.log("SOURCE dropped File", data);
 			});
 			
 		},
@@ -10123,8 +10081,6 @@ MT.extend("core.BasicPlugin")(
 			this.send("getFiles");
 		},
 		a_receiveFiles: function(files){
-			console.log(files);
-			
 			this.tv.merge(files);
 			var data = this.tv.getData();
 		},
@@ -10145,8 +10101,6 @@ MT.extend("core.BasicPlugin")(
 			}
 			data.src = data.doc.getValue();
 			this.checkChanges();
-			
-			console.log("saving", panel.data.data, this.editor.getValue());
 			this.send("save", {
 				path: panel.data.data.fullPath, 
 				src: this.editor.getValue()
@@ -10225,7 +10179,6 @@ MT.extend("core.BasicPlugin")(
 		
 		
 		loadDocument: function(data, needFocus){
-			console.log("LOAD:", data);
 			var that = this;
 			
 			var panel = this.documents[data.fullPath];
@@ -10292,7 +10245,6 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		a_fileContent: function(data){
-			console.log("received", data);
 			var ext = data.name.split(".").pop();
 			var mode = this.guessMode(ext);
 			
@@ -10384,9 +10336,6 @@ MT.extend("core.BasicPlugin")(
 			
 			var that = this;
 			var select =  function(data, element){
-				console.log("click", data, element);
-				
-				
 				
 				if(that.activeTreeItem){
 					that.activeTreeItem.removeClass("selected");
@@ -10517,8 +10466,6 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			this.editor.operation(function(){
 				that.editor.clearGutter("CodeMirror-jslint");
-				console.log(that.editor.mode);
-				
 				if(that.editor.options.mode.name != "javascript"){
 					return;
 				}
@@ -11320,8 +11267,6 @@ MT.extend("core.Emitter")(
 		var animEnd = function(aa){
 			that.update();
 			var prop = aa.propertyName;
-			console.log(prop);
-			//
 			
 			if(prop == "width" || prop == "height"){
 				that.refresh();
@@ -11380,7 +11325,6 @@ MT.extend("core.Emitter")(
 		this.events.on(this.events.MOUSEDOWN, function(e){
 			if(e.button != 0){
 				if(e.button == 1){
-					console.log(e.target.data);
 					if(e.target.data && e.target.data.panel && e.target.data.panel.isCloseable){
 						e.target.data.panel.close();
 					}
@@ -11503,7 +11447,6 @@ MT.extend("core.Emitter")(
 				that.beforeHide(p);
 			});
 			p.on("show", function(){
-				console.log("show");
 				that.beforeShow(p);
 			});
 			p.addClass("animated");
@@ -12350,7 +12293,6 @@ MT.extend("core.Emitter")(
 		},
 		
 		joinPanels: function(target, panel){
-			console.log("join");
 			panel.inheritSize(target);
 			target.addJoint(panel);
 			target.removeClass("active");
@@ -12403,7 +12345,6 @@ MT.extend("core.Emitter")(
 			}
 			
 			helper = helper || this.helper;
-			console.log("dock");
 			if(!helper.isDocked){
 				panel.saveBox();
 			}
@@ -12422,11 +12363,8 @@ MT.extend("core.Emitter")(
    
 		undock: function(panel){
 			if(!panel.isDocked){
-				console.log("not docked");
 				return;
 			}
-			console.log("undock");
-			
 			var p = null;
 			
 			panel.isDocked = false;
@@ -12520,7 +12458,6 @@ MT.extend("core.Emitter")(
 				panel = this.getByName(i);
 				
 				if(!panel){
-					console.log("cannot find panel", i);
 					continue;
 				}
 				
@@ -12570,7 +12507,6 @@ MT.extend("core.Emitter")(
 		
 		
 		resetLayout: function(){
-			//console.log("todo");
 			var toLoad =  {"__box":{"x":40,"y":29,"width":837,"height":656},"__oldScreenSize":{"width":1087,"height":982},"Project":{"x":0,"y":0,"width":1087,"height":29,"dockPosition":3,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":29},"top":null,"bottom":null},"Assets":{"x":837,"y":29,"width":250,"height":193.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":"Objects"},"assetPreview":{"x":40,"y":656,"width":797,"height":300,"dockPosition":4,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"Objects":{"x":837,"y":222.25,"width":250,"height":168.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Assets","bottom":"Settings"},"Map editor":{"x":40,"y":29,"width":797,"height":627,"dockPosition":5,"isDocked":true,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":false,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null},"toolbox":{"x":0,"y":29,"width":40,"height":953,"dockPosition":1,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":40,"height":400},"top":null,"bottom":null},"Settings":{"x":837,"y":390.5,"width":250,"height":591.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Objects","bottom":null},"Map Manager":{"x":40,"y":956,"width":797,"height":26,"dockPosition":4,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":26},"top":null,"bottom":null},"Text":{"x":40,"y":29,"width":797,"height":30,"dockPosition":0,"isDocked":false,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":false,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null}};
 			this.loadLayout(toLoad);
 			//this.saveLayout();
@@ -12776,8 +12712,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.newProject();
 		},
 		a_needUpdate: function(){
-			console.log("old project - need update");
-			
 			var that = this;
 			var pop = new MT.ui.Popup("Update Project", "");
 			pop.removeHeader();
@@ -12872,7 +12806,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			pop.addButton("Create", function(){
-				console.log("createProject", prop);
 				that.send("newProject", prop);
 				pop.hide();
 			});
@@ -12964,7 +12897,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var className = "ui-dragover";
 			
 			this.ui.events.on("dragover", function(e){
-				console.log("dragged Over");
 				if(lastTarget){
 					MT.ui.removeClass(lastTarget, className);
 				}
@@ -12991,17 +12923,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		handleDrop: function(e){
-			console.log("DROPPED", e);
 			var files = e.dataTransfer.files;
 			this.handleFiles(files, e.dataTransfer, e);
 			
 		},
 		
 		handleFiles: function(files, dataTransfer, e){
-			for(var i=0; i<files.length; i++){
-				console.log("FILE:",files[i]);
-			}
-			
 			for(var i=0; i<files.length; i++){
 				//chrome
 				if(dataTransfer){
