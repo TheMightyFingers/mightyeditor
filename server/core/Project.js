@@ -324,7 +324,8 @@ MT.extend("core.BasicPlugin")(
 				this.openProject(this.id, function(){
 					that.fs.after(function(){
 						that.saveProjectInfo(info);
-						that.send("selectProject", that.id);
+						that.a_loadProject(that.id);
+						//that.send("selectProject", that.id);
 					});
 				});
 			//});
