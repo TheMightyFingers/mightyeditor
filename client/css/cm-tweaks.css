@@ -43,12 +43,12 @@ div.CodeMirror span.CodeMirror-matchingbracket {
 	padding-bottom: 0;
 }
 .CodeMirror-dialog.CodeMirror-dialog-top{
-	position: absolute;
+	/*position: absolute;
 	bottom: 0;
 	background: white;
 	z-index: 10;
 	width: 100%;
-	padding: 5px;
+	padding: 5px;*/
 }
 .CodeMirror-vscrollbar {
 	bottom: 10px !important;
@@ -71,8 +71,39 @@ z-index: 10;
 width: 100%;
 }
 
+a.lint-error .lint-error-text{
+	display: none;
+}
+a.lint-error:hover .lint-error-text{
+	display: block;
+	background-color: #f00;
+	white-space: pre;
+	position: absolute;
+	left: 14px;
+	padding: 1px 10px;
+	border-radius: 8px;
+	top: 14px;
+}
 
+.lint-error-icon{
+	width: 15px;
+	display: block;
+	white-space: pre;
+	height: 14px;
+	padding: 2px;
+	text-align: center;
+	text-indent: 2px;
+	line-height: 11px;
+	position: absolute;
+	left: -2px;
+	font-weight: bold;
+	text-shadow: -1px 0 0px rgba(0,0,0,0.1);
+	color: rgba(190, 0, 0, 0.69);
+}
 
+.CodeMirror-gutter.CodeMirror-jslint{
+	width: 10px;
+}
 
 
 

@@ -25,8 +25,6 @@ MT.extend("core.BasicPlugin")(
 			}
 			
 			this.db.count++;
-			//console.log("new Folder", name);
-			
 			
 			name = name.split("\\").join("/");
 			
@@ -62,7 +60,6 @@ MT.extend("core.BasicPlugin")(
 		a_updateImage: function(data){
 			var that = this;
 			this.fs.writeFile( this.project.path  + "/" + data.__image, new Buffer(data.data, "binary"), function(e){
-				//console.log("updated Image", data.__image);
 				that.a_sendFiles();
 			});
 		},
@@ -125,8 +122,6 @@ MT.extend("core.BasicPlugin")(
 		a_newImage: function(data){
 			
 			var path = data.path.split("/");
-			//console.log("create Image", path, "in:", this.fs.path.dirname(data.path));
-			
 			if(data.path != "/"){
 				this.a_newFolder(this.fs.path.dirname(data.path));
 			}
@@ -145,7 +140,6 @@ MT.extend("core.BasicPlugin")(
 			
 			var that = this;
 			this.fs.writeFile(p, new Buffer(data.data, "binary"), function(e){
-				//console.log(p);
 				that.createImageObject(data, path, ext, im);
 			});
 			
@@ -161,8 +155,6 @@ MT.extend("core.BasicPlugin")(
 					p = "/"+p;
 				}
 				folder = this.project.db.get(this.name + p );
-				
-				//console.log("new FOLDER", this.name + p);
 			}
 			
 			

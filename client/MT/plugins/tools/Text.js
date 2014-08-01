@@ -213,15 +213,17 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.textPopup.hide();
 			
 			this.textPopup.showClose();
-			this.textPopup.addButton("Done", function(){
-				that.setText(that.textArea.value);
-				that.textPopup.hide();
-			});
+			
 			
 			this.textArea = document.createElement("textarea");
 			this.textPopup.content.appendChild(this.textArea);
 			this.textArea.style.width = "100%";
 			this.textArea.style.height = "200px";
+			
+			this.textPopup.addButton("Done", function(){
+				that.setText(that.textArea.value);
+				that.textPopup.hide();
+			});
 			
 		},
 		
@@ -293,7 +295,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 			this.map.activeObject.text = val;
 			this.map.activeObject.MT_OBJECT.text = val;
-			this.map.activeObject.MT_OBJECT.name = val;
+			//this.map.activeObject.MT_OBJECT.name = val;
 			
 		},
 		

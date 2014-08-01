@@ -141,6 +141,7 @@ body:before {
 	letter-spacing: 0.1;
 	/*overflow: hidden;*/
 	background: inherit;
+	text-align: left;
 }
 div.ui-panel-header:after {
 	background-image: linear-gradient(to bottom, rgba(84,84,84,0.5) 0%,rgba(51,51,51,0.5) 5%,rgba(51,51,51,0.5) 96%,rgba(28,28,28,0.1) 100%);
@@ -161,7 +162,7 @@ span.panel-head-tab {
 	max-width: 100px;
 	border-right: 1px solid rgba(0,0,0,0.6);
 	border-bottom: 1px transparent;
-	text-shadow: 1px 1px 0px #999;
+	text-shadow: 1px 1px 1px rgba(255,255,255,0.4);
 	position: relative;
 	z-index: 1;
 	padding: 0 3px;
@@ -207,7 +208,7 @@ span.panel-head-tab > span{
 span.panel-head-tab.active {
 	color: #eee;
 	border-bottom-color: transparent;
-	text-shadow: none;
+	text-shadow: 0px 0px 1px rgba(0,0,0,0.9);
 	background: inherit;
 }
 
@@ -225,6 +226,10 @@ div.ui-panel.small {
 .small div.ui-panel-header {
 	padding: 0;
 	border: none !important;
+}
+
+.ui-dragover{
+	background-color: rgba(0,0,0,0.5) !important;
 }
 
 .small span.panel-head-tab {
@@ -503,12 +508,13 @@ div.ui-treeview-folder.open > .ui-treeView-folder-head:last-child > div{
 	font-weight: bold;
 	letter-spacing: 0;
 	border-right: 1px solid rgba(255,255,255,0.1);
-	line-height: 25px;
+	line-height: 28px;
 	display: inline-block;
 	min-width: 70px;
 	float: left;
 	padding: 0 20px;
 	position: relative;
+	height: 27px;
 }
 
 .ui-button.ui-options {
@@ -547,6 +553,9 @@ div.ui-input{
 	margin: 9px 5px -6px 7px;
 	border-bottom: dashed 1px rgba(255,255,255,0.1);
 	text-indent: 3px;
+	min-height: 20px;
+	position: relative;
+	text-align: left;
 }
 
 div.ui-input.upload, div.ui-input.upload *{
@@ -556,15 +565,20 @@ div.ui-input.upload, div.ui-input.upload *{
 }
 
 div.ui-input .ui-input-value{
-	cursor:ns-resize;
-	padding: 0 10px 0 0;
-	font-weight: bold;
-	min-width: 50px;
-	text-align: right;
-	max-width: 50%;
-	overflow: hidden;
-	white-space: nowrap;
-	min-height: 100%;
+padding: 0 10px 0 0;
+font-weight: bold;
+min-width: 50px;
+text-align: right;
+max-width: 50%;
+overflow: hidden;
+white-space: nowrap;
+color: #fff;
+min-height: 100%;
+text-decoration: none;
+}
+
+div.ui-input.ui-input-number .ui-input-value{
+	cursor: ns-resize;
 }
 
 input.ui-input, textarea.ui-input{
@@ -667,14 +681,27 @@ body > div.ui-wrapper {
 	margin: 0 auto;
 	top: 30%;
 	width: 50%;
-	background-color: #282828;
-	border: 1px solid #161616;
+	background-color: inherit;
+	border: 3px solid rgba(0,0,0,0.7);
 	max-height: 100%;
 	padding: 0;
 	left: 0;
 	right: 0;
 	position: absolute;
-	
+	background: inherit;
+	box-shadow: inset 0 0 250px rgba(0,0,0,0.5);
+	text-shadow: 0 0 1px rgba(0,0,0,0.7);
+	min-height: 150px;
+}
+
+.ui-popup-with-head div.ui-popup-content {
+	text-align: center;
+	padding: 10px 10px 20px;
+	background-color: rgba(255,255,255,0.1);
+	position: relative;
+}
+div.ui-popup-content textarea{
+	max-width: 100%;
 }
 div.ui-popup-head {
 	border-radius: 0;
@@ -686,7 +713,13 @@ div.ui-popup-head {
 }
 div.ui-popup-content {
 	text-align: center;
-	padding: 10px 10px 40px;
+	padding: 0px 10px 20px;
+	background-color: rgba(255,255,255,0.1);
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
 }
 div.ui-popup .ui-popup-close{
 	width: 28px;
@@ -701,21 +734,33 @@ div.ui-popup .ui-popup-close{
 }
 
 .ui-popup-button{
-position: absolute;
-bottom: 0;
-width: 200px;
-height: 36px;
-background-color: rgba(0,0,0,0.7);
-color: #eee;
-cursor: pointer;
-line-height: 36px;
-font-weight: bold;
-margin-bottom: 4px;
+	width: 200px;
+	height: 36px;
+	background-color: rgba(20,20,20,0.7);
+	color: #eee;
+	cursor: pointer;
+	line-height: 36px;
+	font-weight: bold;
+	margin-bottom: 4px;
+	display: block;
+	margin: 10px 5px;
+	float: right;
+	z-index: 101;
+	position: relative;
+}
+.ui-popup-button:hover {
+background-color: rgba(0,0,0,0.9);
 }
 
-.ui-popup.ui-has-buttons{
-	padding-bottom: 20px;
-	
+.ui-popup.ui-has-buttons .ui-popup-content{
+	margin-bottom: 60px;
+}
+
+.ui-popup.ui-has-buttons > div.ui-button-bar{
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	text-align: center;
 }
 
 div.ui-panel.text-tools{

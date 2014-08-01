@@ -23,6 +23,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.y = window.innerHeight*0.3;
 		this.style.bottom = "auto";
 		
+		this.addClass("ui-popup-with-head");
+		
 		this.show();
 		
 	},
@@ -42,16 +44,27 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		addButton: function(title, cb){
-			
+			if(!this.buttonBar){
+				this.buttonBar = document.createElement("div");
+				this.el.appendChild(this.buttonBar);
+				this.buttonBar.className = "ui-button-bar";
+			}
 			this.buttons = this.buttons || {};
 			var button = this.buttons[title] = document.createElement("div");
 			button.className = "ui-popup-button";
 			button.innerHTML = title;
 			button.onclick = cb;
 			
-			this.content.appendChild(button);
+			this.buttonBar.appendChild(button);
 			
 			this.addClass("ui-has-buttons");
+		},
+		
+		removeHeader: function(){
+			if(this.head.parentNode){
+				this.head.parentNode.removeChild(this.head);
+				this.removeClass("ui-popup-with-head");
+			}
 		},
 		
 		hide: function(cancel){

@@ -13,10 +13,10 @@ MT.extend("core.BasicPlugin")(
 		this.phaserSrc = "phaser.js";
 		this.phaserMinSrc = "phaser.min.js";
 		
-		this.importFile = "mt.import.js";
+		this.importFile = "mt.helper.js";
 		this.dataFile = "mt.data.js";
 		this.jsonFile = "mt.data.json";
-		this.exampleFile = "example.html";
+		this.exampleFile = "index.html";
 		this.hacksFile = "phaserHacks.js";
 		
 		
@@ -24,15 +24,14 @@ MT.extend("core.BasicPlugin")(
 		this.assetsPath = "assets";
 		
 		this.sep = this.fs.path.sep;
+		this.dir = this.project.path + this.sep + this.phaserPath;
 		
 		this.idList = {};
 	},
 	{
 		a_phaserDataOnly: function(){
 			var that = this;
-			this.dir = this.project.path + this.sep + this.phaserPath;
 			
-
 			this.phaserDataOnly(function(err, localFilePath, filePath){
 				that.send("complete",{
 					file: localFilePath,
@@ -55,9 +54,6 @@ MT.extend("core.BasicPlugin")(
 		
 		phaserDataOnly: function(cb, contents){
 			var that = this;
-			
-			this.dir = this.project.path + this.sep + this.phaserPath;
-			
 			this.fs.mkdir(this.dir);
 			var data;
 			if(contents == void(0)){
@@ -76,13 +72,41 @@ MT.extend("core.BasicPlugin")(
 			this.parseObjects(data.objects.contents);
 			
 			
-			var filePath = this.dir + this.sep + this.dataFile;
-			var localFilePath = this.phaserPath + this.sep + this.dataFile;
+			
+			
 			
 			
 			contents = JSON.stringify(data, null, "\t");
 			
-			this.fs.writeFile(this.dir + this.sep + this.jsonFile, contents);
+			var srcPath = this.dir + this.sep;
+			var libsPath = srcPath + "js/lib/";
+			var tplPath = "templates/default/src/js/lib/";
+			var localFilePath = libsPath + this.dataFile;
+			var filePath = libsPath + this.dataFile;
+			
+			//this.fs.scandir(this.projects.path + this.sep + this.src, function(data){
+				
+				//that.copydata(data, srcPath);
+				
+				that.fs.copy(this.project.path + this.sep + "src", this.dir);
+				
+				
+				that.fs.copy(tplPath + "mt.helper.js", libsPath + this.importFile);
+				that.fs.copy(tplPath + this.phaserSrc, libsPath +  this.phaserSrc);
+				that.fs.copy(tplPath + this.phaserMinSrc, libsPath + this.phaserMinSrc);
+				
+				
+				that.fs.writeFile(tplPath + this.jsonFile, contents);
+				that.fs.writeFile(tplPath + this.dataFile, "window.mt = window.mt || {}; window.mt.data = "+contents+";\r\n", function(err){
+					if(cb){
+						cb(err, localFilePath, filePath);
+					}
+				});
+				
+			//});
+			
+			/*
+			
 			this.fs.copy("phaser/mt.export.js", this.dir + this.sep + this.importFile);
 			
 			this.fs.copy("phaser" + this.sep + this.phaserSrc, this.dir + this.sep + this.phaserSrc);
@@ -90,20 +114,46 @@ MT.extend("core.BasicPlugin")(
 			this.fs.copy("phaser" + this.sep + this.exampleFile, this.dir + this.sep + this.exampleFile);
 			this.fs.copy("phaser" + this.sep + this.hacksFile, this.dir + this.sep + this.hacksFile);
 			
+			*/
 			
 			
-			this.fs.writeFile(filePath, "window.mt = window.mt || {}; window.mt.data = "+contents+";\r\n", function(err){
-				if(cb){
-					cb(err, localFilePath, filePath);
-				}
-			});
 			
 		},
 		
+		
+		copyData: function(data, path, num, cb){
+			num = num || 0;
+			
+			var scanAgain = [];
+			
+			for(var i=0; i<data.length; i++){
+				if(data[i].contents){
+					scanAgain.push(data[i].contents);
+					continue;
+				}
+				
+				num++;
+				this.copyFile(data[i], path, function(){
+					num--;
+					if(num == 0){
+						cb();
+					}
+				});
+			}
+			
+			for(var i=0; i<scanAgain.length; i++){
+				this.createSources(scanAgain[i], info, num, cb);
+			}
+		},
+		
+		copyFile: function(info, path, cb){
+			
+			
+		},
+		
+		
 		a_phaser: function(){
 			var that = this;
-			
-			this.dir = this.project.path + this.sep + this.phaserPath;
 			this.fs.rmdir(this.dir);
 			this.fs.rm(this.project.path + this.sep +  this.zipName);
 			

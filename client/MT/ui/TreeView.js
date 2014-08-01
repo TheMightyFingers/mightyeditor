@@ -100,89 +100,17 @@ MT.extend("core.Emitter")(
 		},
 		
 		addItem: function(data, parent, index, isVirtual){
+			var item = this.checkExistingItem(data, parent, index, isVirtual);
 			
-			for(var i=0; i<this.items.length; i++){
-				if(data.id == void(0)){
-					data.id = this.mkid();
-				}
-				if(this.items[i].data.id == data.id){
-					this.items[i].needRemove = false;
-					var item = this.items[i];
-					var p = item.parent;
-					
-					if(p){
-						p.removeChild(item);
-						p.addChild(item, item.index).show();
-					}
-					
-					
-					for(var k in data){
-						item.data[k] = data[k];
-					}
-					
-					if(parent.hasClass("close")){
-						item.hide();
-					}
-					
-					if(item._parent != parent.el){
-						if(item.el.parentNode){
-							item.el.parentNode.removeChild(item.el);
-						}
-						item.parent.removeChild(item);
-						parent.addChild(item).show();
-						
-						
-						if(!parent.visible){
-							item.hide();
-						}
-					}
-					
-					if(item.options.showHide){
-						if(!data.isVisible){
-							item.options.showHide.addClass("hidden");
-						}
-						else{
-							item.options.showHide.removeClass("hidden");
-						}
-					}
-					
-					
-					
-					if(item.options.lock){
-						if(!data.isLocked){
-							item.options.lock.addClass("locked");
-						}
-						else{
-							item.options.lock.removeClass("locked");
-						}
-					}
-					
-					if(data.__image){
-						if(item.img){
-							item.img.src = this.rootPath + "/" + data.__image + "?"+Date.now();
-						}
-						else{
-							console.log("WHERE IS IMG?");
-						}
-							
-						
-						
-					}
-					
-					return item;
-				}
+			if(item){
+				return item;
 			}
 			
 			var that = this;
+			var type = (data.contents ? "folder" : "item");
 			var el = new MT.ui.DomElement();
 			el.options = {};
-			
 			el.index = index;
-			
-			var type = "item";
-			if(data.contents){
-				type = "folder";
-			}
 			
 			el.style.position = "relative";
 			el.addClass("ui-treeview-"+type);
@@ -191,6 +119,7 @@ MT.extend("core.Emitter")(
 			
 			el.data = data;
 			el.fullPath = data.fullPath;
+			
 			
 			var head = new MT.ui.DomElement();
 			var label = new MT.ui.DomElement();
@@ -207,7 +136,6 @@ MT.extend("core.Emitter")(
 			label.style.paddingLeft = "30px";
 			label.style.paddingRight = "23px";
 			
-			//el.addChild(head);
 			head.show(el.el);
 			
 			el.head = head;
@@ -273,7 +201,6 @@ MT.extend("core.Emitter")(
 			}
 			
 			
-			
 			if(type == "item"){
 				el.isFolder = false;
 				if(!data.type){
@@ -300,7 +227,6 @@ MT.extend("core.Emitter")(
 				}
 				
 			}
-			
 			
 			if(this.options.showHide){
 				el.addClass("show-hide-enabled");
@@ -338,9 +264,85 @@ MT.extend("core.Emitter")(
 			};
 			this.items.push(el);
 			el.needRemove = false;
+			el.tvItem = true;
+			
 			return el;
 		},
-   
+		
+		checkExistingItem: function(data, parent, index, isVirtual){
+			var item, p;
+			for(var i=0; i<this.items.length; i++){
+				if(data.id == void(0)){
+					data.id = this.mkid();
+				}
+				if(this.items[i].data.id == data.id){
+					this.items[i].needRemove = false;
+					item = this.items[i];
+					p = item.parent;
+					
+					if(p){
+						p.removeChild(item);
+						p.addChild(item, item.index).show();
+					}
+					
+					
+					for(var k in data){
+						item.data[k] = data[k];
+					}
+					
+					if(parent.hasClass("close")){
+						item.hide();
+					}
+					
+					if(item._parent != parent.el){
+						if(item.el.parentNode){
+							item.el.parentNode.removeChild(item.el);
+						}
+						item.parent.removeChild(item);
+						parent.addChild(item).show();
+						
+						
+						if(!parent.visible){
+							item.hide();
+						}
+					}
+					
+					if(item.options.showHide){
+						if(!data.isVisible){
+							item.options.showHide.addClass("hidden");
+						}
+						else{
+							item.options.showHide.removeClass("hidden");
+						}
+					}
+					
+					
+					
+					if(item.options.lock){
+						if(!data.isLocked){
+							item.options.lock.addClass("locked");
+						}
+						else{
+							item.options.lock.removeClass("locked");
+						}
+					}
+					
+					if(data.__image){
+						if(item.img){
+							item.img.src = this.rootPath + "/" + data.__image + "?"+Date.now();
+						}
+						else{
+							console.log("WHERE IS IMG?");
+						}
+							
+						
+						
+					}
+					
+					return item;
+				}
+			}
+		},
 		addShowHide: function(){
 			for(var i=0; i<this.items.length; i++){
 				this._mkShowHide(this.items[i]);
@@ -536,7 +538,7 @@ MT.extend("core.Emitter")(
 					last = null;
 					return;
 				}
-// 				
+ 				
 				dropItem(item, last);
 				if(item.hasClass("selected")){
 					for(var i=0; i<that.items.length; i++){
@@ -564,7 +566,7 @@ MT.extend("core.Emitter")(
 				
 				scrollTop = that.tree.el.parentNode.scrollTop;
 				var p2 = 0;
-				var activeItem = that.getOwnItem(e.target.parentNode.parentNode);
+				var activeItem = that.getOwnItem(e.target);
 				
 				dragHelper.y = p1;
 				
@@ -577,6 +579,8 @@ MT.extend("core.Emitter")(
 				dragHelper.head.el.innerHTML = item.data.name;
 				
 				p2 = activeItem.calcOffsetY(dd.parentNode);
+				
+				console.log(p2);
 				if(Math.abs(p1-p2) > dragHelper.el.offsetHeight){
 					return;
 				}
@@ -594,13 +598,10 @@ MT.extend("core.Emitter")(
 					bottom = true;
 				}
 				
+				dd.style.top = (p2 - 2)+"px";
 				if(Math.abs(p2-p1) < 16 && activeItem.isFolder){
 					dd.style.height = dragHelper.el.offsetHeight+"px";
-					dd.style.top = activeItem.el.offsetTop+"px";
 					inFolder = true;
-				}
-				else{
-					dd.style.top = (p2 - 2)+"px";
 				}
 				
 				last = activeItem;
@@ -613,6 +614,8 @@ MT.extend("core.Emitter")(
 		
 		enableRename: function(el){
 			var that = this;
+			this.emit("renameStart");
+			
 			if(!this.input){
 				this.input = document.createElement("input");
 				this.input.className = "ui-input";
@@ -650,7 +653,12 @@ MT.extend("core.Emitter")(
 					el.data.name = this.value;
 					el.head.label.el.innerHTML = this.value;
 					
-					that.emit("change", part + "/" + op, part + "/" + this.value);
+					var o = part + "/" + op;
+					var n = part + "/" + this.value;
+					
+					if(o !== n){
+						that.emit("change", part + "/" + op, part + "/" + this.value);
+					}
 				}
 				else{
 					el.head.label.el.innerHTML = lastValue;
@@ -727,11 +735,24 @@ MT.extend("core.Emitter")(
 		},
    
 		getOwnItem: function(it){
+			var item = it;
+			while(item){
+				if(item.ctrl && item.ctrl.tvItem){
+					break;
+				}
+				item = item.parentElement;
+			}
+			
+			if(!item){
+				return null;
+			}
+			
 			for(var i=0; i<this.items.length; i++){
-				if(it == this.items[i].el){// || it == this.items[i].el.parentNode){
+				if(item == this.items[i].el){// || it == this.items[i].el.parentNode){
 					return this.items[i];
 				}
 			}
+			
 			return null;
 		},
 		
@@ -743,8 +764,8 @@ MT.extend("core.Emitter")(
 				data[i].fullPath = fullPath;
 				
 				if(op != fullPath){
-					if(shouldNotify && this.onChange){
-						this.onChange(op, fullPath);
+					if(shouldNotify){
+						this.emit("change", op, fullPath);
 					}
 					
 				}

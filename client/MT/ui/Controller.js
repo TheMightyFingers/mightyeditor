@@ -21,6 +21,44 @@ MT.BOTTOM = 4;
 MT.CENTER = 5;
 MT.NONE = 0;
 
+MT.ui.addClass = function(el, clsName){
+	if(typeof clsName == "object"){
+		for(var i=0; i<clsName.length; i++){
+			this.addClass(el, clsName[i]);
+		}
+		return;
+	}
+	
+	var c = el.className.split(" ");
+	for(var i=0; i<c.length; i++){
+		if(c[i] == clsName){
+			return;
+		}
+	}
+	
+	c.push(clsName);
+	el.className = c.join(" ");
+};
+
+MT.ui.removeClass = function(el, clsName){
+	if(typeof clsName == "object"){
+		for(var i=0; i<clsName.length; i++){
+			this.removeClass(el, clsName[i]);
+		}
+		return;
+	}
+	
+	var c = el.className.split(" ");
+	for(var i=0; i<c.length; i++){
+		if(c[i] == clsName){
+			c.splice(i, 1);
+		}
+	}
+	
+	el.className = c.join(" ");
+};
+
+
 MT.extend("core.Emitter")(
 	MT.ui.Controller = function(){
 		this.events = new MT.ui.Events();
@@ -125,9 +163,8 @@ MT.extend("core.Emitter")(
 			if(e.button != 0){
 				if(e.button == 1){
 					console.log(e.target.data);
-					if(e.target.data && e.target.data.panel){
-						e.target.data.panel.unjoin();
-						e.target.data.panel.hide();
+					if(e.target.data && e.target.data.panel && e.target.data.panel.isCloseable){
+						e.target.data.panel.close();
 					}
 				}
 				return;

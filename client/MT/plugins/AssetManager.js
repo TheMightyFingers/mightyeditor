@@ -145,7 +145,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.setPreviewAssets(that.active.data);
 			};
 			
-			
 			var update = function(){
 				that.updateData();
 			};
@@ -194,16 +193,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			this.tv.on("open", update);
-			
 			this.tv.on("close", update);
-			
-			/*this.tv.on("drop", function(e, item, last){
-				if(e.target == that.project.map.game.canvas){
-					that.project.om.addObject(e, item.data);
-					return false;
-				}
-			});*/
-			
 			
 			this.preview = ui.createPanel("assetPreview");
 			this.preview.setFree();
@@ -235,9 +225,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			
-			
+			/*
+			moved to project globally
 			ui.events.on(ui.events.DROP, function(e){
 				that.handleDrop(e);
+			});
+			*/
+			
+			this.project.on(MT.DROP, function(e, data){
+				if(!MT.core.Helper.isImage(data.path)){
+					return;
+				}
+				var item = that.tv.getOwnItem(e.target);
+				if(item && item.data.contents){
+					data.path = item.data.fullPath + data.path;
+				}
+				that.createImage(data);
+				
+				console.log("dropped File", e, data);
 			});
 			
 			ui.events.on(ui.events.KEYDOWN, function(e){
@@ -263,7 +268,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			return ret;
 		},
-		
 		
 		_mkZoomCB: function(zoom){
 			var that = this;
@@ -373,6 +377,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					
 					
 					this.drawSpritesheet(panel);
+					this.addSpriteEvents(panel);
 				}
 			}
 			
@@ -447,16 +452,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.drawAtlasJSONImage(panel);
 			
 			panel.data.canvas.style.cssText = "width: "+(panel.data.canvas.width*this.scale)+"px";//"transform: scale("+this.scale+","+this.scale+"); transform-origin: 0 0;";
-			
-			return;
-			
-			if(isxml){
-				this.drawAtlasXMLImage(panel);
-			}
-			else{
-				this.drawAtlasJSONImage(panel);
-			}
-			
 		},
 		
 		drawAtlasJSONImage: function(panel){
@@ -522,8 +517,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				
 				panel.content.el.appendChild(panel.data.canvas);
-				//panel.show(this.preview.content.el);
-				//panel.removeHeader();
 				return;
 			}
 			
@@ -584,77 +577,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			panel.content.el.appendChild(panel.data.canvas);
 		},
 		
-		
-		drawAtlasXMLImage: function(panel){
-			var map = this.project.plugins.mapeditor;
-			var game = map.game;
-			var cache = game.cache._images[panel.data.asset.id];
-			var ctx = null;
-			
-			ctx = panel.data.ctx;
-			
-			var frames = cache.frameData;
-			var src = cache.data;
-			
-			var frame;
-			var startX = 0;
-			
-			var width = 0;
-			var height = 0;
-			var pixi;
-			
-			for(var i=panel.data.frames.start; i<panel.data.frames.end; i++){
-				frame = frames.getFrame(i);
-				width += frame.width;
-				if(height < frame.height){
-					height = frame.height;
-				}
-			}
-			if(panel.data.canvas.width != width){
-				panel.data.canvas.width = width;
-				panel.data.canvas.height = height;
-			}
-			panel.data.rectangles = [];
-			
-			
-			ctx.clearRect(0, 0, width, height);
-			
-			for(var i=panel.data.frames.start; i<panel.data.frames.end; i++){
-				frame = frames.getFrame(i);
-				var r = frame.getRect();
-				
-				src = this.project.plugins.mapeditor.game.cache.getImage(panel.data.asset.id);
-				var x = 0;
-				var y = 0;
-				/*
-				if(pixi.trim){
-					x = pixi.trim.x;
-					y = pixi.trim.y;
-				}
-				*/
-				
-				ctx.drawImage(src, frame.x , frame.y, frame.width, frame.height, startX, 0, frame.width, frame.height);
-				
-				panel.data.rectangles.push(new Phaser.Rectangle(startX, 0, frame.width, frame.height));
-				
-				
-				if(this.activeFrame == i){
-					ctx.fillStyle = "rgba(0,0,0,0.5);"
-					ctx.fillRect(startX, 0, frame.width, height);
-					panel.data.group.active = panel;
-				}
-				
-				startX += frame.width;
-				ctx.beginPath();
-				ctx.moveTo(startX+0.5, 0);
-				ctx.lineTo(startX+0.5, height);
-				ctx.stroke();
-			}
-			
-			panel.content.el.appendChild(panel.data.canvas);
-		},
-		
-		
 		drawSpritesheet: function(panel){
 			var image = this.project.plugins.mapeditor.game.cache.getImage(panel.data.asset.id+"");
 			var ctx = panel.data.ctx;
@@ -708,8 +630,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(frame == that.activeFrame){
 					return;
 				}
-				that.activeFrame = frame;
 				
+				// released mouse outside canvas?
+				var asset = panel.data.asset;
+				var maxframe = Math.floor(asset.width / asset.frameWidth ) - 1;
+				if(maxframe < frame){
+					return;
+				}
+				
+				
+				that.activeFrame = frame;
 				that.emit(MT.ASSET_FRAME_CHANGED, panel.data.asset, that.activeFrame);
 			};
 			
@@ -899,23 +829,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				that.setPreviewAssets(asset);
 			});
-			
-			/*
-			var select = function(obj){
-				if(obj.contents){
-					if(that.active){
-						that.active.removeClass("selected");
-						that.active = null;
-						that.tv.select(null);
-					}
-					return;
-				}
-				that.tv.select(obj.assetId, true);
-			};
-			
-			this.project.om.tv.on("click", select);
-			this.project.om.tv.on("select", select);
-			*/
 		},
 		
 		selectAssetById: function(id, redraw){
@@ -978,14 +891,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
-		makeGridCss: function(w, h, margin){
-			margin = margin | 0;
-			return "background-size: "+w+"px "+h+"px; \
-					background-position: "+margin+"px "+margin+"px; \
-					background-image:repeating-linear-gradient(0deg, #fff, #fff 1px, transparent 1px, transparent "+h+"px),\
-					repeating-linear-gradient(-90deg, #fff, #fff 1px, transparent 1px, transparent "+w+"px); width: 100%; height: 100%; position: absolute;";
-		},
-		
 		getFrame: function(o, x, y){
 			
 			var gx = Math.floor(x/(o.frameWidth + o.spacing));
@@ -1045,7 +950,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		handleFile: function(file){
 			var path = file.webkitRelativePath || file.path || file.name;
-
 			//folder
 			if(file.size == 0){
 				this.send("newFolder", path);
@@ -1055,7 +959,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.uploadImage(file, path);
 			}
 		},
-		
 		
 		upload: function(){
 			
@@ -1087,6 +990,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panel.options.list.hide();
 		},
 		
+		
+		
+		
+		
 		handleEntry: function(entry){
 			var that = this;
 			
@@ -1106,6 +1013,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				});
 			}
 		},
+		
 		
 		
 		initSocket: function(socket){
@@ -1199,40 +1107,51 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		uploadImage: function(file, path){
 			if(path.substring(0, 1) != "/"){
-				path = "/"+path;
+				path = "/" + path;
 			}
 			var that = this;
 			this.readFile(file, function(fr){
-				var img = new Image();
-				img.onload = function(){
-					
-					var data = {
-						data: fr.result,
-						name: file.name,
-						path: path,
-						fullPath: path,
-						key: path,
-						width: img.width,
-						height: img.height,
-						frameWidth: img.width,
-						frameHeight: img.height,
-						frameMax: -1,
-						margin: 0,
-						spacing: 0,
-						anchorX: 0,
-						anchorY: 0,
-						fps: 10,
-						updated: Date.now(),
-						atlas: ""
-					};
-					
-					that.guessFrameWidth(data);
-					
-					that.send("newImage", data);
-					that.emit(MT.ASSET_ADDED, path);
-				};
-				img.src = that.toPng(fr.result);
+				that.createImage({
+					src: fr.result,
+					path: path
+				});
 			});
+		},
+		
+		createImage: function(fileObj){
+			var path = fileObj.path;
+			var src = fileObj.src;
+			name = name || path.split("/").pop();
+			var img = new Image();
+			var that = this;
+			img.onload = function(){
+				
+				var data = {
+					data: src,
+					name: name,
+					path: path,
+					fullPath: path,
+					key: path,
+					width: img.width,
+					height: img.height,
+					frameWidth: img.width,
+					frameHeight: img.height,
+					frameMax: -1,
+					margin: 0,
+					spacing: 0,
+					anchorX: 0,
+					anchorY: 0,
+					fps: 10,
+					updated: Date.now(),
+					atlas: ""
+				};
+				
+				that.guessFrameWidth(data);
+				
+				that.send("newImage", data);
+				that.emit(MT.ASSET_ADDED, path);
+			};
+			img.src = that.toPng(src);
 		},
 		
 		toPng: function(src){

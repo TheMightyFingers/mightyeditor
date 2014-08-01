@@ -9,6 +9,17 @@
 		fs: fs,
 		queue: [],
 		
+		after: function(cb){
+			if(typeof cb != "function"){
+				return;
+			}
+			this.addQueue([this._after, this.mkcb(cb)]);
+		},
+ 
+		_after: function(cb){
+			cb();
+		},
+ 
 		exists: function(file, cb){
 			this.addQueue([this._exists, file, this.mkcb(cb)]);
 		},
@@ -58,7 +69,6 @@
 		},
  
 		_copyWrap: function(source, target, cb){
-			var that = this;
 			fs.stat(source, function(err, stats){
 				if(err){
 					cb(err);
@@ -70,9 +80,6 @@
 					that._mkdir(target, function(){
 						
 						that._readdir(source, true, [], function(buff){
-						
-							//process.exit();
-							
 							var toCopy = buff.length;
 							var cbx = function(){
 								toCopy--;
@@ -95,14 +102,23 @@
 					
 				}
 				else{
-					that._copy(source, target, cb);
+					var dirname = that.path.dirname(target);
+					// check if directory exists
+					fs.stat(dirname, function(err){
+						if(err){
+							that._mkdir(dirname, function(){
+								that._copy(source, target, cb);
+							});
+						}
+						else{
+							that._copy(source, target, cb);
+						}
+					});
 				}
 				
 			});
 			
 		},
-		
-		
 		
 		_copy: function(source, target, cb) {
 			
@@ -125,7 +141,7 @@
 			function done(err) {
 				if(err){
 					MT.debug(err, "FS::copy error ---> ", source + " -> " + target);
-					return;
+					//return;
 				}
 				if(typeof cb == "function"){
 					cb();
@@ -139,6 +155,7 @@
 			this.addQueue([this._rm, file, this.mkcb(cb)]);//no arguments
 		},
 		_rm: function(file, cb){
+			var that = this;
 			fs.lstat(file, function(err, stats){
 				if(err){
 					MT.log("FS::rm error", err);
@@ -146,7 +163,7 @@
 					return;
 				}
 				if(stats.isDirectory()){
-					this._rmdir(file, cb);
+					that._rmdir(file, cb);
 					return;
 				}
 				fs.unlink(file, cb);
@@ -196,6 +213,11 @@
 		},
  
 		readdir: function(dir, recurse, cb){
+			if(typeof(recurse) == "function"){
+				cb = recurse;
+				recurse = false;
+			}
+			
 			this.addQueue([this._readdir, dir, recurse, [], this.mkcb(cb)]);//no arguments
 			
 		},

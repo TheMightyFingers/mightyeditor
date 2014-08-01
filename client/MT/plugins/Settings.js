@@ -266,6 +266,8 @@ MT(
 				}, obj, true, cb);
 			}
 			
+			this.objects.alpha = this.addInput( {key: "alpha", min: 0, max: 1, step: 0.1}, obj, true, cb);
+			
 		},
 		
 		update: function(){
@@ -296,6 +298,14 @@ MT(
 			
 			this.scene.cameraX = this.addInput( {key: "cameraX"}, obj, true, cb);
 			this.scene.cameraY = this.addInput( {key: "cameraY"}, obj, true, cb);
+			
+			this.scene.worldWidth  = this.addInput( {key: "worldWidth"}, obj, true, cb);
+			this.scene.worldHeight = this.addInput( {key: "worldHeight"}, obj, true, cb);
+			
+			this.scene.viewportWidth  = this.addInput( {key: "viewportWidth"}, obj, true, cb);
+			this.scene.viewportHeight = this.addInput( {key: "viewportHeight"}, obj, true, cb);
+			
+			
 			this.scene.gridX = this.addInput( {key: "gridX", min: 2}, obj, true, cb);
 			this.scene.gridY = this.addInput( {key: "gridY", min: 2}, obj, true, cb);
 			this.scene.showGrid = this.addInput( {key: "showGrid", min: 0, max: 1}, obj, true, cb);

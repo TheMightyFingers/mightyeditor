@@ -38,6 +38,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		this.settings = {
 			cameraX: 0,
 			cameraY: 0,
+			
+			worldWidth: 800,
+			worldHeight: 480,
+			
+			viewportWidth: 800,
+			viewportHeight: 480,
+			
 			gridX: 64,
 			gridY: 64,
 			
@@ -269,11 +276,68 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						}
 						
 					});
+					
+					
+					var graphics = window.graphics = new PIXI.Graphics();
+					
+					// begin a green fill..
+					graphics.beginFill(0xffffff);
+					
+					// top
+					graphics.drawRect(0, 0, that.game.canvas.width, -that.game.camera.y);
+					
+					// right
+					graphics.drawRect(that.settings.viewportWidth, -that.game.camera.y, that.game.canvas.width, that.settings.viewportHeight);
+					
+					// bottom
+					graphics.drawRect(0, that.settings.viewportWidth, that.game.canvas.width, that.game.canvas.height);
+					
+					// left
+					graphics.drawRect(0, -that.game.camera.y, -that.game.camera.x, that.settings.viewportHeight);
+					
+					// end the fill
+					graphics.endFill();
+					
+					graphics.alpha = 0.05;
+					
+					graphics.postUpdate = graphics.preUpdate = function(){};
+
+					graphics.update = function(){
+						//graphics.x = -that.game.camera.x;
+						//graphics.y = -that.game.camera.y;
+						
+						//update top
+						graphics.graphicsData[0].points[2] = that.game.canvas.width;
+						graphics.graphicsData[0].points[3] = -that.game.camera.y;
+						
+						// update right
+						graphics.graphicsData[1].points[0] = (that.settings.viewportWidth* that.game.camera.scale.x - that.game.camera.x) ;
+						graphics.graphicsData[1].points[1] = -that.game.camera.y;
+						graphics.graphicsData[1].points[2] = that.game.canvas.width + that.game.camera.x;
+						graphics.graphicsData[1].points[3] = that.settings.viewportHeight* that.game.camera.scale.y;
+						
+						// update bottom
+						graphics.graphicsData[2].points[1] = that.settings.viewportHeight* that.game.camera.scale.y - that.game.camera.y;
+						graphics.graphicsData[2].points[2] = that.game.canvas.width;
+						graphics.graphicsData[2].points[3] = that.game.canvas.height + that.game.camera.y;
+						
+						
+						// update left
+						graphics.graphicsData[3].points[1] = -that.game.camera.y;
+						graphics.graphicsData[3].points[2] = -that.game.camera.x;
+						graphics.graphicsData[3].points[3] = that.settings.viewportHeight* that.game.camera.scale.y;
+						
+						//graphics.drawRect(0, 0, that.settings.width, that.settings.height);
+					};
+
+					// add it the stage so we see it on our screens..
+					map.game.stage.children.unshift(graphics);
+					graphics.parent = map.game.stage;
 				},
 				
 				
 				render: function(){
-					
+					ctx.globalAlpha = 1;
 					that.drawGrid(ctx);
 					
 					that.selector.forEach(drawObjects);
@@ -800,7 +864,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 			};
 			xhr.onerror = function(){
-				console.error("couldn't load asset", path);
+				console.error("couldn't load asset", src);
 				cb();
 			};
 			xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
@@ -811,7 +875,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var image = new Image();
 			image.onload = cb;
 			image.onerror = function(){
-				console.error("couldn't load asset", path);
+				console.error("couldn't load asset", src);
 				cb();
 			};
 			image.src = src;
@@ -1039,7 +1103,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					}
 					
 					if(oo.type == MT.objectTypes.TEXT){
-						od.text = obj.name;
+						od.text = obj.text;
 						od.setStyle(obj.style);
 					}
 					
@@ -1089,7 +1153,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		addText: function(obj, group){
 			group = group || this.game.world;
-			var t = this.game.add.text(obj.x, obj.y, obj.name, obj.style);
+			var t = this.game.add.text(obj.x, obj.y, obj.text, obj.style);
 			group.add(t);
 			
 			return t;
@@ -1130,6 +1194,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			sp.y = obj.y;
 			
 			sp.angle = obj.angle;
+			
+			sp.alpha = obj.alpha || 1;
 			
 			obj._framesCount = 0;
 			
@@ -1414,6 +1480,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			obj.height = sprite.height;
 			
 			obj.frame = sprite.frame;
+			
+			obj.alpha = sprite.alpha;
 			
 			if(sprite == this.activeObject){
 				this.project.settings.update();

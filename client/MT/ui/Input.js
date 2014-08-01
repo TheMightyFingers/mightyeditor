@@ -4,6 +4,7 @@
 
 "use strict";
 
+
 MT.extend("ui.DomElement").extend("core.Emitter")(
 	MT.ui.Input = function(events, properties, obj){
 		MT.ui.DomElement.call(this);
@@ -36,6 +37,10 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 		}
 		
+		if(this.type == "number"){
+			this.addClass("ui-input-number");
+		}
+		
 		this.label = new MT.ui.DomElement();
 		this.label.setAbsolute();
 		
@@ -50,7 +55,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.label.style.right = "50%";
 		
 		
-		this.value = new MT.ui.DomElement();
+		this.value = new MT.ui.DomElement("a");
 		this.value.setAbsolute();
 		
 		
@@ -88,6 +93,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.value.style.right = 0;
 		this.value.addClass("ui-input-value");
 		
+		this.setTabIndex();
+		
 		
 		var down = false;
 		this.value.el.onmousedown = function(){
@@ -107,9 +114,10 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		input.style.textAlign = "right";
 		input.style.paddingRight = "10px";
 		
-
-		this.value.el.ondblclick = function(){
-			
+		input.setAttribute("tabindex", parseInt(this.value.el.getAttribute("tabindex")) +1);
+		//input.setAttribute("tabstop", "false");
+		
+		var enableInput = function(){
 			var w = that.value.el.parentNode.parentNode.offsetWidth*0.5;
 			input.style.width = w + "px";
 			
@@ -129,6 +137,29 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				input.setSelectionRange(0, input.value.length);
 			}
 		};
+		
+		this.value.el.onkeydown = function(){
+			enableInput();
+		};
+		
+		this.value.el.setAttribute("draggable", "false");
+		
+		//this.value.el.onfocus = enableInput;
+		this.value.el.onmouseup = function(){
+			if(that.needEnalbe){
+				enableInput();
+			}
+		}
+		this.enableInput = function(){
+			enableInput();
+		};
+		
+		this.value.el.onmousedown = function(){
+			that.needEnalbe = true;
+		};
+		
+		
+		
 		
 		input.onblur = function(){
 			input.parentNode.removeChild(input);
@@ -154,6 +185,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				input.blur();
 			}
 			
+			if(that.object[that.key] != input.value){
+				var val = that.evalValue(input.value);
+				that.setValue(val);
+				that.value.el.innerHTML = "";
+			}
 			
 		});
 		
@@ -203,6 +239,13 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		},
 		
 		setValue: function(val, silent){
+			this.needEnalbe = false;
+			var oldValue = this.object[this.key];
+			
+			if(val == oldValue && !silent){
+				this.value.el.innerHTML = val;
+				return;
+			}
 			if(val < this.min){
 				val = this.min;
 			}
@@ -211,7 +254,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				val = this.max;
 			}
 			
-			var oldValue = this.object[this.key];
+			
+			
+			
 			
 			this.object[this.key] = val;
 			
@@ -229,6 +274,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		evalValue: function(val){
 			if(this.type != "number"){
+				console.log("num", val);
 				return val;
 			}
 			var ret = null;
@@ -241,6 +287,13 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			
 			return ret;
+		},
+		
+		setTabIndex: function(){
+			MT.ui.Input.tabindex += 1;
+			this.value.el.setAttribute("tabindex", MT.ui.Input.tabindex);
+			this.value.el.setAttribute("href", "javascript:;");
+			//this.value.el.setAttribute("tabstop", "true");
 		}
 		
 		
@@ -250,3 +303,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 	}
 );
+MT.ui.Input.tabindex = 0;
+
+

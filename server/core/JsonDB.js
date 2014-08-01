@@ -58,11 +58,16 @@ MT(
 			});
 		},
 		
+		// /source/xxx/smth.js
 		get: function(name){
 			if(name == "" || name == "/"){
 				return this.data;
 			}
 			var folders = name.split("/");
+			if(folders[0] == ""){
+				folders.shift();
+			}
+			
 			var fi = 0;
 			var ret = this.data;
 			var data = ret.contents;
@@ -79,7 +84,6 @@ MT(
 					}
 				}
 			}
-
 			for(var i=fi; i<folders.length; i++){
 				var d = {
 					name: folders[i],
@@ -123,34 +127,51 @@ MT(
 		
    
 		move: function(a, b){
-			var adb = this.delete(a);
-			if(adb.length === 0){
-				
+			var tmp = a.split("/");
+			
+			var aname = tmp.pop();
+			var abase = tmp.join("/");
+			
+			tmp = b.split("/");
+			
+			var bname = tmp.pop();
+			var bbase = tmp.join("/");
+			
+			var aItem = this.get(a);
+			
+			if(abase == bbase){
+				aItem.name = bname;
+				this.save();
 				return;
 			}
 			
-			var bdb = null;
+			var apar = this.get(abase);
+			for(var i=0; i<apar.contents.length; i++){
+				if(apar.contents[i] == aItem){
+					apar.contents.splice(i, 1);
+				}
+			}
 			
-			var pb = b.split("/");
-			var name = pb.pop();
-			var parent = this.get(pb.join("/"));
-			
-			adb[0].name = name;
-			
-			parent.contents.push(adb[0]);
-			
+			var bpar = this.get(bbase);
+			bpar.contents.push(aItem);
+			aItem.name = bname;
 			this.save();
+			
+			return;
 		},
    
 		delete: function(name){
 			
 			var folders = name.split("/");
 			var fi = 0;
-			
 			var data = this.data.contents;
+			
 			var i=0;
 			
 			while(true){
+				if(!data[i]){
+					break;
+				}
 				if(data[i].name == folders[fi]){
 					fi++;
 					
@@ -167,8 +188,9 @@ MT(
 				if(i>=data.length){
 					break;
 				}
-				
 			}
+			
+			return null;
 		},
    
 		close: function(){

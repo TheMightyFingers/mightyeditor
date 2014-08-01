@@ -52,6 +52,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		isJoinable: false,
 		acceptsPanels: false,
 		isPickable: true,
+		isCloaseable: false,
 		
 		setFree: function(){
 			this.isMoveable = true;
@@ -97,6 +98,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			return this.options;
 		},
 		
+		removeBorder: function(){
+			this.addClass("borderless");
+		},
 		
 		activate: function(){
 			this.show();
@@ -602,6 +606,12 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				this.emit("unselect");
 			}
 			return this;
+		},
+		
+		close: function(){
+			this.unjoin();
+			this.hide();
+			this.emit("close");
 		},
 		
 		addHeader: function(){

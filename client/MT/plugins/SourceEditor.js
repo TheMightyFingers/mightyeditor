@@ -24,31 +24,25 @@
 		MT.requireFile(cmPath+"/scroll/scrollpastend.js");
 		MT.requireFile(cmPath+"/hint/show-hint.js");
 		MT.requireFile(cmPath+"/hint/anyword-hint.js");
-		//<script src="mode/javascript/javascript.js"></script>
-		
-		
-		
 		
 		MT.requireFile("js/jshint.js");
 		
-		var style = document.createElement("link");
-		style.setAttribute("rel", "stylesheet");
-		style.setAttribute("type", "text/scc");
-		style.setAttribute("href", "css/codemirror.css");
-		document.head.appendChild(style);
+		
+		var addCss = function(src){
+			var style = document.createElement("link");
+			style.setAttribute("rel", "stylesheet");
+			style.setAttribute("type", "text/scc");
+			style.setAttribute("href", src);
+			document.head.appendChild(style);
+		};
 		
 		
-		style = document.createElement("link");
-		style.setAttribute("rel", "stylesheet");
-		style.setAttribute("type", "text/scc");
-		style.setAttribute("href", "css/cm-tweaks.css");
-		document.head.appendChild(style);
+		addCss("css/codemirror.css");
+		addCss(cmPath+"/hint/show-hint.css");
+		addCss(cmPath+"/fold/foldgutter.css");
+		addCss(cmPath+"/dialog/dialog.css");
 		
-		style = document.createElement("link");
-		style.setAttribute("rel", "stylesheet");
-		style.setAttribute("type", "text/scc");
-		style.setAttribute("href", cmPath+"/hint/show-hint.css");
-		document.head.appendChild(style);
+		addCss("css/cm-tweaks.css");
 		
 	});
 })();
@@ -89,19 +83,23 @@ MT.extend("core.BasicPlugin")(
 			this.buttonPanel.addClass("ui-panel-content");
 			
 			this.buttons = {
-				newFile: new MT.ui.Button("N", "ui-button.tool", null, function(){
+				newFile: new MT.ui.Button("N", "ui-button.tool.ui-new-file", null, function(){
 					console.log("new File");
 					that.newFile();
 				}),
 				
-				newFolder: new MT.ui.Button("F", "ui-button.tool", null, function(){
+				newFolder: new MT.ui.Button("F", "ui-button.tool.ui-new-folder", null, function(){
 					console.log("new Folder");
 					that.newFolder();
 				}),
 				
-				save: new MT.ui.Button("S", "ui-button.tool", null, function(){
+				save: new MT.ui.Button("S", "ui-button.tool.ui-save-file", null, function(){
 					that.save();
-				})
+				}),
+				
+				deleteFile: new MT.ui.Button("D", "ui-button.tool.ui-delete-file", null, function(){
+					that.deleteFile();
+				}),
 			};
 			
 			for(var i in this.buttons){
@@ -128,6 +126,23 @@ MT.extend("core.BasicPlugin")(
 				that.removeButtons();
 			});
 			
+			this.project.on(MT.DROP, function(e, data){
+				if(!MT.core.Helper.isSource(data.path)){
+					return;
+				}
+				console.dir(e.target);
+				var item = that.tv.getOwnItem(e.target);
+				if(item && item.data.contents){
+					data.path = item.data.fullPath + data.path;
+				}
+				
+				that.uploadFile(data);
+				
+				console.log(item);
+				
+				console.log("SOURCE dropped File", data);
+			});
+			
 		},
 		
 		initSocket: function(socket){
@@ -139,49 +154,108 @@ MT.extend("core.BasicPlugin")(
 			this.send("getFiles");
 		},
 		a_receiveFiles: function(files){
+			console.log(files);
+			
 			this.tv.merge(files);
+			var data = this.tv.getData();
 		},
 		
-		save: function(){
-			console.log("saving", this.activePanel.data.data, this.editor.getValue());
-			this.send("save", this.activePanel.data.data, this.editor.getValue());
+		uploadFile: function(data){
+			this.send("uploadFile", data);
+		},
+		
+		save: function(panel){
+			panel = panel || this.activePanel;
+			
+			if(!panel){
+				return;
+			}
+			var data = panel.data;
+			if(data.src == data.doc.getValue()){
+				return;
+			}
+			data.src = data.doc.getValue();
+			this.checkChanges();
+			
+			console.log("saving", panel.data.data, this.editor.getValue());
+			this.send("save", {
+				path: panel.data.data.fullPath, 
+				src: this.editor.getValue()
+			});
+		},
+		restore: function(panel){
+			panel = panel || this.activePanel;
+			
+			if(!panel){
+				return;
+			}
+			var data = panel.data;
+			if(data.src == data.doc.getValue()){
+				return;
+			}
+			data.doc.setValue(data.src);
+		},
+		deleteFile: function(){
+			var pop = new MT.ui.Popup("Delete file?", "Are you sure you want to delete file?");
+			
+			pop.addButton("no", function(){
+				pop.hide();
+			});
+			
+			pop.addButton("yes", function(){
+				that._deleteFile();
+				pop.hide();
+			});
+			pop.showClose();
+		},
+		
+		_deleteFile: function(){
+			if(this.activeTreeItem){
+				this.send("delete", this.activeTreeItem.data);
+				if(!this.activeTreeItem.data.contents && this.activePanel){
+					this.activePanel.close();
+				}
+				return;
+				
+			}
+			if(!this.activePanel){
+				return;
+			}
+			this.send("delete", this.activePanel.data.data);
+			this.activePanel.close();
 		},
 		
 		newFile: function(){
-			var data = this.tv.getData();
-			var id = Date.now();
-			data.push({
-				name: "new File",
-				id: id
-			});
-			
-			this.tv.merge(data);
-			
+			this.send("newFile");
+		},
+		
+		a_newFile: function(id){
 			var parsedData = this.tv.getById(id);
+			var panel = this.loadDocument(parsedData.data, false);
+			panel.data.needFocus = false;
 			this.tv.enableRename(parsedData);
-			this.loadDocument(parsedData.data);
-			
-			
-			
 		},
 		
 		newFolder: function(){
-			var data = this.tv.getData();
-			var id = Date.now();
-			
-			data.push({
-				name: "new Folder",
-				id: id,
-				contents: []
-			});
-			
-			this.tv.merge(data);
-			
-			this.tv.enableRename(this.tv.getById(id));
-			
+			this.send("newFolder");
 		},
 		
-		loadDocument: function(data){
+		a_newFolder: function(id){
+			var parsedData = this.tv.getById(id);
+			this.tv.enableRename(parsedData);
+		},
+		
+		
+		rename: function(o, n){
+			this.send("rename", {
+				o: o,
+				n: n
+			});
+		},
+		
+		
+		
+		loadDocument: function(data, needFocus){
 			console.log("LOAD:", data);
 			var that = this;
 			
@@ -189,7 +263,8 @@ MT.extend("core.BasicPlugin")(
 			if(panel == void(0)){
 				panel = new MT.ui.Panel(data.name);
 				panel.data = {
-					data: data
+					data: data,
+					needFocus: true
 				};
 				
 				panel.mainTab.el.setAttribute("title", data.fullPath);
@@ -197,12 +272,35 @@ MT.extend("core.BasicPlugin")(
 				this.documents[data.fullPath] = panel;
 				
 				panel.on("show", function(){
+					var el;
+					if(that.activePanel){
+						el = that.tv.getById(that.activePanel.data.data.id);
+						if(el){
+							el.removeClass("selected");
+						}
+					}
 					that.activePanel = panel;
+					
+					el = that.tv.getById(panel.data.data.id);
+					if(el){
+						el.addClass("selected");
+					}
 					if(!panel.data.doc){
 						return;
 					}
-					that.loadDoc(panel);
+					that.loadDoc(panel, needFocus);
 				});
+				
+				panel.on("close", function(){
+					that.checkChangesAndAskSave(panel);
+					if(that.activePanel == panel){
+						el = that.tv.getById(that.activePanel.data.data.id);
+						if(el){
+							el.removeClass("selected");
+						}
+					}
+				});
+				panel.isCloseable = true;
 			}
 			
 			
@@ -221,6 +319,7 @@ MT.extend("core.BasicPlugin")(
 			panel.show();
 			
 			this.send("getContent", data);
+			return panel;
 		},
 		
 		a_fileContent: function(data){
@@ -232,6 +331,8 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			this.loadMode(mode, function(){
 				var doc = that.documents[data.fullPath].data.doc;
+				that.documents[data.fullPath].data.src = data.src;
+				
 				if(!doc){
 					doc = CodeMirror.Doc(data.src, mode, 0);
 					that.documents[data.fullPath].data.doc = doc;
@@ -240,6 +341,7 @@ MT.extend("core.BasicPlugin")(
 				that.editor.swapDoc(doc);
 				that.documents[data.fullPath].show();
 				that.loadDoc(that.documents[data.fullPath]);
+				
 			});
 		},
 		
@@ -250,6 +352,16 @@ MT.extend("core.BasicPlugin")(
 			}
 			panel.content.el.appendChild(this.editorElement);
 			this.editor.swapDoc(panel.data.doc);
+			
+			var that = this;
+			window.setTimeout(function(){
+				if(panel.data.needFocus !== false){
+					that.editor.focus();
+				}
+			}, 300);
+			
+			this.updateHints();
+			
 		},
 		
 		addButtons: function(el){
@@ -302,29 +414,43 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			var that = this;
-			this.tv.on("click", function(data, element){
+			var select =  function(data, element){
 				console.log("click", data, element);
 				
-				if(data.contents){
-					return;
-				}
+				
 				
 				if(that.activeTreeItem){
 					that.activeTreeItem.removeClass("selected");
 				}
 				that.activeTreeItem = element;
-				that.loadDocument(data);
 				element.addClass("selected");
-			});
+				
+				if(!data.contents){
+					that.loadDocument(data);
+				}
+			};
 			
+			this.tv.on("click", select);
+			this.tv.on("renameStart", function(){
+				if(!that.activePanel){
+					return;
+				}
+				that.activePanel.data.needFocus = false;
+			});
 			this.tv.on("change", function(a, b){
 				if(!a || !b){
+					// changed order
+					that.saveData();
 					return;
 				}
-				var doc = that.documents[a];
+				var doc = that.documents[a] || that.documents[b];
+				
 				if(!doc){
+					that.rename(a, b);
 					return;
 				}
+				doc.data.needFocus = true;
+				
 				var name = b.split("/").pop();
 				that.documents[b] = doc;
 				delete that.documents[a];
@@ -332,11 +458,41 @@ MT.extend("core.BasicPlugin")(
 				doc.mainTab.title.innerHTML = name;
 				var mode = that.guessMode(name.split(".").pop());
 				that.loadMode(mode, function(){
-					doc.data.doc.getEditor().setOption("mode", mode);
+					var el = that.tv.getById(doc.data.data.id);
+					doc.data.needFocus = true;
+					
+					select(doc.data.data, el);
+					
+					if(doc.data.doc){
+						doc.data.doc.getEditor().setOption("mode", mode);
+					}
+					
 				});
 				
+				that.rename(a, b);
+				
 			});
+			
+			var saveState = function(el){
+				that.send("updateFolder", {
+					id: el.data.id,
+					isClosed: el.data.isClosed
+				});
+			};
+			
+			this.tv.on("open", function(el){
+				saveState(el);
+			});
+			
+			this.tv.on("close", function(el){
+				saveState(el);
+			});
+			
 			this.tv.sortable(this.ui.events);
+		},
+		
+		saveData: function(){
+			this.send("update", this.tv.getData());
 		},
 		
 		addEditor: function(){
@@ -382,8 +538,114 @@ MT.extend("core.BasicPlugin")(
 				that.editorElement = el;
 			}, defaultCfg);
 			
+			this.editor.on("change", function(){
+				that.checkChanges();
+			});
+			
 		},
 		
+		updateHints: function(){
+			var that = this;
+			this.editor.operation(function(){
+				that.editor.clearGutter("CodeMirror-jslint");
+				console.log(that.editor.mode);
+				
+				if(that.editor.options.mode.name != "javascript"){
+					return;
+				}
+				var conf = {
+					browser: true,
+					globalstrict: true,
+					loopfunc: true,
+					predef: {
+						"Phaser": false,
+						"mt": false,
+						"console": false
+					},
+					laxcomma: false
+				};
+				
+				
+				
+				/*for(var i in Import){
+					conf.predef[i] = false;
+				}*/
+				
+				/*var globalScope = that.sourceEditor.content.plugins.Map.map;
+				if(globalScope){
+					for(var i in globalScope){
+						conf.predef[i] = false;
+					}
+				}*/
+				
+				JSHINT(that.editor.getValue(), conf);
+				
+				for (var i = 0; i < JSHINT.errors.length; ++i) {
+					var err = JSHINT.errors[i];
+					if (!err) continue;
+					
+					var msg = document.createElement("a");
+					msg.errorTxt = err.reason;
+					
+					/*msg.addEventListener("click",function(){
+						copyToClipboard(this.errorTxt);
+					});*/
+					
+					var icon = msg.appendChild(document.createElement("span"));
+					
+					icon.innerHTML = "!";
+					icon.className = "lint-error-icon";
+					
+					var text = msg.appendChild(document.createElement("span"));
+					text.className = "lint-error-text";
+					text.appendChild(document.createTextNode(err.reason));
+					
+					//var evidence = msg.appendChild(document.createElement("span"));
+					//evidence.className = "lint-error-text evidence";
+					//evidence.appendChild(document.createTextNode(err.evidence));
+					
+					msg.className = "lint-error";
+					that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
+				}
+			});
+		},
+		
+		checkChanges: function(){
+			if(!this.activePanel){
+				return;
+			}
+			this.updateHints();
+			var data = this.activePanel.data;
+			if(data.src != data.doc.getValue()){
+				this.activePanel.mainTab.title.innerHTML = data.data.name + "*";
+			}
+			else{
+				this.activePanel.mainTab.title.innerHTML = data.data.name;
+			}
+			
+			
+		},
+		
+		
+		checkChangesAndAskSave: function(panel){
+			var data = panel.data;
+			if(data.src === data.doc.getValue()){
+				return;
+			}
+			var that = this;
+			var pop = new MT.ui.Popup("File changed", "File has been changed, do you want to save changes?");
+			
+			pop.addButton("no", function(){
+				that.restore(panel);
+				pop.hide();
+			});
+			
+			pop.addButton("yes", function(){
+				that.save(panel);
+				pop.hide();
+			});
+			pop.showClose();
+		},
 		
 		guessMode: function(ext){
 			var mode = {};
@@ -409,11 +671,14 @@ MT.extend("core.BasicPlugin")(
 				mode.name = "css";
 				mode.hint = "css";
 			}
+			if(ext == "json"){
+				mode.name = "javascript";
+			}
 			return mode;
 		},
 		_loadedModes: {},
 		loadMode: function(mode, cb){
-			if(!mode){
+			if(!mode || !mode.name){
 				cb();
 				return;
 			}
