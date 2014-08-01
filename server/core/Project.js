@@ -151,7 +151,8 @@ MT.extend("core.BasicPlugin")(
 		onDbReady: function(db, cb){
 			this.loadData(db);
 			
-			if(!this.getProjectInfo()){
+			if(!this.getProjectInfo() && !this.isNewProject){
+				this.isNewProject = false;
 				this.send("needUpdate");
 				return;
 			}
@@ -174,9 +175,9 @@ MT.extend("core.BasicPlugin")(
 			this.objects.readData();
 			this.map.readData();
 		},
-		
+		isNewProject: false,
 		createProject: function(info){
-			
+			this.isNewProject = true;
 			this.id = this.makeID(this.knownProjects.length);
 			this.path = this.root + MT.core.FS.path.sep + this.id;
 			
@@ -318,10 +319,9 @@ MT.extend("core.BasicPlugin")(
 					info[i] = infoObj[i];
 				}
 			}
+			
 			//this.fs.copy("templates/common/db.json", this.path + this.fs.path.sep + ".db.json", function(){
 				this.openProject(this.id, function(){
-					console.log("AFTER???");
-					
 					that.fs.after(function(){
 						that.saveProjectInfo(info);
 						that.send("selectProject", that.id);
