@@ -1,14 +1,13 @@
-var MT = createClass("MT");
+(function(window){
+	"use strict";
+	
+	window.MT = createClass("MT");
+	MT.require("core.Project");
+	MT.require("ui.Controller");
+	MT.require("Socket");
 
-MT.require("core.Project");
-MT.require("ui.Controller");
-MT.require("Socket");
-
-MT.onReady(main);
-
-function main(){
-	var socket = new MT.Socket();
-	var hasClosed = false;
+	MT.onReady(main);
+	
 	var loaded = false;
 	var img = new Image();
 	img.onload = function(){
@@ -18,23 +17,32 @@ function main(){
 	};
 	img.src = "img/icons/loadingbar.gif";
 	img.className = "loadingImage";
-	
-	
-	socket.on("core", function(type){
-		if(type == "open"){
-			if(hasClosed){
-				window.location.reload();
-				return;
+
+
+	function main(){
+		var socket = new MT.Socket();
+		var hasClosed = false;
+		var loaded = false;
+		
+		
+		
+		socket.on("core", function(type){
+			if(type == "open"){
+				if(hasClosed){
+					window.location.reload();
+					return;
+				}
+				if(img.parentNode){
+					img.parentNode.removeChild(img);
+				}
+				
+				new MT.core.Project(new MT.ui.Controller(), socket);
 			}
-			if(img.parentNode){
-				img.parentNode.removeChild(img);
+			if(type == "close"){
+				document.body.innerHTML = "";
+				hasClosed = true;
 			}
-			
-			new MT.core.Project(new MT.ui.Controller(), socket);
-		}
-		if(type == "close"){
-			document.body.innerHTML = "";
-			hasClosed = true;
-		}
-	});
-}
+		});
+	}
+	
+})(window);
