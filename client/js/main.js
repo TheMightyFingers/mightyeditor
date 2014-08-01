@@ -9,15 +9,17 @@
 	MT.onReady(main);
 	
 	var loaded = false;
+	// hack for minimiser
+	if(Image){
 	var img = new Image();
-	img.onload = function(){
-		if(!loaded){
-			document.body.appendChild(img);
-		}
-	};
-	img.src = "img/icons/loadingbar.gif";
-	img.className = "loadingImage";
-
+		img.onload = function(){
+			if(!loaded){
+				document.body.appendChild(img);
+			}
+		};
+		img.src = "img/icons/loadingbar.gif";
+		img.className = "loadingImage";
+	}
 
 	function main(){
 		var socket = new MT.Socket();
