@@ -10,8 +10,8 @@
 	
 	var loaded = false;
 	// hack for minimiser
-	if(Image){
-	var img = new Image();
+	if(typeof Image !== "undefined"){
+		var img = new Image();
 		img.onload = function(){
 			if(!loaded){
 				document.body.appendChild(img);
