@@ -2618,14 +2618,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		this.setTabIndex();
 		
-		
-		var down = false;
-		this.value.el.onmousedown = function(){
-			down = true;
-		};
-
-		
-
 		this.events = events;
 		
 		
@@ -2676,12 +2668,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.enableInput = function(){
 			enableInput();
 		};
-		
+		var down = false;
 		this.value.el.onmousedown = function(){
 			that.needEnalbe = true;
+			down = true;
 		};
-		
-		
 		
 		
 		input.onblur = function(){
@@ -2698,20 +2689,26 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				return;
 			}
 			var w = e.which;
+			var hideval = true;
+			
 			
 			if(w == MT.keys.ESC){
 				input.value = that.object[that.key];
 				input.blur();
+				hideval = false;
 			}
 			
 			if(w == MT.keys.ENTER){
 				input.blur();
+				hideval = false;
 			}
 			
 			if(that.object[that.key] != input.value){
 				var val = that.evalValue(input.value);
 				that.setValue(val);
-				that.value.el.innerHTML = "";
+				if(hideval){
+					that.value.el.innerHTML = "";
+				}
 			}
 			
 		});
@@ -2729,6 +2726,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			this.mouseup = events.on("mouseup",function(){
 				down = false;
+				that.needEnalbe = false;
 			});
 			
 			this.mousemove = events.on("mousemove",function(e){
@@ -5288,6 +5286,10 @@ MT(
 				return;
 			}
 			
+			if(this.stack == "assets"){
+				return;
+			}
+			
 			var that = this;
 			this.clear();
 			
@@ -5304,11 +5306,11 @@ MT(
 			
 			this.stack = "assets";
 			this.addInput( {key: "key", type: "text"}, obj, false, cb);
-			this.addInput( {key: "frameWidth", step: 1}, obj, false, cb);
-			this.addInput( "frameHeight", obj, true, cb);
+			this.addInput( {key: "frameWidth", step: 1, min: 1}, obj, false, cb);
+			this.addInput( {key: "frameHeight", step: 1, min: 1}, obj, true, cb);
 			this.addInput( "frameMax", obj, false, cb);
-			this.addInput( "margin", obj, true, cb);
-			this.addInput( "spacing", obj, false, cb);
+			this.addInput( {key: "margin", step: 1, min: 0} , obj, true, cb);
+			this.addInput( {key: "spacing", step: 1, min: 0}, obj, false, cb);
 			this.addInput( {key: "anchorX", step: 0.5}, obj, true, cb);
 			this.addInput( {key: "anchorY", step: 0.5}, obj, true, cb);
 			this.addInput( {key: "fps", step: 1}, obj, true, cb);
@@ -8907,7 +8909,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		createImage: function(fileObj){
 			var path = fileObj.path;
 			var src = fileObj.src;
-			name = name || path.split("/").pop();
+			var name = path.split("/").pop();
 			var img = new Image();
 			var that = this;
 			img.onload = function(){
@@ -13004,7 +13006,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	
 	var loaded = false;
 	// hack for minimiser
-	if(typeof Image !== "undefined"){
+	if(typeof document !== "undefined"){
 		var img = new Image();
 		img.onload = function(){
 			if(!loaded){
