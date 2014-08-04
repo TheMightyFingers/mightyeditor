@@ -111,6 +111,7 @@ MT.extend("core.BasicPlugin")(
 			this.fs.mkdir(dir, function(){
 				that.fs.writeFile(that.path + data.path, data.src, function(e){
 					that.project.db.save();
+					that.project.export.phaser();
 				});
 			});
 		},

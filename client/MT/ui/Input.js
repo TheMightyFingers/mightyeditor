@@ -95,14 +95,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		this.setTabIndex();
 		
-		
-		var down = false;
-		this.value.el.onmousedown = function(){
-			down = true;
-		};
-
-		
-
 		this.events = events;
 		
 		
@@ -153,12 +145,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.enableInput = function(){
 			enableInput();
 		};
-		
+		var down = false;
 		this.value.el.onmousedown = function(){
 			that.needEnalbe = true;
+			down = true;
 		};
-		
-		
 		
 		
 		input.onblur = function(){
@@ -175,20 +166,26 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				return;
 			}
 			var w = e.which;
+			var hideval = true;
+			
 			
 			if(w == MT.keys.ESC){
 				input.value = that.object[that.key];
 				input.blur();
+				hideval = false;
 			}
 			
 			if(w == MT.keys.ENTER){
 				input.blur();
+				hideval = false;
 			}
 			
 			if(that.object[that.key] != input.value){
 				var val = that.evalValue(input.value);
 				that.setValue(val);
-				that.value.el.innerHTML = "";
+				if(hideval){
+					that.value.el.innerHTML = "";
+				}
 			}
 			
 		});
@@ -206,6 +203,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			this.mouseup = events.on("mouseup",function(){
 				down = false;
+				that.needEnalbe = false;
 			});
 			
 			this.mousemove = events.on("mousemove",function(e){

@@ -41,7 +41,9 @@ body:before {
 }
 
 .loadingImage{
-	margin: 30% auto;
+	margin: 0 auto;
+	top: 50%;
+	position: relative;
 	display: block;
 }
 ::-webkit-scrollbar {
@@ -580,6 +582,7 @@ white-space: nowrap;
 color: #fff;
 min-height: 100%;
 text-decoration: none;
+outline: none;
 }
 
 div.ui-input.ui-input-number .ui-input-value{

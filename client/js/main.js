@@ -10,7 +10,7 @@
 	
 	var loaded = false;
 	// hack for minimiser
-	if(typeof Image !== "undefined"){
+	if(typeof document !== "undefined"){
 		var img = new Image();
 		img.onload = function(){
 			if(!loaded){

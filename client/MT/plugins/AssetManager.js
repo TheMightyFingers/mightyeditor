@@ -1119,7 +1119,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		createImage: function(fileObj){
 			var path = fileObj.path;
 			var src = fileObj.src;
-			name = name || path.split("/").pop();
+			var name = path.split("/").pop();
 			var img = new Image();
 			var that = this;
 			img.onload = function(){

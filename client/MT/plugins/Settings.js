@@ -112,6 +112,10 @@ MT(
 				return;
 			}
 			
+			if(this.stack == "assets"){
+				return;
+			}
+			
 			var that = this;
 			this.clear();
 			
@@ -128,11 +132,11 @@ MT(
 			
 			this.stack = "assets";
 			this.addInput( {key: "key", type: "text"}, obj, false, cb);
-			this.addInput( {key: "frameWidth", step: 1}, obj, false, cb);
-			this.addInput( "frameHeight", obj, true, cb);
+			this.addInput( {key: "frameWidth", step: 1, min: 1}, obj, false, cb);
+			this.addInput( {key: "frameHeight", step: 1, min: 1}, obj, true, cb);
 			this.addInput( "frameMax", obj, false, cb);
-			this.addInput( "margin", obj, true, cb);
-			this.addInput( "spacing", obj, false, cb);
+			this.addInput( {key: "margin", step: 1, min: 0} , obj, true, cb);
+			this.addInput( {key: "spacing", step: 1, min: 0}, obj, false, cb);
 			this.addInput( {key: "anchorX", step: 0.5}, obj, true, cb);
 			this.addInput( {key: "anchorY", step: 0.5}, obj, true, cb);
 			this.addInput( {key: "fps", step: 1}, obj, true, cb);

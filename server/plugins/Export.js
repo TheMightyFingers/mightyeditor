@@ -72,16 +72,12 @@ MT.extend("core.BasicPlugin")(
 			this.parseObjects(data.objects.contents);
 			
 			
-			
-			
-			
-			
 			contents = JSON.stringify(data, null, "\t");
 			
 			var srcPath = this.dir + this.sep;
 			var libsPath = srcPath + "js/lib/";
 			var tplPath = "templates/default/src/js/lib/";
-			var localFilePath = libsPath + this.dataFile;
+			var localFilePath = "phaser/js/lib/" +  this.dataFile;
 			var filePath = libsPath + this.dataFile;
 			
 			//this.fs.scandir(this.projects.path + this.sep + this.src, function(data){
@@ -92,12 +88,12 @@ MT.extend("core.BasicPlugin")(
 				
 				
 				that.fs.copy(tplPath + "mt.helper.js", libsPath + this.importFile);
-				that.fs.copy(tplPath + this.phaserSrc, libsPath +  this.phaserSrc);
-				that.fs.copy(tplPath + this.phaserMinSrc, libsPath + this.phaserMinSrc);
+				//that.fs.copy(tplPath + this.phaserSrc, libsPath +  this.phaserSrc);
+				//that.fs.copy(tplPath + this.phaserMinSrc, libsPath + this.phaserMinSrc);
 				
 				
-				that.fs.writeFile(tplPath + this.jsonFile, contents);
-				that.fs.writeFile(tplPath + this.dataFile, "window.mt = window.mt || {}; window.mt.data = "+contents+";\r\n", function(err){
+				that.fs.writeFile(libsPath + this.jsonFile, contents);
+				that.fs.writeFile(libsPath + this.dataFile, "window.mt = window.mt || {}; window.mt.data = "+contents+";\r\n", function(err){
 					if(cb){
 						cb(err, localFilePath, filePath);
 					}
@@ -162,7 +158,7 @@ MT.extend("core.BasicPlugin")(
 			this.fs.mkdir(this.dir + this.sep + this.assetsPath);
 			
 			this.phaser(function(error, stdout, stderr){
-				MT.log("Export::exec", error, stdout, stderr);
+				//MT.log("Export::exec", error, stdout, stderr);
 				that.send("complete", {
 					file:  that.zipName,
 					action: "phaser"
