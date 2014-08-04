@@ -5158,7 +5158,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var path = this.project.path;
 			this.export("phaser", function(data){
 				if(w.location){
-					w.location.href = path + "/phaser/";
+					w.location.href = path + "/phaser/index.html";
 				}
 			});
 			
