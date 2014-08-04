@@ -5505,7 +5505,7 @@ MT(
 //MT/plugins/MapEditor.js
 MT.namespace('plugins');
 "use strict";
-MT.requireFile("js/phaser.js", function(){
+MT.requireFile("js/phaser.min.js", function(){
 	MT.requireFile("js/phaserHacks.js");
 });
 MT.require("core.Helper");
