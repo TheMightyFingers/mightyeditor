@@ -410,8 +410,6 @@
 			var t = this.game.add.text(object.x, object.y, object.text || object.name, object.style);
 			group.add(t);
 			
-			
-			
 			if(container.hasOwnProperty(object.name)){
 				console.warn("dublicate object name - ", object.name);
 			}

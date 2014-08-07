@@ -21,6 +21,7 @@ MT(
 			ui.events.on("keyup", function(e){
 				if(e.which == MT.keys.ESC){
 					that.clear();
+					that.active
 				}
 			});
 			
@@ -65,7 +66,8 @@ MT(
 			for(var i in stack){
 				stack[i].hide();
 			}
-			
+			this.stack = "";
+			this.lastObj = null;
 			return;
 			
 			this.panel.title = "Settings";
@@ -106,15 +108,18 @@ MT(
 			fw.on("change", cb);
 			return fw;
 		},
+		
    
+		lastObj: null,
 		handleAssets: function(obj){
 			if(obj.contents !== void(0)){
 				return;
 			}
 			
-			if(this.stack == "assets"){
+			if(this.lastObj == obj){
 				return;
 			}
+			this.lastObj = obj;
 			
 			var that = this;
 			this.clear();
@@ -159,10 +164,14 @@ MT(
 			if(!obj){
 				return;
 			}
+			
+			
+			if(this.lastObj == obj){
+				return;
+			}
+			this.lastObj = obj;
+			
 			this.clear();
-			
-			
-			
 			this.panel.title = obj.name;
 			var that = this;
 			var cb = function(){
