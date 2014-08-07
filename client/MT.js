@@ -1901,6 +1901,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			else{
 				
 				var text = this.tools.om.createTextObject(x, y);
+				text.text = text.tmpName;
 				this.tools.om.insertObject(text);
 				obj = this.map.getById(text.id);
 				this.tools.select(obj);
@@ -6609,7 +6610,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					}
 					
 					if(oo.type == MT.objectTypes.TEXT){
-						od.text = obj.text;
+						od.text = obj.text || obj.name;
 						od.setStyle(obj.style);
 					}
 					
