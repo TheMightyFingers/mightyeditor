@@ -1103,7 +1103,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					}
 					
 					if(oo.type == MT.objectTypes.TEXT){
-						od.text = obj.text;
+						od.text = obj.text || obj.name;
 						od.setStyle(obj.style);
 					}
 					

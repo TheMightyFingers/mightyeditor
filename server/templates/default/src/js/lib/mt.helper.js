@@ -407,7 +407,7 @@
 			this.getFontFamily(object.style.font);
 			
 			group = group || this.game.world;
-			var t = this.game.add.text(object.x, object.y, object.name, object.style);
+			var t = this.game.add.text(object.x, object.y, object.text || object.name, object.style);
 			group.add(t);
 			
 			

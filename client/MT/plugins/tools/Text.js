@@ -739,6 +739,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			else{
 				
 				var text = this.tools.om.createTextObject(x, y);
+				text.text = text.tmpName;
 				this.tools.om.insertObject(text);
 				obj = this.map.getById(text.id);
 				this.tools.select(obj);
