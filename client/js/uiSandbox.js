@@ -1,6 +1,8 @@
 "use strict";
 window.MT = createClass("MT");
 MT.require("ui.Controller");
+MT.require("ui.TableView");
+MT.require("ui.ColorPicker");
 MT.onReady(main);
 
 
@@ -35,5 +37,13 @@ function main(){
 	//ui.joinPanels(p.p0, p.p1);
 	ui.joinPanels(p.p2, p.p3);
 	ui.joinPanels(p.p2, p.p4);
+	
+	var table = new MT.ui.TableView({xxx: 1, yyy: "smth"}, ["key", "value"]);
+	table.show(p.p0.content.el);
+	
+	
+	var cp = window.cp = new MT.ui.ColorPicker(ui);
+	cp.panel.x = 600;
+	cp.panel.y = 200;
 	
 }

@@ -97,6 +97,46 @@
 			return objects[name];
 		},
 		
+		// create slope map for tilelayer
+		createSlopeMap: function(layer){
+			var map = {};
+			var data = layer.layer.data;
+			var i=0, j=0;
+			
+			for( ;i<data.length; i++){
+				for(j=0; j<data[i].length; j++){
+					if(data[i][j].index > 0){
+						map[i*data[i].length + j] = data[i][j].index;
+					}
+				}
+			}
+			return map;
+		},
+		
+		getObjectData: function(name, container){
+			if(typeof name == "object"){
+				name = name.name;
+			}
+			
+			container = container || this.data.objects;
+			
+			if(container.contents){
+				for(var i=0; i<container.contents.length; i++){
+					if(container.contents[i].contents){
+						this.getObjectData(name, container.contents[i]);
+					}
+					else{
+						if(container.contents[i].name == name){
+							return container.contents[i];
+						}
+					}
+				}
+			}
+			if(container.name == name){
+				return container;
+			}
+		},
+ 
 		getAssetPath: function(asset){
 			return this.assetsPath + asset.fullPath;
 		},
@@ -239,6 +279,30 @@
 			return;
 		},
 		
+		physics: {
+			ninja: {
+				enableTileLayer: function (layer) {
+					//  If the bodies array is already populated we need to nuke it
+					//this.clearTilemapLayerBodies(map, layer);
+					layer = layer.layer;
+					for (var y = 0, h = layer.height; y < h; y++)
+					{
+						for (var x = 0, w = layer.width; x < w; x++)
+						{
+							var tile = layer.data[y][x];
+							if (tile && tile.index > 0)
+							{
+								var body = new Phaser.Physics.Ninja.Body(this, null, 3, tile.index, 0, tile.worldX + tile.centerX, tile.worldY + tile.centerY, tile.width, tile.height);
+								layer.bodies.push(body);
+							}
+						}
+					}
+					return layer.bodies;
+				},
+			}
+		},
+ 
+ 
 		/* private stuff */
 		_fontsToLoad: 0,
 		_loadAssetBuffer: function(buffer){
@@ -448,12 +512,14 @@
 			}
 			
 			var tiles = object.tiles;
+			var tile = null;
 			for(var y in tiles){
 				for(var x in tiles[y]){
-					map.putTile(tiles[y][x], x, y, tl);
+					tile = map.putTile(tiles[y][x], x, y, tl);
+					//tile.index = object.widthInTiles*y + x;
 				}
 			}
-			
+			tl.isFixedToCamera = true;
 			
 			if(container.hasOwnProperty(object.name)){
 				console.warn("dublicate object name - ", object.name);
@@ -522,7 +588,7 @@
 			object.y = template.y;
 			object.alpha = template.alpha || 1;
 			
-			object.fixedToCamera = template.isFixedToCamera;
+			
 		},
 		
 		//mark all texts dirty to force redraw

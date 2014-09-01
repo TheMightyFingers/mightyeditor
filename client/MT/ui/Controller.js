@@ -228,6 +228,10 @@ MT.extend("core.Emitter")(
 		window.setTimeout(function(){
 			window.clearInterval(updateInt);
 		}, 5000);
+		
+		
+		this.colorPicker = new MT.ui.ColorPicker(this);
+		this.colorPicker.hide();
 	},
 	{
    
@@ -346,7 +350,7 @@ MT.extend("core.Emitter")(
 			for(var i=this.panels.length-1; i>0; i--){
 				p = this.panels[i];
 				if(!p.isDocked){
-					if(p.style.zIndex != i+10){
+					if(p.style.zIndex != i+10 && p.style.zIndex < 1000){
 						p.style.zIndex = i+10;
 					}
 				}
@@ -362,7 +366,9 @@ MT.extend("core.Emitter")(
 					panel.style.zIndex = this.zIndex + 1;
 				}
 				else{
-					panel.style.zIndex = this.zIndex + 10;
+					if(panel.style.zIndex < 1000){
+						panel.style.zIndex = this.zIndex + 10;
+					}
 				}
 			}
 		},
@@ -1274,7 +1280,7 @@ MT.extend("core.Emitter")(
 		},
 		
 		loadLayout: function(layout){
-			var toLoad = layout;// || JSON.parse(localStorage.getItem("ui"));
+			var toLoad = layout || JSON.parse(localStorage.getItem("ui"));
 			if(!toLoad){
 				this.resetLayout();
 				return;
@@ -1342,7 +1348,7 @@ MT.extend("core.Emitter")(
 		
 		
 		resetLayout: function(){
-			var toLoad =  {"__box":{"x":40,"y":29,"width":837,"height":656},"__oldScreenSize":{"width":1087,"height":982},"Project":{"x":0,"y":0,"width":1087,"height":29,"dockPosition":3,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":29},"top":null,"bottom":null},"Assets":{"x":837,"y":29,"width":250,"height":193.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":"Objects"},"assetPreview":{"x":40,"y":656,"width":797,"height":300,"dockPosition":4,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"Objects":{"x":837,"y":222.25,"width":250,"height":168.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Assets","bottom":"Settings"},"Map editor":{"x":40,"y":29,"width":797,"height":627,"dockPosition":5,"isDocked":true,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":false,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null},"toolbox":{"x":0,"y":29,"width":40,"height":953,"dockPosition":1,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":40,"height":400},"top":null,"bottom":null},"Settings":{"x":837,"y":390.5,"width":250,"height":591.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Objects","bottom":null},"Map Manager":{"x":40,"y":956,"width":797,"height":26,"dockPosition":4,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":26},"top":null,"bottom":null},"Text":{"x":40,"y":29,"width":797,"height":30,"dockPosition":0,"isDocked":false,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":false,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null}};
+			var toLoad = {"__box":{"x":40,"y":29,"width":963,"height":612},"__oldScreenSize":{"width":1234,"height":938},"SourceEditor":{"x":40,"y":29,"width":923,"height":583,"dockPosition":5,"isDocked":true,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":false,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null},"Assets":{"x":963,"y":29,"width":271,"height":193.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":"Objects"},"assetPreview":{"x":40,"y":612,"width":923,"height":300,"dockPosition":4,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"Objects":{"x":963,"y":222.25,"width":271,"height":168.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Assets","bottom":"Settings"},"Map editor":{"x":40,"y":29,"width":923,"height":583,"dockPosition":5,"isDocked":true,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":false,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null},"toolbox":{"x":0,"y":29,"width":40,"height":909,"dockPosition":1,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":40,"height":400},"top":null,"bottom":null},"Project":{"x":0,"y":0,"width":1234,"height":29,"dockPosition":3,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":29},"top":null,"bottom":null},"userData":{"x":963,"y":390.5,"width":271,"height":547.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":false,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":"Objects","bottom":null},"Map Manager":{"x":40,"y":912,"width":923,"height":26,"dockPosition":4,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":26},"top":null,"bottom":null},"physics":{"x":963,"y":390.5,"width":271,"height":547.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":false,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":"Objects","bottom":null},"Settings":{"x":963,"y":390.5,"width":271,"height":547.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Objects","bottom":null},"Text":{"x":40,"y":29,"width":923,"height":30,"dockPosition":0,"isDocked":false,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":false,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":944,"height":30},"top":null,"bottom":null},"file-list-holder":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isDocked":false,"isResizeable":true,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"source-editor":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isDocked":false,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"color":{"x":656,"y":411,"width":305,"height":200,"dockPosition":0,"isDocked":false,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":false,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":305,"height":200},"top":null,"bottom":null}};
 			this.loadLayout(toLoad);
 			//this.saveLayout();
 		},

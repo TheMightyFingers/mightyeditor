@@ -135,13 +135,15 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				this.bottom.setWidth(val);
 			}
 			
-			this.emit("resize", this.width, this.height);
+			
 		},
 		
 		setClearWidth: function(val){
 			for(var i=0; i<this.joints.length; i++){
 				MT.ui.DomElement.setWidth.call(this.joints[i], val);
+				this.joints[i].emit("resize", this.width, this.height);
 			}
+			
 		},
 		
 		setY: function(val){
@@ -176,13 +178,15 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 			
 			
-			this.emit("resize", this.width, this.height);
+			//this.emit("resize", this.width, this.height);
 		},
 		
 		setClearHeight: function(val){
 			for(var i=0; i<this.joints.length; i++){
 				MT.ui.DomElement.setHeight.call(this.joints[i], val);
+				this.joints[i].emit("resize", this.width, this.height);
 			}
+			
 		},
 		
 		show: function(parent, silent){

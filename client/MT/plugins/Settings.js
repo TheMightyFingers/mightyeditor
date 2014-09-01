@@ -15,31 +15,20 @@ MT(
 		initUI: function(ui){
 			this.panel = ui.createPanel("Settings");
 			this.panel.setFree();
-			
-			
 			var that = this;
+			
 			ui.events.on("keyup", function(e){
 				if(e.which == MT.keys.ESC){
 					that.clear();
 					that.active
 				}
 			});
-			
 			this.panel.header.addClass("ui-wrap");
 		},
 		
 		installUI: function(){
-			
 			var that = this;
-			
-			//return;
-			/*
-			this.assetmanager = this.project.plugins.assetmanager.tv.on(["click"], function(obj){
-				that.handleAssets(obj);
-			});
-			*/
-			
-			this.project.plugins.tools.on(MT.ASSET_SELECTED, function(obj){
+			this.project.plugins.tools.on(MT.ASSET_FRAME_CHANGED, function(obj, frame){
 				that.handleAssets(obj);
 			});
 			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
@@ -97,7 +86,7 @@ MT(
 			
 			var p = this.panel.content;
 			
-			var fw = new MT.ui.Input(this.project.ui.events, key, object);
+			var fw = new MT.ui.Input(this.project.ui, key, object);
 			fw.show(p.el);
 			
 			fw.style.position = "relative";
@@ -146,14 +135,14 @@ MT(
 			this.addInput( {key: "anchorY", step: 0.5}, obj, true, cb);
 			this.addInput( {key: "fps", step: 1}, obj, true, cb);
 			
-			this.addInput({key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, obj){
+			this.addInput( {key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, obj){
 				if(e.target.files.length === 0){
 					return;
 				}
 				that.project.am.addAtlas(obj, e);
 			});
 			
-			this.addInput({key: "update", type: "upload", accept: MT.const.IMAGES}, obj, true, function(e){
+			this.addInput( {key: "update", type: "upload", accept: MT.const.IMAGES}, obj, true, function(e){
 				that.project.am.updateImage(obj, e);
 			});
 			
@@ -164,7 +153,6 @@ MT(
 			if(!obj){
 				return;
 			}
-			
 			
 			if(this.lastObj == obj){
 				return;
@@ -321,7 +309,7 @@ MT(
 			this.scene.gridX = this.addInput( {key: "gridX", min: 2}, obj, true, cb);
 			this.scene.gridY = this.addInput( {key: "gridY", min: 2}, obj, true, cb);
 			this.scene.showGrid = this.addInput( {key: "showGrid", min: 0, max: 1}, obj, true, cb);
-			this.scene.backgroundColor = this.addInput( {key: "backgroundColor", type: "text" }, obj, true, cb);
+			this.scene.backgroundColor = this.addInput( {key: "backgroundColor", type: "color" }, obj, true, cb);
 			
 		},
    

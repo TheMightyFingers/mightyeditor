@@ -288,7 +288,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				contents: [],
 				isVisible: 1,
 				isLocked: 0,
-				isFixedToCamera: 0
+				isFixedToCamera: 0,
+				alpha: 1
 			};
 			
 			data.unshift(group);

@@ -39,7 +39,23 @@ body:before {
 	content: "";
 	z-index: -1;
 }
-
+table{
+	width: 99.9999%;
+	border-collapse: collapse;
+	font-size: 13.5px;
+	cursor: default;
+}
+table td{
+	border: solid 1px rgba(0,0,0,0.3);
+	padding: 1px 3px;
+	word-break: break-word;
+	height: 19px;
+}
+table th{
+	font-size: 11px;
+	margin: 0;
+	padding: 2px;
+}
 .loadingImage{
 	margin: 0 auto;
 	top: 50%;
@@ -572,17 +588,17 @@ div.ui-input.upload, div.ui-input.upload *{
 }
 
 div.ui-input .ui-input-value{
-padding: 0 10px 0 0;
-font-weight: bold;
-min-width: 50px;
-text-align: right;
-max-width: 50%;
-overflow: hidden;
-white-space: nowrap;
-color: #fff;
-min-height: 100%;
-text-decoration: none;
-outline: none;
+	padding: 0 10px 0 0;
+	font-weight: bold;
+	min-width: 50px;
+	text-align: right;
+	max-width: 50%;
+	overflow: hidden;
+	white-space: nowrap;
+	color: #fff;
+	text-decoration: none;
+	outline: none;
+	float: right;
 }
 
 div.ui-input.ui-input-number .ui-input-value{
@@ -976,5 +992,36 @@ div.ui-list {
 	color: rgba(255,255,255,0.6);
 	text-align: center;
 	text-shadow: 0 0 0px #000;
+}
+
+.ui-input-color-pick{
+	float: right;
+	width: 10px;
+	height: 10px;
+	margin-left: 23px;
+	top: 3px;
+	position: relative;
+	border: solid 1px rgba(255, 255, 255, 0.4);
+}
+
+fieldset {
+	margin: 9px 3px 0 7px;
+}
+legend {
+padding: 0px 5px;
+position: relative;
+font-size: 11px;
+font-weight: bold;
+font-style: italic;
+}
+fieldset div.ui-input {
+	margin: 2px 0 2px 15px;
+	float: left;
+	min-width: 43%;
+}
+
+.ui-input div{
+	display: inline-block;
+	padding-right: 5px;
 }
 

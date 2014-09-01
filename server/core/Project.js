@@ -93,6 +93,9 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		loadPlugins: function(){
+			console.log("load Plugins");
+			this.unloadPlugins();
+			
 			this.export = new MT.plugins.Export(this);
 			
 			this.assets = new MT.plugins.AssetManager(this);
@@ -101,6 +104,17 @@ MT.extend("core.BasicPlugin")(
 			this.map = new MT.plugins.MapEditor(this);
 			
 			this.sourceeditor = new MT.plugins.SourceEditor(this);
+		},
+		
+		unloadPlugins: function(){
+			if(this.export){
+				this.export.unload();
+				this.assets.unload();
+				this.objects.unload();
+				this.map.unload();
+				this.sourceeditor.unload();
+			}
+			
 		},
 		
 		openProject: function(pid, cb){
@@ -160,6 +174,7 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		initProject: function(cb){
+			MT.error("OLD:", this.socket.groups);
 			this.loadPlugins();
 			this.socket.leaveAllGroups();
 			this.socket.joinGroup(this.id);
@@ -171,6 +186,8 @@ MT.extend("core.BasicPlugin")(
 			this.assets.a_sendFiles(this.path);
 			this.objects.readData();
 			this.map.readData();
+			
+			MT.error("NEW:", this.socket.groups, MT.core.sockets.length);
 		},
 		isNewProject: false,
 		createProject: function(info){

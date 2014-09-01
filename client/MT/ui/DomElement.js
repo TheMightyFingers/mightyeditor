@@ -144,7 +144,7 @@ MT(
 		setX: function(val){
 			this._x = val;
 			this.style.left = val+"px";
-			this.width = this._width;
+			//this.width = this._width;
 			
 			//this.style.transform =  "translate(" + this.y + "px," + this.y + "px)";
 		},

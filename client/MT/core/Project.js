@@ -7,6 +7,8 @@ MT.require("plugins.FontManager");
 MT.require("plugins.MapManager");
 MT.require("plugins.SourceEditor");
 MT.require("plugins.GamePreview");
+MT.require("plugins.Physics");
+MT.require("plugins.UserData");
 
 MT.DROP = "drop";
 
@@ -34,7 +36,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"FontManager",
 			"MapManager",
 			"SourceEditor",
-			"GamePreview"
+			"GamePreview",
+			"Physics",
+			"UserData"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
@@ -297,7 +301,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				removeClass();
 			});
 			
-			this.ui.loadLayout();
+			this.ui.resetLayout();
 		},
 		
 		handleDrop: function(e){

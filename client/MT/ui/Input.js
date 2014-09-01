@@ -4,9 +4,10 @@
 
 "use strict";
 
-
+MT.require("ui.ColorPicker");
 MT.extend("ui.DomElement").extend("core.Emitter")(
-	MT.ui.Input = function(events, properties, obj){
+	MT.ui.Input = function(ui, properties, obj){
+		var events = ui.events;
 		MT.ui.DomElement.call(this);
 		MT.core.Emitter.call(this);
 		
@@ -37,14 +38,26 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 		}
 		
+		// create button? 
+		if(this.type == "bool"){
+			this.type = "number";
+			this.min =  0;
+			this.max =  1;
+			this.step = 1;
+		}
+		
 		if(this.type == "number"){
 			this.addClass("ui-input-number");
 		}
 		
+		
 		this.label = new MT.ui.DomElement();
-		this.label.setAbsolute();
+		//this.label.setAbsolute();
 		
 		this.addChild(this.label).show();
+		
+		
+		
 		
 		this.input = document.createElement("input");
 		this.addClass("ui-input");
@@ -56,7 +69,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		
 		this.value = new MT.ui.DomElement("a");
-		this.value.setAbsolute();
+		//this.value.setAbsolute();
 		
 		
 		var that = this;
@@ -85,21 +98,39 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			return;
 		}
 		
-		this.setValue(this.object[this.key], true);
+		
 		
 		this.addChild(this.value).show();
 		this.value.style.bottom = "initial";
 		this.value.style.left = "initial";
 		this.value.style.right = 0;
 		this.value.addClass("ui-input-value");
+		if(this.type == "color"){
+			this.value.style.float = "right";
+			this.value.style.position = "relative";
+			this.span = document.createElement("span");
+			this.el.appendChild(this.span);
+			this.span.className = "ui-input-color-pick";
+			this.span.style.backgroundColor = this.object[this.key];
+			
+			var that = this;
+			this.span.onclick = function(){
+				ui.colorPicker.setColor(that.object[that.key]);
+				ui.colorPicker.show();
+				ui.colorPicker.once("change", function(val){
+					that.setValue(val);
+				});
+			};
+		}
 		
+		this.setValue(this.object[this.key], true);
 		this.setTabIndex();
 		
 		this.events = events;
 		
 		
 		var input = document.createElement("input");
-		input.style.position = "absolute";
+		//input.style.position = "absolute";
 		input.type = "text";
 		input.className = "ui-input";
 		input.isVisible = false;
@@ -230,10 +261,13 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			this.setValue(this.object[this.key], true);
 		},
 		
-		setObject: function(obj){
+		setObject: function(obj, show){
 			
 			this.object = obj;
 			this.update();
+			if(show){
+				this.show();
+			}
 		},
 		
 		setValue: function(val, silent){
@@ -264,7 +298,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			else{
 				this.value.el.innerHTML = val;
 			}
-			
+			if(this.type == "color"){
+				this.span.style.backgroundColor = val;
+			}
 			if(!silent){
 				this.emit("change", val, oldValue);
 			}

@@ -120,7 +120,7 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		a_newImage: function(data){
-			
+			console.log("new Image", data.name);
 			var path = data.path.split("/");
 			if(data.path != "/"){
 				this.a_newFolder(this.fs.path.dirname(data.path));

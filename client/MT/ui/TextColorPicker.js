@@ -65,52 +65,52 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		
 		
 		this.color = "#000000";
-		this.colorInput = new MT.ui.Input(MT.events, {key: "color", type: "color"}, this);
+		this.colorInput = new MT.ui.Input(ui, {key: "color", type: "color"}, this);
 		this.colorInput.style.top = "auto";
 		this.colorInput.style.bottom = "70px";
 		this.colorInput.on("change", function(val){
-			that.change();
+			that.change(val);
 		});
 		this.addChild(this.colorInput).show();
 		
 		
 		// add stroke options
 		this.strokeThickness = 0;
-		this.strokeThicknessInput = new MT.ui.Input(MT.events, {key: "strokeThickness", min: 0, step: 1}, this);
+		this.strokeThicknessInput = new MT.ui.Input(ui, {key: "strokeThickness", min: 0, step: 1}, this);
 		this.strokeThicknessInput.style.top = "auto";
 		this.strokeThicknessInput.style.bottom = "50px";
 		this.strokeThicknessInput.on("change", function(val){
-			that.change();
+			that.change(val);
 		});
 		
 		
 		
 		// add shadow options
 		this.shadowX = 0;
-		this.shadowXInput =  new MT.ui.Input(MT.events, {key: "shadowX", step: 1}, this);
+		this.shadowXInput =  new MT.ui.Input(ui, {key: "shadowX", step: 1}, this);
 		this.shadowXInput.style.top = "auto";
 		this.shadowXInput.style.bottom = "50px";
 		this.shadowXInput.on("change", function(val){
-			that.change();
+			that.change(val);
 		});
 		
 		
 		this.shadowY = 0;
-		this.shadowYInput =  new MT.ui.Input(MT.events, {key: "shadowY", step: 1}, this);
+		this.shadowYInput =  new MT.ui.Input(ui, {key: "shadowY", step: 1}, this);
 		
 		this.shadowYInput.style.top = "auto";
 		this.shadowYInput.style.bottom = "30px";
 		this.shadowYInput.on("change", function(val){
-			that.change();
+			that.change(val);
 		});
 		
 		this.shadowBlur = 0;
-		this.shadowBlurInput =  new MT.ui.Input(MT.events, {key: "shadowBlur", min: 0, step: 1}, this);
+		this.shadowBlurInput =  new MT.ui.Input(ui, {key: "shadowBlur", min: 0, step: 1}, this);
 		
 		this.shadowBlurInput.style.top = "auto";
 		this.shadowBlurInput.style.bottom = "10px";
 		this.shadowBlurInput.on("change", function(val){
-			that.change();
+			that.change(val);
 		});
 		
 		

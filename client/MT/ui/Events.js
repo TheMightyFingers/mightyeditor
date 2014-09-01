@@ -118,6 +118,7 @@ MT(
 			var ev = this.events[type];
 			
 			for(var i=0; i<ev.length; i++){
+
 				ev[i](data);
 			}
 		},

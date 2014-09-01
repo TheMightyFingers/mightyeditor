@@ -141,7 +141,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				
 				that.active.addClass("selected");
-				that.emit(MT.ASSET_SELECTED, that.active.data);
+				//that.emit(MT.ASSET_SELECTED, that.active.data);
+				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
 				that.setPreviewAssets(that.active.data);
 			};
 			
@@ -180,8 +181,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active = element;
 				that.active.addClass("active.selected");
 				
-				that.emit(MT.ASSET_SELECTED, data);
-				that.setPreviewAssets(data);
+				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+				// tiletool uses his own preview
+				var tools = that.project.plugins.tools;
+				if( tools && tools.activeTool && tools.activeTool != tools.tools.tiletool){
+					that.setPreviewAssets(data);
+				}
 			});
 			
 			this.tv.on("select", select);
@@ -638,7 +643,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				
 				that.activeFrame = frame;
-				that.emit(MT.ASSET_FRAME_CHANGED, panel.data.asset, that.activeFrame);
+				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
 			};
 			
 			canvas.onmousedown = function(e){
@@ -843,7 +848,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(active == void(0) && !this.active){
 				return;
 			}
-			this.emit(MT.ASSET_SELECTED, this.active.data);
+			//this.emit(MT.ASSET_SELECTED, this.active.data);
+			this.emit(MT.ASSET_FRAME_CHANGED, this.active.data, this.activeFrame);
 			this.setPreviewAssets(this.active.data);
 		},
 		
@@ -910,9 +916,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		a_receiveFileList: function(list){
+			
+			//this._syncData(list);
+			
 			this.buildAssetsTree(list);
 			this.buildList(list);
 			this.update();
+			
 		},
 		
 		buildList: function(list){

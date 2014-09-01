@@ -364,9 +364,19 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.game.renderer.resize(this.game.width, this.game.height);
 			
 			this.setCameraBounds();
-			
+			this.reloadObjectsDelayed();
 		},
-		
+		_reloadDelay: 0,
+		reloadObjectsDelayed: function(){
+			if(this._reloadDelay){
+				window.clearTimeout(this._reloadDelay);
+			}
+			var that = this;
+			this._reloadDelay = window.setTimeout(function(){
+				that._reloadDelay = 0;
+				that.reloadObjects();
+			}, 500);
+		},
 		setCameraBounds: function(){
 			
 			this.game.camera.bounds.x = -Infinity;
@@ -769,7 +779,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(asset.atlas){
 				var ext = asset.atlas.split(".").pop().toLowerCase();
 				
-				this.ajax(that.project.path + "/" + asset.atlas+"?"+Date.now(), function(dataString){
+				MT.loader.get(that.project.path + "/" + asset.atlas+"?"+Date.now(), function(dataString){
 					var data = null;
 					var type = Phaser.Loader.TEXTURE_ATLAS_XML_STARLING;
 					/*
@@ -880,7 +890,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			};
 			image.src = src;
 		},
-		
 		
 		atlasNames: {},
 		
@@ -1075,7 +1084,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			group.visible = !!obj.isVisible;
 			
-			group.fixedToCamera = !!obj.isFixedToCamera;
+			//group.fixedToCamera = !!obj.isFixedToCamera;
 			
 			return group;
 		},
@@ -1194,8 +1203,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			sp.y = obj.y;
 			
 			sp.angle = obj.angle;
-			
-			sp.alpha = obj.alpha || 1;
+			if(obj.alpha == void(0)){
+				sp.alpha = 1;
+			}
 			
 			obj._framesCount = 0;
 			
@@ -1214,7 +1224,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 			}*/
 			
-			if(obj.scaleX){
+			if(obj.scaleX != void(0)){
 				if(sp.scale.x != obj.scaleX || sp.scale.y != obj.scaleY){
 					sp.scale.x = obj.scaleX;
 					sp.scale.y = obj.scaleY;

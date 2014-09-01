@@ -5,16 +5,23 @@ MT(
 		this.channel = this.name = channel;
 
 		var that = this;
-		this.socket.on(channel, function(action, data){
+		this._cb = function(action, data){
 			if(typeof that["a_"+action] == "function"){
 				that["a_"+action](data);
 			}
 			else{
 				MT.log("unknown function", channel, action);
 			}
-		});
+		};
+		
+		this.socket.on(channel, this._cb);
 	},
 	{
+		_cb: null,
+   
+		unload: function(){
+			this.socket.off(this.channel, this._cb);
+		},
 		
 		send: function(action, data){
 			this.socket.send(this.channel, action, data);

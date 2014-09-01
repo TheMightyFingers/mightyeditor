@@ -14,6 +14,17 @@ var log = MT.core.Logger = {
 		console.error("\n");
 	},
 	
+	stack: function(name){
+		try{
+			throw new Error(name);
+		}
+		catch(e){
+			var args = arguments;
+			args[0] = e;
+			log.debug.apply(log, args);
+		}
+	},
+	
 	_message: function(parts){
 		return [log.mktime()].concat(Array.prototype.slice.call(parts) );
 	},
@@ -25,5 +36,6 @@ var log = MT.core.Logger = {
 MT.log = log.log;
 MT.error = log.error;
 MT.debug = log.debug;
+MT.stack = log.stack;
 
 })();

@@ -132,7 +132,19 @@ MT(
 			}
 			this.channels[channel].push(cb);
 		},
-   
+		off: function(channel, cb){
+			if(this.channels[channel] === void(0)){
+				return;
+			}
+			var chns = this.channels[channel];
+			for(var i=0; i<chns.length; i++){
+				if(chns[i] == cb){
+					chns[i] = chns[chns.length -1];
+					chns.length = chns.length - 1;
+					return;
+				}
+			}
+		},
 		emit: function(channel, action, data){
 			if(!this.channels[channel]){
 				MT.error("Socket::Unknown channel", channel);
