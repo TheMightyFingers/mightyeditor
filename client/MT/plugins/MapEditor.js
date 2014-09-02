@@ -346,6 +346,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 					that.highlightDublicates(ctx);
 					
+					that.drawPhysics(ctx);
+					
 				}
 			});
 			
@@ -673,6 +675,150 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			ctx.restore();
 		},
 		
+		drawPhysics: function(ctx){
+			if(!this.enabledPhysics){
+				return;
+			}
+			for(var i=0; i<this.objects.length; i++){
+				this.drawPhysicsBody(ctx, this.objects[i]);
+			}
+		},
+		drawPhysicsBody: function(ctx, obj){
+			
+			if(!obj || !obj.MT_OBJECT.physics || !obj.MT_OBJECT.physics.enable){
+				return;
+			}
+			
+			if(!obj.game || !obj.parent){
+				obj = this.getById(obj.MT_OBJECT.id);
+				if(!obj){
+					return;
+				}
+			}
+			
+			if(!this.isVisible(obj)){
+				return;
+			}
+			
+			
+			var alpha = ctx.globalAlpha;
+			var bounds = obj.getBounds();
+			var group = null;
+			
+			if(obj.MT_OBJECT.contents){
+				group = obj;
+			}
+			else{
+				group = obj.parent || game.world;
+			}
+			
+			var x = this.getObjectOffsetX(group);
+			var y = this.getObjectOffsetY(group);
+			
+			
+			ctx.save();
+			
+			ctx.translate(0.5,0.5);
+			
+			if(this.activeObject == obj){
+				ctx.strokeStyle = "rgb(255,0,0)";
+				ctx.lineWidth = 1;
+				
+				
+				var off = this.helperBoxSize;
+				var sx = bounds.x-off*0.5 | 0;
+				var dx = sx + bounds.width | 0;
+				
+				var sy = bounds.y-off*0.5 | 0;
+				var dy = sy + bounds.height | 0;
+					
+				if(obj.MT_OBJECT.type == MT.objectTypes.TEXT){
+					var width = bounds.width;
+					if(obj.wordWrap){
+						width = obj.wordWrapWidth*this.game.camera.scale.x | 0;
+						
+						ctx.strokeRect(bounds.x - off | 0, sy + bounds.height*0.5 | 0, off, off);
+						ctx.strokeRect(bounds.x + width | 0, sy + bounds.height*0.5 | 0, off, off);
+						
+					}
+					
+					ctx.strokeRect(bounds.x | 0, bounds.y | 0, width | 0, bounds.height | 0);
+				}
+				else{
+					if(obj.type == Phaser.SPRITE){
+						ctx.strokeRect(sx, sy, off, off);
+						ctx.strokeRect(sx, dy, off, off);
+						ctx.strokeRect(dx, sy, off, off);
+						ctx.strokeRect(dx, dy, off, off);
+						ctx.beginPath();
+						ctx.moveTo(sx + off, bounds.y);
+						ctx.lineTo(dx, bounds.y);
+						
+						ctx.moveTo(sx + off, bounds.y + bounds.height);
+						ctx.lineTo(dx, bounds.y + bounds.height);
+						
+						ctx.moveTo(bounds.x, sy + off);
+						ctx.lineTo(bounds.x, dy);
+						
+						ctx.moveTo(bounds.x + bounds.width, sy + off);
+						ctx.lineTo(bounds.x + bounds.width, dy);
+						
+						
+						ctx.stroke();
+					}
+					
+					else{ //(obj.type == Phaser.GROUP ){
+						ctx.strokeRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
+					}
+					if(obj.type != Phaser.TILE_LAYER){
+					//	ctx.strokeRect((bounds.x  - this.game.camera.x) | 0, (bounds.y - this.game.camera.y) | 0 , bounds.width | 0, bounds.height | 0);
+					}
+					
+					
+				
+				}
+			}
+			else{
+				ctx.strokeStyle = "rgb(255,100,0)";
+				ctx.strokeRect(bounds.x | 0, bounds.y | 0, bounds.width, bounds.height);
+			}
+			
+			
+			
+			
+			ctx.strokeStyle = "#ffffff";
+			ctx.lineWidth = 1;
+			
+			
+			
+			var par = group.parent;
+			var oo = [];
+			while(par){
+				oo.push({x: par.x, y: par.y, r: par.rotation});
+				par = par.parent;
+			}
+			
+			while(oo.length){
+				var p = oo.pop();
+				ctx.translate(p.x, p.y);
+				ctx.rotate(p.r);
+				ctx.translate(-p.x, -p.y);
+			}
+			
+			ctx.translate(x, y);
+			ctx.rotate(group.rotation);
+			ctx.translate(-x, -y);
+			
+			ctx.beginPath();
+			ctx.moveTo(x, y);
+			ctx.lineTo(x, y - 16);
+			ctx.stroke();
+			ctx.strokeRect(x - 4, y - 4, 8, 8);
+
+			
+			ctx.globalAlpha = alpha;
+			ctx.restore();
+		},
 		
 		drawSelection: function(ctx){
 			
@@ -1333,7 +1479,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		dist: null,
 		
 		_objectMove: function(e, object){
-			
+			//console.log("move");
 			if(!object){
 				var that = this;
 				this.selector.forEach(function(obj){
@@ -1344,6 +1490,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			var id = object.MT_OBJECT.id;
 			if(!object.world){
+				console.error("ASDASD");
 				object = this.getById(id);
 			}
 			
@@ -1395,6 +1542,16 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			this.sync(object);
 			this.project.settings.updateObjects(object.MT_OBJECT);
+			
+			this.reloadObjects();
+		},
+		
+		enabledPhysics: false,
+		enablePhysics: function(){
+			this.enabledPhysics = true;
+		},
+		disablePhysics: function(){
+			this.enabledPhysics= false;
 		},
 		
 		moveByKey: function(e, object){

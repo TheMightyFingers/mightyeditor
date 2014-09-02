@@ -92,6 +92,8 @@
 			}
 			
 			var objects = {};
+			console.log("group", group);
+			
 			this._add(group, objects, "", parent);
 			
 			return objects[name];
@@ -418,6 +420,9 @@
 			
 			if(object.contents){
 				createdObject = this._addGroup(object, container);
+				if(object.physics && object.physics.enable){
+					createdObject.enableBody = true;
+				}
 				group.add(createdObject);
 				
 				if(!container[object.name]){

@@ -17,6 +17,7 @@ MT(
 			var plugins = this.project.plugins;
 			var tools = plugins.tools;
 			var that = this;
+			this.activeObject = null;
 			
 			var updateData = function(obj){
 				if(!obj.userData){
@@ -24,21 +25,38 @@ MT(
 				}
 				that.table.setData(obj.userData);
 				that.table.show(that.panel.content.el);
+				that.activeObject = obj;
 			};
 			
-			tools.on(MT.ASSET_FRAME_CHANGED, updateData);
-			tools.on(MT.OBJECT_SELECTED, updateData);
+			tools.on(MT.ASSET_FRAME_CHANGED, function(obj){
+				updateData(obj);
+				that.type = "asset";
+				console.log("asset GO");
+			});
+			tools.on(MT.OBJECT_SELECTED, function(obj){
+				updateData(obj);
+				that.type = "object";
+			});
 			
-			
-			this.ui.events.on("keyup", function(e){
-				if(e.which == MT.keys.ESC){
-					that.table.hide();
+			plugins.assetmanager.on(MT.ASSETS_UPDATED, function(){
+				if(that.type == "asset"){
+					updateData(plugins.assetmanager.getById(that.activeObject.id));
 				}
 			});
 			
-			this.table.on("change", function(){
-				
+			
+			var clear = function(){
+				that.table.hide();
+			};
+			/*
+			this.ui.events.on("keyup", function(e){
+				if(e.which == MT.keys.ESC){
+					clear();
+				}
 			});
+			*/
+			tools.on(MT.OBJECT_UNSELECTED, clear);
+			
 			
 			this.ui.joinPanels(this.project.plugins.settings.panel, this.panel);
 			this.project.plugins.settings.panel.show();

@@ -214,6 +214,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.emit(MT.OBJECT_ADDED, obj);
 			}
 			
+			console.log(obj);
+			
 			return obj;
 		},
 		
@@ -235,6 +237,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				type: MT.objectTypes.SPRITE,
 				anchorX: asset.anchorX,
 				anchorY: asset.anchorY,
+				userData: JSON.parse(JSON.stringify(asset.userData)),
+				physics: JSON.parse(JSON.stringify(asset.physics)),
 				scaleX: 1,
 				scaleY: 1,
 				angle: 0,

@@ -6,6 +6,7 @@ MT.require("plugins.tools.Stamp");
 MT.require("plugins.tools.Brush");
 MT.require("plugins.tools.Text");
 MT.require("plugins.tools.TileTool");
+MT.require("plugins.tools.Physics");
 
 MT.TOOL_SELECTED = "TOOL_SELECTED";
 
@@ -24,7 +25,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"Stamp": MT.plugins.tools.Stamp,
 			"Brush": MT.plugins.tools.Brush,
 			"Text": MT.plugins.tools.Text,
-			"TileTool": MT.plugins.tools.TileTool
+			"TileTool": MT.plugins.tools.TileTool,
+			"Physics": MT.plugins.tools.Physics
 		};
 		
 		this.tmpObject = null;
@@ -286,7 +288,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		lastSelected: null,
 		
 		selectObject: function(obj, clear){
-			if(this.lastSelected == obj && this.map.activeObject){
+			if(this.lastSelected && this.lastSelected.MT_OBJECT.id == obj.MT_OBJECT.id && this.map.activeObject){
 				return;
 			}
 			this.lastSelected = obj;

@@ -12,7 +12,6 @@ MT.extend("core.BasicPlugin")(
 			
 			var that = this;
 			this.empty.on("change", function(val){
-				console.log("change", val);
 				if(val){
 					that.buildPropTree();
 				}
@@ -24,6 +23,7 @@ MT.extend("core.BasicPlugin")(
 			
 			var cb = function(val){
 				that.change(val);
+				that.buildPropTree();
 			};
 			
 			var tmp = {};
@@ -100,24 +100,9 @@ MT.extend("core.BasicPlugin")(
 			}
 			
 			
-			/*
-			
-			immovable - 1/0
-			bounce: 0 - 1
-			gravity -> x/y
-			
-			size: {
-				width: 
-				height:
-				offset -> x/y
-			}
-			mass
-			maxVelocity
-			maxAngular
-			allowRotation : 0 / 1
-			
-			*/
-			
+			this.createFieldset("gravity");
+			this.createFieldset("size");
+			this.createFieldset("rotation");
 		},
 		getTemplate: function(isFull){
 			if(isFull == void(0)){
@@ -162,8 +147,9 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		buildPropTree: function(){
+			this.clear();
+			
 			if(!this.activeObject.physics.enable){
-				this.clear();
 				return;
 			}
 			
@@ -172,6 +158,7 @@ MT.extend("core.BasicPlugin")(
 			}
 			
 			var o = this.activeObject.physics;
+			var f;
 			
 			this.empty.setObject(o);
 			this.empty.show(this.panel.content.el);
@@ -179,16 +166,7 @@ MT.extend("core.BasicPlugin")(
 			this.inputs.immovable.setObject(o);
 			this.inputs.immovable.show(this.panel.content.el);
 			
-			this.inputs.bounce.setObject(o);
-			this.inputs.bounce.show(this.panel.content.el);
 			
-			var f = this.addFieldset("gravity");
-			
-			this.inputs.gravityX.setObject(o.gravity);
-			this.inputs.gravityX.show(f);
-			
-			this.inputs.gravityY.setObject(o.gravity);
-			this.inputs.gravityY.show(f);
 			
 			f = this.addFieldset("size");
 			
@@ -204,49 +182,57 @@ MT.extend("core.BasicPlugin")(
 			this.inputs.offsetY.setObject(o.size);
 			this.inputs.offsetY.show(f);
 			
+			if(!o.immovable){
+				this.inputs.bounce.setObject(o);
+				this.inputs.bounce.show(this.panel.content.el);
 			
+				f = this.addFieldset("gravity");
 			
-			f = this.addFieldset("rotation");
+				this.inputs.gravityX.setObject(o.gravity);
+				this.inputs.gravityX.show(f);
 			
-			this.inputs.allowRotation.setObject(o.rotation);
-			this.inputs.allowRotation.show(f);
-			
-			this.inputs.maxAngular.setObject(o.rotation);
-			this.inputs.maxAngular.show(f);
-			
-			this.inputs.maxVelocity.setObject(o);
-			this.inputs.maxVelocity.show(this.panel.content.el);
-			
-			this.inputs.mass.setObject(o);
-			this.inputs.mass.show(this.panel.content.el);
-			
-			/*
-			this.inputs.immovable.setObject(o, true);
-			this.inputs.immovable.setObject(o, true);
-			this.inputs.immovable.setObject(o, true);
-			this.inputs.immovable.setObject(o, true);
-			*/
-			
-			
-			console.log("createTree", p);
+				this.inputs.gravityY.setObject(o.gravity);
+				this.inputs.gravityY.show(f);
+
+				f = this.addFieldset("rotation");
+				
+				this.inputs.allowRotation.setObject(o.rotation);
+				this.inputs.allowRotation.show(f);
+				
+				this.inputs.maxAngular.setObject(o.rotation);
+				this.inputs.maxAngular.show(f);
+				
+				this.inputs.maxVelocity.setObject(o);
+				this.inputs.maxVelocity.show(this.panel.content.el);
+				
+				this.inputs.mass.setObject(o);
+				this.inputs.mass.show(this.panel.content.el);
+			}
 		},
 		
 		sets: {},
 		addFieldset: function(title){
-			
 			if(this.sets[title]){
 				this.panel.content.el.appendChild(this.sets[title]);
 				return this.sets[title];
 			}
 			
+			var f = this.createFieldset(title);
+			this.panel.content.el.appendChild(f);
+			return f;
+		},
+		
+		createFieldset: function(title){
+			if(this.sets[title]){
+				return;
+			}
 			var f = document.createElement("fieldset");
 			var l = document.createElement("legend");
 			f.appendChild(l);
 			
 			l.innerHTML = title;
 			
-			this.panel.content.el.appendChild(f);
-			
+		
 			this.sets[title] = f;
 			
 			return f;
@@ -300,8 +286,13 @@ MT.extend("core.BasicPlugin")(
 			tools.on(MT.ASSET_FRAME_CHANGED, updateData);
 			tools.on(MT.OBJECT_SELECTED, updateData);
 			
+			tools.on(MT.OBJECT_UNSELECTED, function(){
+				that.clear();
+			});
+			
 			this.ui.joinPanels(this.project.plugins.settings.panel, this.panel);
 			this.project.plugins.settings.panel.show();
+			
 		}
 		
 	}

@@ -80,7 +80,7 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		this.strokeThicknessInput.style.top = "auto";
 		this.strokeThicknessInput.style.bottom = "50px";
 		this.strokeThicknessInput.on("change", function(val){
-			that.change(val);
+			that.change();
 		});
 		
 		
@@ -91,7 +91,7 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		this.shadowXInput.style.top = "auto";
 		this.shadowXInput.style.bottom = "50px";
 		this.shadowXInput.on("change", function(val){
-			that.change(val);
+			that.change();
 		});
 		
 		
@@ -101,7 +101,7 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		this.shadowYInput.style.top = "auto";
 		this.shadowYInput.style.bottom = "30px";
 		this.shadowYInput.on("change", function(val){
-			that.change(val);
+			that.change();
 		});
 		
 		this.shadowBlur = 0;
@@ -110,7 +110,7 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		this.shadowBlurInput.style.top = "auto";
 		this.shadowBlurInput.style.bottom = "10px";
 		this.shadowBlurInput.on("change", function(val){
-			that.change(val);
+			that.change();
 		});
 		
 		

@@ -117,7 +117,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			this.span.onclick = function(){
 				ui.colorPicker.setColor(that.object[that.key]);
 				ui.colorPicker.show();
-				ui.colorPicker.once("change", function(val){
+				ui.colorPicker.on("change", function(val){
 					that.setValue(val);
 				});
 			};

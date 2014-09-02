@@ -113,6 +113,9 @@ MT.extend("core.BasicPlugin")(
 				MT.events.simulateKey(MT.keys.ESC);
 				
 				that.addButtons(tools.panel);
+				
+				that.leftPanel.width = parseInt(that.leftPanel.style.width);
+				
 			});
 			this.panel.on("unselect", function(){
 				tools.panel.content.show();

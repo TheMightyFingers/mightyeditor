@@ -1,6 +1,6 @@
 MT.require("ui.InputHelper");
 
-MT.extend("ui.DomElement")(
+MT.extend("ui.DomElement").extend("core.Emitter")(
 	MT.ui.TableView = function(data, header){
 		MT.ui.DomElement.call(this);
 		
@@ -30,10 +30,7 @@ MT.extend("ui.DomElement")(
 		});
 		
 		this.input.on("blur", function(){
-			console.log("blur");
-			
 			that.updateData(that.input.el);
-			
 		});
 		
 		this.input.on("tab", function(e){
@@ -189,6 +186,7 @@ MT.extend("ui.DomElement")(
 			}
 			
 			this.createTable();
+			this.emit("change", this.origData);
 		},
 		
 		_allowEmpty: true,

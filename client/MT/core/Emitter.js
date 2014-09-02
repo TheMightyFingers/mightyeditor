@@ -77,6 +77,10 @@ MT(
 			}
 			
 			for(var i in this.callbacks){
+				if(cb == void(0)){
+					this.callbacks[i].length = 0;
+					continue;
+				}
 				this._off(cb, i);
 			}
 		},

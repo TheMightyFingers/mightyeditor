@@ -704,6 +704,11 @@ input.ui-input.ui-input-helper{
 	background: url("../img/tools/trash.png")  no-repeat 50%;
 }
 
+.tool.physics{
+	border-right: 1px solid rgba(255,255,255,0.1);
+	background: url("../img/tools/physics.png")  no-repeat 50%;
+}
+
 
 .ui-button.datalink{
 	padding: 0 5px;

@@ -196,6 +196,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				var sprite;
 				for(var i=0; i<data.length; i++){
 					sprite = this.map.getById(data[i].id);
+					sprite.updateTransform();
+					
 					bounds = sprite.getBounds();
 					data[i].x = bounds.x + cx;
 					data[i].y = bounds.y + cy;

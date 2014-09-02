@@ -57,7 +57,6 @@ MT.extend("core.Emitter")(
 		
 		
 		this.panel.on("resize", function(w, h){
-			console.log("resize", w, h);
 			that.resize();
 		});
 		
@@ -69,7 +68,8 @@ MT.extend("core.Emitter")(
 		
 		ui.events.on(ui.events.MOUSEDOWN, function(e){
 			if(!that.panel.vsPoint(e)){
-				that.panel.hide();
+				that.emit("change", that.color.valueOf());
+				that.hide();
 				return;
 			}
 			
@@ -132,9 +132,14 @@ MT.extend("core.Emitter")(
 		that.input.onkeyup = function(e){
 			e.stopPropagation();
 			e.preventDefault();
-			console.log("done");
+			if(e.which == MT.keys.ESC){
+				that.emit("change", that.startColor);
+				that.setColor(that.startColor);
+				that.hide();
+				return;
+			}
 			
-			if(e.which == MT.keys.ENTER || e.which == MT.keys.ESC){
+			if(e.which == MT.keys.ENTER){
 				that.emit("change", that.color.valueOf());
 				that.hide();
 			}
@@ -176,16 +181,19 @@ MT.extend("core.Emitter")(
 			data = this.ctx.getImageData(this.handleX.value, this.handleY.value, 1, 1).data;
 			
 			this.color.setRGB(data[0], data[1], data[2]);
-			
-			//console.log("VAL:", this.color.hex());
+
 			this.drawHandles();
 			
 			this.preview.style.backgroundColor = this.color.valueOf();
 			this.text.innerHTML = this.color.valueOf();
-			//that.emit("change", that.color.valueOf());
+			
+			this.emit("change", this.color.valueOf());
 		},
 		
+		startColor: null,
 		setColor: function(color){
+			this.startColor = color;
+			
 			this.preview.style.backgroundColor = color;
 			
 			this.color.setColor(color);
@@ -223,7 +231,6 @@ MT.extend("core.Emitter")(
 					}
 					this.handleX.reset( (i/4) % (this.canvas.width - this.pickOffset) );
 					this.handleY.reset( Math.floor( (i/4) / (this.canvas.width - this.pickOffset) ) );
-					console.log("FOUND", data[i], data[i+1], data[i+2]);
 					break;
 				}
 			}
@@ -239,10 +246,6 @@ MT.extend("core.Emitter")(
 			this.cache.height = this.canvas.height;
 			this.drawSide(this.cacheCtx);
 		},
-   
-		
-		
-		
 		
 		redraw: function(){
 			this.drawSide();
@@ -341,6 +344,7 @@ MT.extend("core.Emitter")(
 		hide: function(){
 			this.panel.hide();
 			this.input.blur();
+			this.off();
 		}
 
 	}

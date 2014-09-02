@@ -15,6 +15,9 @@ MT.extend("core.BasicPlugin")(
 		
 		var that = this;
 		this.onKeyDown = function(e){
+			if(!e.ctrlKey){
+				return;
+			}
 			if(e.which !== "Z".charCodeAt(0)){
 				return;
 			}

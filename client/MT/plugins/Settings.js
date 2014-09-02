@@ -20,7 +20,6 @@ MT(
 			ui.events.on("keyup", function(e){
 				if(e.which == MT.keys.ESC){
 					that.clear();
-					that.active
 				}
 			});
 			this.panel.header.addClass("ui-wrap");
@@ -101,6 +100,7 @@ MT(
    
 		lastObj: null,
 		handleAssets: function(obj){
+			this.ooo = obj;
 			if(obj.contents !== void(0)){
 				return;
 			}
@@ -110,7 +110,6 @@ MT(
 			}
 			this.lastObj = obj;
 			
-			var that = this;
 			this.clear();
 			
 			this.panel.title = obj.name;
@@ -278,7 +277,7 @@ MT(
    
 		updateObjects: function(obj){
 			if(obj.id != this.activeId){
-				return;
+				//return;
 			}
 			for(var i in this.objects){
 				this.objects[i].obj = obj;
