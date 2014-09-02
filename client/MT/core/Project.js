@@ -122,8 +122,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				namespace: "NewGame"
 			};
 			
-			var iName = new MT.ui.Input(this.ui.events, {key: "title", type: "text"}, prop);
-			var iNs = new MT.ui.Input(this.ui.events, {key: "namespace", type: "text"}, prop);
+			var iName = new MT.ui.Input(this.ui, {key: "title", type: "text"}, prop);
+			var iNs = new MT.ui.Input(this.ui, {key: "namespace", type: "text"}, prop);
 			
 			iName.show(p.content.el);
 			iNs.show(p.content.el);
@@ -174,8 +174,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				namespace: "NewGame"
 			};
 			
-			var iName = new MT.ui.Input(this.ui.events, {key: "title", type: "text"}, prop);
-			var iNs = new MT.ui.Input(this.ui.events, {key: "namespace", type: "text"}, prop);
+			var iName = new MT.ui.Input(this.ui, {key: "title", type: "text"}, prop);
+			var iNs = new MT.ui.Input(this.ui, {key: "namespace", type: "text"}, prop);
 			
 			iName.show(p.content.el);
 			iNs.show(p.content.el);
