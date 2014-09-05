@@ -14955,9 +14955,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var p;
 			for(var i=0; i<items.length; i++){
 				p = document.createElement("div");
-				p.innerHTML = items[i].title + " ("+items[i].id+")";
 				p.className = "projectItem"
-				p.project = items[i].id;
+				if(items[i].id){
+					p.innerHTML = items[i].title + " ("+items[i].id+")";
+					p.project = items[i].id;
+				}
+				else{
+					p.innerHTML = i;
+					p.project = i;
+				}
 				list.appendChild(p);
 			}
 			list.onclick = function(e){

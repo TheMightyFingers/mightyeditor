@@ -212,10 +212,20 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var list = document.createElement("div");
 			list.className = "list-content";
 			var items = [];
+			var tmp = null;
 			for(var i=0; i<localStorage.length; i++){
 				key = localStorage.key(i);
 				if(key.substring(0, 3) !== "ui-" && key != "UndoRedo"){
-					items.push( JSON.parse(localStorage.getItem(key)) );
+					tmp = JSON.parse(localStorage.getItem(key));
+					if(tmp.id){
+						items.push(tmp );
+					}
+					else{
+						items.push({
+							id: key,
+							title: key
+						});
+					}
 				}
 			}
 			
@@ -223,14 +233,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			for(var i=0; i<items.length; i++){
 				p = document.createElement("div");
 				p.className = "projectItem"
-				if(items[i].id){
-					p.innerHTML = items[i].title + " ("+items[i].id+")";
-					p.project = items[i].id;
-				}
-				else{
-					p.innerHTML = i;
-					p.project = i;
-				}
+				p.innerHTML = items[i].title + " ("+items[i].id+")";
+				p.project = items[i].id;
+				
 				list.appendChild(p);
 			}
 			list.onclick = function(e){
