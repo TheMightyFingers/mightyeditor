@@ -92,11 +92,15 @@
 			}
 			
 			var objects = {};
-			console.log("group", group);
 			
 			this._add(group, objects, "", parent);
 			
 			return objects[name];
+		},
+		
+		createGroup: function(name, parent){
+			console.warn('mt.createGroup is deprecated. Use mt.create("'+name+'") instead');
+			return mt.create(name, parent);
 		},
 		
 		// create slope map for tilelayer

@@ -1085,10 +1085,6 @@ border-radius: 5px;
 border: 1px solid #000;
 }
 
-.ui-popup.starting-popup:after{
-	content: "";
-	
-}
 
 .ui-popup.starting-popup .ui-popup-close{
 	top: 2px;
@@ -1153,7 +1149,9 @@ background-image: none;
 	background-repeat: no-repeat;
 	background-image: url("../img/icons/map.png");
 	top: 15px;
-left: 25px;
+	left: 20px;
+	width: 16px;
+	height: 16px;
 }
 
 .ui-popup.starting-popup .ui-button.docs{
@@ -1166,7 +1164,9 @@ left: 25px;
 	background-repeat: no-repeat;
 	background-image: url("../img/icons/map.png");
 	top: 15px;
-	left: 25px;
+	left: 20px;
+	width: 16px;
+	height: 16px;
 }
 .ui-popup.starting-popup .project-list{
 	position: absolute;
