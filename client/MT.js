@@ -937,7 +937,10 @@ MT.extend("core.Emitter")(
 		this.preview.style.height = "20px";
 		this.preview.style.marginLeft = "5px";
 		this.preview.style.float = "left";
+		this.preview.style.border = "solid 1px rgba(0,0,0,0.5)";
 		this.panel.content.el.appendChild(this.preview);
+		
+		
 		
 		this.text = document.createElement("span");
 		this.text.style.width = "20%";
@@ -1099,6 +1102,7 @@ MT.extend("core.Emitter")(
 		
 		startColor: null,
 		setColor: function(color){
+			color = color || "#333";
 			this.startColor = color;
 			
 			this.preview.style.backgroundColor = color;
@@ -1242,7 +1246,7 @@ MT.extend("core.Emitter")(
 		},
 		
 		show: function(){
-			this.panel.style.zIndex = this.ui.zIndex*10+999;
+			this.panel.style.zIndex = this.ui.zIndex*10+9999;
 			this.panel.show();
 			this.input.focus();
 			
@@ -1961,7 +1965,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		
 		this.tools.on(MT.OBJECT_SELECTED, function(obj){
-			that.select(obj);
+			if(tools.map.activeObject){
+				that.select(tools.map.activeObject);
+			}
 		});
 		
 		this.tools.on(MT.OBJECT_UNSELECTED, function(){
@@ -3195,7 +3201,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				if(!shift){
 					this.map.selector.clear();
 					this.map.activeObject = null;
-					this.tools.project.plugins.settings.handleScene(this.map.settings);
+					this.map.emit("select", this.map.settings);
+					//this.tools.project.plugins.settings.handleScene();
 				}
 			}
 		}
@@ -3481,8 +3488,14 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			var val = that.evalValue(input.value);
 			that.setValue(val);
+			that.emit("change", val, val);
 		};
 		
+		input.onkeydown = input.onkeyup = function(e){
+			if(e.which == MT.keys.DELETE){
+				e.stopPropagation();
+			}
+		};
 		
 		this.keyup = events.on("keyup", function(e){
 			if(!input.isVisible){
@@ -3490,7 +3503,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 			var w = e.which;
 			var hideval = true;
-			
 			
 			if(w == MT.keys.ESC){
 				input.value = that.object[that.key];
@@ -3505,11 +3517,12 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			if(that.object[that.key] != input.value){
 				var val = that.evalValue(input.value);
-				that.setValue(val);
+				that.setValue(val, true);
 				if(hideval){
 					that.value.el.innerHTML = "";
 				}
 			}
+			
 			
 		});
 		
@@ -3519,6 +3532,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				if(e.target !== that.value.el){
 					return;
 				}
+				e.preventDefault();
 				var d = ( (e.wheelDelta || -e.deltaY) > 0 ? 1 : -1);
 				var val = that.object[that.key] + d*that.step;
 				that.setValue(val);
@@ -4615,10 +4629,11 @@ MT(
    
 		hide: function(){
 			if(!this.el.parentNode){
-				return;
+				return this;
 			}
 			this.el.parentNode.removeChild(this.el);
 			this.isVisible = false;
+			return this;
 		},
    
 		hideToTop: function(){
@@ -4813,6 +4828,7 @@ MT(
 			this.style.bottom = 0;
 			this.style.left = 0;
 			this.style.height = "auto";
+			this.style.width = "auto";
 			this.isFitted = true;
 		},
 		
@@ -4966,6 +4982,11 @@ MT.extend("ui.DomElement")(
 		},
 		
 		showTabs: function(){
+			if(!this.tabs.length){
+				console.error("TABELEES");
+			}
+			
+			
 			var width = (100/this.tabs.length);
 			
 			for(var i=0; i<this.tabs.length; i++){
@@ -4999,6 +5020,7 @@ MT.extend("ui.DomElement")(
 				t.removeClass("active");
 			}
 		},
+		
 		setActiveIndex: function(index){
 			var t = null;
 			for(var i=0; i<this.tabs.length; i++){
@@ -5606,7 +5628,7 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			
 			var link = window.location.origin;
-			link += "/"+this.project.path+"/phaser/mt.data.js";
+			link += "/"+this.project.path+"/phaser/js/lib/mt.data.js";
 			
 			
 			var b = this.project.panel.addButton(link, "datalink", function(e){
@@ -5632,9 +5654,12 @@ MT.extend("core.BasicPlugin")(
 	MT.plugins.UndoRedo = function(project){
 		this.project = project;
 		this.buffer = [];
+		
+		this.name = "UndoRedo";
+		
 		this._step = 0;
 		
-		this.max = 100;
+		this.max = 20;
 		
 		this.undos = 0;
 		
@@ -5707,12 +5732,22 @@ MT.extend("core.BasicPlugin")(
 		installUI: function(){
 			var that = this;
 			
-			var stored = localStorage.getItem(that.project.id);
-			if(stored){
-				this.buffer = JSON.parse(stored);
-				this.step = this.buffer.length;
+			var stored = localStorage.getItem(this.name);
+			
+			if(!stored){
+				this.data = {};
+			}
+			else{
+				this.data = JSON.parse(stored);
+			}
+
+			if(this.data[this.project.id]){
+				this.buffer = this.data[this.project.id];
 			}
 			
+			
+			this.step = this.buffer.length;
+			this.data[this.project.id] = this.buffer;
 			
 			this.om = this.project.plugins.objectmanager;
 			this.om.on(MT.OBJECTS_SYNC, function(data){
@@ -5757,11 +5792,12 @@ MT.extend("core.BasicPlugin")(
 			this.currentOffset = off;
 			
 			try{
-				localStorage.setItem(this.project.id, str);
+				localStorage.setItem(this.name, JSON.stringify(this.data) );
 			}
 			catch(e){
 				off++;
-				localStorage.setItem(this.project.id, JSON.stringify(this.buffer.slice(this.step - off, this.step)) );
+				this.buffer.slice(this.step - off, this.step);
+				localStorage.setItem(this.name, JSON.stringify(this.data) );
 			}
 		},
 		
@@ -6192,29 +6228,23 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					}
 				},
 				{
-					label: "Phaser.io (data only)",
+					label: "Phaser.io (data only) js",
 					className: "",
 					cb: function(){
 						that.export("phaserDataOnly", function(data){
-							that.openDataLink(data);
+							that.openDataLink(data, "js");
 						});
 					}
 				},
 				{
-					label: "Open sample",
+					label: "Phaser.io (data only) json",
 					className: "",
 					cb: function(){
-						that.openLink();
+						that.export("phaserDataOnly", function(data){
+							that.openDataLink(data, "json");
+						});
 					}
 				}
-				/*,
-				{
-					label: "Tiled (.tml)",
-					className: "",
-					cb: function(){
-						alert("in progress");
-					}
-				}*/
 			
 			], ui, true);
 			
@@ -6222,15 +6252,21 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				that.showList();
 			});
 			
-			
+			this.openGame = this.project.panel.addButton("Open Game", null, function(e){
+				that.openLink();
+			});
 			
 			//this.list.removeHeader();
 			//this.list.content.overflow = "initial";
 			
 		},
 		
-		export: function(dest, cb){
-			this.send(dest);
+		export: function(dest, data, cb){
+			if(typeof data == "function"){
+				cb = data;
+				data = null;
+			}
+			this.send(dest, data);
 			this.once("done", cb);
 		},
 		
@@ -6242,7 +6278,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.list.show(document.body);
 		},
 		
-		openDataLink: function(data){
+		openDataLink: function(data, json){
+			if(json == "json"){
+				data.file += "on";
+			}
 			var w = window.innerWidth*0.5;
 			var h = window.innerHeight*0.8;
 			var l = (window.innerWidth - w)*0.5;
@@ -6311,9 +6350,7 @@ MT(
 			
 			var map = this.project.plugins.mapeditor;
 			map.on("select", function(obj){
-				if(!obj){
-					that.handleScene(map.settings);
-				}
+				that.handleScene(map.settings);
 			});
 			
 		},
@@ -7285,9 +7322,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				this.drawPhysicsBody(ctx, this.objects[i]);
 			}
 		},
+		
 		drawPhysicsBody: function(ctx, obj){
 			
-			if(!obj || !obj.MT_OBJECT.physics || !obj.MT_OBJECT.physics.enable){
+			
+			if(!obj){
 				return;
 			}
 			
@@ -7301,124 +7340,53 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!this.isVisible(obj)){
 				return;
 			}
+			if(obj.MT_OBJECT.contents){
+				return;
+			}
+			
+			var p = obj.MT_OBJECT.physics;
+			if(!p || !p.enable){
+				var pp = obj.parent;
+				if(obj.parent == obj.game.world){
+					pp = this.settings.physics;
+				}
+				else{
+					pp = pp.MT_OBJECT.physics;
+				}
+				if(!pp || !pp.enable){
+					return;
+				}
+				p = pp;
+			}
 			
 			
 			var alpha = ctx.globalAlpha;
 			var bounds = obj.getBounds();
-			var group = null;
+			var group = obj.parent;
 			
-			if(obj.MT_OBJECT.contents){
-				group = obj;
-			}
-			else{
-				group = obj.parent || game.world;
-			}
+		
 			
 			var x = this.getObjectOffsetX(group);
 			var y = this.getObjectOffsetY(group);
 			
-			
 			ctx.save();
 			
-			ctx.translate(0.5,0.5);
+			ctx.fillStyle = "rgb(100,200,70)";
+			ctx.globalAlpha = 0.2;
 			
-			if(this.activeObject == obj){
-				ctx.strokeStyle = "rgb(255,0,0)";
-				ctx.lineWidth = 1;
-				
-				
-				var off = this.helperBoxSize;
-				var sx = bounds.x-off*0.5 | 0;
-				var dx = sx + bounds.width | 0;
-				
-				var sy = bounds.y-off*0.5 | 0;
-				var dy = sy + bounds.height | 0;
-					
-				if(obj.MT_OBJECT.type == MT.objectTypes.TEXT){
-					var width = bounds.width;
-					if(obj.wordWrap){
-						width = obj.wordWrapWidth*this.game.camera.scale.x | 0;
-						
-						ctx.strokeRect(bounds.x - off | 0, sy + bounds.height*0.5 | 0, off, off);
-						ctx.strokeRect(bounds.x + width | 0, sy + bounds.height*0.5 | 0, off, off);
-						
-					}
-					
-					ctx.strokeRect(bounds.x | 0, bounds.y | 0, width | 0, bounds.height | 0);
-				}
-				else{
-					if(obj.type == Phaser.SPRITE){
-						ctx.strokeRect(sx, sy, off, off);
-						ctx.strokeRect(sx, dy, off, off);
-						ctx.strokeRect(dx, sy, off, off);
-						ctx.strokeRect(dx, dy, off, off);
-						ctx.beginPath();
-						ctx.moveTo(sx + off, bounds.y);
-						ctx.lineTo(dx, bounds.y);
-						
-						ctx.moveTo(sx + off, bounds.y + bounds.height);
-						ctx.lineTo(dx, bounds.y + bounds.height);
-						
-						ctx.moveTo(bounds.x, sy + off);
-						ctx.lineTo(bounds.x, dy);
-						
-						ctx.moveTo(bounds.x + bounds.width, sy + off);
-						ctx.lineTo(bounds.x + bounds.width, dy);
-						
-						
-						ctx.stroke();
-					}
-					
-					else{ //(obj.type == Phaser.GROUP ){
-						ctx.strokeRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
-					}
-					if(obj.type != Phaser.TILE_LAYER){
-					//	ctx.strokeRect((bounds.x  - this.game.camera.x) | 0, (bounds.y - this.game.camera.y) | 0 , bounds.width | 0, bounds.height | 0);
-					}
-					
-					
-				
-				}
+			var w = bounds.width;
+			var h = bounds.height;
+			
+			if(p.size.width > 0){
+				w = p.size.width * this.scale.x;
 			}
-			else{
-				ctx.strokeStyle = "rgb(255,100,0)";
-				ctx.strokeRect(bounds.x | 0, bounds.y | 0, bounds.width, bounds.height);
+			if(p.size.height > 0){
+				h = p.size.height * this.scale.y;
 			}
 			
 			
 			
-			
-			ctx.strokeStyle = "#ffffff";
-			ctx.lineWidth = 1;
-			
-			
-			
-			var par = group.parent;
-			var oo = [];
-			while(par){
-				oo.push({x: par.x, y: par.y, r: par.rotation});
-				par = par.parent;
-			}
-			
-			while(oo.length){
-				var p = oo.pop();
-				ctx.translate(p.x, p.y);
-				ctx.rotate(p.r);
-				ctx.translate(-p.x, -p.y);
-			}
-			
-			ctx.translate(x, y);
-			ctx.rotate(group.rotation);
-			ctx.translate(-x, -y);
-			
-			ctx.beginPath();
-			ctx.moveTo(x, y);
-			ctx.lineTo(x, y - 16);
-			ctx.stroke();
-			ctx.strokeRect(x - 4, y - 4, 8, 8);
-
-			
-			ctx.globalAlpha = alpha;
+			ctx.fillRect((bounds.x + p.size.offsetX*this.scale.x) | 0, (bounds.y + p.size.offsetY*this.scale.y) | 0, w, h);
 			ctx.restore();
 		},
 		
@@ -8073,7 +8041,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.settings.cameraX = this.game.camera.x;
 			this.settings.cameraY = this.game.camera.y;
 			
-			this.project.settings.updateScene(this.settings);
+			this.project.plugins.settings.updateScene(this.settings);
 			
 		},
 		
@@ -8143,7 +8111,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			
 			this.sync(object);
-			this.project.settings.updateObjects(object.MT_OBJECT);
+			this.project.plugins.settings.updateObjects(object.MT_OBJECT);
 			
 			this.reloadObjects();
 		},
@@ -8184,7 +8152,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			object.MT_OBJECT.x = object.x;
 			object.MT_OBJECT.y = object.y;
-			this.project.settings.updateObjects(object.MT_OBJECT);
+			this.project.plugins.settings.updateObjects(object.MT_OBJECT);
 			this.sync(object);
 		},
 		
@@ -8253,7 +8221,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			obj.alpha = sprite.alpha;
 			
 			if(sprite == this.activeObject){
-				this.project.settings.update();
+				this.project.plugins.settings.update();
 			}
 			
 			this.emit(MT.SYNC, this);
@@ -8732,8 +8700,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				type: MT.objectTypes.SPRITE,
 				anchorX: asset.anchorX,
 				anchorY: asset.anchorY,
-				userData: JSON.parse(JSON.stringify(asset.userData)),
-				physics: JSON.parse(JSON.stringify(asset.physics)),
+				userData: JSON.parse(JSON.stringify(asset.userData || {})),
+				physics: JSON.parse(JSON.stringify(asset.physics || {})),
 				scaleX: 1,
 				scaleY: 1,
 				angle: 0,
@@ -9200,7 +9168,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				that.active.addClass("selected");
 				//that.emit(MT.ASSET_SELECTED, that.active.data);
-				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+				//that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
 				that.setPreviewAssets(that.active.data);
 			};
 			
@@ -10356,7 +10324,38 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		activate: function(){
 			this.show();
 		},
-
+		
+		reset: function(obj){
+			this.dockPosition = obj.dockPosition;
+			
+			// is docked should be removed..
+			this.isDocked = obj.isDocked;
+			//this.isVisible = obj.isVisible;
+			
+			this.x = obj.x;
+			this.y = obj.y;
+			this.width = obj.width;
+			this.height = obj.height;
+			
+			this.top = null;
+			this.bottom = null;
+			
+			if(this.joints.length > 1){
+				this.isVisible = true;
+				MT.ui.DomElement.show.call(this, this._parent);
+			}
+			
+			this.joints = [this];
+			this.header.tabs = [this.mainTab];
+			this.header.setTabs(this.header.tabs);
+			
+			this.setClearX(obj.x);
+			this.setClearY(obj.y);
+			this.setClearWidth(obj.width);
+			this.setClearHeight(obj.height);
+			
+		},
+		
 		setX: function(val){
 			
 			this.setClearX(val);
@@ -10412,7 +10411,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				MT.ui.DomElement.setY.call(this.joints[i], val);
 			}
 		},
-		
+		alingCenter: function(){
+			this.x = (window.innerWidth - this.width)*0.5;
+			this.y = (window.innerHeight - this.height)*0.5;
+		},
 		setHeight: function(val){
 			
 			if(this.dockPosition == MT.TOP && this.bottom){
@@ -10441,6 +10443,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		show: function(parent, silent){
+			this.header.showTabs();
+			
 			if(this.isVisible){
 				return this;
 			}
@@ -10455,7 +10459,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				this.emit("show");
 			}
 			
-			this.header.showTabs();
+			
 			this.content.fitIn();
 			this.content.y = this.header.el.offsetHeight;
 			return this;
@@ -10529,17 +10533,22 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			this.header.setTabs([this.mainTab]);
 			
+			
+			// show first
 			for(var i=0; i<oldJoints.length; i++){
 				if(oldJoints[i] != this){
 					oldJoints[i].show();
 					oldJoints[i].header.showTabs();
-					
 					break;
 				}
 			}
 		},
 		
 		addJoint: function(panel){
+			if(!panel || this == panel){
+				console.log("joining with self?");
+				return;
+			}
 			panel._parent = this._parent;
 			
 			panel.removeClass("animated");
@@ -10578,12 +10587,17 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 			
 			
+			
 			this.setAll("top", this.top);
 			this.setAll("bottom", this.bottom);
 			
-			
+			return;
 			if(!panel.isVisible && this.isVisible){
-				panel.show();
+				//panel.show();
+				panel.header.setTabs(this.header.tabs);
+			}
+			else{
+				this.header.setTabs(this.header.tabs);
 			}
 			
 		},
@@ -10700,6 +10714,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(panel == this.top){
 				return;
 			}
+			
 			if(!noResize){
 				this.setClearHeight(this.height - panel.height);
 				panel.setClearWidth(this.width);
@@ -10761,6 +10776,68 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.bottom = null;
 		},
 		
+		
+		_bottom: null,
+		
+		set bottom(val){
+			if(typeof val != "object"){
+				throw new Error("setting top nt non object", val);
+			}
+			
+			var next = this._bottom;
+			
+			var depth = 0;
+			
+			while(next){
+				depth++;
+				if(depth > 10){
+					console.log("recursivity warning");
+					break;
+				}
+				if(next == this  || next == val){
+				}
+				
+				next = next._bottom;
+			}
+			
+			this._bottom = val;
+			
+		},
+		
+		get bottom(){
+			return this._bottom;
+		},
+		
+		_top: null,
+		set top(val){
+			if(typeof val != "object"){
+				throw new Error("setting top nt non object", val);
+			}
+			
+			var next = this._top;
+			var depth = 0;
+			while(next){
+				depth++;
+				if(depth > 10){
+					console.log("recursivity warning");
+					break;
+				}
+				if(next == this || (next == val && next != this._top)){
+					console.log("recursivity warning");
+					this._top = val;
+					return;
+				}
+				
+				next = next._top;
+			}
+			
+			this._top = val;
+		},
+		
+		get top(){
+			return this._top;
+		},
+		
 		breakSideJoints: function(){
 			var pos = this.dockPosition;
 			if(this.bottom){
@@ -10777,9 +10854,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				
 			}
 			else if(this.top){
-				if(this.bottom){
-					this.bottom.setAll("top", this.top);
-				}
 				this.top.setAll("bottom", this.bottom);
 				
 				this.top.setClearHeight(this.top.height + this.height);
@@ -10795,6 +10869,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		_isDocked: false,
 		set isDocked(val){
+			if(val == void(0)){
+				throw new Error("docek");
+			}
 			this.setAll("_isDocked", val);
 		},
 		
@@ -10842,16 +10919,35 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		loadBox: function(){
-			this.width = this.savedBox.width;
-			this.height = this.savedBox.height;
+			if(this.savedBox.width){
+				this.width = this.savedBox.width;
+			}
+			if(this.savedBox.height){
+				this.height = this.savedBox.height;
+			}
 		},
-		
-		hide: function(silent){
+		getVisibleJoint: function(){
+			for(var i=0; i<this.joints.length; i++){
+				if(this.joints[i].isVisible){
+					return this.joints[i];
+				}
+			}
+			console.log("smth is broken");
+			this.show(this._parent, false);
+			
+			return this;
+		},
+		hide: function(silent, noEmit){
 			if(!this.isVisible){
 				return this;
 			}
 			this.isVisible = false;
 			MT.ui.DomElement.hide.call(this);
+			if(noEmit != void(0)){
+				return this;
+			}
+			
+			
 			if(silent !== false){
 				this.emit("hide");
 			}
@@ -10920,12 +11016,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		getJointNames: function(){
 			var names = [];
 			for(var i=0; i<this.joints.length; i++){
-				if(this.joints[i] == this){
-					continue;
-				}
 				names.push(this.joints[i].name);
 			}
-			
+			return names;
 		},
 		
 	}
@@ -11221,6 +11314,7 @@ MT(
 );
 //MT/plugins/Physics.js
 MT.namespace('plugins');
+"use strict";
 MT.extend("core.BasicPlugin")(
 	MT.plugins.Physics = function(project){
 		this.project = project;
@@ -11258,6 +11352,11 @@ MT.extend("core.BasicPlugin")(
 				}, tmp),
 				
 				// gravity
+				allowGravity: new MT.ui.Input(ui, {
+					key: "allow",
+					type: "bool",
+				}, tmp),
+				
 				gravityX: new MT.ui.Input(ui, {
 					key: "x",
 					type: "number",
@@ -11267,8 +11366,15 @@ MT.extend("core.BasicPlugin")(
 					type: "number",
 				}, tmp),
 				
-				bounce: new MT.ui.Input(ui, {
-					key: "bounce",
+				bounceX: new MT.ui.Input(ui, {
+					key: "x",
+					type: "number",
+					min: 0,
+					step: 0.1
+				}, tmp),
+				
+				bounceY: new MT.ui.Input(ui, {
+					key: "y",
 					type: "number",
 					min: 0,
 					step: 0.1
@@ -11308,6 +11414,10 @@ MT.extend("core.BasicPlugin")(
 					type: "number",
 				}, tmp),
 				
+				collideWorldBounds: new MT.ui.Input(ui, {
+					key: "collideWorldBounds",
+					type: "number",
+				}, tmp),
 				
 				// limits
 				maxVelocity: new MT.ui.Input(ui, {
@@ -11338,8 +11448,12 @@ MT.extend("core.BasicPlugin")(
 			return {
 				enable: 1,
 				immovable: 1,
-				bounce: 1,
+				bounce: {
+					x: 1,
+					y: 1
+				},
 				gravity: {
+					allow: 1,
 					x: 0,
 					y: 0
 				},
@@ -11354,7 +11468,8 @@ MT.extend("core.BasicPlugin")(
 					maxAngular: 0
 				},
 				maxVelocity: 0,
-				mass: 1
+				mass: 1,
+				collideWorldBounds: 0
 			}
 			
 		},
@@ -11368,7 +11483,13 @@ MT.extend("core.BasicPlugin")(
 		change: function(val){
 			
 		},
-		
+		_gravityBreak: null,
+		get gravityBreak(){
+			if(!this._gravityBreak){
+				this._gravityBreak = document.createElement("br");
+			}
+			return this._gravityBreak;
+		},
 		buildPropTree: function(){
 			this.clear();
 			
@@ -11380,56 +11501,85 @@ MT.extend("core.BasicPlugin")(
 				this.activeObject.physics = this.getTemplate(true);
 			}
 			
-			var o = this.activeObject.physics;
+			var o = this.activeObject;
+			var p = o.physics;
 			var f;
 			
-			this.empty.setObject(o);
+			this.empty.setObject(p);
 			this.empty.show(this.panel.content.el);
 			
-			this.inputs.immovable.setObject(o);
+			this.inputs.immovable.setObject(p);
 			this.inputs.immovable.show(this.panel.content.el);
 			
 			
 			
 			f = this.addFieldset("size");
 			
-			this.inputs.width.setObject(o.size);
+			this.inputs.width.setObject(p.size);
 			this.inputs.width.show(f);
 			
-			this.inputs.height.setObject(o.size);
+			this.inputs.height.setObject(p.size);
 			this.inputs.height.show(f);
 			
-			this.inputs.offsetX.setObject(o.size);
+			this.inputs.offsetX.setObject(p.size);
 			this.inputs.offsetX.show(f);
 			
-			this.inputs.offsetY.setObject(o.size);
+			this.inputs.offsetY.setObject(p.size);
 			this.inputs.offsetY.show(f);
 			
-			if(!o.immovable){
-				this.inputs.bounce.setObject(o);
-				this.inputs.bounce.show(this.panel.content.el);
-			
+			if(!p.immovable){
+				
+				f = this.addFieldset("bounce");
+				if(typeof p.bounce != "object"){
+					p.bounce = {x: 1, y: 1};
+				}
+				
+				this.inputs.bounceX.setObject(p.bounce);
+				this.inputs.bounceX.show(f);
+				
+				this.inputs.bounceY.setObject(p.bounce);
+				this.inputs.bounceY.show(f);
+				
+				
 				f = this.addFieldset("gravity");
-			
-				this.inputs.gravityX.setObject(o.gravity);
-				this.inputs.gravityX.show(f);
-			
-				this.inputs.gravityY.setObject(o.gravity);
-				this.inputs.gravityY.show(f);
-
+				if(p.gravity.allow == void(0)){
+					p.gravity.allow = 1;
+				}
+				this.inputs.allowGravity.setObject(p.gravity);
+				this.inputs.allowGravity.show(f);
+				if(p.gravity.allow){
+					f.appendChild(this.gravityBreak);
+					this.inputs.gravityX.setObject(p.gravity);
+					this.inputs.gravityX.show(f);
+				
+					this.inputs.gravityY.setObject(p.gravity);
+					this.inputs.gravityY.show(f);
+				}
+				else{
+					if(this.gravityBreak.parentNode){
+						this.gravityBreak.parentNode.removeChild(this.gravityBreak);
+					}
+				}
 				f = this.addFieldset("rotation");
 				
-				this.inputs.allowRotation.setObject(o.rotation);
+				this.inputs.allowRotation.setObject(p.rotation);
 				this.inputs.allowRotation.show(f);
 				
-				this.inputs.maxAngular.setObject(o.rotation);
+				this.inputs.maxAngular.setObject(p.rotation);
 				this.inputs.maxAngular.show(f);
 				
-				this.inputs.maxVelocity.setObject(o);
+				this.inputs.maxVelocity.setObject(p);
 				this.inputs.maxVelocity.show(this.panel.content.el);
 				
-				this.inputs.mass.setObject(o);
+				this.inputs.mass.setObject(p);
 				this.inputs.mass.show(this.panel.content.el);
+				
+				
+				if(p.collideWorldBounds == void(0)){
+					p.collideWorldBounds = 0;
+				}
+				this.inputs.collideWorldBounds.setObject(p);
+				this.inputs.collideWorldBounds.show(this.panel.content.el);
 			}
 		},
 		
@@ -11477,8 +11627,10 @@ MT.extend("core.BasicPlugin")(
 			var plugins = this.project.plugins;
 			var tools = plugins.tools;
 			var that = this;
+			var map = this.project.plugins.mapeditor;
 			
 			var updateData = function(obj){
+				map.updateScene(map.settings);
 				if(obj){
 					that.activeObject = obj;
 				}
@@ -11504,6 +11656,12 @@ MT.extend("core.BasicPlugin")(
 				if(e.which == MT.keys.ESC){
 					that.clear();
 				}
+			});
+			
+			
+			map.on("select", function(obj){
+				updateData(map.settings);
+				
 			});
 			
 			tools.on(MT.ASSET_FRAME_CHANGED, updateData);
@@ -11692,6 +11850,9 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			this.panel.on("show", function(){
+				that.ui.loadLayout(null, 1);
+				that.panel.show(that.panel._parent, false);
+				
 				tools.panel.content.hide();
 				zoombox.hide();
 				ampv.hide();
@@ -11702,6 +11863,10 @@ MT.extend("core.BasicPlugin")(
 				
 				that.leftPanel.width = parseInt(that.leftPanel.style.width);
 				
+				//window.setTimeout(function(){
+					
+				//}, 1);
+				
 			});
 			this.panel.on("unselect", function(){
 				tools.panel.content.show();
@@ -11711,6 +11876,9 @@ MT.extend("core.BasicPlugin")(
 				window.getSelection().removeAllRanges();
 				
 				that.removeButtons();
+				//window.setTimeout(function(){
+					that.ui.loadLayout(null, 0);
+				//}, 1);
 			});
 			
 			this.project.on(MT.DROP, function(e, data){
@@ -11726,6 +11894,9 @@ MT.extend("core.BasicPlugin")(
 				that.uploadFile(data);
 			});
 			
+			this.project.on("updateData", function(data){
+				that.panel.el.style.fontSize = data.sourceEditor.fontSize+"px";
+			});
 		},
 		
 		initSocket: function(socket){
@@ -12069,7 +12240,49 @@ MT.extend("core.BasicPlugin")(
 			this.send("update", this.tv.getData());
 		},
 		
+		moveLine: function(ed, inc){
+			var line = ed.state.activeLines[0];
+			if(line == void(0)){
+				return;
+			}
+			var c = ed.getCursor();
+			
+			var cLine = ed.getLine(c.line);
+			var nLine = ed.getLine(c.line+inc);
+			
+			//ed.replaceRange(c.line, nLine);
+			ed.replaceRange(nLine, {ch: 0, line: c.line}, {ch: cLine.length, line: c.line});
+			c.line = c.line+inc;
+			
+			
+			ed.replaceRange(cLine, {ch: 0, line: c.line}, {ch: nLine.length, line: c.line});
+			
+			ed.setSelection(c);
+			ed.indentLine(c.line);
+			
+		},
+		
+		copyLine: function(ed, inc){
+			var line = ed.state.activeLines[0];
+			if(line == void(0)){
+				return;
+			}
+			var c = ed.getCursor();
+			var cch = c.ch;
+			c.ch = line.text.length;
+			
+			ed.setCursor(c);
+			ed.replaceSelection("\r\n"+line.text);
+			
+			c.line = c.line+inc;
+			c.ch = cch;
+			ed.setSelection(c);
+			return;
+			
+		},
+		
 		addEditor: function(){
+			var that = this;
 			var defaultCfg = {
 				indentUnit: 4,
 				extraKeys: {
@@ -12079,7 +12292,23 @@ MT.extend("core.BasicPlugin")(
 					
 					"Ctrl-/": "toggleComment",
 					
-					"Ctrl-Space": "autocomplete"
+					"Ctrl-Space": "autocomplete",
+					
+					"Alt-Up": function(ed, e){
+						that.moveLine(ed, -1);
+					},
+					"Alt-Down": function(ed, e){
+						that.moveLine(ed, 1);
+					},
+					"Ctrl-Alt-Up": function(ed){
+						that.copyLine(ed, 0);
+					},
+					"Ctrl-Alt-Down": function(ed){
+						that.copyLine(ed, 1);
+					},
+					"Ctrl-+": function(ed){
+						alert();
+					}
 				},
 				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-jslint"],
 				highlightSelectionMatches: {showToken: /\w/},
@@ -12115,7 +12344,29 @@ MT.extend("core.BasicPlugin")(
 			this.editor.on("change", function(){
 				that.checkChanges();
 			});
+			this.editor.on("keyup", function(ed, e){
+				
+				//move up/down
+				if(e.altKey && (e.which == MT.keys.UP || e.which == MT.keys.DOWN) ){
+					var line = ed.state.activeLines[0];
+					var c = ed.getCursor();
+					if(e.ctrlKey){
+						
+					}
+					
+					
+					
+					e.preventDefault();
+					return false;
+				}
+			});
 			
+			this.editor.on("keyHandled", function(ed, a,b,c){
+				console.log(a,b,c);
+				return;
+				e.preventDefault();
+				e.stopPropagation();
+			});
 		},
 		
 		updateHints: function(){
@@ -12130,7 +12381,7 @@ MT.extend("core.BasicPlugin")(
 					globalstrict: true,
 					loopfunc: true,
 					predef: {
-						"Phaser": false,
+						"Phaser": Phaser,
 						"mt": false,
 						"console": false
 					},
@@ -12410,6 +12661,10 @@ MT.extend("core.BasicPlugin")(
 			if(!this.zoom.list.isVisible){
 				this.zoom.button.text = (val*100).toFixed(0);
 			}
+			
+			this.map.settings.cameraX = cam.x;
+			this.map.settings.cameraY = cam.y;
+			this.project.plugins.settings.updateScene(this.map.settings);
 		},
 		
 		
@@ -12574,6 +12829,29 @@ MT.extend("core.BasicPlugin")(
 		}
 	}
 );
+//MT/ui/Fieldset.js
+MT.namespace('ui');
+MT.extend("ui.DomElement")(
+	MT.ui.Fieldset = function(title){
+		MT.ui.DomElement.call(this, "fieldset");
+		this.title = title;
+	},
+	{
+		get title(){
+			return this.title.innerHTML;
+		},
+		legend: null,
+		set title(val){
+			if(!this.legend){
+				this.legend = document.createElement("legend");
+				this.el.appendChild(this.legend);
+			}
+			if(val !== void(0) || val != ""){
+				this.legend.innerHTML = val;
+			}
+		}
+	}
+);
 //MT/ui/Popup.js
 MT.namespace('ui');
 MT.extend("core.Emitter").extend("ui.DomElement")(
@@ -12596,6 +12874,13 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.bg = document.createElement("div");
 		this.bg.className = "ui-wrapper";
 		this.bg.style.zIndex = 9999;
+		this.bg.onmousedown = this.bg.onmouseup = this.bg.onmousemove = function(e){
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		};
+		
+		
 		this.style.zIndex = 10000;
 		
 		this.y = window.innerHeight*0.3;
@@ -12978,7 +13263,6 @@ MT.extend("core.Emitter")(
 			
 			that.movePanel(activePanel, e);
 		});
-		
 		this.events.on(this.events.MOUSEDOWN, function(e){
 			if(e.button != 0){
 				if(e.button == 1){
@@ -13009,6 +13293,8 @@ MT.extend("core.Emitter")(
 			
 			activePanel.removeClass("animated");
 			that.updateZ(activePanel);
+			
+			window.x = activePanel;
 		});
 		
 		this.events.on(this.events.MOUSEUP, function(e){
@@ -13036,6 +13322,7 @@ MT.extend("core.Emitter")(
 			
 			that.sortPanels();
 			that.update();
+			that.saveLayout();
 		});
 		
 		
@@ -13049,14 +13336,14 @@ MT.extend("core.Emitter")(
 		// after 5 seconds should all be loaded and all animations stopped
 		window.setTimeout(function(){
 			window.clearInterval(updateInt);
-		}, 5000);
+		}, 2000);
 		
 		
 		this.colorPicker = new MT.ui.ColorPicker(this);
 		this.colorPicker.hide();
 	},
 	{
-   
+		saveSlot: 0,
 		toResize: {
 			TOP: false,
 			RIGHT: false,
@@ -13083,12 +13370,22 @@ MT.extend("core.Emitter")(
 			this.sortPanels();
 			this.updateCenter();
 		},
-		
+		// debug only - fast access to panels
+		p: {},
 		createPanel: function(name, width, height){
+			
 			if(!name){
 				console.error("bad name");
 			}
 			var p = new MT.ui.Panel(name, this);
+			
+			Object.defineProperty(this.p, name, {
+				get: function(){
+					return p;
+				},
+				enumerable: true
+			});
+			
 			this.panels.push(p);
 			
 			p.width = width || 250;
@@ -13540,8 +13837,10 @@ MT.extend("core.Emitter")(
 		},
 		
 		update: function(){
-			this.moveDocks();
 			this.updateZ();
+			return;
+			this.saveLayout();
+			this.moveDocks();
 		},
 		
 		/* adjust midddle box */
@@ -13573,7 +13872,7 @@ MT.extend("core.Emitter")(
 			
 			for(var i=0; i<tmp.length; i++){
 				p = tmp[i];
-				if(!p.isDocked || p.dockPosition != MT.LEFT || !p.isVisible){
+				if(p.dockPosition != MT.LEFT || !p.isVisible){
 					continue;
 				}
 				if(p.justUpdated){
@@ -13971,6 +14270,8 @@ MT.extend("core.Emitter")(
 			panel.header.showTabs();
 			
 			panel.isDockNeeded = false;
+			panel.isVisible = false;
+			panel.show();
 		},
 		
 		vsPanels: function(point, panel){
@@ -14101,82 +14402,227 @@ MT.extend("core.Emitter")(
 			this.moveDocks();
 		},
 		
-		loadLayout: function(layout){
-			var toLoad = layout || JSON.parse(localStorage.getItem("ui"));
-			if(!toLoad){
-				this.resetLayout();
+		loadLayout: function(layout, slot){
+			if(slot != void(0)){
+				this.saveSlot = slot;
+			}
+			console.log("loading from slot", this.saveSlot);
+			
+			layout = layout || JSON.parse(localStorage.getItem("ui-"+this.saveSlot));
+			if(!layout){
+				this.resetLayout(this.saveSlot);
 				return;
 			}
 			
+			//this._loadLayout(layout);
+			this._loadLayout(layout, true);
+			this._loadLayout(layout, true);
+			this._loadLayout(layout, true);
+			
+			this.updateZ();
+			this.reloadSize();
+			
+		},
+		_loadLayout: function(layout, noAnim){
+			this._centerPanels.length = 0;
 			
 			var obj = null;
 			var panel = null;
-			this.box = toLoad.__box;
-			this.oldScreenSize.width = toLoad.__oldScreenSize.width;
-			this.oldScreenSize.height = toLoad.__oldScreenSize.height;
+			this.box = layout.__box;
+			this.oldScreenSize.width = layout.__oldScreenSize.width;
+			this.oldScreenSize.height = layout.__oldScreenSize.height;
 			
 			
-			for(var i in toLoad){
-				obj = toLoad[i];
+			var animated = [];
+			if(noAnim){
+				for(var i=0; i<this.panels.length; i++){
+					if(this.panels[i].hasClass("animated")){
+						animated.push(this.panels[i]);
+						this.panels[i].removeClass("animated");
+					}
+				}
+			}
+			
+			var panels = [];
+			for(var i in layout){
+				obj = layout[i];
+				obj.name = i;
 				panel = this.getByName(i);
-				
 				if(!panel){
 					continue;
 				}
 				
 				
-				panel.dockPosition = obj.dockPosition;
-				panel.isDocked = obj.isDocked;
-				
-				//panel.isResizeable = obj.isResizeable;
-				panel.isDockable = obj.isDockable;
-				panel.isJoinable = obj.isJoinable;
-				panel.isPickable = obj.isPickable;
-				/*if(obj.isVisible){
-					panel.show();
-				}
-				else{
-					panel.hide();
-				}*/
-				panel.acceptsPanels = obj.acceptsPanels;
+				panel.reset(obj);
+				panels.push({p: panel, o: obj});
+				continue;
+			}
 			
+			var isFirst = false;
+			var tmp = null;
+			for(var i=0; i<panels.length; i++){
+				panel = panels[i].p;
+				obj = panels[i].o;
+				
 				panel.savedBox = obj.savedBox;
 				
-				for(var j=0; j<obj.joints; j++){
-					panel.addJoint(this.getByName(obj.joints[i]));
+				if(!obj.isVisible){
+					panel.hide(false, true);
+					continue;
 				}
 				
+				isFirst = false;
+				for(var j=0; j<obj.joints.length; j++){
+					tmp = this.getByName(obj.joints[j]);
+					if(tmp == panel){
+						isFirst = true;
+						continue;
+					}
+					
+					if(isFirst){
+						panel.addJoint(tmp);
+					}
+					else{
+						tmp.addJoint(panel);
+					}
+				}
+			}
+			for(var i=0; i<panels.length; i++){
+				panel = panels[i].p;
+				obj = panels[i].o;
 				var p = this.getByName(obj.bottom);
+				if(p){
+					if(!p.isVisible){
+						p = p.getVisibleJoint();
+					}
+				}
 				if(p){
 					panel.joinBottom(p, true);
 				}
 				
 				p = this.getByName(obj.top);
 				if(p){
-					panel.joinTop(p, true);
+					if(!p.isVisible){
+						p = p.getVisibleJoint();
+					}
 				}
 				
-				
-				panel.setClearX(obj.x);
-				panel.setClearY(obj.y);
-				panel.setClearWidth(obj.width);
-				panel.setClearHeight(obj.height);
-				
+				if(p){
+					panel.joinTop(p, true);
+				}
+				if(panel.isVisible){
+					panel.header.showTabs();
+				}
+				panel.dockPosition = obj.dockPosition;
+				if(obj.dockPosition == MT.CENTER){
+					this.setCenter(panel);
+				}
 			}
 			
-			this.reloadSize();
+			
+			
+			for(var i=0; i<animated.length; i++){
+				animated[i].addClass("animated");
+			}
+			
+			//this.reloadSize();
 			/*this.update();*/
 		},
 		
 		
-		resetLayout: function(){
-			var toLoad = {"__box":{"x":40,"y":29,"width":963,"height":612},"__oldScreenSize":{"width":1234,"height":938},"SourceEditor":{"x":40,"y":29,"width":923,"height":583,"dockPosition":5,"isDocked":true,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":false,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null},"Assets":{"x":963,"y":29,"width":271,"height":193.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":"Objects"},"assetPreview":{"x":40,"y":612,"width":923,"height":300,"dockPosition":4,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"Objects":{"x":963,"y":222.25,"width":271,"height":168.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Assets","bottom":"Settings"},"Map editor":{"x":40,"y":29,"width":923,"height":583,"dockPosition":5,"isDocked":true,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":false,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null},"toolbox":{"x":0,"y":29,"width":40,"height":909,"dockPosition":1,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":40,"height":400},"top":null,"bottom":null},"Project":{"x":0,"y":0,"width":1234,"height":29,"dockPosition":3,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":29},"top":null,"bottom":null},"userData":{"x":963,"y":390.5,"width":271,"height":547.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":false,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":"Objects","bottom":null},"Map Manager":{"x":40,"y":912,"width":923,"height":26,"dockPosition":4,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":26},"top":null,"bottom":null},"physics":{"x":963,"y":390.5,"width":271,"height":547.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":false,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":"Objects","bottom":null},"Settings":{"x":963,"y":390.5,"width":271,"height":547.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Objects","bottom":null},"Text":{"x":40,"y":29,"width":923,"height":30,"dockPosition":0,"isDocked":false,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":false,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":944,"height":30},"top":null,"bottom":null},"file-list-holder":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isDocked":false,"isResizeable":true,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"source-editor":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isDocked":false,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"color":{"x":656,"y":411,"width":305,"height":200,"dockPosition":0,"isDocked":false,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":false,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":305,"height":200},"top":null,"bottom":null}};
-			this.loadLayout(toLoad);
-			//this.saveLayout();
+		resetLayout: function(slot){
+			var toLoad = {"__box":{"x":40,"y":29,"width":719,"height":612},"__oldScreenSize":{"width":990,"height":938},
+				"SourceEditor":{
+					"x":40,"y":29,"width":679,"height":583, "dockPosition":5,"isVisible":false,"isDocked":true,
+					"savedBox": {"x":0, "y":0, "width":0, "height":0}
+				},
+				"Settings": {
+					"x":719,"y":580.125,"width":271,"height":357.875,"dockPosition":2,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":["Settings","physics","userData"], "top":"Objects", "bottom":null
+				},
+				"Assets":{
+					"x":719,"y":29,"width":271,"height":193.25,"dockPosition":2,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},
+					"joints":[],"top":null,"bottom":"Objects"
+				},
+				"assetPreview":{
+					"x":40,"y":612,"width":679,"height":300,"dockPosition":4,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},
+					"joints":[],"top":null,"bottom":null
+				},
+				"Objects":{
+					"x":719,"y":222.25,"width":271,"height":357.875,"dockPosition":2,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":"Assets","bottom":"Settings"
+				},
+				"Map editor":{
+					"x":40,"y":29,"width":679,"height":583,"dockPosition":5,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":0,"height":0},"joints":["Map editor","SourceEditor"],"top":null,"bottom":null
+				},
+				"toolbox":{
+					"x":0,"y":29,"width":40,"height":909,"dockPosition":1,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":40,"height":400},"joints":[],"top":null,"bottom":null
+				},
+				"Project":{
+					"x":0,"y":0,"width":990,"height":29,"dockPosition":3,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":29},"joints":[],"top":null,"bottom":null
+				},
+				"physics":{
+					"x":719,"y":580.125,"width":271,"height":357.875,"dockPosition":2,"isVisible":false,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":0,"height":0},"joints":["Settings","physics","userData"],"top":"Objects","bottom":null
+				},
+				"userData":{
+					"x":719,"y":580.125,"width":271,"height":357.875,"dockPosition":2,"isVisible":false,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":0,"height":0},"joints":["Settings","physics","userData"],"top":"Objects","bottom":null
+				},
+				"Map Manager":{
+					"x":40,"y":912,"width":679,"height":26,"dockPosition":4,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":26},"joints":[],"top":null,"bottom":null
+				},
+				"color":{
+					"x":656,"y":411,"width":305,"height":200,"dockPosition":0,"isVisible":false,"isDocked":false,
+					"savedBox":{"x":0,"y":0,"width":305,"height":200},"joints":[],"top":null,"bottom":null
+				},
+				"Text":{
+					"x":40,"y":29,"width":679,"height":30,"dockPosition":0,"isVisible":false,"isDocked":false,
+					"savedBox":{"x":0,"y":0,"width":944,"height":30},"joints":[],"top":null,"bottom":null
+				},
+				"file-list-holder":{
+					"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":null,"bottom":null
+				},
+				"source-editor":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":null,"bottom":null
+				}
+			};
+			
+			var str = JSON.stringify(toLoad);
+			if(slot != void(0)){
+				localStorage.setItem("ui-"+slot, str);
+			}
+			else{
+				var key;
+				for(var i=0; i<localStorage.length; i++){
+					key = localStorage.key(i);
+					if(key.substring(0, 3) == "ui-"){
+						localStorage.setItem(key, str);
+					}
+				}
+			}
+			
+			this.loadLayout();
 		},
 		
-		saveLayout: function(){
-		
+		saveLayout: function(slot){
+			this.refresh();
+			if(slot != void(0)){
+				this.saveSlot = slot;
+			}
+			
+			console.log("saving in slot", this.saveSlot);
+			
+			if(!this.isSaveAllowed){
+				return;
+			}
 			var toSave = {
 				__box: this.box,
 				__oldScreenSize: this.oldScreenSize
@@ -14186,33 +14632,35 @@ MT.extend("core.Emitter")(
 			
 			for(var i=0; i<this.panels.length; i++){
 				p = this.panels[i];
+				
+				if(p._parent != document.body){
+					continue;
+				}
+				
 				toSave[p.name] = {
 					x: p.x,
 					y: p.y,
 					width: p.width,
 					height: p.height,
 					dockPosition: p.dockPosition,
-					
-					isDocked: p.isDocked,
-					isResizeable: p.isResizeable,
-					isDockable: p.isDockable,
-					isJoinable: p.isJoinable,
-					isPickable: p.isPickable,
 					isVisible: p.isVisible,
-					acceptsPanels: p.acceptsPanels,
 					savedBox: p.savedBox,
-					
-					
-					joints: p.getJointNames(),
-					top: (p.top ? p.top.name : null),
-					bottom: (p.bottom ? p.bottom.name : null)
+					isDocked: p.isDocked
 				};
+				
+				if(p.isVisible){
+					toSave[p.name].joints = p.getJointNames();
+					toSave[p.name].top = (p.top ? p.top.name : null);
+					toSave[p.name].bottom = (p.bottom ? p.bottom.name : null);
+				}
 			}
 			
 			var str = JSON.stringify(toSave);
-			localStorage.setItem("ui", str);
-			console.log("toLoad = ", str);
-			
+			localStorage.setItem("ui-"+this.saveSlot, str);
+		},
+		
+		getSavedLayout: function(){
+			console.log("toLoad = ", localStorage.getItem("ui-"+this.saveSlot) );
 		},
 		
 		oldScreenSize: {
@@ -14286,6 +14734,7 @@ MT.namespace('core');
 MT.require("plugins.list");
 MT.require("core.keys");
 MT.require("ui.Popup");
+MT.require("ui.Fieldset");
 
 MT.require("plugins.HelpAndSupport");
 MT.require("plugins.FontManager");
@@ -14301,6 +14750,13 @@ MT.DROP = "drop";
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.core.Project = function(ui, socket){
 		MT.core.BasicPlugin.call(this, "Project");
+		
+		this.data = {
+			backgroundColor: "#666666",
+			sourceEditor:{
+				fontSize: 12
+			}
+		};
 		
 		window.pp = this;
 		
@@ -14334,7 +14790,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.am = this.plugins.assetmanager;
 		this.om = this.plugins.objectmanager;
 		this.map = this.plugins.mapeditor;
-		this.settings = this.plugins.settings;
+		//this.settings = this.plugins.settings;
 		
 		this.ui = ui;
 		
@@ -14367,17 +14823,33 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
-		a_selectProject: function(id){
-			this.id = id;
-			window.location.hash = id;
-			this.path = "data/projects/"+id;
+		a_selectProject: function(info){
+			this.id = info.id;
+			window.location.hash = info.id;
+			this.path = "data/projects/"+info.id;
+			
+			this.a_getProjectInfo(info);
 			
 			this.initUI(this.ui);
 			this.initPlugins();
+			
+			this.setUpData();
+			
+			localStorage.setItem(info.id, JSON.stringify(info));
+			
+			
 		},
+		
+		setUpData: function(){
+			document.body.style.backgroundColor = this.data.backgroundColor;
+			
+			this.emit("updateData", this.data);
+		},
+		
 		a_newProject: function(){
 			this.newProject();
 		},
+		
 		a_needUpdate: function(){
 			var that = this;
 			var pop = new MT.ui.Popup("Update Project", "");
@@ -14427,13 +14899,87 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
+		a_getProjectInfo: function(data){
+			for(var i in data){
+				this.data[i] = data[i];
+			}
+		},
+		
+		// user get here without hash
 		newProject: function(){
+			var that = this;
+			var pop = new MT.ui.Popup("Welcome to MightyEditor", "");
+			pop.y = 200;
+			pop.showClose();
+			
+			pop.bg.style.backgroundColor = "rgba(10,10,10,0.3)";
+			
+			pop.addClass("starting-popup");
+			var logo = document.createElement("div");
+			pop.content.appendChild(logo);
+			logo.className = "logo";
+			
+			var that = this;
+			var newProject = new MT.ui.Button("Create New Project", "new-project", null, function(){
+				that.newProjectNext();
+				pop.off();
+				pop.hide();
+			});
+			
+			var docs = new MT.ui.Button("About MightyEditor","docs", null, function(){
+				//http://mightyfingers.com/editor-features/
+				var w = window.open("about:blank","_newTab");
+				w.opener=null; w.location.href="http://mightyfingers.com/editor-features/";
+			});
+			
+			newProject.show(pop.content);
+			docs.show(pop.content)
+			
+			
+			var projects = document.createElement("div");
+			pop.content.appendChild(projects);
+			projects.innerHTML = '<span class="label">Recent Projects</span>';
+			projects.className = "project-list";
+			
+			
+			var list = document.createElement("div");
+			list.className = "list-content";
+			var items = [];
+			for(var i=0; i<localStorage.length; i++){
+				key = localStorage.key(i);
+				if(key.substring(0, 3) !== "ui-" && key != "UndoRedo"){
+					items.push( JSON.parse(localStorage.getItem(key)) );
+				}
+			}
+			
+			var p;
+			for(var i=0; i<items.length; i++){
+				p = document.createElement("div");
+				p.innerHTML = items[i].title + " ("+items[i].id+")";
+				p.className = "projectItem"
+				p.project = items[i].id;
+				list.appendChild(p);
+			}
+			list.onclick = function(e){
+				e.preventDefault();
+				if(e.target.project){
+					window.location.hash = e.target.project;
+					window.location.reload();
+				}
+				
+			};
+			
+			projects.appendChild(list);
+			
+			pop.on("close", function(){
+				that.newProjectNext();
+			});
+		},
+		
+		newProjectNext: function(){
 			var that = this;
 			var pop = new MT.ui.Popup("New Project", "");
 			pop.removeHeader();
-			
-			
-			
 			
 			pop.el.style.width = "50%";
 			pop.el.style.height= "40%";
@@ -14484,6 +15030,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		initUI: function(ui){
+			var that = this;
+			
 			this.ui = ui;
 			this.panel = ui.createPanel("Project");
 			this.panel.height = 29;
@@ -14492,16 +15040,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panel.addClass("top");
 			
 			ui.dockToTop(this.panel);
+			this.createSettings();
 			
 			this.panel.addButton(null, "logo",  function(e){
-				console.log("clicked", e);
+				
+				that.setPop.show();
 			});
 			
 			
-			var that = this;
 			this.list = new MT.ui.List([
 				{
-					label: "New",
+					label: "Home",
 					className: "",
 					cb: function(){
 						window.location = window.location.toString().split("#")[0];
@@ -14526,6 +15075,90 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				console.log("hash changed", "reload?");
 				window.location.reload();
 			});
+			
+		},
+		
+		createSettings: function(){
+			var that = this;
+			var lastData;
+			
+			
+			this.setPop = new MT.ui.Popup("","");
+			this.setPop.removeHeader();
+			
+			this.setPop.style.height = "50%";
+			this.setPop.style.width = "70%";
+			this.setPop.y = 200;
+			
+			
+			this.setInputs = {
+				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
+				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor)
+				
+			};
+			
+			
+			this.setInputs.bgColor.on("change", function(val){
+				document.body.style.backgroundColor = val;
+			});
+			
+			this.setInputs.srcEdFontSize.on("change", function(val){
+				that.setUpData();
+			});
+			
+			this.setFields = {
+				ui: new MT.ui.Fieldset("UI"),
+				sourceEditor: new MT.ui.Fieldset("SourceEditor")
+			};
+			
+			
+			
+			
+			this.setPop.on("show", function(){
+				console.log("pop show");
+				lastData = JSON.stringify(that.data);
+			});
+			
+			this.setPanel = new MT.ui.Panel("Editor Properties");
+			this.setPanel.removeBorder();
+			
+			this.setPanel.hide().show(this.setPop.content).fitIn();
+			
+			this.setPop.hide();
+			
+			
+			this.setPop.addButton("Save", function(){
+				that.setPop.hide();
+				that.send("saveProjectInfo", that.data);
+				that.emit("updateData", that.data);
+			});
+			this.setPop.addButton("Cancel", function(){
+				that.setPop.hide();
+				that.data = JSON.parse(lastData);
+				
+				that.setInputs.bgColor.setValue(that.data.backgroundColor);
+				that.setInputs.srcEdFontSize.setValue(that.data.sourceEditor.fontSize);
+				that.setUpData();
+			});
+			
+			this.setButtons = {
+				resetLayout: new MT.ui.Button("Reset Layout", "", null, function(){
+					that.ui.resetLayout();
+				})
+			};
+			
+			
+			this.setInputs.bgColor.show(this.setFields.ui.el);
+			this.setButtons.resetLayout.show(this.setFields.ui.el);
+			
+			this.setInputs.srcEdFontSize.show(this.setFields.sourceEditor.el);
+			
+			
+			
+			for(var i in this.setFields){
+				this.setPanel.content.el.appendChild(this.setFields[i].el);
+				this.setFields[i].addClass("full");
+			}
 			
 		},
 		
@@ -14586,7 +15219,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				removeClass();
 			});
 			
-			this.ui.resetLayout();
+			this.ui.loadLayout();
+			this.ui.isSaveAllowed = true;
 		},
 		
 		handleDrop: function(e){
