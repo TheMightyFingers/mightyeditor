@@ -176,7 +176,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		newProject: function(){
 			var that = this;
 			var pop = new MT.ui.Popup("Welcome to MightyEditor", "");
-			pop.y = 200;
+			pop.y = (window.innerHeight - 510)*0.45;
 			pop.showClose();
 			
 			pop.bg.style.backgroundColor = "rgba(10,10,10,0.3)";
