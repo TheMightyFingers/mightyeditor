@@ -1,6 +1,7 @@
 MT.require("plugins.list");
 MT.require("core.keys");
 MT.require("ui.Popup");
+MT.require("ui.Fieldset");
 
 MT.require("plugins.HelpAndSupport");
 MT.require("plugins.FontManager");
@@ -16,6 +17,13 @@ MT.DROP = "drop";
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.core.Project = function(ui, socket){
 		MT.core.BasicPlugin.call(this, "Project");
+		
+		this.data = {
+			backgroundColor: "#666666",
+			sourceEditor:{
+				fontSize: 12
+			}
+		};
 		
 		window.pp = this;
 		
@@ -49,7 +57,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.am = this.plugins.assetmanager;
 		this.om = this.plugins.objectmanager;
 		this.map = this.plugins.mapeditor;
-		this.settings = this.plugins.settings;
+		//this.settings = this.plugins.settings;
 		
 		this.ui = ui;
 		
@@ -82,17 +90,33 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
-		a_selectProject: function(id){
-			this.id = id;
-			window.location.hash = id;
-			this.path = "data/projects/"+id;
+		a_selectProject: function(info){
+			this.id = info.id;
+			window.location.hash = info.id;
+			this.path = "data/projects/"+info.id;
+			
+			this.a_getProjectInfo(info);
 			
 			this.initUI(this.ui);
 			this.initPlugins();
+			
+			this.setUpData();
+			
+			localStorage.setItem(info.id, JSON.stringify(info));
+			
+			
 		},
+		
+		setUpData: function(){
+			document.body.style.backgroundColor = this.data.backgroundColor;
+			
+			this.emit("updateData", this.data);
+		},
+		
 		a_newProject: function(){
 			this.newProject();
 		},
+		
 		a_needUpdate: function(){
 			var that = this;
 			var pop = new MT.ui.Popup("Update Project", "");
@@ -142,13 +166,87 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
+		a_getProjectInfo: function(data){
+			for(var i in data){
+				this.data[i] = data[i];
+			}
+		},
+		
+		// user get here without hash
 		newProject: function(){
+			var that = this;
+			var pop = new MT.ui.Popup("Welcome to MightyEditor", "");
+			pop.y = 200;
+			pop.showClose();
+			
+			pop.bg.style.backgroundColor = "rgba(10,10,10,0.3)";
+			
+			pop.addClass("starting-popup");
+			var logo = document.createElement("div");
+			pop.content.appendChild(logo);
+			logo.className = "logo";
+			
+			var that = this;
+			var newProject = new MT.ui.Button("Create New Project", "new-project", null, function(){
+				that.newProjectNext();
+				pop.off();
+				pop.hide();
+			});
+			
+			var docs = new MT.ui.Button("About MightyEditor","docs", null, function(){
+				//http://mightyfingers.com/editor-features/
+				var w = window.open("about:blank","_newTab");
+				w.opener=null; w.location.href="http://mightyfingers.com/editor-features/";
+			});
+			
+			newProject.show(pop.content);
+			docs.show(pop.content)
+			
+			
+			var projects = document.createElement("div");
+			pop.content.appendChild(projects);
+			projects.innerHTML = '<span class="label">Recent Projects</span>';
+			projects.className = "project-list";
+			
+			
+			var list = document.createElement("div");
+			list.className = "list-content";
+			var items = [];
+			for(var i=0; i<localStorage.length; i++){
+				key = localStorage.key(i);
+				if(key.substring(0, 3) !== "ui-" && key != "UndoRedo"){
+					items.push( JSON.parse(localStorage.getItem(key)) );
+				}
+			}
+			
+			var p;
+			for(var i=0; i<items.length; i++){
+				p = document.createElement("div");
+				p.innerHTML = items[i].title + " ("+items[i].id+")";
+				p.className = "projectItem"
+				p.project = items[i].id;
+				list.appendChild(p);
+			}
+			list.onclick = function(e){
+				e.preventDefault();
+				if(e.target.project){
+					window.location.hash = e.target.project;
+					window.location.reload();
+				}
+				
+			};
+			
+			projects.appendChild(list);
+			
+			pop.on("close", function(){
+				that.newProjectNext();
+			});
+		},
+		
+		newProjectNext: function(){
 			var that = this;
 			var pop = new MT.ui.Popup("New Project", "");
 			pop.removeHeader();
-			
-			
-			
 			
 			pop.el.style.width = "50%";
 			pop.el.style.height= "40%";
@@ -199,6 +297,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		initUI: function(ui){
+			var that = this;
+			
 			this.ui = ui;
 			this.panel = ui.createPanel("Project");
 			this.panel.height = 29;
@@ -207,16 +307,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panel.addClass("top");
 			
 			ui.dockToTop(this.panel);
+			this.createSettings();
 			
 			this.panel.addButton(null, "logo",  function(e){
-				console.log("clicked", e);
+				
+				that.setPop.show();
 			});
 			
 			
-			var that = this;
 			this.list = new MT.ui.List([
 				{
-					label: "New",
+					label: "Home",
 					className: "",
 					cb: function(){
 						window.location = window.location.toString().split("#")[0];
@@ -241,6 +342,90 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				console.log("hash changed", "reload?");
 				window.location.reload();
 			});
+			
+		},
+		
+		createSettings: function(){
+			var that = this;
+			var lastData;
+			
+			
+			this.setPop = new MT.ui.Popup("","");
+			this.setPop.removeHeader();
+			
+			this.setPop.style.height = "50%";
+			this.setPop.style.width = "70%";
+			this.setPop.y = 200;
+			
+			
+			this.setInputs = {
+				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
+				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor)
+				
+			};
+			
+			
+			this.setInputs.bgColor.on("change", function(val){
+				document.body.style.backgroundColor = val;
+			});
+			
+			this.setInputs.srcEdFontSize.on("change", function(val){
+				that.setUpData();
+			});
+			
+			this.setFields = {
+				ui: new MT.ui.Fieldset("UI"),
+				sourceEditor: new MT.ui.Fieldset("SourceEditor")
+			};
+			
+			
+			
+			
+			this.setPop.on("show", function(){
+				console.log("pop show");
+				lastData = JSON.stringify(that.data);
+			});
+			
+			this.setPanel = new MT.ui.Panel("Editor Properties");
+			this.setPanel.removeBorder();
+			
+			this.setPanel.hide().show(this.setPop.content).fitIn();
+			
+			this.setPop.hide();
+			
+			
+			this.setPop.addButton("Save", function(){
+				that.setPop.hide();
+				that.send("saveProjectInfo", that.data);
+				that.emit("updateData", that.data);
+			});
+			this.setPop.addButton("Cancel", function(){
+				that.setPop.hide();
+				that.data = JSON.parse(lastData);
+				
+				that.setInputs.bgColor.setValue(that.data.backgroundColor);
+				that.setInputs.srcEdFontSize.setValue(that.data.sourceEditor.fontSize);
+				that.setUpData();
+			});
+			
+			this.setButtons = {
+				resetLayout: new MT.ui.Button("Reset Layout", "", null, function(){
+					that.ui.resetLayout();
+				})
+			};
+			
+			
+			this.setInputs.bgColor.show(this.setFields.ui.el);
+			this.setButtons.resetLayout.show(this.setFields.ui.el);
+			
+			this.setInputs.srcEdFontSize.show(this.setFields.sourceEditor.el);
+			
+			
+			
+			for(var i in this.setFields){
+				this.setPanel.content.el.appendChild(this.setFields[i].el);
+				this.setFields[i].addClass("full");
+			}
 			
 		},
 		
@@ -301,7 +486,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				removeClass();
 			});
 			
-			this.ui.resetLayout();
+			this.ui.loadLayout();
+			this.ui.isSaveAllowed = true;
 		},
 		
 		handleDrop: function(e){

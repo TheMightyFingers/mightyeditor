@@ -78,12 +78,12 @@
 		},
 		
 		// create full map
-		create: function(){
+		createAll: function(){
 			this._loadObjects(this.data.objects.contents, this.objects, "");
 		},
 		
 		// create seperate group
-		createGroup: function(name, parent){
+		create: function(name, parent){
 			parent = parent || this.game.world;
 			var group = this.getObjectGroupByName(name);
 			if(!group){
@@ -284,23 +284,18 @@
 		physics: {
 			ninja: {
 				enableTileLayer: function (layer) {
-					//  If the bodies array is already populated we need to nuke it
-					//this.clearTilemapLayerBodies(map, layer);
 					layer = layer.layer;
-					for (var y = 0, h = layer.height; y < h; y++)
-					{
-						for (var x = 0, w = layer.width; x < w; x++)
-						{
+					for (var y = 0, h = layer.height; y < h; y++){
+						for (var x = 0, w = layer.width; x < w; x++){
 							var tile = layer.data[y][x];
-							if (tile && tile.index > 0)
-							{
+							if (tile && tile.index > 0){
 								var body = new Phaser.Physics.Ninja.Body(this, null, 3, tile.index, 0, tile.worldX + tile.centerX, tile.worldY + tile.centerY, tile.width, tile.height);
 								layer.bodies.push(body);
 							}
 						}
 					}
 					return layer.bodies;
-				},
+				}
 			}
 		},
  
@@ -410,12 +405,12 @@
 			path = path !== "" ? "." + path : path;
 			
 			for(var i = data.length - 1; i > -1; i--){
-				this._add(data[i], container, path, group);
+				this._add(data[i], container, path, group, data);
 			}
 			return container;
 		},
 		
-		_add: function(object, container, path, group){
+		_add: function(object, container, path, group, parent){
 			var createdObject = null;
 			
 			if(object.contents){
@@ -428,7 +423,10 @@
 				if(!container[object.name]){
 					container[object.name] = {
 						get self(){
-							return createdObject
+							return createdObject;
+						},
+						get data(){
+							return object;
 						}
 					};
 				}
@@ -447,6 +445,7 @@
 				}
 				else{
 					createdObject = this._addObject(object, container, group);
+					this.addPhysics(object, createdObject, container.data);
 				}
 				
 				this._updateCommonProperties(object, createdObject);
@@ -455,6 +454,51 @@
 			
 		},
 		
+		addPhysics: function(tpl, sprite, parent){
+			
+			
+			var p = tpl.physics;
+			if(!p || !p.enable){
+				if(parent && parent.physics && parent.physics.enable){
+					p = parent.physics;
+				}
+			}
+			if(p && p.enable){
+				this.game.physics.arcade.enable(sprite);
+				
+				sprite.body.allowGravity = p.gravity.allow;
+				sprite.body.gravity.x = p.gravity.x;
+				sprite.body.gravity.y = p.gravity.y;
+				
+				sprite.body.immovable = p.immovable;
+				
+				sprite.body.bounce = p.bounce
+				
+				sprite.body.maxAngular = p.rotation.maxAngular;
+				sprite.body.allowRotation = p.rotation.allowRotation;
+				
+				sprite.body.maxVelocity = p.maxVelocity;
+				
+				sprite.body.mass = p.mass;
+				sprite.body.collideWorldBounds = p.collideWorldBounds;
+				
+				
+				
+				var w = sprite.width;
+				var h = sprite.height;
+				if(p.size.width > 0){
+					w = p.size.width;
+				}
+				if(p.size.height > 0){
+					h = sprite.height;
+				}
+				
+				sprite.body.setSize(w, h, p.size.offsetX, p.size.offsetY);
+			}
+			
+			
+		},
+ 
 		_addGroup: function(object){
 			var group = this.game.add.group();
 
@@ -577,7 +621,6 @@
  
 		_updateCommonProperties: function(template, object){
 			
-			
 			if(template.angle){
 				object.angle = template.angle;
 			}
@@ -593,6 +636,9 @@
 			object.y = template.y;
 			object.alpha = template.alpha || 1;
 			
+			object.getData = function(){
+				return template;
+			}
 			
 		},
 		

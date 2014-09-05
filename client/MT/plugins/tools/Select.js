@@ -290,7 +290,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				if(!shift){
 					this.map.selector.clear();
 					this.map.activeObject = null;
-					this.tools.project.plugins.settings.handleScene(this.map.settings);
+					this.map.emit("select", this.map.settings);
+					//this.tools.project.plugins.settings.handleScene();
 				}
 			}
 		}

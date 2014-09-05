@@ -69,10 +69,11 @@ MT(
    
 		hide: function(){
 			if(!this.el.parentNode){
-				return;
+				return this;
 			}
 			this.el.parentNode.removeChild(this.el);
 			this.isVisible = false;
+			return this;
 		},
    
 		hideToTop: function(){
@@ -267,6 +268,7 @@ MT(
 			this.style.bottom = 0;
 			this.style.left = 0;
 			this.style.height = "auto";
+			this.style.width = "auto";
 			this.isFitted = true;
 		},
 		

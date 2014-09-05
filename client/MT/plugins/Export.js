@@ -18,29 +18,23 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					}
 				},
 				{
-					label: "Phaser.io (data only)",
+					label: "Phaser.io (data only) js",
 					className: "",
 					cb: function(){
 						that.export("phaserDataOnly", function(data){
-							that.openDataLink(data);
+							that.openDataLink(data, "js");
 						});
 					}
 				},
 				{
-					label: "Open sample",
+					label: "Phaser.io (data only) json",
 					className: "",
 					cb: function(){
-						that.openLink();
+						that.export("phaserDataOnly", function(data){
+							that.openDataLink(data, "json");
+						});
 					}
 				}
-				/*,
-				{
-					label: "Tiled (.tml)",
-					className: "",
-					cb: function(){
-						alert("in progress");
-					}
-				}*/
 			
 			], ui, true);
 			
@@ -48,15 +42,21 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				that.showList();
 			});
 			
-			
+			this.openGame = this.project.panel.addButton("Open Game", null, function(e){
+				that.openLink();
+			});
 			
 			//this.list.removeHeader();
 			//this.list.content.overflow = "initial";
 			
 		},
 		
-		export: function(dest, cb){
-			this.send(dest);
+		export: function(dest, data, cb){
+			if(typeof data == "function"){
+				cb = data;
+				data = null;
+			}
+			this.send(dest, data);
 			this.once("done", cb);
 		},
 		
@@ -68,7 +68,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.list.show(document.body);
 		},
 		
-		openDataLink: function(data){
+		openDataLink: function(data, json){
+			if(json == "json"){
+				data.file += "on";
+			}
 			var w = window.innerWidth*0.5;
 			var h = window.innerHeight*0.8;
 			var l = (window.innerWidth - w)*0.5;

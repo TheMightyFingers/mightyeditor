@@ -16,7 +16,7 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			
 			var link = window.location.origin;
-			link += "/"+this.project.path+"/phaser/mt.data.js";
+			link += "/"+this.project.path+"/phaser/js/lib/mt.data.js";
 			
 			
 			var b = this.project.panel.addButton(link, "datalink", function(e){

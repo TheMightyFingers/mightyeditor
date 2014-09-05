@@ -189,8 +189,14 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			var val = that.evalValue(input.value);
 			that.setValue(val);
+			that.emit("change", val, val);
 		};
 		
+		input.onkeydown = input.onkeyup = function(e){
+			if(e.which == MT.keys.DELETE){
+				e.stopPropagation();
+			}
+		};
 		
 		this.keyup = events.on("keyup", function(e){
 			if(!input.isVisible){
@@ -198,7 +204,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 			var w = e.which;
 			var hideval = true;
-			
 			
 			if(w == MT.keys.ESC){
 				input.value = that.object[that.key];
@@ -213,11 +218,12 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			if(that.object[that.key] != input.value){
 				var val = that.evalValue(input.value);
-				that.setValue(val);
+				that.setValue(val, true);
 				if(hideval){
 					that.value.el.innerHTML = "";
 				}
 			}
+			
 			
 		});
 		
@@ -227,6 +233,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				if(e.target !== that.value.el){
 					return;
 				}
+				e.preventDefault();
 				var d = ( (e.wheelDelta || -e.deltaY) > 0 ? 1 : -1);
 				var val = that.object[that.key] + d*that.step;
 				that.setValue(val);

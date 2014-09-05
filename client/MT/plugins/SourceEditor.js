@@ -106,6 +106,9 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			this.panel.on("show", function(){
+				that.ui.loadLayout(null, 1);
+				that.panel.show(that.panel._parent, false);
+				
 				tools.panel.content.hide();
 				zoombox.hide();
 				ampv.hide();
@@ -116,6 +119,10 @@ MT.extend("core.BasicPlugin")(
 				
 				that.leftPanel.width = parseInt(that.leftPanel.style.width);
 				
+				//window.setTimeout(function(){
+					
+				//}, 1);
+				
 			});
 			this.panel.on("unselect", function(){
 				tools.panel.content.show();
@@ -125,6 +132,9 @@ MT.extend("core.BasicPlugin")(
 				window.getSelection().removeAllRanges();
 				
 				that.removeButtons();
+				//window.setTimeout(function(){
+					that.ui.loadLayout(null, 0);
+				//}, 1);
 			});
 			
 			this.project.on(MT.DROP, function(e, data){
@@ -140,6 +150,9 @@ MT.extend("core.BasicPlugin")(
 				that.uploadFile(data);
 			});
 			
+			this.project.on("updateData", function(data){
+				that.panel.el.style.fontSize = data.sourceEditor.fontSize+"px";
+			});
 		},
 		
 		initSocket: function(socket){
@@ -483,7 +496,49 @@ MT.extend("core.BasicPlugin")(
 			this.send("update", this.tv.getData());
 		},
 		
+		moveLine: function(ed, inc){
+			var line = ed.state.activeLines[0];
+			if(line == void(0)){
+				return;
+			}
+			var c = ed.getCursor();
+			
+			var cLine = ed.getLine(c.line);
+			var nLine = ed.getLine(c.line+inc);
+			
+			//ed.replaceRange(c.line, nLine);
+			ed.replaceRange(nLine, {ch: 0, line: c.line}, {ch: cLine.length, line: c.line});
+			c.line = c.line+inc;
+			
+			
+			ed.replaceRange(cLine, {ch: 0, line: c.line}, {ch: nLine.length, line: c.line});
+			
+			ed.setSelection(c);
+			ed.indentLine(c.line);
+			
+		},
+		
+		copyLine: function(ed, inc){
+			var line = ed.state.activeLines[0];
+			if(line == void(0)){
+				return;
+			}
+			var c = ed.getCursor();
+			var cch = c.ch;
+			c.ch = line.text.length;
+			
+			ed.setCursor(c);
+			ed.replaceSelection("\r\n"+line.text);
+			
+			c.line = c.line+inc;
+			c.ch = cch;
+			ed.setSelection(c);
+			return;
+			
+		},
+		
 		addEditor: function(){
+			var that = this;
 			var defaultCfg = {
 				indentUnit: 4,
 				extraKeys: {
@@ -493,7 +548,23 @@ MT.extend("core.BasicPlugin")(
 					
 					"Ctrl-/": "toggleComment",
 					
-					"Ctrl-Space": "autocomplete"
+					"Ctrl-Space": "autocomplete",
+					
+					"Alt-Up": function(ed, e){
+						that.moveLine(ed, -1);
+					},
+					"Alt-Down": function(ed, e){
+						that.moveLine(ed, 1);
+					},
+					"Ctrl-Alt-Up": function(ed){
+						that.copyLine(ed, 0);
+					},
+					"Ctrl-Alt-Down": function(ed){
+						that.copyLine(ed, 1);
+					},
+					"Ctrl-+": function(ed){
+						alert();
+					}
 				},
 				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-jslint"],
 				highlightSelectionMatches: {showToken: /\w/},
@@ -529,7 +600,29 @@ MT.extend("core.BasicPlugin")(
 			this.editor.on("change", function(){
 				that.checkChanges();
 			});
+			this.editor.on("keyup", function(ed, e){
+				
+				//move up/down
+				if(e.altKey && (e.which == MT.keys.UP || e.which == MT.keys.DOWN) ){
+					var line = ed.state.activeLines[0];
+					var c = ed.getCursor();
+					if(e.ctrlKey){
+						
+					}
+					
+					
+					
+					e.preventDefault();
+					return false;
+				}
+			});
 			
+			this.editor.on("keyHandled", function(ed, a,b,c){
+				console.log(a,b,c);
+				return;
+				e.preventDefault();
+				e.stopPropagation();
+			});
 		},
 		
 		updateHints: function(){
@@ -544,7 +637,7 @@ MT.extend("core.BasicPlugin")(
 					globalstrict: true,
 					loopfunc: true,
 					predef: {
-						"Phaser": false,
+						"Phaser": Phaser,
 						"mt": false,
 						"console": false
 					},

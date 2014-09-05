@@ -124,6 +124,10 @@ MT.extend("core.BasicPlugin")(
 			if(!this.zoom.list.isVisible){
 				this.zoom.button.text = (val*100).toFixed(0);
 			}
+			
+			this.map.settings.cameraX = cam.x;
+			this.map.settings.cameraY = cam.y;
+			this.project.plugins.settings.updateScene(this.map.settings);
 		},
 		
 		

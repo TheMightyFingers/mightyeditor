@@ -37,9 +37,7 @@ MT(
 			
 			var map = this.project.plugins.mapeditor;
 			map.on("select", function(obj){
-				if(!obj){
-					that.handleScene(map.settings);
-				}
+				that.handleScene(map.settings);
 			});
 			
 		},

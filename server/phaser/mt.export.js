@@ -53,7 +53,7 @@
 			}
 		},
 	
-		create: function(){
+		createAll: function(){
 			this._loadObjects(this.data.objects.contents, this.objects, "");
 		},
 		

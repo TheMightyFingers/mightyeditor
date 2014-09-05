@@ -56,6 +56,11 @@ MT.extend("ui.DomElement")(
 		},
 		
 		showTabs: function(){
+			if(!this.tabs.length){
+				console.error("TABELEES");
+			}
+			
+			
 			var width = (100/this.tabs.length);
 			
 			for(var i=0; i<this.tabs.length; i++){
@@ -89,6 +94,7 @@ MT.extend("ui.DomElement")(
 				t.removeClass("active");
 			}
 		},
+		
 		setActiveIndex: function(index){
 			var t = null;
 			for(var i=0; i<this.tabs.length; i++){

@@ -156,7 +156,6 @@ MT.extend("core.Emitter")(
 			
 			that.movePanel(activePanel, e);
 		});
-		
 		this.events.on(this.events.MOUSEDOWN, function(e){
 			if(e.button != 0){
 				if(e.button == 1){
@@ -187,6 +186,8 @@ MT.extend("core.Emitter")(
 			
 			activePanel.removeClass("animated");
 			that.updateZ(activePanel);
+			
+			window.x = activePanel;
 		});
 		
 		this.events.on(this.events.MOUSEUP, function(e){
@@ -214,6 +215,7 @@ MT.extend("core.Emitter")(
 			
 			that.sortPanels();
 			that.update();
+			that.saveLayout();
 		});
 		
 		
@@ -227,14 +229,14 @@ MT.extend("core.Emitter")(
 		// after 5 seconds should all be loaded and all animations stopped
 		window.setTimeout(function(){
 			window.clearInterval(updateInt);
-		}, 5000);
+		}, 2000);
 		
 		
 		this.colorPicker = new MT.ui.ColorPicker(this);
 		this.colorPicker.hide();
 	},
 	{
-   
+		saveSlot: 0,
 		toResize: {
 			TOP: false,
 			RIGHT: false,
@@ -261,12 +263,22 @@ MT.extend("core.Emitter")(
 			this.sortPanels();
 			this.updateCenter();
 		},
-		
+		// debug only - fast access to panels
+		p: {},
 		createPanel: function(name, width, height){
+			
 			if(!name){
 				console.error("bad name");
 			}
 			var p = new MT.ui.Panel(name, this);
+			
+			Object.defineProperty(this.p, name, {
+				get: function(){
+					return p;
+				},
+				enumerable: true
+			});
+			
 			this.panels.push(p);
 			
 			p.width = width || 250;
@@ -718,8 +730,10 @@ MT.extend("core.Emitter")(
 		},
 		
 		update: function(){
-			this.moveDocks();
 			this.updateZ();
+			return;
+			this.saveLayout();
+			this.moveDocks();
 		},
 		
 		/* adjust midddle box */
@@ -751,7 +765,7 @@ MT.extend("core.Emitter")(
 			
 			for(var i=0; i<tmp.length; i++){
 				p = tmp[i];
-				if(!p.isDocked || p.dockPosition != MT.LEFT || !p.isVisible){
+				if(p.dockPosition != MT.LEFT || !p.isVisible){
 					continue;
 				}
 				if(p.justUpdated){
@@ -931,7 +945,7 @@ MT.extend("core.Emitter")(
 		},
    
 		movePanel: function(panel, e){
-			if(!panel.isMoveable){
+			if(!panel.isMovable){
 				return;
 			}
 			
@@ -1149,6 +1163,8 @@ MT.extend("core.Emitter")(
 			panel.header.showTabs();
 			
 			panel.isDockNeeded = false;
+			panel.isVisible = false;
+			panel.show();
 		},
 		
 		vsPanels: function(point, panel){
@@ -1279,82 +1295,227 @@ MT.extend("core.Emitter")(
 			this.moveDocks();
 		},
 		
-		loadLayout: function(layout){
-			var toLoad = layout || JSON.parse(localStorage.getItem("ui"));
-			if(!toLoad){
-				this.resetLayout();
+		loadLayout: function(layout, slot){
+			if(slot != void(0)){
+				this.saveSlot = slot;
+			}
+			console.log("loading from slot", this.saveSlot);
+			
+			layout = layout || JSON.parse(localStorage.getItem("ui-"+this.saveSlot));
+			if(!layout){
+				this.resetLayout(this.saveSlot);
 				return;
 			}
 			
+			//this._loadLayout(layout);
+			this._loadLayout(layout, true);
+			this._loadLayout(layout, true);
+			this._loadLayout(layout, true);
+			
+			this.updateZ();
+			this.reloadSize();
+			
+		},
+		_loadLayout: function(layout, noAnim){
+			this._centerPanels.length = 0;
 			
 			var obj = null;
 			var panel = null;
-			this.box = toLoad.__box;
-			this.oldScreenSize.width = toLoad.__oldScreenSize.width;
-			this.oldScreenSize.height = toLoad.__oldScreenSize.height;
+			this.box = layout.__box;
+			this.oldScreenSize.width = layout.__oldScreenSize.width;
+			this.oldScreenSize.height = layout.__oldScreenSize.height;
 			
 			
-			for(var i in toLoad){
-				obj = toLoad[i];
+			var animated = [];
+			if(noAnim){
+				for(var i=0; i<this.panels.length; i++){
+					if(this.panels[i].hasClass("animated")){
+						animated.push(this.panels[i]);
+						this.panels[i].removeClass("animated");
+					}
+				}
+			}
+			
+			var panels = [];
+			for(var i in layout){
+				obj = layout[i];
+				obj.name = i;
 				panel = this.getByName(i);
-				
 				if(!panel){
 					continue;
 				}
 				
 				
-				panel.dockPosition = obj.dockPosition;
-				panel.isDocked = obj.isDocked;
-				
-				//panel.isResizeable = obj.isResizeable;
-				panel.isDockable = obj.isDockable;
-				panel.isJoinable = obj.isJoinable;
-				panel.isPickable = obj.isPickable;
-				/*if(obj.isVisible){
-					panel.show();
-				}
-				else{
-					panel.hide();
-				}*/
-				panel.acceptsPanels = obj.acceptsPanels;
+				panel.reset(obj);
+				panels.push({p: panel, o: obj});
+				continue;
+			}
 			
+			var isFirst = false;
+			var tmp = null;
+			for(var i=0; i<panels.length; i++){
+				panel = panels[i].p;
+				obj = panels[i].o;
+				
 				panel.savedBox = obj.savedBox;
 				
-				for(var j=0; j<obj.joints; j++){
-					panel.addJoint(this.getByName(obj.joints[i]));
+				if(!obj.isVisible){
+					panel.hide(false, true);
+					continue;
 				}
 				
+				isFirst = false;
+				for(var j=0; j<obj.joints.length; j++){
+					tmp = this.getByName(obj.joints[j]);
+					if(tmp == panel){
+						isFirst = true;
+						continue;
+					}
+					
+					if(isFirst){
+						panel.addJoint(tmp);
+					}
+					else{
+						tmp.addJoint(panel);
+					}
+				}
+			}
+			for(var i=0; i<panels.length; i++){
+				panel = panels[i].p;
+				obj = panels[i].o;
 				var p = this.getByName(obj.bottom);
+				if(p){
+					if(!p.isVisible){
+						p = p.getVisibleJoint();
+					}
+				}
 				if(p){
 					panel.joinBottom(p, true);
 				}
 				
 				p = this.getByName(obj.top);
 				if(p){
-					panel.joinTop(p, true);
+					if(!p.isVisible){
+						p = p.getVisibleJoint();
+					}
 				}
 				
-				
-				panel.setClearX(obj.x);
-				panel.setClearY(obj.y);
-				panel.setClearWidth(obj.width);
-				panel.setClearHeight(obj.height);
-				
+				if(p){
+					panel.joinTop(p, true);
+				}
+				if(panel.isVisible){
+					panel.header.showTabs();
+				}
+				panel.dockPosition = obj.dockPosition;
+				if(obj.dockPosition == MT.CENTER){
+					this.setCenter(panel);
+				}
 			}
 			
-			this.reloadSize();
+			
+			
+			for(var i=0; i<animated.length; i++){
+				animated[i].addClass("animated");
+			}
+			
+			//this.reloadSize();
 			/*this.update();*/
 		},
 		
 		
-		resetLayout: function(){
-			var toLoad = {"__box":{"x":40,"y":29,"width":963,"height":612},"__oldScreenSize":{"width":1234,"height":938},"SourceEditor":{"x":40,"y":29,"width":923,"height":583,"dockPosition":5,"isDocked":true,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":false,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null},"Assets":{"x":963,"y":29,"width":271,"height":193.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":"Objects"},"assetPreview":{"x":40,"y":612,"width":923,"height":300,"dockPosition":4,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"Objects":{"x":963,"y":222.25,"width":271,"height":168.25,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Assets","bottom":"Settings"},"Map editor":{"x":40,"y":29,"width":923,"height":583,"dockPosition":5,"isDocked":true,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":false,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":null,"bottom":null},"toolbox":{"x":0,"y":29,"width":40,"height":909,"dockPosition":1,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":40,"height":400},"top":null,"bottom":null},"Project":{"x":0,"y":0,"width":1234,"height":29,"dockPosition":3,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":29},"top":null,"bottom":null},"userData":{"x":963,"y":390.5,"width":271,"height":547.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":false,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":"Objects","bottom":null},"Map Manager":{"x":40,"y":912,"width":923,"height":26,"dockPosition":4,"isDocked":true,"isResizeable":false,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":26},"top":null,"bottom":null},"physics":{"x":963,"y":390.5,"width":271,"height":547.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":false,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":0,"height":0},"top":"Objects","bottom":null},"Settings":{"x":963,"y":390.5,"width":271,"height":547.5,"dockPosition":2,"isDocked":true,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":true,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":"Objects","bottom":null},"Text":{"x":40,"y":29,"width":923,"height":30,"dockPosition":0,"isDocked":false,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":false,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":944,"height":30},"top":null,"bottom":null},"file-list-holder":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isDocked":false,"isResizeable":true,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"source-editor":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isDocked":false,"isResizeable":false,"isDockable":false,"isJoinable":false,"isPickable":true,"isVisible":true,"acceptsPanels":false,"savedBox":{"x":0,"y":0,"width":250,"height":400},"top":null,"bottom":null},"color":{"x":656,"y":411,"width":305,"height":200,"dockPosition":0,"isDocked":false,"isResizeable":true,"isDockable":true,"isJoinable":true,"isPickable":true,"isVisible":false,"acceptsPanels":true,"savedBox":{"x":0,"y":0,"width":305,"height":200},"top":null,"bottom":null}};
-			this.loadLayout(toLoad);
-			//this.saveLayout();
+		resetLayout: function(slot){
+			var toLoad = {"__box":{"x":40,"y":29,"width":719,"height":612},"__oldScreenSize":{"width":990,"height":938},
+				"SourceEditor":{
+					"x":40,"y":29,"width":679,"height":583, "dockPosition":5,"isVisible":false,"isDocked":true,
+					"savedBox": {"x":0, "y":0, "width":0, "height":0}
+				},
+				"Settings": {
+					"x":719,"y":580.125,"width":271,"height":357.875,"dockPosition":2,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":["Settings","physics","userData"], "top":"Objects", "bottom":null
+				},
+				"Assets":{
+					"x":719,"y":29,"width":271,"height":193.25,"dockPosition":2,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},
+					"joints":[],"top":null,"bottom":"Objects"
+				},
+				"assetPreview":{
+					"x":40,"y":612,"width":679,"height":300,"dockPosition":4,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},
+					"joints":[],"top":null,"bottom":null
+				},
+				"Objects":{
+					"x":719,"y":222.25,"width":271,"height":357.875,"dockPosition":2,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":"Assets","bottom":"Settings"
+				},
+				"Map editor":{
+					"x":40,"y":29,"width":679,"height":583,"dockPosition":5,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":0,"height":0},"joints":["Map editor","SourceEditor"],"top":null,"bottom":null
+				},
+				"toolbox":{
+					"x":0,"y":29,"width":40,"height":909,"dockPosition":1,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":40,"height":400},"joints":[],"top":null,"bottom":null
+				},
+				"Project":{
+					"x":0,"y":0,"width":990,"height":29,"dockPosition":3,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":29},"joints":[],"top":null,"bottom":null
+				},
+				"physics":{
+					"x":719,"y":580.125,"width":271,"height":357.875,"dockPosition":2,"isVisible":false,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":0,"height":0},"joints":["Settings","physics","userData"],"top":"Objects","bottom":null
+				},
+				"userData":{
+					"x":719,"y":580.125,"width":271,"height":357.875,"dockPosition":2,"isVisible":false,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":0,"height":0},"joints":["Settings","physics","userData"],"top":"Objects","bottom":null
+				},
+				"Map Manager":{
+					"x":40,"y":912,"width":679,"height":26,"dockPosition":4,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":26},"joints":[],"top":null,"bottom":null
+				},
+				"color":{
+					"x":656,"y":411,"width":305,"height":200,"dockPosition":0,"isVisible":false,"isDocked":false,
+					"savedBox":{"x":0,"y":0,"width":305,"height":200},"joints":[],"top":null,"bottom":null
+				},
+				"Text":{
+					"x":40,"y":29,"width":679,"height":30,"dockPosition":0,"isVisible":false,"isDocked":false,
+					"savedBox":{"x":0,"y":0,"width":944,"height":30},"joints":[],"top":null,"bottom":null
+				},
+				"file-list-holder":{
+					"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":null,"bottom":null
+				},
+				"source-editor":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":null,"bottom":null
+				}
+			};
+			
+			var str = JSON.stringify(toLoad);
+			if(slot != void(0)){
+				localStorage.setItem("ui-"+slot, str);
+			}
+			else{
+				var key;
+				for(var i=0; i<localStorage.length; i++){
+					key = localStorage.key(i);
+					if(key.substring(0, 3) == "ui-"){
+						localStorage.setItem(key, str);
+					}
+				}
+			}
+			
+			this.loadLayout();
 		},
 		
-		saveLayout: function(){
-		
+		saveLayout: function(slot){
+			this.refresh();
+			if(slot != void(0)){
+				this.saveSlot = slot;
+			}
+			
+			console.log("saving in slot", this.saveSlot);
+			
+			if(!this.isSaveAllowed){
+				return;
+			}
 			var toSave = {
 				__box: this.box,
 				__oldScreenSize: this.oldScreenSize
@@ -1364,33 +1525,35 @@ MT.extend("core.Emitter")(
 			
 			for(var i=0; i<this.panels.length; i++){
 				p = this.panels[i];
+				
+				if(p._parent != document.body){
+					continue;
+				}
+				
 				toSave[p.name] = {
 					x: p.x,
 					y: p.y,
 					width: p.width,
 					height: p.height,
 					dockPosition: p.dockPosition,
-					
-					isDocked: p.isDocked,
-					isResizeable: p.isResizeable,
-					isDockable: p.isDockable,
-					isJoinable: p.isJoinable,
-					isPickable: p.isPickable,
 					isVisible: p.isVisible,
-					acceptsPanels: p.acceptsPanels,
 					savedBox: p.savedBox,
-					
-					
-					joints: p.getJointNames(),
-					top: (p.top ? p.top.name : null),
-					bottom: (p.bottom ? p.bottom.name : null)
+					isDocked: p.isDocked
 				};
+				
+				if(p.isVisible){
+					toSave[p.name].joints = p.getJointNames();
+					toSave[p.name].top = (p.top ? p.top.name : null);
+					toSave[p.name].bottom = (p.bottom ? p.bottom.name : null);
+				}
 			}
 			
 			var str = JSON.stringify(toSave);
-			localStorage.setItem("ui", str);
-			console.log("toLoad = ", str);
-			
+			localStorage.setItem("ui-"+this.saveSlot, str);
+		},
+		
+		getSavedLayout: function(){
+			console.log("toLoad = ", localStorage.getItem("ui-"+this.saveSlot) );
 		},
 		
 		oldScreenSize: {

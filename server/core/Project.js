@@ -42,7 +42,9 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			if(idr.length == 1){
 				this.openProject(id, function(){
-					that.send("selectProject", that.id);
+					var info = that.getProjectInfo();
+					info.id = that.id;
+					that.send("selectProject", info);
 				});
 				return;
 			}
@@ -53,6 +55,13 @@ MT.extend("core.BasicPlugin")(
 			this.updateProject(info);
 		},
 		
+		a_getProjectInfo: function(){
+			this.emit("getProjectInfo", this.getProjectInfo());
+		},
+		
+		a_saveProjectInfo: function(info){
+			this.saveProjectInfo(info);
+		},
 		
 		loadCommand: function(projectId, command){
 			var that = this;
@@ -73,7 +82,9 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			this.fs.copy(this.root + "/" + projectId, this.root + "/" + this.id, function(){
 				that.openProject(that.id, function(){
-					that.send("selectProject", that.id);
+					var info = that.getProjectInfo();
+					info.id = that.id;
+					that.send("selectProject", info);
 				});
 			});
 			
@@ -83,7 +94,7 @@ MT.extend("core.BasicPlugin")(
 			this.data.contents[0] = info;
 		},
 		
-		getProjectInfo: function(info){
+		getProjectInfo: function(){
 			return this.data.contents[0];
 		},
 		
@@ -217,7 +228,8 @@ MT.extend("core.BasicPlugin")(
 				
 				that.saveProjectInfo(info);
 				that.initProject(function(){
-					that.send("selectProject", that.id);
+					info.id = that.id;
+					that.send("selectProject", info);
 				});
 			};
 			

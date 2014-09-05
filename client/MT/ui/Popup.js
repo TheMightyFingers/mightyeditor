@@ -18,6 +18,13 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.bg = document.createElement("div");
 		this.bg.className = "ui-wrapper";
 		this.bg.style.zIndex = 9999;
+		this.bg.onmousedown = this.bg.onmouseup = this.bg.onmousemove = function(e){
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		};
+		
+		
 		this.style.zIndex = 10000;
 		
 		this.y = window.innerHeight*0.3;

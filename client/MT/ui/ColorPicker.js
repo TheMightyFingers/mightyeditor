@@ -30,7 +30,10 @@ MT.extend("core.Emitter")(
 		this.preview.style.height = "20px";
 		this.preview.style.marginLeft = "5px";
 		this.preview.style.float = "left";
+		this.preview.style.border = "solid 1px rgba(0,0,0,0.5)";
 		this.panel.content.el.appendChild(this.preview);
+		
+		
 		
 		this.text = document.createElement("span");
 		this.text.style.width = "20%";
@@ -192,6 +195,7 @@ MT.extend("core.Emitter")(
 		
 		startColor: null,
 		setColor: function(color){
+			color = color || "#333";
 			this.startColor = color;
 			
 			this.preview.style.backgroundColor = color;
@@ -335,7 +339,7 @@ MT.extend("core.Emitter")(
 		},
 		
 		show: function(){
-			this.panel.style.zIndex = this.ui.zIndex*10+999;
+			this.panel.style.zIndex = this.ui.zIndex*10+9999;
 			this.panel.show();
 			this.input.focus();
 			

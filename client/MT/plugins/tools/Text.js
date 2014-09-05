@@ -33,7 +33,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		
 		this.tools.on(MT.OBJECT_SELECTED, function(obj){
-			that.select(obj);
+			if(tools.map.activeObject){
+				that.select(tools.map.activeObject);
+			}
 		});
 		
 		this.tools.on(MT.OBJECT_UNSELECTED, function(){

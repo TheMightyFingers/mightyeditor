@@ -56,6 +56,9 @@ table th{
 	margin: 0;
 	padding: 2px;
 }
+br{
+	clear: both;
+}
 .loadingImage{
 	margin: 0 auto;
 	top: 50%;
@@ -739,7 +742,6 @@ body > div.ui-wrapper {
 	right: 0;
 	position: absolute;
 	background: inherit;
-	box-shadow: inset 0 0 250px rgba(0,0,0,0.5);
 	text-shadow: 0 0 1px rgba(0,0,0,0.7);
 	min-height: 150px;
 }
@@ -765,6 +767,7 @@ div.ui-popup-content {
 	text-align: center;
 	padding: 0px 10px 20px;
 	background-color: rgba(255,255,255,0.1);
+	background-image: radial-gradient(ellipse at center, rgba(255,255,255,0) 67%,rgba(0,0,0,0.5) 150%);
 	position: absolute;
 	top: 0;
 	bottom: 0;
@@ -1013,11 +1016,11 @@ fieldset {
 	margin: 9px 3px 0 7px;
 }
 legend {
-padding: 0px 5px;
-position: relative;
-font-size: 11px;
-font-weight: bold;
-font-style: italic;
+	padding: 0px 5px;
+	position: relative;
+	font-size: 11px;
+	font-weight: bold;
+	font-style: italic;
 }
 fieldset div.ui-input {
 	margin: 2px 0 2px 15px;
@@ -1025,8 +1028,194 @@ fieldset div.ui-input {
 	min-width: 43%;
 }
 
+fieldset.full div.ui-input {
+	margin: 2px 0 2px 15px;
+	float: none;
+}
+
 .ui-input div{
 	display: inline-block;
 	padding-right: 5px;
 }
 
+fieldset div.ui-button{
+	display: inline-block;
+	background-color: rgba(0,0,0,0.4);
+	padding: 2px 17px;
+	line-height: 18px;
+	margin: 8px 10px 0;
+	border: solid 1px rgba(255,255,255,0.5);
+	border-radius: 1px;
+	font-size: 11px;
+	font-weight: bold;
+	float: right;
+	position: relative;
+}
+fieldset div.ui-button:before{
+	content: "";
+	pointer-events: none;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	background-image: linear-gradient(to bottom, rgba(255,255,255,0.1) 0%,rgba(0,0,0,0.5) 100%);
+}
+
+fieldset div.ui-button:hover:before{
+	background-image: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(0,0,0,0.5) 100%);
+}
+fieldset div.ui-button:active:before{
+	background-image: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%,rgba(0,0,0,0.5) 100%);
+}
+
+fieldset div.ui-button:active{
+	border-color: rgba(0,0,0,0.5);
+	border-top-color: invisible;
+	line-height: 20px;
+}
+
+
+.ui-popup.starting-popup{
+background-color: #282828;
+height: auto;
+width: 798px;
+height: 510px;
+border-radius: 5px;
+border: 1px solid #000;
+}
+
+.ui-popup.starting-popup:after{
+	content: "";
+	
+}
+
+.ui-popup.starting-popup .ui-popup-close{
+	top: 2px;
+right: 3px;
+}
+
+.ui-popup.starting-popup div.ui-popup-head {
+border-radius: 0;
+padding: 9px 0 3px;
+position: relative;
+text-align: center;
+font-size: 12px;
+font-weight: bold;
+font-family: arial;
+cursor: default;
+line-height: 20px;
+letter-spacing: 1.4px;
+
+}
+
+.ui-popup.starting-popup div.ui-popup-content{
+	position: absolute;
+top: 30px;
+background-color: inherit;
+background-image: none;
+}
+
+.ui-popup.starting-popup .logo{
+	position: absolute;
+	background-image: url('../img/icons/logoLargeLight.png');
+	background-repeat: no-repeat;
+	width: 311px;
+	background-position: 50% 0;
+	height: 160px;
+	position: absolute;
+	top: -10px;
+	left: 0;
+}
+.ui-popup.starting-popup .ui-button{
+	
+	position: absolute;
+	padding: 20px 40px;
+	display: block;
+	color: #e0e0e0;
+	background: linear-gradient(to bottom, #4b4b4b 0%, #343434 100%);
+	line-height: 6px;
+	left: 15px;
+	width: 281px;
+	height: 47px;
+	border: solid 1px rgba(0,0,0,0.6);
+	border-radius: 2px;
+	text-align: left;
+	
+}
+.ui-popup.starting-popup .ui-button.new-project{
+	top: 150px;
+}
+.ui-popup.starting-popup .ui-button.new-project:after{
+	content: "";
+	position: absolute;
+	background-position: -32px -96px;
+	background-repeat: no-repeat;
+	background-image: url("../img/icons/map.png");
+	top: 15px;
+left: 25px;
+}
+
+.ui-popup.starting-popup .ui-button.docs{
+	top: 205px;
+}
+.ui-popup.starting-popup .ui-button.docs:after{
+	background-position: -48px -144px;
+	content: "";
+	position: absolute;
+	background-repeat: no-repeat;
+	background-image: url("../img/icons/map.png");
+	top: 15px;
+	left: 25px;
+}
+.ui-popup.starting-popup .project-list{
+	position: absolute;
+	top: 7px;
+	right: 1px;
+	width: 481px;
+	bottom: 0;
+	background: linear-gradient(to bottom, #6b6b6b 0%,#282828 100%);
+	text-align: left;
+	background-color: inherit;
+}
+
+.ui-popup.starting-popup .project-list .label{
+	display: block;
+	padding: 10px 0 8px 15px;
+	font-weight: bold;
+	border-bottom: solid 1px #656565;
+	text-align: left;
+	font-family: Verdana;
+	font-size: 13px;
+	color: rgb(224, 224, 224);
+	text-indent: 10px;
+	outline: none;
+	text-shadow: none;
+}
+
+.ui-popup.starting-popup .project-list .projectItem{
+	font-family: arial,sans-serif;
+	font-size: 13px;
+	line-height: 15px;
+	display: block;
+	border-bottom: solid 1px #333333;
+	cursor: pointer;
+	border-radius: 1px;
+	padding: 10px 0 8px 35px;
+	color: #e1e1e1;
+	letter-spacing: 0px;
+	margin-top: 2px;
+	background-color: inherit;
+	background-image: url("../img/icons/ui_folder_open.png");
+	background-repeat: no-repeat;
+	background-position: 16px 13px;
+}
+.ui-popup.starting-popup .project-list .list-content{
+overflow: auto;
+position: absolute;
+left: 9px;
+right: 0;
+top: 34px;
+bottom: 0;
+background-color: inherit;
+}

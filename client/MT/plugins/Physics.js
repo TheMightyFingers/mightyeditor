@@ -1,3 +1,4 @@
+"use strict";
 MT.extend("core.BasicPlugin")(
 	MT.plugins.Physics = function(project){
 		this.project = project;
@@ -35,6 +36,11 @@ MT.extend("core.BasicPlugin")(
 				}, tmp),
 				
 				// gravity
+				allowGravity: new MT.ui.Input(ui, {
+					key: "allow",
+					type: "bool",
+				}, tmp),
+				
 				gravityX: new MT.ui.Input(ui, {
 					key: "x",
 					type: "number",
@@ -44,8 +50,15 @@ MT.extend("core.BasicPlugin")(
 					type: "number",
 				}, tmp),
 				
-				bounce: new MT.ui.Input(ui, {
-					key: "bounce",
+				bounceX: new MT.ui.Input(ui, {
+					key: "x",
+					type: "number",
+					min: 0,
+					step: 0.1
+				}, tmp),
+				
+				bounceY: new MT.ui.Input(ui, {
+					key: "y",
 					type: "number",
 					min: 0,
 					step: 0.1
@@ -85,6 +98,10 @@ MT.extend("core.BasicPlugin")(
 					type: "number",
 				}, tmp),
 				
+				collideWorldBounds: new MT.ui.Input(ui, {
+					key: "collideWorldBounds",
+					type: "number",
+				}, tmp),
 				
 				// limits
 				maxVelocity: new MT.ui.Input(ui, {
@@ -115,8 +132,12 @@ MT.extend("core.BasicPlugin")(
 			return {
 				enable: 1,
 				immovable: 1,
-				bounce: 1,
+				bounce: {
+					x: 1,
+					y: 1
+				},
 				gravity: {
+					allow: 1,
 					x: 0,
 					y: 0
 				},
@@ -131,7 +152,8 @@ MT.extend("core.BasicPlugin")(
 					maxAngular: 0
 				},
 				maxVelocity: 0,
-				mass: 1
+				mass: 1,
+				collideWorldBounds: 0
 			}
 			
 		},
@@ -145,7 +167,13 @@ MT.extend("core.BasicPlugin")(
 		change: function(val){
 			
 		},
-		
+		_gravityBreak: null,
+		get gravityBreak(){
+			if(!this._gravityBreak){
+				this._gravityBreak = document.createElement("br");
+			}
+			return this._gravityBreak;
+		},
 		buildPropTree: function(){
 			this.clear();
 			
@@ -157,56 +185,85 @@ MT.extend("core.BasicPlugin")(
 				this.activeObject.physics = this.getTemplate(true);
 			}
 			
-			var o = this.activeObject.physics;
+			var o = this.activeObject;
+			var p = o.physics;
 			var f;
 			
-			this.empty.setObject(o);
+			this.empty.setObject(p);
 			this.empty.show(this.panel.content.el);
 			
-			this.inputs.immovable.setObject(o);
+			this.inputs.immovable.setObject(p);
 			this.inputs.immovable.show(this.panel.content.el);
 			
 			
 			
 			f = this.addFieldset("size");
 			
-			this.inputs.width.setObject(o.size);
+			this.inputs.width.setObject(p.size);
 			this.inputs.width.show(f);
 			
-			this.inputs.height.setObject(o.size);
+			this.inputs.height.setObject(p.size);
 			this.inputs.height.show(f);
 			
-			this.inputs.offsetX.setObject(o.size);
+			this.inputs.offsetX.setObject(p.size);
 			this.inputs.offsetX.show(f);
 			
-			this.inputs.offsetY.setObject(o.size);
+			this.inputs.offsetY.setObject(p.size);
 			this.inputs.offsetY.show(f);
 			
-			if(!o.immovable){
-				this.inputs.bounce.setObject(o);
-				this.inputs.bounce.show(this.panel.content.el);
-			
+			if(!p.immovable){
+				
+				f = this.addFieldset("bounce");
+				if(typeof p.bounce != "object"){
+					p.bounce = {x: 1, y: 1};
+				}
+				
+				this.inputs.bounceX.setObject(p.bounce);
+				this.inputs.bounceX.show(f);
+				
+				this.inputs.bounceY.setObject(p.bounce);
+				this.inputs.bounceY.show(f);
+				
+				
 				f = this.addFieldset("gravity");
-			
-				this.inputs.gravityX.setObject(o.gravity);
-				this.inputs.gravityX.show(f);
-			
-				this.inputs.gravityY.setObject(o.gravity);
-				this.inputs.gravityY.show(f);
-
+				if(p.gravity.allow == void(0)){
+					p.gravity.allow = 1;
+				}
+				this.inputs.allowGravity.setObject(p.gravity);
+				this.inputs.allowGravity.show(f);
+				if(p.gravity.allow){
+					f.appendChild(this.gravityBreak);
+					this.inputs.gravityX.setObject(p.gravity);
+					this.inputs.gravityX.show(f);
+				
+					this.inputs.gravityY.setObject(p.gravity);
+					this.inputs.gravityY.show(f);
+				}
+				else{
+					if(this.gravityBreak.parentNode){
+						this.gravityBreak.parentNode.removeChild(this.gravityBreak);
+					}
+				}
 				f = this.addFieldset("rotation");
 				
-				this.inputs.allowRotation.setObject(o.rotation);
+				this.inputs.allowRotation.setObject(p.rotation);
 				this.inputs.allowRotation.show(f);
 				
-				this.inputs.maxAngular.setObject(o.rotation);
+				this.inputs.maxAngular.setObject(p.rotation);
 				this.inputs.maxAngular.show(f);
 				
-				this.inputs.maxVelocity.setObject(o);
+				this.inputs.maxVelocity.setObject(p);
 				this.inputs.maxVelocity.show(this.panel.content.el);
 				
-				this.inputs.mass.setObject(o);
+				this.inputs.mass.setObject(p);
 				this.inputs.mass.show(this.panel.content.el);
+				
+				
+				if(p.collideWorldBounds == void(0)){
+					p.collideWorldBounds = 0;
+				}
+				this.inputs.collideWorldBounds.setObject(p);
+				this.inputs.collideWorldBounds.show(this.panel.content.el);
 			}
 		},
 		
@@ -254,8 +311,10 @@ MT.extend("core.BasicPlugin")(
 			var plugins = this.project.plugins;
 			var tools = plugins.tools;
 			var that = this;
+			var map = this.project.plugins.mapeditor;
 			
 			var updateData = function(obj){
+				map.updateScene(map.settings);
 				if(obj){
 					that.activeObject = obj;
 				}
@@ -281,6 +340,12 @@ MT.extend("core.BasicPlugin")(
 				if(e.which == MT.keys.ESC){
 					that.clear();
 				}
+			});
+			
+			
+			map.on("select", function(obj){
+				updateData(map.settings);
+				
 			});
 			
 			tools.on(MT.ASSET_FRAME_CHANGED, updateData);

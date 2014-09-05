@@ -55,7 +55,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		isCloaseable: false,
 		
 		setFree: function(){
-			this.isMoveable = true;
+			this.isMovable = true;
 			this.isDockable = true;
 			this.isJoinable = true;
 			this.isDockable = true;
@@ -105,7 +105,38 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		activate: function(){
 			this.show();
 		},
-
+		
+		reset: function(obj){
+			this.dockPosition = obj.dockPosition;
+			
+			// is docked should be removed..
+			this.isDocked = obj.isDocked;
+			//this.isVisible = obj.isVisible;
+			
+			this.x = obj.x;
+			this.y = obj.y;
+			this.width = obj.width;
+			this.height = obj.height;
+			
+			this.top = null;
+			this.bottom = null;
+			
+			if(this.joints.length > 1){
+				this.isVisible = true;
+				MT.ui.DomElement.show.call(this, this._parent);
+			}
+			
+			this.joints = [this];
+			this.header.tabs = [this.mainTab];
+			this.header.setTabs(this.header.tabs);
+			
+			this.setClearX(obj.x);
+			this.setClearY(obj.y);
+			this.setClearWidth(obj.width);
+			this.setClearHeight(obj.height);
+			
+		},
+		
 		setX: function(val){
 			
 			this.setClearX(val);
@@ -161,7 +192,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				MT.ui.DomElement.setY.call(this.joints[i], val);
 			}
 		},
-		
+		alingCenter: function(){
+			this.x = (window.innerWidth - this.width)*0.5;
+			this.y = (window.innerHeight - this.height)*0.5;
+		},
 		setHeight: function(val){
 			
 			if(this.dockPosition == MT.TOP && this.bottom){
@@ -190,6 +224,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		show: function(parent, silent){
+			this.header.showTabs();
+			
 			if(this.isVisible){
 				return this;
 			}
@@ -204,7 +240,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				this.emit("show");
 			}
 			
-			this.header.showTabs();
+			
 			this.content.fitIn();
 			this.content.y = this.header.el.offsetHeight;
 			return this;
@@ -278,17 +314,22 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			this.header.setTabs([this.mainTab]);
 			
+			
+			// show first
 			for(var i=0; i<oldJoints.length; i++){
 				if(oldJoints[i] != this){
 					oldJoints[i].show();
 					oldJoints[i].header.showTabs();
-					
 					break;
 				}
 			}
 		},
 		
 		addJoint: function(panel){
+			if(!panel || this == panel){
+				console.log("joining with self?");
+				return;
+			}
 			panel._parent = this._parent;
 			
 			panel.removeClass("animated");
@@ -327,12 +368,17 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			}
 			
 			
+			
 			this.setAll("top", this.top);
 			this.setAll("bottom", this.bottom);
 			
-			
+			return;
 			if(!panel.isVisible && this.isVisible){
-				panel.show();
+				//panel.show();
+				panel.header.setTabs(this.header.tabs);
+			}
+			else{
+				this.header.setTabs(this.header.tabs);
 			}
 			
 		},
@@ -449,6 +495,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(panel == this.top){
 				return;
 			}
+			
 			if(!noResize){
 				this.setClearHeight(this.height - panel.height);
 				panel.setClearWidth(this.width);
@@ -510,6 +557,68 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.bottom = null;
 		},
 		
+		
+		_bottom: null,
+		
+		set bottom(val){
+			if(typeof val != "object"){
+				throw new Error("setting top nt non object", val);
+			}
+			
+			var next = this._bottom;
+			
+			var depth = 0;
+			
+			while(next){
+				depth++;
+				if(depth > 10){
+					console.log("recursivity warning");
+					break;
+				}
+				if(next == this  || next == val){
+				}
+				
+				next = next._bottom;
+			}
+			
+			this._bottom = val;
+			
+		},
+		
+		get bottom(){
+			return this._bottom;
+		},
+		
+		_top: null,
+		set top(val){
+			if(typeof val != "object"){
+				throw new Error("setting top nt non object", val);
+			}
+			
+			var next = this._top;
+			var depth = 0;
+			while(next){
+				depth++;
+				if(depth > 10){
+					console.log("recursivity warning");
+					break;
+				}
+				if(next == this || (next == val && next != this._top)){
+					console.log("recursivity warning");
+					this._top = val;
+					return;
+				}
+				
+				next = next._top;
+			}
+			
+			this._top = val;
+		},
+		
+		get top(){
+			return this._top;
+		},
+		
 		breakSideJoints: function(){
 			var pos = this.dockPosition;
 			if(this.bottom){
@@ -526,9 +635,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				
 			}
 			else if(this.top){
-				if(this.bottom){
-					this.bottom.setAll("top", this.top);
-				}
 				this.top.setAll("bottom", this.bottom);
 				
 				this.top.setClearHeight(this.top.height + this.height);
@@ -544,6 +650,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		_isDocked: false,
 		set isDocked(val){
+			if(val == void(0)){
+				throw new Error("docek");
+			}
 			this.setAll("_isDocked", val);
 		},
 		
@@ -591,16 +700,35 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		loadBox: function(){
-			this.width = this.savedBox.width;
-			this.height = this.savedBox.height;
+			if(this.savedBox.width){
+				this.width = this.savedBox.width;
+			}
+			if(this.savedBox.height){
+				this.height = this.savedBox.height;
+			}
 		},
-		
-		hide: function(silent){
+		getVisibleJoint: function(){
+			for(var i=0; i<this.joints.length; i++){
+				if(this.joints[i].isVisible){
+					return this.joints[i];
+				}
+			}
+			console.log("smth is broken");
+			this.show(this._parent, false);
+			
+			return this;
+		},
+		hide: function(silent, noEmit){
 			if(!this.isVisible){
 				return this;
 			}
 			this.isVisible = false;
 			MT.ui.DomElement.hide.call(this);
+			if(noEmit != void(0)){
+				return this;
+			}
+			
+			
 			if(silent !== false){
 				this.emit("hide");
 			}
@@ -669,12 +797,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		getJointNames: function(){
 			var names = [];
 			for(var i=0; i<this.joints.length; i++){
-				if(this.joints[i] == this){
-					continue;
-				}
 				names.push(this.joints[i].name);
 			}
-			
+			return names;
 		},
 		
 	}

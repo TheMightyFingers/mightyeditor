@@ -142,7 +142,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				that.active.addClass("selected");
 				//that.emit(MT.ASSET_SELECTED, that.active.data);
-				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+				//that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
 				that.setPreviewAssets(that.active.data);
 			};
 			

@@ -2,9 +2,12 @@ MT.extend("core.BasicPlugin")(
 	MT.plugins.UndoRedo = function(project){
 		this.project = project;
 		this.buffer = [];
+		
+		this.name = "UndoRedo";
+		
 		this._step = 0;
 		
-		this.max = 100;
+		this.max = 20;
 		
 		this.undos = 0;
 		
@@ -77,12 +80,22 @@ MT.extend("core.BasicPlugin")(
 		installUI: function(){
 			var that = this;
 			
-			var stored = localStorage.getItem(that.project.id);
-			if(stored){
-				this.buffer = JSON.parse(stored);
-				this.step = this.buffer.length;
+			var stored = localStorage.getItem(this.name);
+			
+			if(!stored){
+				this.data = {};
+			}
+			else{
+				this.data = JSON.parse(stored);
+			}
+
+			if(this.data[this.project.id]){
+				this.buffer = this.data[this.project.id];
 			}
 			
+			
+			this.step = this.buffer.length;
+			this.data[this.project.id] = this.buffer;
 			
 			this.om = this.project.plugins.objectmanager;
 			this.om.on(MT.OBJECTS_SYNC, function(data){
@@ -127,11 +140,12 @@ MT.extend("core.BasicPlugin")(
 			this.currentOffset = off;
 			
 			try{
-				localStorage.setItem(this.project.id, str);
+				localStorage.setItem(this.name, JSON.stringify(this.data) );
 			}
 			catch(e){
 				off++;
-				localStorage.setItem(this.project.id, JSON.stringify(this.buffer.slice(this.step - off, this.step)) );
+				this.buffer.slice(this.step - off, this.step);
+				localStorage.setItem(this.name, JSON.stringify(this.data) );
 			}
 		},
 		

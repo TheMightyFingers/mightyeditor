@@ -683,9 +683,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				this.drawPhysicsBody(ctx, this.objects[i]);
 			}
 		},
+		
 		drawPhysicsBody: function(ctx, obj){
 			
-			if(!obj || !obj.MT_OBJECT.physics || !obj.MT_OBJECT.physics.enable){
+			
+			if(!obj){
 				return;
 			}
 			
@@ -699,124 +701,53 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!this.isVisible(obj)){
 				return;
 			}
+			if(obj.MT_OBJECT.contents){
+				return;
+			}
+			
+			var p = obj.MT_OBJECT.physics;
+			if(!p || !p.enable){
+				var pp = obj.parent;
+				if(obj.parent == obj.game.world){
+					pp = this.settings.physics;
+				}
+				else{
+					pp = pp.MT_OBJECT.physics;
+				}
+				if(!pp || !pp.enable){
+					return;
+				}
+				p = pp;
+			}
 			
 			
 			var alpha = ctx.globalAlpha;
 			var bounds = obj.getBounds();
-			var group = null;
+			var group = obj.parent;
 			
-			if(obj.MT_OBJECT.contents){
-				group = obj;
-			}
-			else{
-				group = obj.parent || game.world;
-			}
+		
 			
 			var x = this.getObjectOffsetX(group);
 			var y = this.getObjectOffsetY(group);
 			
-			
 			ctx.save();
 			
-			ctx.translate(0.5,0.5);
+			ctx.fillStyle = "rgb(100,200,70)";
+			ctx.globalAlpha = 0.2;
 			
-			if(this.activeObject == obj){
-				ctx.strokeStyle = "rgb(255,0,0)";
-				ctx.lineWidth = 1;
-				
-				
-				var off = this.helperBoxSize;
-				var sx = bounds.x-off*0.5 | 0;
-				var dx = sx + bounds.width | 0;
-				
-				var sy = bounds.y-off*0.5 | 0;
-				var dy = sy + bounds.height | 0;
-					
-				if(obj.MT_OBJECT.type == MT.objectTypes.TEXT){
-					var width = bounds.width;
-					if(obj.wordWrap){
-						width = obj.wordWrapWidth*this.game.camera.scale.x | 0;
-						
-						ctx.strokeRect(bounds.x - off | 0, sy + bounds.height*0.5 | 0, off, off);
-						ctx.strokeRect(bounds.x + width | 0, sy + bounds.height*0.5 | 0, off, off);
-						
-					}
-					
-					ctx.strokeRect(bounds.x | 0, bounds.y | 0, width | 0, bounds.height | 0);
-				}
-				else{
-					if(obj.type == Phaser.SPRITE){
-						ctx.strokeRect(sx, sy, off, off);
-						ctx.strokeRect(sx, dy, off, off);
-						ctx.strokeRect(dx, sy, off, off);
-						ctx.strokeRect(dx, dy, off, off);
-						ctx.beginPath();
-						ctx.moveTo(sx + off, bounds.y);
-						ctx.lineTo(dx, bounds.y);
-						
-						ctx.moveTo(sx + off, bounds.y + bounds.height);
-						ctx.lineTo(dx, bounds.y + bounds.height);
-						
-						ctx.moveTo(bounds.x, sy + off);
-						ctx.lineTo(bounds.x, dy);
-						
-						ctx.moveTo(bounds.x + bounds.width, sy + off);
-						ctx.lineTo(bounds.x + bounds.width, dy);
-						
-						
-						ctx.stroke();
-					}
-					
-					else{ //(obj.type == Phaser.GROUP ){
-						ctx.strokeRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
-					}
-					if(obj.type != Phaser.TILE_LAYER){
-					//	ctx.strokeRect((bounds.x  - this.game.camera.x) | 0, (bounds.y - this.game.camera.y) | 0 , bounds.width | 0, bounds.height | 0);
-					}
-					
-					
-				
-				}
+			var w = bounds.width;
+			var h = bounds.height;
+			
+			if(p.size.width > 0){
+				w = p.size.width * this.scale.x;
 			}
-			else{
-				ctx.strokeStyle = "rgb(255,100,0)";
-				ctx.strokeRect(bounds.x | 0, bounds.y | 0, bounds.width, bounds.height);
+			if(p.size.height > 0){
+				h = p.size.height * this.scale.y;
 			}
 			
 			
 			
-			
-			ctx.strokeStyle = "#ffffff";
-			ctx.lineWidth = 1;
-			
-			
-			
-			var par = group.parent;
-			var oo = [];
-			while(par){
-				oo.push({x: par.x, y: par.y, r: par.rotation});
-				par = par.parent;
-			}
-			
-			while(oo.length){
-				var p = oo.pop();
-				ctx.translate(p.x, p.y);
-				ctx.rotate(p.r);
-				ctx.translate(-p.x, -p.y);
-			}
-			
-			ctx.translate(x, y);
-			ctx.rotate(group.rotation);
-			ctx.translate(-x, -y);
-			
-			ctx.beginPath();
-			ctx.moveTo(x, y);
-			ctx.lineTo(x, y - 16);
-			ctx.stroke();
-			ctx.strokeRect(x - 4, y - 4, 8, 8);
-
-			
-			ctx.globalAlpha = alpha;
+			ctx.fillRect((bounds.x + p.size.offsetX*this.scale.x) | 0, (bounds.y + p.size.offsetY*this.scale.y) | 0, w, h);
 			ctx.restore();
 		},
 		
@@ -1471,7 +1402,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.settings.cameraX = this.game.camera.x;
 			this.settings.cameraY = this.game.camera.y;
 			
-			this.project.settings.updateScene(this.settings);
+			this.project.plugins.settings.updateScene(this.settings);
 			
 		},
 		
@@ -1541,7 +1472,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			
 			this.sync(object);
-			this.project.settings.updateObjects(object.MT_OBJECT);
+			this.project.plugins.settings.updateObjects(object.MT_OBJECT);
 			
 			this.reloadObjects();
 		},
@@ -1582,7 +1513,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			object.MT_OBJECT.x = object.x;
 			object.MT_OBJECT.y = object.y;
-			this.project.settings.updateObjects(object.MT_OBJECT);
+			this.project.plugins.settings.updateObjects(object.MT_OBJECT);
 			this.sync(object);
 		},
 		
@@ -1651,7 +1582,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			obj.alpha = sprite.alpha;
 			
 			if(sprite == this.activeObject){
-				this.project.settings.update();
+				this.project.plugins.settings.update();
 			}
 			
 			this.emit(MT.SYNC, this);
