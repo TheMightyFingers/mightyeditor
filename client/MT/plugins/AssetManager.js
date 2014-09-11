@@ -583,10 +583,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		drawSpritesheet: function(panel){
 			var image = this.project.plugins.mapeditor.game.cache.getImage(panel.data.asset.id+"");
 			var ctx = panel.data.ctx;
+			if(!image){
+				var that = this;
+				window.setTimeout(function(){
+					that.drawSpritesheet(panel);
+				}, 100);
+				return;
+			}
 			
 			var imgData = panel.data.asset;
+			ctx.canvas.width = image.width;
+			ctx.canvas.height = image.height;
 			
 			ctx.clearRect(0, 0, image.width, image.height);
+			
+			
 			ctx.drawImage(image, 0, 0, image.width, image.height);
 			ctx.beginPath();
 			
@@ -600,16 +611,23 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			ctx.stroke();
 			
-			var dx = this.getTileX(this.activeFrame, image.width / imgData.frameWidth);
-			var dy = this.getTileY(this.activeFrame, image.width / imgData.frameWidth);
+			
+			var off = imgData.margin + imgData.spacing*Math.floor(image.width / imgData.frameWidth  - imgData.spacing);
+			
+			var widthInFrames = (image.width - off) / (imgData.frameWidth )    
+			
+			
+			var dx = this.getTileX(this.activeFrame, widthInFrames);
+			var dy = this.getTileY(this.activeFrame, widthInFrames);
 			
 			ctx.fillStyle = "rgba(0,0,0,0.5)";
 			ctx.fillRect(
-							imgData.margin + imgData.frameWidth * dx  + dx * imgData.spacing + 0.5,
-							imgData.frameHeight * dy + dy * imgData.spacing + 0.5,
-							imgData.frameWidth + 0.5,
-							imgData.frameHeight + 0.5
-						);
+					imgData.margin + imgData.frameWidth  * dx + dx * imgData.spacing + 0.5,
+					imgData.margin + imgData.frameHeight * dy + dy * imgData.spacing + 0.5,
+				
+				
+							imgData.frameWidth+0.5, imgData.frameHeight+0.5
+				);
 			
 			
 		},
@@ -636,11 +654,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				// released mouse outside canvas?
 				var asset = panel.data.asset;
-				var maxframe = Math.floor(asset.width / asset.frameWidth ) - 1;
+				var maxframe = Math.floor(  (asset.width / asset.frameWidth) * (asset.height /asset.frameHeight) - 1) ;
 				if(maxframe < frame){
 					return;
 				}
 				
+				panel.data.scrollTop = panel.content.el.scrollTop;
+				panel.data.scrollLeft = panel.content.el.scrollLeft;
 				
 				that.activeFrame = frame;
 				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
@@ -864,11 +884,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				img.onload = function(){
 					asset.frameWidth = img.width;
 					asset.frameHeight= img.height;
+					asset.width = img.width;
+					asset.height = img.height;
+					
 					asset.updated = Date.now();
 					
 					that.guessFrameWidth(asset);
 				 
-					that.send("updateImage", {__image: asset.__image, data: fr.result});
+					that.send("updateImage", {asset: asset, data: fr.result});
 				};
 				img.src = that.toPng(fr.result);
 			});
@@ -904,14 +927,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var frame = gx + maxX * gy;
 			
+			console.log(frame, "frame");
+			
 			return frame;
 		},
 		
 		
 		update: function(){
 			var data = this.tv.getData();
-			
-			
+			if(this.active){
+				this.setPreviewAssets(this.active.data);
+			}
 			this.emit(MT.ASSETS_UPDATED, data);
 		},
 		

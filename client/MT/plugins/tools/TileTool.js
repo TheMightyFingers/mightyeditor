@@ -24,7 +24,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				if(!obj){
 					return;
 				}
-				that._select(obj);
+				if(obj.type == MT.objectTypes.TILE_LAYER){
+					that._select(obj);
+				}
 			});
 			this.tools.on(MT.OBJECT_UNSELECTED, function(){
 				that.unselect();

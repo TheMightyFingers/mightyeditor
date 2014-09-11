@@ -59,7 +59,12 @@ MT.extend("core.BasicPlugin")(
 		
 		a_updateImage: function(data){
 			var that = this;
-			this.fs.writeFile( this.project.path  + "/" + data.__image, new Buffer(data.data, "binary"), function(e){
+			var asset = data.asset;
+			var toUpdate = this.getById(asset.id);
+			for(var i in asset){
+				toUpdate[i] = asset[i];
+			}
+			this.fs.writeFile( this.project.path  + "/" + asset.__image, new Buffer(data.data, "binary"), function(e){
 				that.a_sendFiles();
 			});
 		},

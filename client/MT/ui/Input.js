@@ -278,6 +278,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		},
 		
 		setValue: function(val, silent){
+			if(this.type == "upload"){
+				return;
+			}
+			
+			
 			this.needEnalbe = false;
 			var oldValue = this.object[this.key];
 			

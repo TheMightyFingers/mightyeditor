@@ -132,15 +132,15 @@ MT(
 			this.addInput( {key: "anchorY", step: 0.5}, obj, true, cb);
 			this.addInput( {key: "fps", step: 1}, obj, true, cb);
 			
-			this.addInput( {key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, obj){
+			this.addInput( {key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, asset){
 				if(e.target.files.length === 0){
 					return;
 				}
-				that.project.am.addAtlas(obj, e);
+				that.project.am.addAtlas(asset, e);
 			});
 			
-			this.addInput( {key: "update", type: "upload", accept: MT.const.IMAGES}, obj, true, function(e){
-				that.project.am.updateImage(obj, e);
+			this.addInput( {key: "update", type: "upload", accept: MT.const.IMAGES}, obj, true, function(e, asset){
+				that.project.am.updateImage(asset, e);
 			});
 			
 			
