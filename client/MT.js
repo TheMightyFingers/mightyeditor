@@ -1425,7 +1425,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				if(!obj){
 					return;
 				}
-				that._select(obj);
+				if(obj.type == MT.objectTypes.TILE_LAYER){
+					that._select(obj);
+				}
 			});
 			this.tools.on(MT.OBJECT_UNSELECTED, function(){
 				that.unselect();
@@ -3577,6 +3579,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		},
 		
 		setValue: function(val, silent){
+			if(this.type == "upload"){
+				return;
+			}
+			
+			
 			this.needEnalbe = false;
 			var oldValue = this.object[this.key];
 			
@@ -6445,15 +6452,15 @@ MT(
 			this.addInput( {key: "anchorY", step: 0.5}, obj, true, cb);
 			this.addInput( {key: "fps", step: 1}, obj, true, cb);
 			
-			this.addInput( {key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, obj){
+			this.addInput( {key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, asset){
 				if(e.target.files.length === 0){
 					return;
 				}
-				that.project.am.addAtlas(obj, e);
+				that.project.am.addAtlas(asset, e);
 			});
 			
-			this.addInput( {key: "update", type: "upload", accept: MT.const.IMAGES}, obj, true, function(e){
-				that.project.am.updateImage(obj, e);
+			this.addInput( {key: "update", type: "upload", accept: MT.const.IMAGES}, obj, true, function(e, asset){
+				that.project.am.updateImage(asset, e);
 			});
 			
 			
@@ -9609,10 +9616,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		drawSpritesheet: function(panel){
 			var image = this.project.plugins.mapeditor.game.cache.getImage(panel.data.asset.id+"");
 			var ctx = panel.data.ctx;
+			if(!image){
+				var that = this;
+				window.setTimeout(function(){
+					that.drawSpritesheet(panel);
+				}, 100);
+				return;
+			}
 			
 			var imgData = panel.data.asset;
+			ctx.canvas.width = image.width;
+			ctx.canvas.height = image.height;
 			
 			ctx.clearRect(0, 0, image.width, image.height);
+			
+			
 			ctx.drawImage(image, 0, 0, image.width, image.height);
 			ctx.beginPath();
 			
@@ -9626,16 +9644,23 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			ctx.stroke();
 			
-			var dx = this.getTileX(this.activeFrame, image.width / imgData.frameWidth);
-			var dy = this.getTileY(this.activeFrame, image.width / imgData.frameWidth);
+			
+			var off = imgData.margin + imgData.spacing*Math.floor(image.width / imgData.frameWidth  - imgData.spacing);
+			
+			var widthInFrames = (image.width - off) / (imgData.frameWidth )    
+			
+			
+			var dx = this.getTileX(this.activeFrame, widthInFrames);
+			var dy = this.getTileY(this.activeFrame, widthInFrames);
 			
 			ctx.fillStyle = "rgba(0,0,0,0.5)";
 			ctx.fillRect(
-							imgData.margin + imgData.frameWidth * dx  + dx * imgData.spacing + 0.5,
-							imgData.frameHeight * dy + dy * imgData.spacing + 0.5,
-							imgData.frameWidth + 0.5,
-							imgData.frameHeight + 0.5
-						);
+					imgData.margin + imgData.frameWidth  * dx + dx * imgData.spacing + 0.5,
+					imgData.margin + imgData.frameHeight * dy + dy * imgData.spacing + 0.5,
+				
+				
+							imgData.frameWidth+0.5, imgData.frameHeight+0.5
+				);
 			
 			
 		},
@@ -9662,11 +9687,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				// released mouse outside canvas?
 				var asset = panel.data.asset;
-				var maxframe = Math.floor(asset.width / asset.frameWidth ) - 1;
+				var maxframe = Math.floor(  (asset.width / asset.frameWidth) * (asset.height /asset.frameHeight) - 1) ;
 				if(maxframe < frame){
 					return;
 				}
 				
+				panel.data.scrollTop = panel.content.el.scrollTop;
+				panel.data.scrollLeft = panel.content.el.scrollLeft;
 				
 				that.activeFrame = frame;
 				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
@@ -9890,11 +9917,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				img.onload = function(){
 					asset.frameWidth = img.width;
 					asset.frameHeight= img.height;
+					asset.width = img.width;
+					asset.height = img.height;
+					
 					asset.updated = Date.now();
 					
 					that.guessFrameWidth(asset);
 				 
-					that.send("updateImage", {__image: asset.__image, data: fr.result});
+					that.send("updateImage", {asset: asset, data: fr.result});
 				};
 				img.src = that.toPng(fr.result);
 			});
@@ -9930,14 +9960,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var frame = gx + maxX * gy;
 			
+			console.log(frame, "frame");
+			
 			return frame;
 		},
 		
 		
 		update: function(){
 			var data = this.tv.getData();
-			
-			
+			if(this.active){
+				this.setPreviewAssets(this.active.data);
+			}
 			this.emit(MT.ASSETS_UPDATED, data);
 		},
 		

@@ -494,7 +494,7 @@
 					w = p.size.width;
 				}
 				if(p.size.height > 0){
-					h = sprite.height;
+					h = p.size.height;
 				}
 				
 				sprite.body.setSize(w, h, p.size.offsetX, p.size.offsetY);
