@@ -160,6 +160,35 @@ MT(
 				opy: 0
 			};
 			
+			// horizontal handles
+			this.handles[4] = {
+				x: 0,
+				y: 0,
+				opx: 6,
+				opy: 0
+			};
+			
+			this.handles[5] = {
+				x: 0,
+				y: 0,
+				opx: 7,
+				opy: 7
+			};
+			
+			this.handles[6] = {
+				x: 0,
+				y: 0,
+				opx: 4,
+				opy: 0
+			};
+			
+			this.handles[7] = {
+				x: 0,
+				y: 0,
+				opx: 2,
+				opy: 5
+			};
+			
 			this.updateBox();
 		},
 		
@@ -236,14 +265,45 @@ MT(
 				y = mat.ty + obj.height * (1 - obj.anchor.y) * this.map.scale.x;
 				this.rp(angle, x, y, ax, ay, this.handles[3]);
 			}
+			// sides
+			// left
+			if(this.activeHandle != 4){
+				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) ;
+				y = (mat.ty - obj.height * (obj.anchor.y) * this.map.scale.x) + obj.height*0.5;
+				this.rp(angle, x, y, ax, ay, this.handles[4]);
+			}
 			
+			// right
+			if(this.activeHandle != 6){
+				x = mat.tx + obj.width * (1 - obj.anchor.x) * this.map.scale.x;
+				y = (mat.ty - obj.height * (obj.anchor.y) * this.map.scale.x) + obj.height*0.5;
+				this.rp(angle, x, y, ax, ay, this.handles[6]);
+			}
+			
+			// top
+			if(this.activeHandle != 5){
+				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) + obj.width*0.5;
+				y = (mat.ty - obj.height * (obj.anchor.y) * this.map.scale.x) ;
+				this.rp(angle, x, y, ax, ay, this.handles[5]);
+			}
+			// bottom
+			if(this.activeHandle != 7){
+				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) + obj.width*0.5;
+				y = mat.ty + obj.height * (1 - obj.anchor.y) * this.map.scale.x;
+				this.rp(angle, x, y, ax, ay, this.handles[7]);
+			}
 			
 			var rx = ax;
-			var ry = ay - this.object.height*0.6* this.map.scale.x;
+			var ry = ay - this.object.height * this.map.scale.x * 0.6 - 20;
 			
 			if(this.activeHandle != -3){
 				this.rotator.x = this.rpx(this.object.rotation, rx, ry, ax, ay);
 				this.rotator.y = this.rpy(this.object.rotation, rx, ry, ax, ay);
+				
+				for(var i=0; i<this.handles.length; i++){
+					
+				}
+				
 			}
 		},
 		
@@ -293,7 +353,7 @@ MT(
 			ctx.beginPath();
 			ctx.moveTo(h1.x, h1.y);
 			
-			var h;
+			var h, grd;
 			for(var i=1; i<4; i++){
 				h = this.handles[i];
 				ctx.lineTo(h.x, h.y);
@@ -304,7 +364,8 @@ MT(
 			
 			if(this.map.activeObject == this){
 				ctx.strokeStyle = "#ff0000";
-				ctx.fillStyle = "rgba(255,255,255,0.1)";
+				
+				ctx.fillStyle = grd;//"rgba(255,255,255,0.1)";
 				for(var i=0; i<this.handles.length; i++){
 					h = this.handles[i];
 					
@@ -316,11 +377,19 @@ MT(
 					else{
 						ctx.arc(h.x, h.y, this.radius, 0, 2*Math.PI);
 					}
+					grd = ctx.createRadialGradient(h.x, h.y, 0, h.x,h.y, this.radius);
+					grd.addColorStop(0,"rgba(255, 255, 255, 0)");
+					grd.addColorStop(1,"rgba(0, 70, 70, 1)");
+					ctx.fillStyle = grd;
+					
 					ctx.fill();
 					ctx.stroke();
 				}
 				
 				
+				ctx.strokeStyle = "#ffee22";
+				
+				// rotate
 				ctx.beginPath();
 				if(this.activeHandle == -3){
 					ctx.arc(this.rotator.x, this.rotator.y, this.activeRadius, 0, 2*Math.PI);
@@ -329,10 +398,23 @@ MT(
 				else{
 					ctx.arc(this.rotator.x, this.rotator.y, this.radius, 0, 2*Math.PI);
 				}
+				grd = ctx.createRadialGradient(this.rotator.x, this.rotator.y, 0, this.rotator.x, this.rotator.y, this.radius);
+				grd.addColorStop(0,"rgba(255, 255, 255, 0)");
+				grd.addColorStop(1,"rgba(0, 70, 70, 1)");
+				ctx.fillStyle = grd;
+				
 				ctx.fill();
 				ctx.stroke();
 				
-				ctx.strokeStyle = "#ffee22";
+				// connect anchor and rotator
+				ctx.beginPath();
+				ctx.moveTo(this.rotator.x, this.rotator.y);
+				ctx.lineTo(ax, ay);
+				ctx.stroke();
+				
+				
+				// anchor
+				ctx.strokeStyle = "#000000";
 				ctx.beginPath();
 				if(this.activeHandle == -2){
 					ctx.arc(ax, ay, this.activeRadius, 0, 2*Math.PI);
@@ -340,6 +422,11 @@ MT(
 				else{
 					ctx.arc(ax, ay, this.radius, 0, 2*Math.PI);
 				}
+				grd = ctx.createRadialGradient(ax, ay, 0, ax, ay, this.radius);
+				grd.addColorStop(0,"rgba(255, 255, 255, 0)");
+				grd.addColorStop(1,"rgba(0, 70, 70, 1)");
+				ctx.fillStyle = grd;
+				
 				ctx.fill();
 				ctx.stroke();
 			}
@@ -373,13 +460,13 @@ MT(
 			this.mouseInfo.y = y;
 			
 			if(this.activeHandle != -1){
-				document.body.style.cursor = "none";
+				//document.body.style.cursor = "none";
 			}
 		},
 		
 		mouseUp: function(e){
 			this.mouseInfo.down = false;
-			document.body.style.cursor = "auto";
+			//document.body.style.cursor = "auto";
 		},
 		
 		mouseMove: function(x, y, e){
@@ -579,29 +666,48 @@ MT(
 			dx = mi.x - x;
 			dy = mi.y - y;
 			h = this.handles[this.activeHandle];
-			h.x -= dx;
-			h.y -= dy;
+			
 			
 			var dw = this.handles[h.opx];
 			var dh = this.handles[h.opy];
 			
+			
+			if(this.activeHandle < 4){
+				h.x -= dx;
+				h.y -= dy;
+			
+				this.width = Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
+				this.height = Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
+			
+				this.updateBox();
+			
+				this.data.scaleX = this.object.scale.x;
+				this.data.scaleY = this.object.scale.y;
+			}
+			else{
+				if(this.activeHandle % 2 == 0){
+					h.x -= dx;
+					h.y -= dy;
+					
+					this.width = Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
+					this.height = Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
+					
+					this.updateBox();
+					this.data.scaleX = this.object.scale.x;
+				}
+				else{
+					h.y -= dy;
+					h.x -= dx;
+					
+					this.height = Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / (this.map.scale.y);
+				
+					this.updateBox();
+					this.data.scaleY = this.object.scale.y;
+				}
+			}
+			
 			mi.x = x;
 			mi.y = y;
-			
-			//if(this.data.type == MT.objectTypes.SPRITE){
-				this.width = Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
-			/*}
-			else{
-				this.object.wordWrapWidth = Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
-			}*/
-			
-			this.height = Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.x;
-			
-			this.updateBox();
-			
-			this.data.scaleX = this.object.scale.x;
-			this.data.scaleY = this.object.scale.y;
-			
 			this.update();
 		},
    
