@@ -75,6 +75,10 @@ MT.extend("core.Emitter")(
 			}
 			this._selected.length = 0;
 			this.emit("clear");
+		},
+		
+		get: function(index){
+			return this._selected[index];
 		}
 		
 		

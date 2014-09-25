@@ -602,6 +602,7 @@ div.ui-input .ui-input-value{
 	text-decoration: none;
 	outline: none;
 	float: right;
+	min-height: 20px;
 }
 
 div.ui-input.ui-input-number .ui-input-value{

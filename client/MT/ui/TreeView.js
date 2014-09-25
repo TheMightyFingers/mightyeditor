@@ -69,26 +69,6 @@ MT.extend("core.Emitter")(
 			return data;
 		},
 		
-		/*getData: function(parent, data){
-			
-			//return this.data;
-			
-			parent = parent || this.tree;
-			var c = null;
-			var data = [];
-			for(var i=0; i<parent.el.children.length; i++){
-				c = parent.el.children[i];
-				if(!c.ctrl || !c.ctrl.data || c.ctrl.data.skip){
-					continue;
-				}
-				if(c.ctrl.data.contents){
-					c.ctrl.data.contents = this.getData(c.ctrl);
-				}
-				data.push(c.ctrl.data);
-			}
-			return data;
-		},*/
-		
 		update: function(data){
 			this.tree.el.innerHTML = "";
 			this.createObject(data, this.tree);
@@ -247,7 +227,7 @@ MT.extend("core.Emitter")(
 			}
 			
 			
-			head.el.ondblclick = function(e){
+			label.el.ondblclick = function(e){
 				if(el.isFolder && e.offsetX < 30){
 					return;
 				}
@@ -265,7 +245,9 @@ MT.extend("core.Emitter")(
 			this.items.push(el);
 			el.needRemove = false;
 			el.tvItem = true;
-			
+			if(parent.hasClass("close")){
+				el.hide();
+			}
 			return el;
 		},
 		
@@ -282,7 +264,7 @@ MT.extend("core.Emitter")(
 					
 					if(p){
 						p.removeChild(item);
-						p.addChild(item, item.index).show();
+						p.addChild(item, index).show();
 					}
 					
 					
@@ -366,7 +348,7 @@ MT.extend("core.Emitter")(
 				that.emit("show", item);
 				
 				e.stopPropagation();
-				
+				e.preventDefault();
 			});
 			item.head.el.appendChild(b.el);
 			b.parent = item;

@@ -204,7 +204,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, arr, 0);
 			
-			arr.splice(0, 0, obj);
+			arr.splice(0, -1, obj);
+			
+			obj.index = -1;
 			
 			if(!silent){
 				this.tv.rootPath = this.project.path
@@ -266,6 +268,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				angle: 0,
 				alpha: 1,
 				tmpName: name,
+				wordWrapWidth: 100,
+				style: {
+					fontFamily: "Arial",
+					fontSize: 32
+				},
+				align: "left",
+				wordWrap: 0,
 				isVisible: 1,
 				isLocked: 0
 			};
@@ -334,7 +343,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				tileWidth: 64,
 				tileHeight: 64,
 				widthInTiles: 10,
-				heightInTiles: 10
+				heightInTiles: 10,
+				alpha: 1
 			};
 			
 			data.unshift(obj);

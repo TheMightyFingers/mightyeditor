@@ -1,9 +1,10 @@
 "use strict";
-MT.requireFile("js/phaser.min.js", function(){
+MT.requireFile("js/phaser.js", function(){
 	MT.requireFile("js/phaserHacks.js");
 });
 MT.require("core.Helper");
 MT.require("core.Selector");
+MT.require("core.MagicObject");
 
 MT.MAP_OBECTS_ADDED = "MAP_OBECTS_ADDED";
 MT.SYNC = "SYNC";
@@ -23,6 +24,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		this.groups = [];
 		this.oldGroups = [];
+		
+		
+		this.loadedObjects = [];
 		
 		this.tileLayers = [];
 		
@@ -114,10 +118,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var tools = this.project.plugins.tools;
 			var om = this.project.plugins.objectmanager;
 			
+			var mdown = false;
+			
 			ui.events.on(ui.events.MOUSEDOWN, function(e){
 				if(e.target != game.canvas){
 					return;
 				}
+				mdown = true;
 				that.handleMouseDown(e);
 			});
 			
@@ -131,13 +138,14 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			ui.events.on(ui.events.MOUSEUP, function(e){
 				that.handleMouseUp(e);
+				mdown = false;
 			});
 			
 			
 			var dx = 0;
 			var dy = 0;
 			ui.events.on(ui.events.MOUSEMOVE, function(e){
-				if(e.target !== that.game.canvas && e.button != 2){
+				if( e.target != game.canvas && e.button != 2 && !mdown){
 					return;
 				}
 				
@@ -195,6 +203,24 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				that.addObjects(data);
 			});
 			
+			this.project.plugins.objectmanager.on(MT.OBJECT_DELETED, function(id){
+				console.log("deleted", id);
+				var tmp;
+				for(var i=0; i<that.loadedObjects.length; i++){
+					tmp = that.loadedObjects[i];
+					
+					if(tmp.id == id){
+						that.loadedObjects.splice(i, 1);
+						tmp.remove();
+						if(that.activeObject == tmp){
+							that.activeObject = null;
+						}
+						return;
+					}
+				}
+				
+			});
+			
 			this.tools.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				if(that.activeObject){
 					that.activeObject.frame = frame;
@@ -216,7 +242,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			var ctx = null;
 			var drawObjects = function(obj){
-				that.highlightObject(ctx, obj);
+				obj.highlight(ctx);
 			};
 			
 			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
@@ -254,8 +280,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 								}
 								
 							}
-							
 						},
+						
 						postRender: function(){
 							
 							for(var i=0; i<that.tileLayers.length; i++){
@@ -353,7 +379,14 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 		},
-		
+		update: function(){
+			var tmp;
+			return;
+			for(var i=0; i<this.loadedObjects.length; i++){
+				tmp = this.loadedObjects[i];
+				tmp.updateBox();
+			}
+		},
 		
 		resize: function(){
 			if(!this.game || !this.game.world){
@@ -409,19 +442,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			
 			this.postUpdateSetting();
+			this.project.plugins.settings.update();
 		},
 		
 		postUpdateSetting: function(){
-			
-			
 			this.game.width = this.settings.worldWidth;
 			this.game.height = this.settings.worldHeight;
-			
-			//this.game.world.setBounds(0, 0, obj.worldWidth, obj.worldHeight);
-			
-			
 			this.setCameraBounds();
-			
 			
 			this.game.camera.x = this.settings.cameraX;
 			this.game.camera.y = this.settings.cameraY;
@@ -432,6 +459,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(this.game.stage.backgroundColor != bg){
 				this.game.stage.setBackgroundColor(bg);
 			}
+			
+			this.update();
 		},
 		
 		/* drawing fns */
@@ -464,8 +493,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			
 			ctx.strokeStyle = "#"+xx;
-			
-			//ctx.strokeStyle = "rgba(255,255,255,0.1)";
 			
 			var offx = this.settings.gridOffsetX % this.settings.gridX - this.settings.gridX;
 			var offy = this.settings.gridOffsetY % this.settings.gridY - this.settings.gridY;
@@ -538,13 +565,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		highlightObject: function(ctx, obj){
-			
 			if(!obj){
 				return;
 			}
 			
 			if(!obj.game || !obj.parent){
-				obj = this.getById(obj.MT_OBJECT.id);
+				obj = this.getById(obj.id);
 				if(!obj){
 					return;
 				}
@@ -554,13 +580,19 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return;
 			}
 			
+			/*var matrix = obj.xxx.matrix;
+			if(!matrix){
+				matrix = [1, 0, 0, 1, 0, 0, 0, 0];
+				obj.xxx.matrix = matrix;
+				
+			}*/
 			
 			var alpha = ctx.globalAlpha;
 			
 			var bounds = obj.getBounds();
 			var group = null;
 			
-			if(obj.MT_OBJECT.contents){
+			if(obj.data.contents){
 				group = obj;
 			}
 			else{
@@ -587,7 +619,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				var sy = bounds.y-off*0.5 | 0;
 				var dy = sy + bounds.height | 0;
 					
-				if(obj.MT_OBJECT.type == MT.objectTypes.TEXT){
+				if(obj.data.type == MT.objectTypes.TEXT){
 					var width = bounds.width;
 					if(obj.wordWrap){
 						width = obj.wordWrapWidth*this.game.camera.scale.x | 0;
@@ -601,10 +633,71 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				else{
 					if(obj.type == Phaser.SPRITE){
-						ctx.strokeRect(sx, sy, off, off);
-						ctx.strokeRect(sx, dy, off, off);
-						ctx.strokeRect(dx, sy, off, off);
-						ctx.strokeRect(dx, dy, off, off);
+						obj.updateTransform();
+						var mat = obj.worldTransform;
+						var ax = mat.tx;
+						var ay = mat.ty;
+						var angle = obj.rotation;
+						var par = obj.parent;
+						while(par){
+							angle += par.rotation;
+							par = par.parent;
+						}
+						
+						var x, y, dx, dy;
+						
+						ctx.strokeStyle = "#ffee22";
+						ctx.beginPath();
+						ctx.arc(ax, ay, 5, 0, 2*Math.PI);
+						ctx.stroke();
+						
+						
+						ctx.strokeStyle = "#ff0000";
+						// top left
+						x = mat.tx - obj.width*(obj.anchor.x);
+						y = mat.ty - obj.height*(obj.anchor.y);
+						
+						dx = this.rpx(angle, x, y, ax, ay);
+						dy = this.rpy(angle, x, y, ax, ay);
+						ctx.beginPath();
+						ctx.arc(dx, dy, 5, 0, 2*Math.PI);
+						ctx.stroke();
+						
+						
+						// top right
+						x = mat.tx + obj.width*(1-obj.anchor.x);
+						y = mat.ty - obj.height*(obj.anchor.y);
+						
+						dx = this.rpx(angle, x, y, ax, ay);
+						dy = this.rpy(angle, x, y, ax, ay);
+						ctx.beginPath();
+						ctx.arc(dx, dy, 5, 0, 2*Math.PI);
+						ctx.stroke();
+						
+						
+						// bottom left
+						x = mat.tx - obj.width*(obj.anchor.x);
+						y = mat.ty + obj.height*(1 - obj.anchor.y);
+						
+						dx = this.rpx(angle, x, y, ax, ay);
+						dy = this.rpy(angle, x, y, ax, ay);
+						ctx.beginPath();
+						ctx.arc(dx, dy, 5, 0, 2*Math.PI);
+						ctx.stroke();
+						
+						// bottom right
+						x = mat.tx + obj.width*(1- obj.anchor.x);
+						y = mat.ty + obj.height*(1- obj.anchor.y);
+						
+						dx = this.rpx(angle, x, y, ax, ay);
+						dy = this.rpy(angle, x, y, ax, ay);
+						ctx.beginPath();
+						ctx.arc(dx, dy, 5, 0, 2*Math.PI);
+						ctx.stroke();
+						
+						return;
+						
+						/*
 						ctx.beginPath();
 						ctx.moveTo(sx + off, bounds.y);
 						ctx.lineTo(dx, bounds.y);
@@ -618,8 +711,80 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						ctx.moveTo(bounds.x + bounds.width, sy + off);
 						ctx.lineTo(bounds.x + bounds.width, dy);
 						
-						
 						ctx.stroke();
+						
+						//if(this.tools.activeTool.resize){
+							ctx.strokeRect(sx, sy, off, off);
+							ctx.strokeRect(sx, dy, off, off);
+							ctx.strokeRect(dx, sy, off, off);
+							ctx.strokeRect(dx, dy, off, off);
+						/*}
+						else{
+							var d =  Math.sqrt((dx - sx)*(dx - sx) + (dy - sy)*(dy - sy)) * 0.02;
+							
+							sx += off*0.5 + d;
+							sy += off*0.5 + d;
+							dx += off*0.5 - d;
+							dy += off*0.5 - d;
+							
+							
+							ctx.beginPath();
+							ctx.arc(sx, sy, 10, 1*Math.PI, 1.5*Math.PI);
+							ctx.stroke();
+							
+							ctx.beginPath();
+							ctx.arc(sx, dy, 10, 0.5*Math.PI, 1.0*Math.PI);
+							ctx.stroke();
+							
+							ctx.beginPath();
+							ctx.arc(dx, sy, 10, 1.5*Math.PI, 2*Math.PI);
+							ctx.stroke();
+							
+							ctx.beginPath();
+							ctx.arc(dx, dy, 10, 0*Math.PI, 0.5*Math.PI);
+							ctx.stroke();
+						}
+					
+						var ax = obj.scale.x > 0 ? obj.anchor.x : 1 - obj.anchor.x;
+						var ay = obj.scale.y > 0 ? obj.anchor.y : 1 - obj.anchor.y;
+						
+						var tx = (obj.x* this.scale.x) - this.game.camera.x;
+						var ty = (obj.y* this.scale.x) - this.game.camera.y ;
+						
+						/*
+						tx = tx;
+						ty = ty * this.scale.x;
+						
+						ctx.save()
+						ctx.beginPath();
+						//ctx.scale(this.scale.x, this.scale.x);
+						ctx.translate(tx, ty);
+						ctx.rotate(obj.rotation);
+						
+						ctx.strokeStyle = "#ffaa00";
+						ctx.fillStyle = "rgba(0,0,0,0.5)";
+						
+						ctx.arc(0 , 0, off*0.5, 0, 2*Math.PI);
+						ctx.fill();
+						ctx.stroke();
+						
+						var h = -obj.height*this.scale.x*0.5;
+						var w = -obj.width*this.scale.x*0.5 
+						var height = -50 - Math.sqrt(h*h+w*w);
+						
+						ctx.beginPath();
+						ctx.moveTo(0, 0);
+						ctx.lineTo(0, height + off*0.5);
+						ctx.stroke();
+						
+						ctx.strokeRect(-off*0.5, height - off*0.5, off, off);
+						
+						
+						
+						ctx.restore();
+						
+						*/
+						
 					}
 					
 					else{ //(obj.type == Phaser.GROUP ){
@@ -686,13 +851,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		drawPhysicsBody: function(ctx, obj){
 			
-			
 			if(!obj){
 				return;
 			}
 			
 			if(!obj.game || !obj.parent){
-				obj = this.getById(obj.MT_OBJECT.id);
+				obj = this.getById(obj.id);
 				if(!obj){
 					return;
 				}
@@ -701,18 +865,18 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!this.isVisible(obj)){
 				return;
 			}
-			if(obj.MT_OBJECT.contents){
+			if(obj.data.contents){
 				return;
 			}
 			
-			var p = obj.MT_OBJECT.physics;
+			var p = obj.data.physics;
 			if(!p || !p.enable){
 				var pp = obj.parent;
 				if(obj.parent == obj.game.world){
 					pp = this.settings.physics;
 				}
 				else{
-					pp = pp.MT_OBJECT.physics;
+					pp = pp.data.physics;
 				}
 				if(!pp || !pp.enable){
 					return;
@@ -788,7 +952,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					if(o1 == o2){
 						continue;
 					}
-					if(o1.x == o2.x && o1.y == o2.y && o1.MT_OBJECT.assetId == o2.MT_OBJECT.assetId && o1.width == o2.width){
+					if(o1.x == o2.x && o1.y == o2.y && o1.assetId == o2.assetId && o1.width == o2.width){
 						bounds = o1.getBounds();
 						ctx.fillRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
 					}
@@ -1046,7 +1210,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					if(o == this.objects[j]){
 						continue;
 					}
-					if(o.MT_OBJECT.id == this.objects[j].MT_OBJECT.id){
+					if(o.id == this.objects[j].id){
 						console.error("dublicate id");
 					}
 				}
@@ -1057,9 +1221,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		_addTimeout: 0,
 		addObjects: function(objs, group){
-			this.addedObjects = objs;
-			
-			group = group || game.world;
+			// check if assets is loaded - if not - call again this method after a while
 			if(!this.isAssetsAdded){
 				var that = this;
 				if(this._addTimeout){
@@ -1068,58 +1230,30 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				
 				this._addTimeout = window.setTimeout(function(){
-					that.addObjects(objs);
+					that.addObjects(objs, group);
 					this._addTimeout = 0;
 				}, 100);
 				return;
 			}
-			
-			this.oldObjects.length = 0;
-			this.oldObjects = this.objects.slice(0);
-			
-			this.tileLayers.length = 0;
-			
-			for(var i=0; i<this.groups.length; i++){
-				if(this.groups[i].parent){
-					this.groups[i].destroy(false);
-				}
+			var tmp;
+			for(var i=0; i< this.loadedObjects.length; i++){
+				tmp = this.loadedObjects[i];
+				tmp.isRemoved = true;
 			}
 			
-			
-			//this.oldGroups.length = 0;
-			//this.oldGroups = this.oldGroups.slice(0);
-			
-			
-			this.objects.length = 0;
-			this.groups.length = 0;
-			
-			
+			group = group || game.world;
 			this._addObjects(objs, group);
 			
-			var remove = true;
-			for(var i=0; i<this.oldObjects.length; i++){
-				remove = true;
-				for(var j=0; j<this.objects.length; j++){
-					
-					if(this.oldObjects[i].MT_OBJECT.id == this.objects[j].MT_OBJECT.id){
-						remove = false;
-						break;
-					}
-				}
-				if(remove){
-					this._destroyObject(this.oldObjects[i]);
+			for(var i=0; i< this.loadedObjects.length; i++){
+				tmp = this.loadedObjects[i];
+				if(tmp.isRemoved){
+					this.loadedObjects.splice(i, 1);
+					tmp.remove();
+					i--;
 				}
 			}
 			
-			
-			
-			for(var i=0; i<this.tmpObjects.length; i++){
-				this.tmpObjects[i].bringToTop();
-			}
-			
-			this.updateSelected();
-			this.emit(MT.MAP_OBECTS_ADDED, this);
-			this._addTimeout = 0;
+			return;
 		},
 		
 		_destroyObject: function(object){
@@ -1128,27 +1262,33 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		_addObjects: function(objs, group){
 			
+			var tmp;
+			var k = 0;
 			for(var i=objs.length-1; i>-1; i--){
+				tmp = this.getById(objs[i].id);
+				
+				if(!tmp ){
+					tmp = new MT.core.MagicObject(objs[i], group, this);
+					this.loadedObjects.push(tmp);
+				}
+				tmp.bringToTop();
+				tmp.isRemoved = false;
+				tmp.update(objs[i], group);
+				
+				// handle group
 				if(objs[i].contents){
-					
-					var tmp = this.addGroup(objs[i]);
-					group.add(tmp);
-					
-					this._addObjects(objs[i].contents, tmp);
+					this._addObjects(objs[i].contents, tmp.object);
 					continue;
 				}
-				
-				var obj = this.addObject(objs[i], group);
-				//obj.bringToTop();
-				this.inheritSprite(obj, objs[i]);
-				obj.z = i;
 			}
 		},
 		
 		addGroup: function(obj){
+			console.error("removed");
+			return;
 			
 			var group = this.game.add.group();
-			group.MT_OBJECT = obj;
+			group = obj;
 			
 			this.groups.push(group);
 			
@@ -1169,11 +1309,15 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		/* TODO: clean up - and seperate object types by corresponding tools*/
 		addObject: function(obj, group){
+			console.log("removed - addObject");
+			return;
+			
+			
 			var oo = null;
 			var od = null;
 			for(var i=0; i<this.oldObjects.length; i++){
 				od = this.oldObjects[i];
-				oo = this.oldObjects[i].MT_OBJECT;
+				oo = this.oldObjects[i].xxx;
 				if(!od.parent){
 					continue;
 				}
@@ -1195,7 +1339,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 					if(oo.type == MT.objectTypes.TILE_LAYER){
 						od = this.updateTileMap(obj, od);
-						od.MT_OBJECT = obj;
+						od.xxx = obj;
 						this.project.plugins.tools.tools.tiletool.updateLayer(od);
 						this.tileLayers.push(od);
 					}
@@ -1217,14 +1361,14 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			if(obj.type == MT.objectTypes.TEXT){
 				var t = this.addText(obj, group);
-				t.MT_OBJECT = obj;
+				t.xxx = obj;
 				this.objects.push(t);
 				return t;
 			}
 			
 			if(obj.type == MT.objectTypes.TILE_LAYER){
 				var t = this.addTileLayer(obj);
-				t.MT_OBJECT = obj;
+				t.xxx = obj;
 				this.objects.push(t);
 				this.project.plugins.tools.tools.tiletool.updateLayer(t);
 				this.tileLayers.push(t);
@@ -1237,88 +1381,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			return sp;
 		},
 		
-		addText: function(obj, group){
-			group = group || this.game.world;
-			var t = this.game.add.text(obj.x, obj.y, obj.text, obj.style);
-			group.add(t);
-			
-			return t;
-		},
-		
-		createSprite: function(obj, group){
-			var game = this.game;
-			group = group || game.world;
-			
-			var sp = null;
-			if(!game.cache.getImage(obj.assetId)){
-				obj.assetId = "__missing";
-			}
-			
-			
-			sp = group.create(obj.x, obj.y, obj.assetId);
-			
-			this.inheritSprite(sp, obj);
-			
-			
-			var frameData = game.cache.getFrameData(obj.assetId);
-			
-			if(frameData){
-				//sp.animations.add("default");
-			}
-			
-			return sp;
-		},
-		
-		inheritSprite: function(sp, obj){
-			
-			sp.MT_OBJECT = obj;
-			
-			sp.anchor.x = obj.anchorX;
-			sp.anchor.y = obj.anchorY;
-			
-			sp.x = obj.x;
-			sp.y = obj.y;
-			
-			sp.angle = obj.angle;
-			if(obj.alpha == void(0)){
-				sp.alpha = 1;
-			}
-			
-			obj._framesCount = 0;
-			
-			
-			if(obj.frame){
-				sp.frame = obj.frame;
-			}
-			
-			/*if(obj.width && obj.height && sp.scale.x == obj.scaleX && sp.scale.y == obj.scaleY){
-				if(obj.width != sp.width || obj.height != sp.height){
-					sp.width = obj.width;
-					sp.height = obj.height;
-					
-					obj.scaleX = sp.scale.x;
-					obj.scaleY = sp.scale.y;
-				}
-			}*/
-			
-			if(obj.scaleX != void(0)){
-				if(sp.scale.x != obj.scaleX || sp.scale.y != obj.scaleY){
-					sp.scale.x = obj.scaleX;
-					sp.scale.y = obj.scaleY;
-					//obj.width = sp.width;
-					//obj.height = sp.height;
-				}
-			}
-			
-			
-			
-			sp.visible = !!obj.isVisible;
-			
-		},
-		
 		reloadObjects: function(){
-			if(this.addedObjects && !this._addTimeout){
-				this.addObjects(this.addedObjects);
+			if(this.loadedObjects && !this._addTimeout){
+				this.addObjects(this.loadedObjects);
 			}
 		},
 		
@@ -1331,7 +1396,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 				
 			if(!this._activeObject.game){
-				this._activeObject = this.getById(this._activeObject.MT_OBJECT.id);
+				this._activeObject = this.getById(this._activeObject.xxx.id);
 			}
 			
 			return this._activeObject;
@@ -1404,77 +1469,43 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			this.project.plugins.settings.updateScene(this.settings);
 			
+			this.update();
 		},
 		
 		
 		dist: null,
 		
-		_objectMove: function(e, object){
+		updateMouseInfo: function(e){
+			var that = this;
+			this.selector.forEach(function(obj){
+				obj.mouseInfo.x = e.x;// - that.ox;
+				obj.mouseInfo.y = e.y;// - that.oy;
+			});
+			
+		},
+		
+		_objectMove: function(e, mo){
+			
+			
 			//console.log("move");
-			if(!object){
+			if(!mo){
 				var that = this;
 				this.selector.forEach(function(obj){
 					that._objectMove(e, obj);
 				});
 				return;
 			}
+			var x = this.ui.events.mouse.mx + this.ox;
+			var y = this.ui.events.mouse.my + this.oy;
 			
-			var id = object.MT_OBJECT.id;
-			if(!object.world){
-				console.error("ASDASD");
-				object = this.getById(id);
-			}
+			var m = this.ui.events.mouse;
 			
+			//mo.mouseInfo.x = m.x
+			//mo.mouseInfo.y = m.y
 			
-			var angle = this.getOffsetAngle(object);
+			mo.moveObject(m.x + m.mx, m.y + m.my, e);
 			
-			var x = this.ui.events.mouse.mx/this.scale.x;
-			var y = this.ui.events.mouse.my/this.scale.y;
-			
-			if(!this.dist[id]){
-				this.dist[id] = {
-					x: 0,
-					y: 0
-				};
-			}
-			var dist = this.dist[id];
-			
-			
-			if(angle){
-				x = this.rpx(angle, -this.ui.events.mouse.mx, -this.ui.events.mouse.my, 0, 0);
-				y = this.rpy(angle, -this.ui.events.mouse.mx, -this.ui.events.mouse.my, 0, 0);
-			}
-			
-			if(e.ctrlKey){
-				
-				dist.x += x;
-				dist.y += y;
-				
-				var mx = Math.round( ( dist.x ) / this.settings.gridX) * this.settings.gridX;
-				var my = Math.round( ( dist.y ) / this.settings.gridY) * this.settings.gridY;
-
-				dist.x -= mx;
-				dist.y -= my;
-				
-				object.x += mx;
-				object.y += my;
-				
-				object.x = Math.round( object.x / this.settings.gridX ) * this.settings.gridX;
-				object.y = Math.round( object.y / this.settings.gridY ) * this.settings.gridY;
-				
-			}
-			else{
-				dist.x = x;
-				dist.y = y;
-				
-				object.x += dist.x;
-				object.y += dist.y;
-			}
-			
-			this.sync(object);
-			this.project.plugins.settings.updateObjects(object.MT_OBJECT);
-			
-			this.reloadObjects();
+			return;
 		},
 		
 		enabledPhysics: false,
@@ -1511,10 +1542,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				object.y += inc;
 			}
 			
-			object.MT_OBJECT.x = object.x;
-			object.MT_OBJECT.y = object.y;
-			this.project.plugins.settings.updateObjects(object.MT_OBJECT);
-			this.sync(object);
+			//this.project.plugins.settings.updateObjects(object);
+			//this.sync(object);
 		},
 		
 		_followMouse: function(e, snapToGrid){
@@ -1535,57 +1564,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		/* helper fns */
 		
-		getOffsetAngle: function(obj){
-			var an = 0;
-			var p = obj.parent;
-			while(p){
-				an += p.rotation;
-				p = p.parent;
-			}
-			
-			
-			return an;
-		},
-		
-		rpx: function(angle, x, y, cx, cy){
-			
-			var sin = Math.sin(angle);
-			var cos = Math.cos(angle);
-			
-			return -(x - cx)*cos - (y - cy)*sin + cx;
-		},
-		
-		rpy: function(angle, x, y, cx, cy){
-			var sin = Math.sin(angle);
-			var cos = Math.cos(angle);
-			
-			return -(y - cy)*cos + (x - cx)*sin + cy;
-		},
-		
 		sync: function(sprite, obj){
-			sprite = sprite || this.activeObject;
-			obj = obj || sprite.MT_OBJECT;
 			
-			obj.x = sprite.x;
-			obj.y = sprite.y;
-			
-			obj.angle = sprite.angle;
-			
-			obj.scaleX = sprite.scale.x;
-			obj.scaleY = sprite.scale.y;
-			
-			obj.width = sprite.width;
-			obj.height = sprite.height;
-			
-			obj.frame = sprite.frame;
-			
-			obj.alpha = sprite.alpha;
-			
-			if(sprite == this.activeObject){
-				this.project.plugins.settings.update();
-			}
-			
-			this.emit(MT.SYNC, this);
 		},
    
 		createObject: function(obj){
@@ -1611,7 +1591,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		received: false,
 		a_receive: function(obj){
-			if(this.received){
+			if( this.received ){
 				return;
 			}
 			this.received = true;
@@ -1623,125 +1603,51 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			return this.activeObject;
 		},
 		
-		
-		getObjectOffsetX: function(obj){
-			var off = obj.x;
-			while(obj.parent){
-				off += obj.parent.x;
-				obj = obj.parent;
-			}
-			return off;
-		},
-		
-		getObjectOffsetY: function(obj){
-			var off = obj.y;
-			while(obj.parent){
-				off += obj.parent.y;
-				obj = obj.parent;
-			}
-			return off;
-		},
-		
-		
 		pickObject: function(x, y){
-			
 			x += this.game.camera.x;
 			y += this.game.camera.y;
 			
-			
-			
-			var ctrl = false;
-			var shift = false;
-			
-			var lc = this.ui.events.mouse.lastClick;
-			if(this.ui.events.mouse.lastClick){
-				ctrl = lc.ctrlKey;
-				shift = lc.shiftKey
+			// chek if we are picking already selected object
+			if(this.activeObject){
+				var obj = this.activeObject.object;
+				var bounds = obj.getBounds();
+				if(bounds.contains(x, y)){
+					return this.activeObject;
+				}
 			}
 			
 			
-			for(var i=this.objects.length-1; i>-1; i--){
-				if(!this.isVisible(this.objects[i])){
+			var p = new Phaser.Point(0,0);
+			var pointer = this.game.input.activePointer;
+			
+			var obj;
+			for(var i=this.loadedObjects.length-1; i>-1; i--){
+				obj = this.loadedObjects[i];
+				if(!obj.isVisible){
 					continue;
 				}
-				if(this.isLocked(this.objects[i])){
+				if(obj.data.contents){
 					continue;
 				}
-				var box = this.objects[i].getBounds();
-				if(box.contains(x,y)){
-					return this.objects[i];
-				}
-			}
-			
-			for(var i=0; i<this.tmpObjects.length; i++){
-				var box = this.tmpObjects[i].getBounds();
-				if(box.contains(x,y)){
-					return this.tmpObjects[i];
-				}
-			}
-			var group = this.isGroupHandle(x, y);
-			if(group){
-				return group;
-			}
-			return null;
-		},
-		
-		
-		pickGroup: function(x,y){
-			
-			x += this.game.camera.x;
-			y += this.game.camera.y;
-			
-			
-			
-			var ctrl = false;
-			var shift = false;
-			
-			var lc = this.ui.events.mouse.lastClick;
-			if(this.ui.events.mouse.lastClick){
-				ctrl = lc.ctrlKey;
-				shift = lc.shiftKey
-			}
-			
-			
-			var box = null;
-			for(var i=0; i<this.groups.length; i++){
-				if(!this.groups[i].visible){
+				if(obj.isLocked){
 					continue;
 				}
-				box = this.groups[i].getBounds();
-				if(box.contains(x, y)){
-					return this.groups[i];
+				// check bounds
+				if(!obj.object.input){
+					bounds = obj.object.getBounds();
+					if(bounds.contains(x, y)){
+						return obj;
+					}
+					continue;
+				}
+				
+				if(obj.object.input.checkPointerOver(this.game.input.activePointer)){
+					this.activeObject = obj;
+					return obj;
 				}
 			}
 			
 			return null;
-		},
-		
-		isVisible: function(obj){
-			var o = obj;
-			while(o.parent){
-				if(!o.visible){
-					return false;
-				}
-				o = o.parent;
-			}
-			
-			return o.visible;
-		},
-		isLocked: function(obj){
-			var o = obj;
-			while(o.parent){
-				if(!o.MT_OBJECT){
-					break;
-				}
-				if(o.MT_OBJECT.isLocked){
-					return true;
-				}
-				o = o.parent;
-			}
-			
-			return false;
 		},
 		
 		selectRect: function(rect, clear){
@@ -1749,22 +1655,31 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			rect.y -= this.game.camera.y;
 			
 			var box = null;
+			var obj = null;
 			
-			
-			for(var i=0; i<this.objects.length; i++){
-				if(!this.isVisible(this.objects[i])){
+			for(var i=0; i<this.loadedObjects.length; i++){
+				obj = this.loadedObjects[i];
+				if(obj.data.type == MT.objectTypes.GROUP){
 					continue;
 				}
-				if(this.isLocked(this.objects[i])){
+				var sprite = obj.object;
+				
+				if(!obj.isVisible){
+					continue;
+				}
+				if(obj.isLocked){
+					continue;
+				}
+				if(obj.data.contents){
 					continue;
 				}
 				
-				box = this.objects[i].getBounds();
+				box = sprite.getBounds();
 				if(box.intersects(rect)){
-					this.selector.add(this.objects[i]);
+					this.selector.add(obj);
 				}
 				else if(clear){
-					this.selector.remove(this.objects[i]);
+					this.selector.remove(obj);
 				}
 			}
 			
@@ -1777,6 +1692,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			return null;
 			
 			var bounds = null;
+			
 			for(var i=0; i<this.groups.length; i++){
 				if(this.isGroupSelected(this.groups[i])){
 					var ox = this.getObjectOffsetX(this.groups[i]);
@@ -1789,33 +1705,101 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 		},
 		
+		createSprite: function(obj, group){
+			var game = this.game;
+			group = group || game.world;
+			
+			var sp = null;
+			if(!game.cache.getImage(obj.assetId)){
+				obj.assetId = "__missing";
+			}
+			
+			
+			sp = group.create(obj.x, obj.y, obj.assetId);
+			
+			this.inheritSprite(sp, obj);
+			
+			
+			var frameData = game.cache.getFrameData(obj.assetId);
+			
+			if(frameData){
+				//sp.animations.add("default");
+			}
+			
+			return sp;
+		},
+		
+		inheritSprite: function(sp, obj){
+			console.log("removed");
+			return;
+			sp.xxx = obj;
+			
+			sp.anchor.x = obj.anchorX;
+			sp.anchor.y = obj.anchorY;
+			
+			sp.x = obj.x;
+			sp.y = obj.y;
+			
+			sp.angle = obj.angle;
+			if(obj.alpha == void(0)){
+				sp.alpha = 1;
+			}
+			
+			obj._framesCount = 0;
+			
+			
+			if(obj.frame){
+				sp.frame = obj.frame;
+			}
+			
+			/*if(obj.width && obj.height && sp.scale.x == obj.scaleX && sp.scale.y == obj.scaleY){
+				if(obj.width != sp.width || obj.height != sp.height){
+					sp.width = obj.width;
+					sp.height = obj.height;
+					
+					obj.scaleX = sp.scale.x;
+					obj.scaleY = sp.scale.y;
+				}
+			}*/
+			
+			if(obj.scaleX != void(0)){
+				if(sp.scale.x != obj.scaleX || sp.scale.y != obj.scaleY){
+					sp.scale.x = obj.scaleX;
+					sp.scale.y = obj.scaleY;
+					//obj.width = sp.width;
+					//obj.height = sp.height;
+				}
+			}
+			
+			
+			
+			sp.visible = !!obj.isVisible;
+			
+		},
+		
+		
 		isGroupSelected: function(group){
 			return false;
 		},
 		
 		updateSelected: function(){
+			console.log("removed");
+			
+			
+			return;
 			if(!this.activeObject){
 				return;
 			}
-			this.activeObject = this.getById(this.activeObject.MT_OBJECT.id);
+			this.activeObject = this.getById(this.activeObject.id);
 		},
 		
-		
-		
-		
+		/* TODO: refactor so all can use MagicObject */
 		getById: function(id){
-			for(var i=0; i<this.objects.length; i++){
-				if(this.objects[i].MT_OBJECT.id == id){
-					return this.objects[i];
+			for(var i=0; i<this.loadedObjects.length; i++){
+				if(this.loadedObjects[i].data.id == id){
+					return this.loadedObjects[i];
 				}
 			}
-			
-			for(var i=0; i<this.groups.length; i++){
-				if(this.groups[i].MT_OBJECT.id == id){
-					return this.groups[i];
-				}
-			}
-			
 		}
 	}
-);   
+);

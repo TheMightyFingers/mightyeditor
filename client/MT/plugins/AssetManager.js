@@ -801,8 +801,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active.addClass("active.selected");
 				
 				that.project.map.selector.forEach(function(o){
-					o.MT_OBJECT.assetId = data.id;
-					o.MT_OBJECT.__image = data.__image;
+					o.data.assetId = data.id;
+					o.data.__image = data.__image;
 				});
 				that.project.plugins.objectmanager.update();
 				that.project.plugins.objectmanager.sync();
@@ -815,7 +815,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
 				if(obj){
 					that.pendingFrame = obj.frame;
-					that.selectAssetById(obj.assetId);
+					that.selectAssetById(obj.data.assetId);
 					
 					//that.setPreviewAssets(obj);
 				}
@@ -842,9 +842,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				that.project.map.selector.forEach(function(o){
-					o.MT_OBJECT.assetId = asset.id;
-					o.MT_OBJECT.__image = asset.__image;
-					o.MT_OBJECT.frame = frame;
+					o.data.assetId = asset.id;
+					o.data.__image = asset.__image;
+					o.frame = frame;
+					
 					that.activeFrame = frame;
 					that.project.plugins.objectmanager.update();
 					that.project.plugins.objectmanager.sync();

@@ -29,24 +29,23 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		lastY: 0,
 		
 		init: function(asset){
-			
+			this.map = this.tools.map;
 			this.tools.unselectObjects();
-			asset = asset || this.tools.activeAsset;
-			if(!asset){
-				return;
-			}
-			if(asset.contents){
-				return;
-			}
-			this.tools.initTmpObject(asset);
-			this.tools.tmpObject.frame = this.tools.activeFrame;
 			
-			this.tools.setTool(this);
+			asset = asset || this.tools.activeAsset;
 			
 			var that = this;
 			this.tools.map.handleMouseMove = function(e){
 				that.mouseMove(e);
 			}
+			
+			if(!asset || asset.contents){
+				return;
+			}
+			
+			this.tools.initTmpObject(asset);
+			this.tools.tmpObject.frame = this.tools.activeFrame;
+			
 		},
 		
 		
@@ -57,7 +56,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					return;
 				}
 				if(!this.tools.lastAsset){
-					this.tools.lastAsset = this.project.plugins.assetmanager.getById(this.tools.map.activeObject.MT_OBJECT.assetId);
+					this.tools.lastAsset = this.project.plugins.assetmanager.getById(this.tools.map.activeObject.data.assetId);
 				}
 				this.init(this.tools.lastAsset);
 				
@@ -73,6 +72,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			
+			if(!this.tools.tmpObject){
+				return;
+			}
+			
 			var x = this.tools.tmpObject.x;
 			var y = this.tools.tmpObject.y;
 			
@@ -82,16 +85,17 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				
 				if(this.tools.tmpObject.x != this.lastX || this.tools.tmpObject.y != this.lastY){
 					this.insertObject();
+					
 				}
 			}
 		},
 		
 		insertObject: function(){
 			var om = this.project.plugins.objectmanager;
-			this.tools.map.sync(this.tools.tmpObject, this.tools.tmpObject.MT_OBJECT);
+			this.tools.map.sync(this.tools.tmpObject, this.tools.tmpObject.data);
 			
-			this.tools.tmpObject.MT_OBJECT.frame = this.tools.activeFrame;
-			om.insertObject(this.tools.tmpObject.MT_OBJECT);
+			this.tools.tmpObject.data.frame = this.tools.activeFrame;
+			om.insertObject(JSON.parse(JSON.stringify(this.tools.tmpObject.data)));
 			
 			this.lastX = this.tools.tmpObject.x;
 			this.lastY = this.tools.tmpObject.y;
@@ -100,7 +104,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.tools.tmpObject.frame = this.tools.activeFrame;
 			this.tools.tmpObject.x = this.lastX;
 			this.tools.tmpObject.y = this.lastY;
-			
+			this.tools.tmpObject.object.bringToTop();
 		},
 		
 		mouseUp: function(e){

@@ -128,13 +128,17 @@ MT.extend("core.BasicPlugin")(
 			this.map.settings.cameraX = cam.x;
 			this.map.settings.cameraY = cam.y;
 			this.project.plugins.settings.updateScene(this.map.settings);
+			var that = this;
+			window.setTimeout(function(){
+				that.map.update();
+			}, 10);
 		},
 		
 		
 		
 		locate: function(){
 			var cam = this.map.game.camera;
-			var o = this.map.activeObject;
+			var o = this.map.activeObject.object;
 			if(o){
 				this.locateXY(o.x + (o.width*(0.5 - o.anchor.x)), o.y + (o.height*(0.5 - o.anchor.y)));
 			}

@@ -16,12 +16,6 @@ MT(
 			this.panel = ui.createPanel("Settings");
 			this.panel.setFree();
 			var that = this;
-			
-			ui.events.on("keyup", function(e){
-				if(e.which == MT.keys.ESC){
-					that.clear();
-				}
-			});
 			this.panel.header.addClass("ui-wrap");
 		},
 		
@@ -33,6 +27,9 @@ MT(
 			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
 				that.handleObjects(obj);
 				that.active = obj.id;
+			});
+			this.project.plugins.tools.on(MT.OBJECT_UNSELECTED, function(obj){
+				that.clear();
 			});
 			
 			var map = this.project.plugins.mapeditor;
@@ -147,9 +144,11 @@ MT(
 		},
    
 		handleObjects: function(obj){
-			if(!obj){
+			/*if(!MO){
 				return;
 			}
+			var obj = MO;
+			*/
 			
 			if(this.lastObj == obj){
 				return;
@@ -163,7 +162,7 @@ MT(
 				that.project.om.update();
 			};
 			//group
-			if(obj.contents){
+			if(obj.data.contents){
 				this.stack = "group";
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
@@ -174,7 +173,7 @@ MT(
 				this.objects.isFixedToCamera = this.addInput({key:"isFixedToCamera", min: 0, max: 1, step: 1}, obj, true, cb);
 			}
 			// tile layer
-			else if(obj.type == MT.objectTypes.TILE_LAYER){
+			else if(obj.data.type == MT.objectTypes.TILE_LAYER){
 				
 				this.stack = "layer";
 				this.objects.x = this.addInput( "x", obj, true, cb);
@@ -197,6 +196,73 @@ MT(
 				}, obj, true, cb);
 				
 				
+			}
+			// tile text
+			else if(obj.data.type == MT.objectTypes.TEXT){
+				this.stack = "sprite";
+				this.objects.x = this.addInput( "x", obj, true, cb);
+				this.objects.y = this.addInput( "y", obj, true, cb);
+				
+				if(obj._framesCount){
+					this.objects.frame = this.addInput( "frame", obj, true, function(){
+						
+						if(obj.frame >= obj._framesCount){
+							obj.frame = 0;
+						}
+						
+						if(obj.frame < 0){
+							obj.frame = obj._framesCount - 1;
+						}
+						
+						that.objects.frame.setValue(obj.frame, true);
+						
+						cb();
+					});
+				}
+				this.objects.angle = this.addInput( "angle", obj, true, cb);
+				this.objects.anchorX = this.addInput( {
+					key: "anchorX",
+					step: 0.1
+				}, obj, true, cb);
+				this.objects.anchorY = this.addInput( {
+					key: "anchorY",
+					step: 0.1
+				}, obj, true, cb);
+				
+				this.objects.width = this.addInput( {
+					key: "width",
+					step: 1,
+				}, obj, true, function(width, oldWidth){
+					var ow = oldWidth / obj.scaleX;
+					var scale = width / ow;
+					that.objects.scaleX.setValue(scale);
+					cb();
+					that.objects.width.setValue(parseInt(width, 10), true);
+				});
+				this.objects.wordWrapWidth = this.addInput( {
+					key: "wordWrapWidth",
+					step: 1,
+				}, obj, true, cb);
+				
+				this.objects.height = this.addInput( {
+					key: "height",
+					step: 1,
+				}, obj, true, function(height, oldHeight){
+					var ov = oldHeight / obj.scaleY;
+					var scale = height / ov;
+					that.objects.scaleY.setValue(scale);
+					cb();
+					that.objects.height.setValue(parseInt(height, 10), true);
+				});
+				
+				this.objects.scaleX = this.addInput( {
+					key: "scaleX",
+					step: 0.1
+				}, obj, true, cb)
+				this.objects.scaleY = this.addInput( {
+					key: "scaleY",
+					step: 0.1
+				}, obj, true, cb);
 			}
 			//sprite
 			else{

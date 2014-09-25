@@ -183,6 +183,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		};
 		
 		
+		var startVal;
+		input.onfocus = function(){
+			startVal = that.object[that.key];
+		};
+		
 		input.onblur = function(){
 			input.parentNode.removeChild(input);
 			input.isVisible = false;
@@ -192,13 +197,20 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			that.emit("change", val, val);
 		};
 		
-		input.onkeydown = input.onkeyup = function(e){
+		input.onkeydown = function(e){
 			if(e.which == MT.keys.DELETE){
+				e.stopPropagation();
+			}
+			if(e.which == MT.keys.ESC){
+				
+				input.value = startVal;
+				input.blur();
 				e.stopPropagation();
 			}
 		};
 		
-		this.keyup = events.on("keyup", function(e){
+		
+		input.onkeyup = function(e){
 			if(!input.isVisible){
 				return;
 			}
@@ -206,14 +218,18 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			var hideval = true;
 			
 			if(w == MT.keys.ESC){
-				input.value = that.object[that.key];
-				input.blur();
+				
 				hideval = false;
+				input.value = that.object[that.key];
+				e.stopPropagation();
+				input.blur();
 			}
 			
 			if(w == MT.keys.ENTER){
-				input.blur();
+				
 				hideval = false;
+				e.stopPropagation();
+				input.blur();
 			}
 			
 			if(that.object[that.key] != input.value){
@@ -223,9 +239,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 					that.value.el.innerHTML = "";
 				}
 			}
-			
-			
-		});
+		};
+		
+		//this.keyup = events.on("keyup", 
 		
 		if(this.type == "number"){
 		

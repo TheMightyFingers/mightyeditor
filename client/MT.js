@@ -1461,7 +1461,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		createPanels: function(images){
 			var p, pp;
-			var obj = this.active.MT_OBJECT;
+			var obj = this.active.data;
 			var image = null;
 			for(var id in images){
 				if(this.panels[id]){
@@ -1533,11 +1533,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var key = ""+image.data.id;
 			var tim = this.active.map.addTilesetImage(key, key, image.data.frameWidth, image.data.frameHeight, 0, 0, nextId);
 			
-			if(!this.active.MT_OBJECT.images){
-				this.active.MT_OBJECT.images = [];
+			if(!this.active.data.images){
+				this.active.data.images = [];
 			}
 			
-			this.active.MT_OBJECT.images.push(image.id);
+			this.active.data.images.push(image.id);
 			
 			return nextId;
 			
@@ -1778,14 +1778,14 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		putTile: function(id, x, y, layer){
-			if(!layer.MT_OBJECT.tiles){
-				layer.MT_OBJECT.tiles = {};
+			if(!layer.data.tiles){
+				layer.data.tiles = {};
 			}
-			if(!layer.MT_OBJECT.tiles[y]){
-				layer.MT_OBJECT.tiles[y] = {};
+			if(!layer.data.tiles[y]){
+				layer.data.tiles[y] = {};
 			}
-			layer.MT_OBJECT.tiles[y][x] = id;
-			layer.map.putTile(id, x, y, layer);
+			layer.data.tiles[y][x] = id;
+			layer.object.map.putTile(id, x, y, layer);
 		},
 		
 		oldSettings: {},

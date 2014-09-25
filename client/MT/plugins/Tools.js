@@ -46,7 +46,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			ui.dockToLeft(this.panel);
-			return;
 		},
 		
 		installUI: function(){
@@ -101,17 +100,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			map.selector.on("select", function(obj){
-				that.emit(MT.OBJECT_SELECTED, om.getById(obj.MT_OBJECT.id));
+				//if(map.selector.count == 1){
+					that.emit(MT.OBJECT_SELECTED, obj);
+				//}
 			});
 			
 			map.selector.on("unselect", function(obj){
-				that.emit(MT.OBJECT_UNSELECTED, om.getById(obj.MT_OBJECT.id));
+				that.emit(MT.OBJECT_UNSELECTED, obj);
+				
+				window.setTimeout(function(){
+					if(map.selector.count == 1){
+						that.emit(MT.OBJECT_SELECTED, map.selector.get(0));
+					}
+				}, 0);
 			});
 			
 			om.on(MT.OBJECTS_UPDATED, function(){
-				if(map.activeObject && that.tmpObject && map.activeObject.MT_OBJECT.id != that.tmpObject.MT_OBJECT.id){
-					select(map.activeObject);
-				}
 				that.emit(MT.OBJECTS_UPDATED);
 			});
 			
@@ -133,7 +137,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					var data = om.tv.getData();
 					
 					that.map.selector.forEach(function(obj){
-						om.deleteObj(obj.MT_OBJECT.id, true, data);
+						om.deleteObj(obj.id, true, data);
 						om.selector.clear();
 					});
 					
@@ -190,7 +194,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						var cop = null;
 						for(var i=0; i<toCopy.length; i++){
 							bounds = toCopy[i].getBounds();
-							cop = that.copy(toCopy[i].MT_OBJECT, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
+							cop = that.copy(toCopy[i].data, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
 							that.map.selector.add(cop);
 						}
 					}
@@ -202,6 +206,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			this.setTool(this.tools.select);
+			
 			
 		},
 		
@@ -288,7 +293,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		lastSelected: null,
 		
 		selectObject: function(obj, clear){
-			if(this.lastSelected && this.lastSelected.MT_OBJECT.id == obj.MT_OBJECT.id && this.map.activeObject){
+			if(this.lastSelected && this.lastSelected == obj && this.map.activeObject){
 				return;
 			}
 			this.lastSelected = obj;
@@ -309,9 +314,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			asset = asset || this.lastAsset;
 			this.lastAsset = asset;
 			
-			if(this.tmpObject){
-				this.map.removeObject(this.tmpObject);
-			}
+			
 			
 			var x = this.ui.events.mouse.x;
 			var y = this.ui.events.mouse.y;
@@ -325,7 +328,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				dy = this.tmpObject.y;
 			}
 			
-			this.tmpObject =  this.map.createObject(om.createObject(asset));
+			if(!this.tmpObject){
+				this.tmpObject = new MT.core.MagicObject(om.createObject(asset), this.map.game.world, this.map);
+			}
+			
+			//this.tmpObject =  this.map.createObject();
 			this.map.activeObject = this.tmpObject;
 			
 			
@@ -337,7 +344,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		removeTmpObject: function(){
 			if(this.tmpObject){
-				this.map.removeObject(this.tmpObject);
+				this.tmpObject.hide();
 			}
 			this.tmpObject = null;
 		},
@@ -355,7 +362,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		unselectObjects: function(){
 			var toUnselect = [];
 			this.map.selector.forEach(function(obj){
-				if(!obj.MT_OBJECT.contents){
+				if(!obj.data.contents){
 					toUnselect.push(obj);
 				}
 			});
@@ -363,9 +370,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			for(var i=0; i<toUnselect.length; i++){
 				this.map.selector.remove(toUnselect[i]);
 			}
-			
+			this.map.activeObject = null;
 		},
 		
-		
+		hide: function(){
+			this.object.visible = false;
+		},
 	}
 );

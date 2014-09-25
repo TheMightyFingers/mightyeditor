@@ -313,7 +313,8 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			var map = this.project.plugins.mapeditor;
 			
-			var updateData = function(obj){
+			var updateData = function(mo){
+				var obj = mo.data;
 				map.updateScene(map.settings);
 				if(obj){
 					that.activeObject = obj;

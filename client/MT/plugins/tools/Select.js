@@ -1,3 +1,4 @@
+"use strict";
 MT.extend("core.BasicTool").extend("core.Emitter")(
 	MT.plugins.tools.Select = function(tools){
 		MT.core.BasicTool.call(this, tools);
@@ -18,6 +19,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			RE: 2,
 			RN: 3,
 			RS: 4,
+			RNW: 5,
+			RNE: 6,
+			RSW: 7,
+			RSE: 8
 		},
 		initUI: function(ui){
 			MT.core.BasicTool.initUI.call(this, ui);
@@ -34,6 +39,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		select: function(obj){
+			if(obj == map.activeObject){
+				return;
+			}
 			
 			var shift = (this.ui.events.mouse.lastEvent && this.ui.events.mouse.lastEvent.shiftKey ? true : false);
 			if(shift){
@@ -56,79 +64,39 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			var self = this.project.plugins.tools.tools.select;
+			var obj = this.activeObject;
+			var x = e.x - this.ox;
+			var y = e.y - this.oy;
+			
+			obj.mouseMove(x, y, e);
+			return;
+			
 			
 			if(this.ui.events.mouse.down && self.activeState != self.states.NONE){
 				self.resizeObject(this.activeObject, this.ui.events.mouse);
 				return;
 			}
 			
-			var bounds = this.activeObject.getBounds();
-			var type = this.activeObject.MT_OBJECT.type;
-			
-			var off = this.helperBoxSize;
-			
-			var x = e.x - this.ox;
-			var y = e.y - this.oy;
+			var type = this.activeObject.data.type;
 			
 			var obj = this.activeObject;
 			var scale = this.game.camera.scale.x;
+			var x = e.x - this.ox;
+			var y = e.y - this.oy;
 			
-			if(type == MT.objectTypes.TEXT){
-				
-				var my = bounds.y + bounds.height * 0.5 - off*0.5;
-				
-				var width = this.activeObject.wordWrapWidth * scale;
-				
-				if(y > my && y < my + off){
-					if(x > bounds.x - off | 0 && x < bounds.x ){
-						document.body.style.cursor = "w-resize";
-						self.activeState = self.states.RW;
-						self.startMove.x = obj.x;
-					}
-					else if(x > bounds.x + width && x < bounds.x + width + off){
-						document.body.style.cursor = "e-resize";
-						self.activeState = self.states.RE;
-						self.startMove.x = obj.x;
-					}
-					else{
-						document.body.style.cursor = "auto";
-						self.activeState = self.states.NONE;
-					}
-				}
-				else{
-					document.body.style.cursor = "auto";
-					self.activeState = self.states.NONE;
-				}
-			}
 			if(this.tools.activeTool !== self){
 				this.tools.mouseMove(e);
 			}
 		},
 		
-		resizeObject: function(obj, mouse){
-			obj = obj || this.map.activeObject;
-			var scale = this.map.game.camera.scale.x;
-			var x = mouse.mx/scale;
-			
-			if(this.activeState == this.states.RW){
-				obj.wordWrapWidth -= x;
-				obj.x = (this.startMove.x) + x * (1-obj.anchor.x);
-				this.startMove.x = obj.x;
-				
-				
-			}
-			if(this.activeState == this.states.RE){
-				obj.wordWrapWidth += x;
-				obj.x += x*obj.anchor.x;
-			}
-
-			this.tools.tools.text.select(obj);
-			
-			this.map.sync();
-		},
-		
-		
 		mouseMove: function(e){
+			/*if(this.map.activeObject){
+				var x = e.x - this.map.ox;
+				var y = e.y - this.map.oy;
+				
+				this.map.activeObject.mouseMove(x, y, e);
+				return;
+			}*/
 			if(!this.mDown){
 				return;
 			}
@@ -154,31 +122,37 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 			
 			this.map.selectRect(this.map.selection, !e.shiftKey);
+			
+			if(this.map.selector.count !== 1){
+				this.map.emit("select", this.map.settings);
+				this.map.activeObject = null;
+			}
+			else{
+				this.map.activeObject = this.map.selector.get(0);
+				
+			}
 		},
 		
-		mouseUp: function(e){
-			this.mDown = false;
-			var map = this.tools.map;
-			
-			map.selectRect(map.selection);
-			
-			map.selection.width = 0;
-			map.selection.height = 0;
-			
-			map.handleMouseMove = this.mouseMoveFree;
-		},
 		
 		initMove: function(e){
 			if(this.tools.activeTool != this){
 				return;
 			}
-			this.map.handleMouseMove = this.map._objectMove;
+			
+			var that = this;
+			
+			this.map.updateMouseInfo(e);
+			
+			this.map.handleMouseMove = function(e){
+				that.map.handleMouseMove = that.map._objectMove;
+			}
+			
 			
 			if(e.altKey){
 				var copy = [];
 				var sel = this.map.selector;
 				sel.forEach(function(o){
-					copy.push(o.MT_OBJECT);
+					copy.push(o.data);
 				});
 				
 				
@@ -187,11 +161,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				var cx = this.map.game.camera.x;
 				var cy = this.map.game.camera.y;
 				
-				
-				
 				var data = this.tools.om.multiCopy(copy);
 				sel.clear();
-				
 				
 				var sprite;
 				for(var i=0; i<data.length; i++){
@@ -204,11 +175,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					
 					sel.add(sprite);
 				}
-				
-				
-				
 			}
-			
 		},
 		_lastMD: 0,
 		doubleClick: function(){
@@ -216,10 +183,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return false;
 			}
 			
-			var mt = this.map.activeObject.MT_OBJECT;
-			for(var i=0; i<this.map.objects.length; i++){
-				if(this.map.objects[i].MT_OBJECT.assetId == mt.assetId){
-					this.map.selector.add(this.map.objects[i]);
+			var mt = this.map.activeObject.data;
+			var tmp;
+			for(var i=0; i<this.map.loadedObjects.length; i++){
+				tmp = this.map.loadedObjects[i];
+				if(tmp.data.assetId == mt.assetId && tmp.data.type == mt.type && tmp.isVisible && !tmp.isLocked){
+					this.map.selector.add(tmp);
 				}
 			}
 			
@@ -227,14 +196,32 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mDown: false,
-		mouseDown: function(e){
+		
+		mouseUp: function(e){
+			this.mDown = false;
+			var x = e.x - this.map.offsetXCam;
+			var y = e.y - this.map.offsetYCam;
 			
-			this.mDown = true;
-			if(this.activeState !== this.states.NONE){
-				return;
+			var map = this.tools.map;
+			
+			map.selectRect(map.selection);
+			
+			map.selection.width = 0;
+			map.selection.height = 0;
+			
+			if(this.map.activeObject){
+				this.map.activeObject.mouseUp(e.x - this.map.ox, e.y - this.map.oy, e);
+				//this.initMove(e);
+				//return;
 			}
+			
+			map.handleMouseMove = this.mouseMoveFree;
+		},
+		
+		
+		mouseDown: function(e){
+			this.mDown = true;
 			if(Date.now() - this._lastMD < 300){
-				
 				if(this.doubleClick()){
 					return;
 				}
@@ -242,11 +229,79 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this._lastMD = Date.now();
 			
+			var x = e.x - this.map.ox;
+			var y = e.y - this.map.oy;
+			
+			var dx = e.x - this.map.offsetXCam;
+			var dy = e.y - this.map.offsetYCam;
+			if(this.map.activeObject && this.map.activeObject.activeHandle != -1){
+				this.map.activeObject.mouseDown(x, y, e);
+				return;
+			}
+			
+			
+			var shift = (e.shiftKey ? true : false);
+			
+			var obj = this.map.pickObject(dx, dy);
+			if(!obj){
+				var that = this;
+				this.map.handleMouseMove = function(e){
+					that.mouseMove(e);
+				};
+				this.map.selection.x = e.x - this.map.offsetX;
+				this.map.selection.y = e.y - this.map.offsetY;
+				
+				this.map.selection.sx = e.x - this.map.offsetX;
+				this.map.selection.sy = e.y - this.map.offsetY;
+				
+				this.map.selection.width = 0;
+				this.map.selection.height = 0;
+				
+				if(!shift){
+					this.map.selector.clear();
+					this.map.activeObject = null;
+					this.map.emit("select", this.map.settings);
+				}
+				return;
+			}
+			
+			if(!shift){
+				if(!this.map.selector.is(obj)){
+					this.map.selector.clear();
+				}
+			}
+			else{
+				if(this.map.selector.is(obj)){
+					this.map.selector.remove(obj);
+					return;
+				}
+			}
+			
+			this.map.selector.add(obj);
+			
+			if(this.map.selector.count == 1){
+				this.map.activeObject = obj;
+				obj.mouseDown(x, y, e);
+			}
+			else{
+				console.log(this.map.selector.count);
+				this.map.activeObject = null;
+				this.map.emit("select", this.map.settings);
+				this.initMove(e);
+			}
+			
+			
+			
+			return;
+			
+			
+			
+			
+			
 			var that = this;
 			var shift = (e.shiftKey ? true : false);
 			
-			var x = e.x - this.map.offsetXCam;
-			var y = e.y - this.map.offsetYCam;
+		
 			
 			var obj = this.map.pickObject(x, y);
 			var group = this.map.pickGroup(x, y);
@@ -274,25 +329,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				}
 			}
 			else{
-				this.map.handleMouseMove = function(e){
-					that.mouseMove(e);
-				};
 				
-				this.map.selection.x = e.x - this.map.offsetX;
-				this.map.selection.y = e.y - this.map.offsetY;
-				
-				this.map.selection.sx = e.x - this.map.offsetX;
-				this.map.selection.sy = e.y - this.map.offsetY;
-				
-				this.map.selection.width = 0;
-				this.map.selection.height = 0;
-				
-				if(!shift){
-					this.map.selector.clear();
-					this.map.activeObject = null;
-					this.map.emit("select", this.map.settings);
-					//this.tools.project.plugins.settings.handleScene();
-				}
 			}
 		}
 	}

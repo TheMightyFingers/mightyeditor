@@ -27,15 +27,14 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			"Verdana"
 		];
 		
-	
-		
-		//this.fontSize = new MT.ui.Button(null, "font-size", 
-		
-		
 		this.tools.on(MT.OBJECT_SELECTED, function(obj){
-			if(tools.map.activeObject){
-				that.select(tools.map.activeObject);
+			if(tools.map.selector.count > 1){
+				that.panel.hide();
+				return;
 			}
+			//if(tools.map.activeObject){
+				that.select(obj);
+			//}
 		});
 		
 		this.tools.on(MT.OBJECT_UNSELECTED, function(){
@@ -283,7 +282,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				var rem = function(cancel){
 					pop.off("close", rem);
 					if(cancel){
-						that.tools.om.deleteObj(obj.MT_OBJECT.id);
+						that.tools.om.deleteObj(obj.id);
 					}
 				};
 				this.textPopup.on("close", rem);
@@ -296,9 +295,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			this.map.activeObject.text = val;
-			this.map.activeObject.MT_OBJECT.text = val;
-			//this.map.activeObject.MT_OBJECT.name = val;
-			
 		},
 		
 		change: function(e){
@@ -368,7 +364,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			for(var i=0; i<objects.length; i++){
 				o = objects[i];
 				if(o.type == Phaser.TEXT){
-					this._setFontFamily(o);
+					//this._setFontFamily(o);
 					
 					if(this.isUnknownFont(o.font)){
 						this.addFont(o.font);
@@ -400,20 +396,22 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 		},
 		
-		setFontFamily: function(fontIn){
+		setFontFamily: function(fontFamily){
 			this.map = this.tools.map;
 			if(!this.map.activeObject){
 				return;
 			}
 			
-			if(this.isUnknownFont(fontIn)){
+			var obj = this.map.activeObject;
+			
+			if(this.isUnknownFont(fontFamily)){
 				var that = this;
-				var active = this.map.activeObject;
-				this.addFont(fontIn);
-				this.manager.loadFont(fontIn, function(){
-					that.setFontFamily(fontIn);
+				var active = obj;
+				this.addFont(fontFamily);
+				this.manager.loadFont(fontFamily, function(){
+					that.setFontFamily(fontFamily);
 					window.setTimeout(function(){
-						that.updateTextObjects(fontIn);
+						that.updateTextObjects(fontFamily);
 					}, 1000);
 				});
 				return;
@@ -422,14 +420,17 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			
 			this.map = this.tools.map;
-			if(!this.map.activeObject){
+			if(!obj){
 				return;
 			}
-			this._setFontFamily(this.map.activeObject);
+			this._setFontFamily(obj, fontFamily);
+			obj.object.dirty = true;
+			this.select(obj);
 			
+			return;
 			
-			this.tester.style.font = this.map.activeObject.font || this.map.activeObject.style.font;
-			this.tester.style.fontFamily = fontIn;
+			this.tester.style.font = obj.font || obj.style.font;
+			this.tester.style.fontFamily = fontFamily;
 			
 			
 			
@@ -437,15 +438,15 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			font = font.replace(/'/gi, "");
 			
 			this.fontFace.button.style.fontFamily = font;
-			this.map.activeObject.font = font;
+			obj.font = font;
 			if(this.tester.style.fontSize){
-				this.map.activeObject.fontSize = this.tester.style.fontSize;
+				obj.fontSize = this.tester.style.fontSize;
 			}
 			
-			this._setFontFamily(this.map.activeObject);
+			this._setFontFamily(obj);
 			
-			this.select(this.map.activeObject);
-			this.map.activeObject.dirty = true;
+			this.select(obj);
+			obj.object.dirty = true;
 		},
 		
 		setFontSize: function(size){
@@ -453,13 +454,15 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!this.map.activeObject){
 				return;
 			}
-			this.tester.style.font = this.map.activeObject.font || this.map.activeObject.style.font;
+			var obj = this.map.activeObject;
+			
+			this.tester.style.font = obj.font || obj.style.font;
 			
 			
-			this._setFontFamily(this.map.activeObject);
+			//this._setFontFamily(obj);
 			this.tester.style.fontSize = size;
 			
-			this.map.activeObject.fontSize = this.tester.style.fontSize;
+			obj.fontSize = this.tester.style.fontSize;
 			
 			this.select(this.map.activeObject);
 			
@@ -470,7 +473,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!this.map.activeObject){
 				return;
 			}
-			var w = this.map.activeObject.style.font;
+			
+			var obj = this.map.activeObject;
+			var w = obj.style.font;
 			var att = this.getFontAttribs(w);
 			var out = "";
 			if(!att.bold){
@@ -482,9 +487,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			
 			out = out.trim();
-			this._setFontFamily(this.map.activeObject);
-			this.map.activeObject.fontWeight = out;
-			this.select(this.map.activeObject);
+			//this._setFontFamily(obj);
+			obj.fontWeight = out;
+			this.select(obj);
 		},
 		
 		toggleItalic: function(){
@@ -492,7 +497,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!this.map.activeObject){
 				return;
 			}
-			var w = this.map.activeObject.style.font;
+			var obj = this.map.activeObject
+			
+			var w = obj.style.font;
 			var att = this.getFontAttribs(w);
 			var out = "";
 			
@@ -507,10 +514,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			out = out.trim();
 			
 			
-			this._setFontFamily(this.map.activeObject);
+			//this._setFontFamily(obj);
 			
-			this.map.activeObject.fontWeight = out;
-			this.select(this.map.activeObject);
+			obj.fontWeight = out;
+			this.select(obj);
 		},
 		toggleWordWrap: function(){
 			this.map = this.tools.map;
@@ -518,14 +525,14 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			
-			this.map.activeObject.wordWrap = !this.map.activeObject.wordWrap;
-			var bounds = this.map.activeObject.getBounds();
-			if(this.map.activeObject.wordWrapWidth < bounds.width - 10){
-				this.map.activeObject.wordWrapWidth = parseInt(bounds.width, 10);
+			var obj = this.map.activeObject;
+			
+			obj.wordWrap = !obj.wordWrap;
+			var bounds = obj.object.getBounds();
+			if(obj.wordWrapWidth < bounds.width - 10){
+				obj.wordWrapWidth = parseInt(bounds.width, 10);
 			}
-			this.select(this.map.activeObject);
-			
-			
+			this.select(obj);
 		},
 		setWordWrapWidth: function(val){
 			this.map = this.tools.map;
@@ -538,17 +545,18 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 		},
 		
-		_setFontFamily: function(obj){
+		_setFontFamily: function(obj, fontFamily){
 			obj = obj || this.map.activeObject;
 			
-			
 			this.tester.style.font = obj.style.font;
-			obj.font = this.tester.style.fontFamily.replace(/'/gi,"");
+			this.tester.style.fontFamily = fontFamily;
+			
+			obj.fontFamily = this.tester.style.fontFamily.replace(/'/gi,"");
 			obj.fontWeight = this.tester.style.fontWeight.replace(/normal/gi,'');
 			if(this.tester.style.fontStyle == "italic"){
 				obj.fontWeight += " "+this.tester.style.fontStyle.replace(/normal/gi,"");;
 			}
-			obj.fontSize = this.tester.style.fontSize;
+			obj.fontSize = parseInt(this.tester.style.fontSize);
 		},
 		
 		init: function(){
@@ -573,27 +581,21 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		select: function(objTemplate){
 			/* fix this */
-			var obj = null;
-			if(!objTemplate.MT_OBJECT){
-				obj = this.tools.map.getById(objTemplate.id);
-			}
-			else{
-				obj = objTemplate;
-			}
+			var obj = objTemplate;
 			
-			if(!obj || !obj.MT_OBJECT || obj.MT_OBJECT.type != MT.objectTypes.TEXT){
+			if(!obj || !obj.data || obj.data.type != MT.objectTypes.TEXT){
 				this.panel.hide();
 				return;
 			}
 			
-			obj.MT_OBJECT.style = obj.style;
+			obj.data.style = obj.style;
 			this.tools.om.sync();
 			
 			if(obj.font){
-				this.tester.style.fontFamily = obj.font;
+				this.tester.style.font = obj.font;
 			}
 			else{
-				this.tester.style.font = obj.style.font;
+				this.tester.style.font = obj.object.style.font;
 			}
 			
 			
@@ -646,10 +648,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.panel.hide();
 			
-			
-			
 			this.panel.show(document.body);
-			obj.dirty = true;
+			obj.object.dirty = true;
+			
+			this.tools.project.plugins.settings.update();
 		},
 		
 		
@@ -673,8 +675,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.right.addClass("hidden");*/
 		},
 		
-		checkAlign: function(obj){
-			if(obj.wordWrap || obj.text.split("\n").length > 1){
+		checkAlign: function(mo){
+			var obj = mo;
+			if(obj.wordWrap || obj.object.text.split("\n").length > 1){
 				this.left.removeClass("hidden active");
 				this.center.removeClass("hidden active");
 				this.right.removeClass("hidden active");
@@ -733,7 +736,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var y = e.offsetY + this.map.offsetYCam - this.map.oy;
 			var obj = this.map.pickObject(e.x - this.map.offsetXCam, e.y - this.map.offsetYCam);
 			
-			if(obj && obj.MT_OBJECT.type == MT.objectTypes.TEXT){
+			if(obj && obj.data.type == MT.objectTypes.TEXT){
 				this.tools.tools.select.select(obj);
 				this.tools.select(obj);
 				this.tools.tools.text.showTextEdit();

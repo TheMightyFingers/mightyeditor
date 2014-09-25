@@ -33,9 +33,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		init: function(asset){
 			
 			this.map = this.tools.map;
-			
 			this.tools.unselectObjects();
+			
 			asset = asset || this.tools.activeAsset;
+			
+			this.map.handleMouseMove = this.map._followMouse;
 			
 			if(!asset || asset.contents){
 				return;
@@ -43,8 +45,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.tools.initTmpObject(asset);
 			this.tools.tmpObject.frame = this.tools.activeFrame;
 			
-			
-			this.map.handleMouseMove = this.map._followMouse;
 		},
 		
 		mouseDown: function(e){
@@ -57,7 +57,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					return;
 				}
 				if(!this.tools.lastAsset){
-					this.tools.lastAsset = this.project.plugins.assetmanager.getById(this.map.activeObject.MT_OBJECT.assetId);
+					this.tools.lastAsset = this.project.plugins.assetmanager.getById(this.map.activeObject.data.assetId);
 				}
 				this.init(this.tools.lastAsset);
 				return;
@@ -67,15 +67,18 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.map.sync(this.tools.tmpObject);
 			
-			this.tools.tmpObject.MT_OBJECT.frame = this.tools.activeFrame;
+			this.tools.tmpObject.data.frame = this.tools.activeFrame;
 			
-			var newObj = om.insertObject(this.tools.tmpObject.MT_OBJECT);
+			var newObj = om.insertObject(JSON.parse(JSON.stringify(this.tools.tmpObject.data)));
 			
 			this.tools.initTmpObject();
 			this.tools.tmpObject.frame = this.tools.activeFrame;
 			
 			this.tools.tmpObject.x = newObj.x;
 			this.tools.tmpObject.y = newObj.y;
+			
+			
+			this.tools.tmpObject.object.bringToTop();
 			
 			//this.tools.unselectObjects();
 		},

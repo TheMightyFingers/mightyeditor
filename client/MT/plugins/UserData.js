@@ -33,8 +33,8 @@ MT(
 				that.type = "asset";
 				console.log("asset GO");
 			});
-			tools.on(MT.OBJECT_SELECTED, function(obj){
-				updateData(obj);
+			tools.on(MT.OBJECT_SELECTED, function(mo){
+				updateData(mo.data);
 				that.type = "object";
 			});
 			
