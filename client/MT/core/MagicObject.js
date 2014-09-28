@@ -64,7 +64,7 @@ MT(
 			this.createTileMap();
 			this.object = this.tilemap.createBlankLayer(this.data.name, this.data.widthInTiles, this.data.heightInTiles, this.data.tileWidth, this.data.tileHeight);
 			this.object.fixedToCamera = this.data.isFixedToCamera;
-			this.map.project.plugins.tools.tools.tiletool.updateLayer(this.object, this.data);
+			this.map.project.plugins.tools.tools.tiletool.updateLayer(this);
 			this.map.tileLayers.push(this.object);
 		},
 		
@@ -597,69 +597,30 @@ MT(
 				this.rotator.x -= dx;
 				this.rotator.y -= dy;
 				
+				
+				var rot = Math.atan2( mat.ty - this.rotator.y, mat.tx - this.rotator.x) - Math.PI * 0.5;
 				mi.x = x;
 				mi.y = y;
 				
-				var rot = Math.atan2( mat.ty - this.rotator.y, mat.tx - this.rotator.x) - Math.PI * 0.5;
 				this.object.rotation = rot;
 				this.data.angle = this.object.angle;
-				this.update();
 				
+				if(e.ctrlKey){
+					console.log(Math.abs(this.object.rotation - rot));
+					this.object.angle = Math.round(this.object.angle / 15)*15;
+					this.data.angle = this.object.angle;
+				}
+				
+				this.update();
 				return;
 			}
 			
 			// move anchor
 			if(this.activeHandle == -2){
 				
-				var angle = this.getOffsetAngle();
-				var rot = this.object.rotation;
-				
-				var parrot = this.getParentAngle();
-				
-				this.object.rotation -= angle;
-				
-				this.updateBox();
-				
-				h = this.handles[0];
-				
-				var ax = mat.tx;
-				var ay = mat.ty;
-				
-				var dxrt = mi.x - x;
-				var dyrt = mi.y - y;
-				
-				var dxr = this.rpx(-parrot, dxrt, dyrt, 0, 0);
-				var dyr = this.rpy(-parrot, dxrt, dyrt, 0, 0);
-				
-				var dx = this.rpx(-rot, dxr, dyr, 0, 0);
-				var dy = this.rpy(-rot, dxr, dyr, 0, 0);
-				
-				var anx = this.anchorX;
-				var any = this.anchorY;
-				
-				var hx = h.x;
-				var hy = h.y;
-				
-				var adx = ax - dx;
-				var nax = (adx - hx)/(this.object.width * this.map.scale.x);
-				
-				var ady = ay - dy;
-				var nay = (ady - hy)/(this.object.height * this.map.scale.x);
-				
-				this.anchorX = nax;
-				this.anchorY = nay;
-				
-				var nx = (nax - anx) * this.object.width;
-				var ny = (nay - any) * this.object.height;
-				
-				this.x += this.rpx(rot, nx, ny, 0, 0);
-				this.y += this.rpy(rot, nx, ny, 0, 0);
-				
+				this.moveAnchor((x - mi.x), (y - mi.y) );
 				mi.x = x;
 				mi.y = y;
-				
-				this.object.rotation = rot;
-				this.update();
 				return;
 			}
 			
@@ -675,12 +636,30 @@ MT(
 			if(this.activeHandle < 4){
 				h.x -= dx;
 				h.y -= dy;
-			
-				this.width = Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
-				this.height = Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
-			
+				
+				var pWidth = this.width;
+				var pHeight = this.height;
+				
+				var nWidth = Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
+				var nHeight = Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
+				
+				this.width = nWidth;
+				this.height = nHeight;
+				
 				this.updateBox();
-			
+				this.data.scaleX = this.object.scale.x;
+				this.data.scaleY = this.object.scale.y;
+				
+				if(e.ctrlKey){
+					this.scaleX = Math.round(this.scaleX/0.1)*0.1;
+					this.scaleY = Math.round(this.scaleY/0.1)*0.1;
+				}
+				
+				if(e.shiftKey){
+					this.scaleX = this.scaleY;
+					
+				}
+				
 				this.data.scaleX = this.object.scale.x;
 				this.data.scaleY = this.object.scale.y;
 			}
@@ -713,6 +692,55 @@ MT(
    
 		bringToTop: function(){
 			this.parent.bringToTop(this.object);
+		},
+   
+		moveAnchor: function(x, y){
+			
+			var angle = this.getOffsetAngle();
+			var rot = this.object.rotation;
+			var mat = this.object.worldTransform;
+			var parrot = this.getParentAngle();
+			
+			var dxrt =  -x;
+			var dyrt =  -y;
+			
+			this.object.rotation -= angle;
+			
+			
+			this.updateBox();
+			
+			var h = this.handles[0];
+			
+			var dxr = this.rpx(-parrot, dxrt, dyrt, 0, 0);
+			var dyr = this.rpy(-parrot, dxrt, dyrt, 0, 0);
+			
+			var dx = this.rpx(-rot, dxr, dyr, 0, 0);
+			var dy = this.rpy(-rot, dxr, dyr, 0, 0);
+			
+			var hx = h.x;
+			var hy = h.y;
+			
+			var adx = mat.tx - dx;
+			var nax = (adx - hx)/(this.object.width * this.map.scale.x);
+			
+			var ady = mat.ty - dy;
+			var nay = (ady - hy)/(this.object.height * this.map.scale.x);
+			
+			var anx = this.anchorX;
+			var any = this.anchorY;
+			
+			this.anchorX = nax;
+			this.anchorY = nay;
+			
+			var nx = (nax - anx) * this.object.width;
+			var ny = (nay - any) * this.object.height;
+			
+			this.x += this.rpx(rot, nx, ny, 0, 0);
+			this.y += this.rpy(rot, nx, ny, 0, 0);
+			
+			this.object.rotation = rot;
+			
+			this.update();
 		},
 		
 		
@@ -815,6 +843,9 @@ MT(
 		},
 		
 		set width(val){
+			if(isNaN(val)){
+				return;
+			}
 			this.object.width = val;
 			this.data.width = val;
 			this.updateBox();
@@ -823,6 +854,9 @@ MT(
 			return this.data.width;
 		},
 		set height(val){
+			if(isNaN(val)){
+				return;
+			}
 			this.object.height = val;
 			this.data.height = val;
 		},
@@ -831,6 +865,9 @@ MT(
 		},
 		
 		set scaleX(val){
+			if(isNaN(val)){
+				return;
+			}
 			this.object.scale.x = val;
 			this.data.scaleX = val;
 			this.updateBox();
@@ -841,6 +878,9 @@ MT(
 		},
    
 		set scaleY(val){
+			if(isNaN(val)){
+				return;
+			}
 			this.object.scale.y = val;
 			this.data.scaleY = val;
 			this.updateBox();
@@ -851,6 +891,9 @@ MT(
 		},
 		
 		set alpha(val){
+			if(isNaN(val)){
+				return;
+			}
 			this.object.alpha = val;
 			this.data.alpha = val;
 		},

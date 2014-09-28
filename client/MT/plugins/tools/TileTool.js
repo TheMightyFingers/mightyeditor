@@ -485,8 +485,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		
-		updateLayer: function(obj, data){
-			this.active = obj;
+		updateLayer: function(mo){
+			
+			this.active = mo;
+			var obj = mo.object;
+			var data = mo.data;
+			
 			if(!data.images || data.images.length == 0){
 				return;
 			}
