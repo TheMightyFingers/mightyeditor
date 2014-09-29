@@ -844,8 +844,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!this.enabledPhysics){
 				return;
 			}
-			for(var i=0; i<this.objects.length; i++){
-				this.drawPhysicsBody(ctx, this.objects[i]);
+			for(var i=0; i<this.loadedObjects.length; i++){
+				this.drawPhysicsBody(ctx, this.loadedObjects[i]);
 			}
 		},
 		
@@ -862,7 +862,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 			}
 			
-			if(!this.isVisible(obj)){
+			if(!obj.isVisible){
 				return;
 			}
 			if(obj.data.contents){
@@ -871,12 +871,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			var p = obj.data.physics;
 			if(!p || !p.enable){
-				var pp = obj.parent;
+				var pp = obj.object.parent;
 				if(obj.parent == obj.game.world){
 					pp = this.settings.physics;
 				}
 				else{
-					pp = pp.data.physics;
+					pp = pp.magic.data.physics;
 				}
 				if(!pp || !pp.enable){
 					return;
@@ -886,21 +886,20 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			var alpha = ctx.globalAlpha;
-			var bounds = obj.getBounds();
-			var group = obj.parent;
+			//this.object.updateTransform();
 			
-		
+			var mat = obj.object.worldTransform
 			
-			var x = this.getObjectOffsetX(group);
-			var y = this.getObjectOffsetY(group);
+			var x = mat.tx;
+			var y = mat.ty;
 			
 			ctx.save();
 			
 			ctx.fillStyle = "rgb(100,200,70)";
 			ctx.globalAlpha = 0.2;
 			
-			var w = bounds.width;
-			var h = bounds.height;
+			var w = obj.width;
+			var h = obj.height;
 			
 			if(p.size.width > 0){
 				w = p.size.width * this.scale.x;
@@ -909,9 +908,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				h = p.size.height * this.scale.y;
 			}
 			
+			ctx.setTransform(mat.a, -mat.b, -mat.c, mat.d, mat.tx, mat.ty);
 			
-			
-			ctx.fillRect((bounds.x + p.size.offsetX*this.scale.x) | 0, (bounds.y + p.size.offsetY*this.scale.y) | 0, w, h);
+			ctx.fillRect(-w*obj.object.anchor.x + p.size.offsetX ,-h*obj.object.anchor.y + p.size.offsetY, w, h);
 			ctx.restore();
 		},
 		
