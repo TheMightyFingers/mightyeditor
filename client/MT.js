@@ -1786,7 +1786,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				layer.data.tiles[y] = {};
 			}
 			layer.data.tiles[y][x] = id;
-			layer.tilemap.putTile(id, x, y, layer.object);
+			layer.putTile(id, x, y);
+			//layer.tilemap.putTile(id, x, y, layer.object);
 		},
 		
 		oldSettings: {},
@@ -4089,6 +4090,8 @@ MT(
 			ctx.save();
 			ctx.translate(0.5, 0.5);
 			
+			ctx.strokeStyle = "#ffaa00";
+			
 			if(this.data.contents){
 				var bounds = this.object.getBounds();
 				ctx.strokeRect(bounds.left, bounds.top, bounds.width, bounds.height);
@@ -4631,6 +4634,14 @@ MT(
 			return angle;
 		},
 		
+		putTile: function(id, x, y){
+			this.object.map.putTile(id, x, y, this.object);
+			//layer.tilemap.putTile(id, x, y, layer.object);
+		},
+		getTile: function(x, y, tile){
+			return this.object.map.getTileWorldXY(x, y, void(0), void(0), this.object);
+		},
+   
 		get isHidden(){
 			return this.object.visible;
 		},
@@ -7281,6 +7292,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					window.setTimeout(function(){
 						if(map.selector.count == 1){
 							var obj = map.selector.get(0);
+							this.map.activeObject = null;
 							map.selector.emit("select", obj);
 							this.map.activeObject = obj;
 						}
@@ -9705,6 +9717,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!obj.object.input){
 				bounds = obj.object.getBounds();
 				if(bounds.contains(x, y)){
+					if(obj.data.type == MT.objectTypes.TILE_LAYER){
+						if(obj.getTile(x + this.game.camera.x, y + this.game.camera.y)){
+							return obj;
+						}
+						return null;
+					}
 					return obj;
 				}
 				return null;;
