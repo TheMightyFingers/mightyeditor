@@ -652,9 +652,6 @@ MT(
 			
 			sigX = (wtx - tx) > 0 ? 1 : -1;
 			sigY = (hty - ty) > 0 ? 1 : -1;
-			
-			console.log(this.activeHandle);
-			
 			if(this.activeHandle < 4){
 				h.x -= dx;
 				h.y -= dy;
@@ -678,6 +675,7 @@ MT(
 				this.height = nHeight;
 				
 				this.updateBox();
+				
 				this.scaleX = this.object.scale.x * sigX;
 				this.scaleY = this.object.scale.y * sigY;
 				
@@ -701,19 +699,26 @@ MT(
 					h.x -= dx;
 					h.y -= dy;
 					
+					
 					this.width = sigX * Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
-					this.height = sigY * Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
+					//this.height = sigY * Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
 					
 					this.scaleX = this.object.scaleX;
-					this.scaleY = this.object.scaleY;
+					//this.scaleY = this.object.scaleY;
 					
 					this.updateBox();
+					
+					if(e.ctrlKey){
+						this.scaleX = Math.round(this.scaleX/0.1)*0.1;
+					}
 					
 					if(e.shiftKey){
 						this.scaleY = this.scaleX;
 					}
 					
+					
 					this.data.scaleX = this.object.scale.x;
+					this.updateBox();
 				}
 				else{
 					h.y -= dy;
@@ -722,13 +727,18 @@ MT(
 						sigY *= -1;
 					}
 					
-					this.width = sigX * Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
+					//this.width = sigX * Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
 					this.height = sigY * Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / (this.map.scale.y);
+					
+					//this.scaleX = this.object.scaleX;
+					this.scaleY = this.object.scaleY;
 					
 					this.updateBox();
 					
-					this.scaleX = this.object.scaleX;
-					this.scaleY = this.object.scaleY;
+					if(e.ctrlKey){
+						//this.scaleX = Math.round(this.scaleX/0.1)*0.1;
+						this.scaleY = Math.round(this.scaleY/0.1)*0.1;
+					}
 					
 					if(e.shiftKey){
 						this.scaleX = this.scaleY;
@@ -736,6 +746,7 @@ MT(
 					
 					
 					this.data.scaleY = this.object.scale.y;
+					this.updateBox();
 				}
 			}
 			
@@ -902,6 +913,7 @@ MT(
 			}
 			this.object.width = val;
 			this.data.width = val;
+			this.data.scaleX = this.object.scale.x;
 			this.updateBox();
 		},
 		get width(){
@@ -913,6 +925,8 @@ MT(
 			}
 			this.object.height = val;
 			this.data.height = val;
+			this.data.scaleY = this.object.scale.y;
+			this.updateBox();
 		},
 		get height(){
 			return this.data.height;
@@ -1033,7 +1047,6 @@ MT(
 			if(!this.data.style.fontSize){
 				this.data.style.fontSize = this.object.fontSize;
 			}
-			console.log("font size", this.data.style.fontSize);
 			return this.data.style.fontSize;
 		},
 		
