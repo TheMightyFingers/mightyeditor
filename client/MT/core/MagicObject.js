@@ -554,6 +554,8 @@ MT(
 			var dy = (mi.y - y) / this.map.scale.y;
 			var angle = this.getParentAngle();
 			
+			
+			
 			var dxt = this.rpx(-angle, dx, dy, 0, 0);
 			var dyt = this.rpy(-angle, dx, dy, 0, 0);
 			
@@ -588,6 +590,10 @@ MT(
 			var mi = this.mouseInfo;
 			var obj = this.object;
 			var mat = obj.worldTransform;
+			var ax = mat.tx;
+			var ay = mat.ty;
+			
+			var angle = this.getOffsetAngle();
 			
 			var h, dx, dy;
 			// rotate
@@ -632,6 +638,22 @@ MT(
 			var dw = this.handles[h.opx];
 			var dh = this.handles[h.opy];
 			
+			var sigX, sigY;
+				
+			var tx = this.rpx(-angle, h.x, h.y, ax, ay);
+			var ty = this.rpy(-angle, h.x, h.y, ax, ay);
+			
+			var wtx = this.rpx(-angle, dw.x, dw.y, ax, ay);
+			var wty = this.rpy(-angle, dw.x, dw.y, ax, ay);
+			
+			var htx = this.rpx(-angle, dh.x, dh.y, ax, ay);
+			var hty = this.rpy(-angle, dh.x, dh.y, ax, ay);
+			
+			
+			sigX = (wtx - tx) > 0 ? 1 : -1;
+			sigY = (hty - ty) > 0 ? 1 : -1;
+			
+			console.log(this.activeHandle);
 			
 			if(this.activeHandle < 4){
 				h.x -= dx;
@@ -643,12 +665,21 @@ MT(
 				var nWidth = Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
 				var nHeight = Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
 				
+				
+				if(this.activeHandle == 1 || this.activeHandle == 2){
+					sigX *= -1;
+				}
+				
+				if(this.activeHandle == 2 || this.activeHandle == 3){
+					sigY *= -1;
+				}
+				
 				this.width = nWidth;
 				this.height = nHeight;
 				
 				this.updateBox();
-				this.data.scaleX = this.object.scale.x;
-				this.data.scaleY = this.object.scale.y;
+				this.scaleX = this.object.scale.x * sigX;
+				this.scaleY = this.object.scale.y * sigY;
 				
 				if(e.ctrlKey){
 					this.scaleX = Math.round(this.scaleX/0.1)*0.1;
@@ -657,7 +688,6 @@ MT(
 				
 				if(e.shiftKey){
 					this.scaleX = this.scaleY;
-					
 				}
 				
 				this.data.scaleX = this.object.scale.x;
@@ -665,22 +695,46 @@ MT(
 			}
 			else{
 				if(this.activeHandle % 2 == 0){
+					if(this.activeHandle == 6){
+						sigX *= -1;
+					}
 					h.x -= dx;
 					h.y -= dy;
 					
-					this.width = Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
-					this.height = Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
+					this.width = sigX * Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
+					this.height = sigY * Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
+					
+					this.scaleX = this.object.scaleX;
+					this.scaleY = this.object.scaleY;
 					
 					this.updateBox();
+					
+					if(e.shiftKey){
+						this.scaleY = this.scaleX;
+					}
+					
 					this.data.scaleX = this.object.scale.x;
 				}
 				else{
 					h.y -= dy;
 					h.x -= dx;
+					if(this.activeHandle == 7){
+						sigY *= -1;
+					}
 					
-					this.height = Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / (this.map.scale.y);
-				
+					this.width = sigX * Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
+					this.height = sigY * Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / (this.map.scale.y);
+					
 					this.updateBox();
+					
+					this.scaleX = this.object.scaleX;
+					this.scaleY = this.object.scaleY;
+					
+					if(e.shiftKey){
+						this.scaleX = this.scaleY;
+					}
+					
+					
 					this.data.scaleY = this.object.scale.y;
 				}
 			}

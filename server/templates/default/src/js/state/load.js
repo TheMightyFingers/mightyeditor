@@ -2,7 +2,7 @@
 window["%namespace%"].state.load = {
 	preload: function(){
 		// we have preloaded assets required for Loading group objects in the Boot state
-		var loading = mt.createGroup("Loading");
+		var loading = mt.create("Loading");
 		var loadingGroup = window.loading = loading.self;
 		
 		// get preload sprite
