@@ -241,6 +241,7 @@ MT(
 			else{
 				this.show();
 			}
+			
 			if(this.data.type == MT.objectTypes.TEXT){
 				this.updateText();
 			}
@@ -253,6 +254,9 @@ MT(
 		
 			this.object.x = this.data.x;
 			this.object.y = this.data.y;
+			
+			this.object.anchor.x = this.data.anchorX;
+			this.object.anchor.y = this.data.anchorY;
 			
 			this.object.angle = this.data.angle;
 			
@@ -666,6 +670,7 @@ MT(
 				return;
 			}
 			
+			
 			dx = mi.x - x;
 			dy = mi.y - y;
 			h = this.handles[this.activeHandle];
@@ -735,8 +740,15 @@ MT(
 					h.x -= dx;
 					h.y -= dy;
 					
+					var width = sigX * Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
 					
-					this.width = sigX * Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
+					if(this.data.type == MT.objectTypes.TEXT && this.data.wordWrap){
+						
+						this.wordWrapWidth = Math.round(width);
+					}
+					else{
+						this.width = width;
+					}
 					//this.height = sigY * Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
 					
 					this.scaleX = this.object.scaleX;

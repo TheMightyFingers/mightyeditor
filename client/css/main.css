@@ -829,6 +829,7 @@ div.ui-panel.text-tools .ui-button{
 	float: left;
 	position:relative;
 	top: 1px;
+	overflow: hidden;
 }
 
 div.ui-panel.text-tools .ui-button:hover{

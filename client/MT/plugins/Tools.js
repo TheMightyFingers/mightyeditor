@@ -108,11 +108,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			map.selector.on("unselect", function(obj){
 				that.emit(MT.OBJECT_UNSELECTED, obj);
 				
-				window.setTimeout(function(){
-					if(map.selector.count == 1){
-						that.emit(MT.OBJECT_SELECTED, map.selector.get(0));
-					}
-				}, 0);
+				if(map.selector.count !== 1){
+					window.setTimeout(function(){
+						if(map.selector.count == 1){
+							var obj = map.selector.get(0);
+							map.selector.emit("select", obj);
+							this.map.activeObject = obj;
+						}
+					}, 0);
+				}
 			});
 			
 			om.on(MT.OBJECTS_UPDATED, function(){

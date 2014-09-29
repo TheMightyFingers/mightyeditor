@@ -25,8 +25,8 @@ MT.extend("core.Emitter")(
 			var o = null;
 			for(var i=0; i<this._selected.length; i++){
 				if(this._selected[i] == obj){
-					this._selected.splice(i, 1);
 					this.emit("unselect", obj);
+					this._selected.splice(i, 1);
 					return;
 				}
 			}

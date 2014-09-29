@@ -30,6 +30,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.map = this.tools.map;
 		},
 		init: function(){
+			this.mDown = false;
 			this.map.handleMouseMove = this.mouseMoveFree;
 		},
 		

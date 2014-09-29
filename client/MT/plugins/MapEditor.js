@@ -1614,13 +1614,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		pickObject: function(x, y){
 			x += this.game.camera.x;
 			y += this.game.camera.y;
+			var obj;
 			
 			// chek if we are picking already selected object
-			if(this.activeObject){
-				var obj = this.activeObject.object;
-				var bounds = obj.getBounds();
-				if(bounds.contains(x, y)){
-					return this.activeObject;
+			if(this.activeObject && (this.activeObject.type == MT.objectTypes.SPRITE || this.activeObject.type == MT.objectTypes.TEXT) ){
+				obj = this._pick(this.activeObject, x, y);
+				if(obj){
+					return obj;
 				}
 			}
 			
@@ -1628,34 +1628,44 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var p = new Phaser.Point(0,0);
 			var pointer = this.game.input.activePointer;
 			
-			var obj;
 			for(var i=this.loadedObjects.length-1; i>-1; i--){
 				obj = this.loadedObjects[i];
-				if(!obj.isVisible){
-					continue;
-				}
-				if(obj.data.contents){
-					continue;
-				}
-				if(obj.isLocked){
-					continue;
-				}
-				// check bounds
-				if(!obj.object.input){
-					bounds = obj.object.getBounds();
-					if(bounds.contains(x, y)){
-						return obj;
-					}
-					continue;
-				}
-				
-				if(obj.object.input.checkPointerOver(this.game.input.activePointer)){
-					this.activeObject = obj;
-					return obj;
+				var ret = this._pick(obj, x, y);
+				if(ret){
+					return ret;
 				}
 			}
 			
 			return null;
+		},
+		
+		_pick: function(obj, x, y){
+			var bounds;
+			if(!obj.isVisible){
+				return null;;
+			}
+			if(obj.data.contents){
+				return null;;
+			}
+			if(obj.isLocked){
+				return null;;
+			}
+			
+			// check bounds
+			if(!obj.object.input){
+				bounds = obj.object.getBounds();
+				if(bounds.contains(x, y)){
+					return obj;
+				}
+				return null;;
+			}
+			
+			if(obj.object.input.checkPointerOver(this.game.input.activePointer)){
+				this.activeObject = obj;
+				return obj;
+			}
+			return null;
+			
 		},
 		
 		selectRect: function(rect, clear){
