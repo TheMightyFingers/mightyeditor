@@ -163,6 +163,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		a_receive: function(data, silent){
 			
 			if(this.received && !silent){
+				this.update();
 				return;
 			}
 			

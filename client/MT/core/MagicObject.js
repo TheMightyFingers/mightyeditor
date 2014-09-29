@@ -135,6 +135,13 @@ MT(
 			if(!this.data.shadow){
 				this.data.shadow = {};
 			}
+			this.object.anchor.x = this.data.anchorX;
+			this.object.anchor.y = this.data.anchorY;
+		},
+   
+		updateSprite: function(){
+			this.object.anchor.x = this.data.anchorX;
+			this.object.anchor.y = this.data.anchorY;
 		},
 		
 		hide: function(){
@@ -246,6 +253,10 @@ MT(
 				this.updateText();
 			}
 			
+			if(this.data.type == MT.objectTypes.SPRITE){
+				this.updateSprite();
+			}
+			
 			if(this.data.type == MT.objectTypes.TILE_LAYER){
 				this.removeLayer();
 				this.createTileLayer();
@@ -254,9 +265,6 @@ MT(
 		
 			this.object.x = this.data.x;
 			this.object.y = this.data.y;
-			
-			this.object.anchor.x = this.data.anchorX;
-			this.object.anchor.y = this.data.anchorY;
 			
 			this.object.angle = this.data.angle;
 			
