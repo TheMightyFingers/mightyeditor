@@ -4763,8 +4763,15 @@ MT(
 			this.data.style.fontWeight = val;
 		},
 		set fontSize(val){
+			var scaleX = this.object.scale.x;
+			var scaleY = this.object.scale.y;
+			
 			this.object.fontSize = parseInt(val);
 			this.data.style.fontSize = this.object.fontSize;
+			
+			this.scaleX = scaleX;
+			this.scaleY = scaleY;
+			
 		},
 		get fontSize(){
 			if(!this.data.style.fontSize){
