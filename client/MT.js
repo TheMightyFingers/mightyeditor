@@ -2956,6 +2956,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.map = this.tools.map;
 		},
 		init: function(){
+			this.mDown = false;
 			this.map.handleMouseMove = this.mouseMoveFree;
 		},
 		
@@ -3964,6 +3965,7 @@ MT(
 			else{
 				this.show();
 			}
+			
 			if(this.data.type == MT.objectTypes.TEXT){
 				this.updateText();
 			}
@@ -3976,6 +3978,9 @@ MT(
 		
 			this.object.x = this.data.x;
 			this.object.y = this.data.y;
+			
+			this.object.anchor.x = this.data.anchorX;
+			this.object.anchor.y = this.data.anchorY;
 			
 			this.object.angle = this.data.angle;
 			
@@ -4389,6 +4394,7 @@ MT(
 				return;
 			}
 			
+			
 			dx = mi.x - x;
 			dy = mi.y - y;
 			h = this.handles[this.activeHandle];
@@ -4458,8 +4464,15 @@ MT(
 					h.x -= dx;
 					h.y -= dy;
 					
+					var width = sigX * Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
 					
-					this.width = sigX * Math.sqrt(Math.pow(dw.x - h.x, 2) + Math.pow(dw.y - h.y, 2)) / this.map.scale.x;
+					if(this.data.type == MT.objectTypes.TEXT && this.data.wordWrap){
+						
+						this.wordWrapWidth = Math.round(width);
+					}
+					else{
+						this.width = width;
+					}
 					//this.height = sigY * Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
 					
 					this.scaleX = this.object.scaleX;
@@ -5000,8 +5013,8 @@ MT.extend("core.Emitter")(
 			var o = null;
 			for(var i=0; i<this._selected.length; i++){
 				if(this._selected[i] == obj){
-					this._selected.splice(i, 1);
 					this.emit("unselect", obj);
+					this._selected.splice(i, 1);
 					return;
 				}
 			}
@@ -7256,11 +7269,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			map.selector.on("unselect", function(obj){
 				that.emit(MT.OBJECT_UNSELECTED, obj);
 				
-				window.setTimeout(function(){
-					if(map.selector.count == 1){
-						that.emit(MT.OBJECT_SELECTED, map.selector.get(0));
-					}
-				}, 0);
+				if(map.selector.count !== 1){
+					window.setTimeout(function(){
+						if(map.selector.count == 1){
+							var obj = map.selector.get(0);
+							map.selector.emit("select", obj);
+							this.map.activeObject = obj;
+						}
+					}, 0);
+				}
 			});
 			
 			om.on(MT.OBJECTS_UPDATED, function(){
@@ -9639,13 +9656,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		pickObject: function(x, y){
 			x += this.game.camera.x;
 			y += this.game.camera.y;
+			var obj;
 			
 			// chek if we are picking already selected object
-			if(this.activeObject){
-				var obj = this.activeObject.object;
-				var bounds = obj.getBounds();
-				if(bounds.contains(x, y)){
-					return this.activeObject;
+			if(this.activeObject && (this.activeObject.type == MT.objectTypes.SPRITE || this.activeObject.type == MT.objectTypes.TEXT) ){
+				obj = this._pick(this.activeObject, x, y);
+				if(obj){
+					return obj;
 				}
 			}
 			
@@ -9653,34 +9670,44 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var p = new Phaser.Point(0,0);
 			var pointer = this.game.input.activePointer;
 			
-			var obj;
 			for(var i=this.loadedObjects.length-1; i>-1; i--){
 				obj = this.loadedObjects[i];
-				if(!obj.isVisible){
-					continue;
-				}
-				if(obj.data.contents){
-					continue;
-				}
-				if(obj.isLocked){
-					continue;
-				}
-				// check bounds
-				if(!obj.object.input){
-					bounds = obj.object.getBounds();
-					if(bounds.contains(x, y)){
-						return obj;
-					}
-					continue;
-				}
-				
-				if(obj.object.input.checkPointerOver(this.game.input.activePointer)){
-					this.activeObject = obj;
-					return obj;
+				var ret = this._pick(obj, x, y);
+				if(ret){
+					return ret;
 				}
 			}
 			
 			return null;
+		},
+		
+		_pick: function(obj, x, y){
+			var bounds;
+			if(!obj.isVisible){
+				return null;;
+			}
+			if(obj.data.contents){
+				return null;;
+			}
+			if(obj.isLocked){
+				return null;;
+			}
+			
+			// check bounds
+			if(!obj.object.input){
+				bounds = obj.object.getBounds();
+				if(bounds.contains(x, y)){
+					return obj;
+				}
+				return null;;
+			}
+			
+			if(obj.object.input.checkPointerOver(this.game.input.activePointer)){
+				this.activeObject = obj;
+				return obj;
+			}
+			return null;
+			
 		},
 		
 		selectRect: function(rect, clear){
