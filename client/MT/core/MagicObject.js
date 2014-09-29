@@ -61,6 +61,8 @@ MT(
 		},
 		
 		createTileLayer: function(){
+			
+			
 			// hack for phaser
 			var gm = this.game.width;
 			var gh = this.game.height;
@@ -78,6 +80,10 @@ MT(
 			
 			this.game.width = gm;
 			this.game.height = gm;
+			if(!this.data.isVisible){
+				this.hide();
+			}
+			
 		},
 		
 		createTileMap: function(){
