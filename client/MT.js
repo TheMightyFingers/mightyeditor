@@ -3784,11 +3784,23 @@ MT(
 		},
 		
 		createTileLayer: function(){
+			// hack for phaser
+			var gm = this.game.width;
+			var gh = this.game.height;
+			
+			this.game.width = 99999;
+			this.game.height = 99999;
+			
+			
 			this.createTileMap();
 			this.object = this.tilemap.createBlankLayer(this.data.name, this.data.widthInTiles, this.data.heightInTiles, this.data.tileWidth, this.data.tileHeight);
 			this.object.fixedToCamera = this.data.isFixedToCamera;
 			this.map.project.plugins.tools.tools.tiletool.updateLayer(this);
 			this.map.tileLayers.push(this.object);
+			this.map.resort();
+			
+			this.game.width = gm;
+			this.game.height = gm;
 		},
 		
 		createTileMap: function(){
@@ -9269,6 +9281,14 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					this._addObjects(objs[i].contents, tmp.object);
 					continue;
 				}
+			}
+		},
+		
+		resort: function(){
+			var tmp;
+			for(var i=0; i<this.loadedObjects.length; i++){
+				tmp = this.loadedObjects[i];
+				tmp.bringToTop();
 			}
 		},
 		
