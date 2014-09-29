@@ -12992,8 +12992,7 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			var map = this.project.plugins.mapeditor;
 			
-			var updateData = function(mo){
-				var obj = mo.data;
+			var updateData = function(obj){
 				map.updateScene(map.settings);
 				if(obj){
 					that.activeObject = obj;
@@ -13008,6 +13007,8 @@ MT.extend("core.BasicPlugin")(
 					that.addEmptyInput();
 				}
 				else if(!obj.physics.enable){
+					obj.physics.enable = 0;
+					
 					that.empty.setObject(obj.physics);
 					that.addEmptyInput();
 				}
@@ -13029,7 +13030,9 @@ MT.extend("core.BasicPlugin")(
 			});
 			
 			tools.on(MT.ASSET_FRAME_CHANGED, updateData);
-			tools.on(MT.OBJECT_SELECTED, updateData);
+			tools.on(MT.OBJECT_SELECTED, function(mo){
+				updateData(mo.data);
+			});
 			
 			tools.on(MT.OBJECT_UNSELECTED, function(){
 				that.clear();

@@ -105,7 +105,7 @@ MT(
 			this.wordWrap = this.data.wordWrap;
 			this.wordWrapWidth = this.data.wordWrapWidth;
 			
-			this.object.fontSize = this.data.style.fontSize;
+			this.object.fontSize = this.data.style.fontSize || 32;
 			this.object.font = this.data.style.fontFamily || "Arial";
 			this.object.fontWeight = this.data.style.fontWeight || "";
 			
