@@ -99,23 +99,28 @@ MT(
 		
 		createSprite: function(){
 			this.object = this.parent.create(this.data.x, this.data.y, this.data.assetId);
-			this.object.anchor.x = this.data.anchorX;
-			this.object.anchor.y = this.data.anchorY;
+			
 			this.object.inputEnabled = true;
 			this.object.input.pixelPerfectOver = true;
 			//this.object.input.stop();
+			
 			this.createBox();
+			this.update();
 		},
-		
+   
 		createText: function(){
 			this.object = this.game.add.text(this.data.x, this.data.y, this.data.text, this.data.style);
 			this.parent.add(this.object);
-			this.createBox();
-			
-			this.object.anchor.x = this.data.anchorX;
-			this.object.anchor.y = this.data.anchorY;
 			this.object.inputEnabled = true;
 			this.object.input.pixelPerfectOver = false;
+			
+			
+			this.createBox();
+			
+			this.update();
+		},
+		updateText: function(){
+			this.object.text = this.data.text;
 			
 			if(this.data.style){
 				this.object.style = this.data.style;
@@ -211,20 +216,12 @@ MT(
 		},
 		
 		update: function(data, parent){
+			
 			if(data){
 				for(var i in data){
 					this.data[i] = data[i];
 				}
 				
-				this.object.x = this.data.x;
-				this.object.y = this.data.y;
-				
-				this.object.angle = this.data.angle;
-				
-				if(this.data.scaleX){
-					this.object.scale.x = this.data.scaleX;
-					this.object.scale.y = this.data.scaleY;
-				}
 			}
 			
 			if(parent){
@@ -244,6 +241,27 @@ MT(
 			else{
 				this.show();
 			}
+			if(this.data.type == MT.objectTypes.TEXT){
+				this.updateText();
+			}
+			
+			if(this.data.type == MT.objectTypes.TILE_LAYER){
+				this.removeLayer();
+				this.createTileLayer();
+			}
+			
+		
+			this.object.x = this.data.x;
+			this.object.y = this.data.y;
+			
+			this.object.angle = this.data.angle;
+			
+			if(this.data.scaleX){
+				this.object.scale.x = this.data.scaleX;
+				this.object.scale.y = this.data.scaleY;
+			}
+			
+			this.map.resort();
 		},
    
 		updateBox: function(){
