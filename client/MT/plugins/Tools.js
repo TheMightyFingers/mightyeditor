@@ -112,6 +112,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					window.setTimeout(function(){
 						if(map.selector.count == 1){
 							var obj = map.selector.get(0);
+							this.map.activeObject = null;
 							map.selector.emit("select", obj);
 							this.map.activeObject = obj;
 						}

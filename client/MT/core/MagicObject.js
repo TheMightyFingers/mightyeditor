@@ -365,6 +365,8 @@ MT(
 			ctx.save();
 			ctx.translate(0.5, 0.5);
 			
+			ctx.strokeStyle = "#ffaa00";
+			
 			if(this.data.contents){
 				var bounds = this.object.getBounds();
 				ctx.strokeRect(bounds.left, bounds.top, bounds.width, bounds.height);
@@ -907,6 +909,14 @@ MT(
 			return angle;
 		},
 		
+		putTile: function(id, x, y){
+			this.object.map.putTile(id, x, y, this.object);
+			//layer.tilemap.putTile(id, x, y, layer.object);
+		},
+		getTile: function(x, y, tile){
+			return this.object.map.getTileWorldXY(x, y, void(0), void(0), this.object);
+		},
+   
 		get isHidden(){
 			return this.object.visible;
 		},

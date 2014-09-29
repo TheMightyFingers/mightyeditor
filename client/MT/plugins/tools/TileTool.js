@@ -385,7 +385,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				layer.data.tiles[y] = {};
 			}
 			layer.data.tiles[y][x] = id;
-			layer.tilemap.putTile(id, x, y, layer.object);
+			layer.putTile(id, x, y);
+			//layer.tilemap.putTile(id, x, y, layer.object);
 		},
 		
 		oldSettings: {},

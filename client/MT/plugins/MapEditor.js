@@ -1655,6 +1655,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!obj.object.input){
 				bounds = obj.object.getBounds();
 				if(bounds.contains(x, y)){
+					if(obj.data.type == MT.objectTypes.TILE_LAYER){
+						if(obj.getTile(x + this.game.camera.x, y + this.game.camera.y)){
+							return obj;
+						}
+						return null;
+					}
 					return obj;
 				}
 				return null;;
