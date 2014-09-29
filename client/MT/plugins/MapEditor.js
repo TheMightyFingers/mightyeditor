@@ -1283,6 +1283,14 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 		},
 		
+		resort: function(){
+			var tmp;
+			for(var i=0; i<this.loadedObjects.length; i++){
+				tmp = this.loadedObjects[i];
+				tmp.bringToTop();
+			}
+		},
+		
 		addGroup: function(obj){
 			console.error("removed");
 			return;
