@@ -822,7 +822,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			this.project.plugins.tools.on(MT.OBJECT_UNSELECTED, function(obj){
+				
 				if(!obj){
+					that.unselectAll();
 					return;
 				}
 				
@@ -832,11 +834,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(that.active){
 					that.active.removeClass("selected.active");
 					that.active = null;
+					that.unselectAll();
 				}
 				
 				if(that.selector.is(asset)){
 					asset.removeClass("selected.active");
 					that.selector.remove(asset);
+					
 				}
 			});
 			
