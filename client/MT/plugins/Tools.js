@@ -336,7 +336,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(!this.tmpObject){
 				this.tmpObject = new MT.core.MagicObject(om.createObject(asset), this.map.game.world, this.map);
 			}
-			
+			else{
+				this.tmpObject.assetId = asset.id;
+			}
 			//this.tmpObject =  this.map.createObject();
 			this.map.activeObject = this.tmpObject;
 			
@@ -344,7 +346,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tmpObject.x = dx || x;
 			this.tmpObject.y = dy || y;
 			
-			
+			this.tmpObject.bringToTop();
 		},
 		
 		removeTmpObject: function(){

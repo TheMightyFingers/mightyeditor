@@ -1288,6 +1288,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				tmp = this.loadedObjects[i];
 				tmp.bringToTop();
 			}
+			if(this.tools.tmpObject){
+				this.tools.tmpObject.bringToTop();
+			}
 		},
 		
 		addGroup: function(obj){

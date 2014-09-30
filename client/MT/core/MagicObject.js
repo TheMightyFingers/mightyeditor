@@ -142,6 +142,7 @@ MT(
 		updateSprite: function(){
 			this.object.anchor.x = this.data.anchorX;
 			this.object.anchor.y = this.data.anchorY;
+			this.object.loadTexture(this.data.assetId);
 		},
 		
 		hide: function(){
@@ -1024,6 +1025,15 @@ MT(
 			return this.data.scaleY;
 		},
 		
+		get assetId(){
+			return this.data.assetId;
+		},
+		
+		set assetId(id){
+			this.data.assetId = id;
+			this.object.loadTexture(id);
+		},
+   
 		set alpha(val){
 			if(isNaN(val)){
 				return;

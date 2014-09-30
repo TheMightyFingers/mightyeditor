@@ -294,6 +294,7 @@ MT.extend("core.BasicPlugin")(
 						return;
 					}
 					that.loadDoc(panel, needFocus);
+					
 				});
 				
 				panel.on("close", function(){
@@ -358,6 +359,9 @@ MT.extend("core.BasicPlugin")(
 			this.editor.swapDoc(panel.data.doc);
 			
 			var that = this;
+			var si = this.editor.getScrollInfo();
+			this.editor.scrollTo(si.left + 1, si.top);
+			this.editor.scrollTo(si.left, si.top);
 			window.setTimeout(function(){
 				if(panel.data.needFocus !== false){
 					that.editor.focus();

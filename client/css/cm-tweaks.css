@@ -35,7 +35,7 @@ div.CodeMirror span.CodeMirror-matchingbracket {
 }
 .CodeMirror-gutters {
 	background: inherit;
-	background-color: rgba(255, 255, 255, 0.5);
+	background-color: rgba(255, 255, 255, 0.9);
 	padding-bottom: 0;
 }
 .CodeMirror-gutter{
@@ -59,7 +59,7 @@ div.CodeMirror span.CodeMirror-matchingbracket {
 }
 
 .CodeMirror-linenumber {
-	background-color: #eee;
+	/*background-color: #eee;*/
 }
 .CodeMirror:before {
 content: "";
@@ -104,7 +104,15 @@ a.lint-error:hover .lint-error-text{
 .CodeMirror-gutter.CodeMirror-jslint{
 	width: 10px;
 }
-
+.CodeMirror-selected{
+	color: #fff !important;
+}
+.CodeMirror-focused .CodeMirror-selected {
+	background-color: #bbb !important;
+	border: solid 1px #aaa;
+	margin-right: 1px;
+	border-right: 2px solid #000;
+}
 
 
 

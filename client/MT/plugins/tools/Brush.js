@@ -20,8 +20,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					return;
 				}
 				
-				that.tools.initTmpObject(that.tools.activeAsset);
+				that.tools.initTmpObject(asset);
 				that.tools.tmpObject.frame = that.tools.activeFrame;
+				
 			});
 		},
 		
