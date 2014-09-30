@@ -125,6 +125,9 @@ MT(
 			if(this.data.style){
 				this.object.style = this.data.style;
 			}
+			else{
+				this.data.style = {};
+			}
 			this.wordWrap = this.data.wordWrap;
 			this.wordWrapWidth = this.data.wordWrapWidth;
 			
