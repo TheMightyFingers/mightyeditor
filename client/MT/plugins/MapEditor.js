@@ -940,19 +940,19 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var o2 = null;
 			var bounds = null;
 			ctx.save();
-			ctx.fillStyle = "rgba(150, 70, 20, 0.2)";
-			for(var j=0; j<this.objects.length; j++){
-				o1 = this.objects[j];
-				if(!this.isVisible(o1)){
+			ctx.fillStyle = "rgba(150, 70, 20, 0.3)";
+			for(var j=0; j<this.loadedObjects.length; j++){
+				o1 = this.loadedObjects[j];
+				if(!o1.isVisible){
 					continue;
 				}
-				for(var i=0; i<this.objects.length; i++){
-					o2 = this.objects[i];
+				for(var i=0; i<this.loadedObjects.length; i++){
+					o2 = this.loadedObjects[i];
 					if(o1 == o2){
 						continue;
 					}
 					if(o1.x == o2.x && o1.y == o2.y && o1.assetId == o2.assetId && o1.width == o2.width){
-						bounds = o1.getBounds();
+						bounds = o1.object.getBounds();
 						ctx.fillRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
 					}
 				}
