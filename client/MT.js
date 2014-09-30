@@ -2721,8 +2721,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					return;
 				}
 				
-				that.tools.initTmpObject(that.tools.activeAsset);
+				that.tools.initTmpObject(asset);
 				that.tools.tmpObject.frame = that.tools.activeFrame;
+				
 			});
 		},
 		
@@ -3867,6 +3868,7 @@ MT(
 		updateSprite: function(){
 			this.object.anchor.x = this.data.anchorX;
 			this.object.anchor.y = this.data.anchorY;
+			this.object.loadTexture(this.data.assetId);
 		},
 		
 		hide: function(){
@@ -4749,6 +4751,15 @@ MT(
 			return this.data.scaleY;
 		},
 		
+		get assetId(){
+			return this.data.assetId;
+		},
+		
+		set assetId(id){
+			this.data.assetId = id;
+			this.object.loadTexture(id);
+		},
+   
 		set alpha(val){
 			if(isNaN(val)){
 				return;
@@ -7516,7 +7527,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(!this.tmpObject){
 				this.tmpObject = new MT.core.MagicObject(om.createObject(asset), this.map.game.world, this.map);
 			}
-			
+			else{
+				this.tmpObject.assetId = asset.id;
+			}
 			//this.tmpObject =  this.map.createObject();
 			this.map.activeObject = this.tmpObject;
 			
@@ -7524,7 +7537,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tmpObject.x = dx || x;
 			this.tmpObject.y = dy || y;
 			
-			
+			this.tmpObject.bringToTop();
 		},
 		
 		removeTmpObject: function(){
@@ -9349,6 +9362,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			for(var i=0; i<this.loadedObjects.length; i++){
 				tmp = this.loadedObjects[i];
 				tmp.bringToTop();
+			}
+			if(this.tools.tmpObject){
+				this.tools.tmpObject.bringToTop();
 			}
 		},
 		
@@ -13513,6 +13529,7 @@ MT.extend("core.BasicPlugin")(
 						return;
 					}
 					that.loadDoc(panel, needFocus);
+					
 				});
 				
 				panel.on("close", function(){
@@ -13577,6 +13594,9 @@ MT.extend("core.BasicPlugin")(
 			this.editor.swapDoc(panel.data.doc);
 			
 			var that = this;
+			var si = this.editor.getScrollInfo();
+			this.editor.scrollTo(si.left + 1, si.top);
+			this.editor.scrollTo(si.left, si.top);
 			window.setTimeout(function(){
 				if(panel.data.needFocus !== false){
 					that.editor.focus();
