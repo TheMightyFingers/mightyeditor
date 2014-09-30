@@ -2640,24 +2640,26 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		getFontAttribs: function(fontWeight){
-			var t = fontWeight.split(" ");
-			var bold = false;
-			var italic = false;
+			var r = {
+				bold: false,
+				italic: false
+			};
 			
+			if(!fontWeight){
+				return r;
+			}
+			
+			var t = fontWeight.split(" ");
 			for(var i=0; i<t.length; i++){
 				if(t[i].trim() == "bold"){
-					bold = true;
+					r.bold = true;
 				}
 				if(t[i].trim() == "italic"){
-					italic = true;
+					r.italic = true;
 				}
 			}
 			
-			return {
-				bold: bold,
-				italic: italic
-			};
-			
+			return r;
 		},
 		
 		mouseDown: function(e){

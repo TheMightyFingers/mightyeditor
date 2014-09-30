@@ -1091,7 +1091,7 @@ MT(
 			this.object.style = val;
 		},
 		get style(){
-			return this.data.style;
+			return this.data.style || {};
 		},
 		
 		set font(val){
