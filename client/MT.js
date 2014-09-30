@@ -3996,8 +3996,9 @@ MT(
 			this.object.angle = this.data.angle;
 			
 			if(this.data.scaleX){
-				this.object.scale.x = this.data.scaleX;
-				this.object.scale.y = this.data.scaleY;
+				this.object.scale.x = this.scaleX;
+				this.object.scale.y = this.scaleY;
+				//console.log(this.scaleX, this.scaleY);
 			}
 			
 			this.map.resort();
@@ -4044,7 +4045,7 @@ MT(
 			// left
 			if(this.activeHandle != 4){
 				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) ;
-				y = (mat.ty - obj.height * (obj.anchor.y) * this.map.scale.x) + obj.height*0.5;
+				y = (mat.ty - obj.height * (obj.anchor.y)) + obj.height*0.5;
 				this.rp(angle, x, y, ax, ay, this.handles[4]);
 			}
 			
@@ -8074,9 +8075,13 @@ MT(
 //MT/plugins/MapEditor.js
 MT.namespace('plugins');
 "use strict";
-MT.requireFile("js/phaser.js", function(){
-	MT.requireFile("js/phaserHacks.js");
-});
+(function(){
+	var phaserSrc = "js/";
+	phaserSrc += (window.release ? "phaser.min.js" : "phaser.js");
+	MT.requireFile(phaserSrc, function(){
+		MT.requireFile("js/phaserHacks.js");
+	});
+})();
 MT.require("core.Helper");
 MT.require("core.Selector");
 MT.require("core.MagicObject");
@@ -9694,10 +9699,17 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var obj;
 			
 			// chek if we are picking already selected object
-			if(this.activeObject && (this.activeObject.type == MT.objectTypes.SPRITE || this.activeObject.type == MT.objectTypes.TEXT) ){
-				obj = this._pick(this.activeObject, x, y);
-				if(obj){
-					return obj;
+			if(this.activeObject){
+				
+				if(this.activeObject.data.contents){
+					return this.checkBounds(this.activeObject, x, y);
+				}
+				
+				if(this.activeObject.type == MT.objectTypes.SPRITE || this.activeObject.type == MT.objectTypes.TEXT){
+					obj = this._pick(this.activeObject, x, y);
+					if(obj){
+						return obj;
+					}
 				}
 			}
 			
@@ -9730,17 +9742,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			// check bounds
 			if(!obj.object.input){
-				bounds = obj.object.getBounds();
-				if(bounds.contains(x, y)){
-					if(obj.data.type == MT.objectTypes.TILE_LAYER){
-						if(obj.getTile(x + this.game.camera.x, y + this.game.camera.y)){
-							return obj;
-						}
-						return null;
-					}
-					return obj;
-				}
-				return null;;
+				return this.checkBounds(obj, x, y);
 			}
 			
 			if(obj.object.input.checkPointerOver(this.game.input.activePointer)){
@@ -9750,6 +9752,21 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			return null;
 			
 		},
+	   
+		checkBounds: function(obj, x, y){
+			var bounds = obj.object.getBounds();
+			if(bounds.contains(x, y)){
+				if(obj.data.type == MT.objectTypes.TILE_LAYER){
+					if(obj.getTile(x + this.game.camera.x, y + this.game.camera.y)){
+						return obj;
+					}
+					return null;
+				}
+				return obj;
+			}
+			return null;
+		},
+	   
 		
 		selectRect: function(rect, clear){
 			rect.x -= this.game.camera.x;
@@ -13856,12 +13873,12 @@ MT.extend("core.BasicPlugin")(
 				}
 			});
 			
-			this.editor.on("keyHandled", function(ed, a,b,c){
+			/*this.editor.on("keyHandled", function(ed, a,b,c){
 				console.log(a,b,c);
 				return;
 				e.preventDefault();
 				e.stopPropagation();
-			});
+			});*/
 		},
 		
 		updateHints: function(){
