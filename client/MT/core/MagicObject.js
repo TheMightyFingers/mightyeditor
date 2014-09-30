@@ -270,8 +270,9 @@ MT(
 			this.object.angle = this.data.angle;
 			
 			if(this.data.scaleX){
-				this.object.scale.x = this.data.scaleX;
-				this.object.scale.y = this.data.scaleY;
+				this.object.scale.x = this.scaleX;
+				this.object.scale.y = this.scaleY;
+				//console.log(this.scaleX, this.scaleY);
 			}
 			
 			this.map.resort();
@@ -318,7 +319,7 @@ MT(
 			// left
 			if(this.activeHandle != 4){
 				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) ;
-				y = (mat.ty - obj.height * (obj.anchor.y) * this.map.scale.x) + obj.height*0.5;
+				y = (mat.ty - obj.height * (obj.anchor.y)) + obj.height*0.5;
 				this.rp(angle, x, y, ax, ay, this.handles[4]);
 			}
 			

@@ -621,12 +621,12 @@ MT.extend("core.BasicPlugin")(
 				}
 			});
 			
-			this.editor.on("keyHandled", function(ed, a,b,c){
+			/*this.editor.on("keyHandled", function(ed, a,b,c){
 				console.log(a,b,c);
 				return;
 				e.preventDefault();
 				e.stopPropagation();
-			});
+			});*/
 		},
 		
 		updateHints: function(){

@@ -1,7 +1,11 @@
 "use strict";
-MT.requireFile("js/phaser.js", function(){
-	MT.requireFile("js/phaserHacks.js");
-});
+(function(){
+	var phaserSrc = "js/";
+	phaserSrc += (window.release ? "phaser.min.js" : "phaser.js");
+	MT.requireFile(phaserSrc, function(){
+		MT.requireFile("js/phaserHacks.js");
+	});
+})();
 MT.require("core.Helper");
 MT.require("core.Selector");
 MT.require("core.MagicObject");
@@ -1619,10 +1623,17 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var obj;
 			
 			// chek if we are picking already selected object
-			if(this.activeObject && (this.activeObject.type == MT.objectTypes.SPRITE || this.activeObject.type == MT.objectTypes.TEXT) ){
-				obj = this._pick(this.activeObject, x, y);
-				if(obj){
-					return obj;
+			if(this.activeObject){
+				
+				if(this.activeObject.data.contents){
+					return this.checkBounds(this.activeObject, x, y);
+				}
+				
+				if(this.activeObject.type == MT.objectTypes.SPRITE || this.activeObject.type == MT.objectTypes.TEXT){
+					obj = this._pick(this.activeObject, x, y);
+					if(obj){
+						return obj;
+					}
 				}
 			}
 			
@@ -1655,17 +1666,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			// check bounds
 			if(!obj.object.input){
-				bounds = obj.object.getBounds();
-				if(bounds.contains(x, y)){
-					if(obj.data.type == MT.objectTypes.TILE_LAYER){
-						if(obj.getTile(x + this.game.camera.x, y + this.game.camera.y)){
-							return obj;
-						}
-						return null;
-					}
-					return obj;
-				}
-				return null;;
+				return this.checkBounds(obj, x, y);
 			}
 			
 			if(obj.object.input.checkPointerOver(this.game.input.activePointer)){
@@ -1675,6 +1676,21 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			return null;
 			
 		},
+	   
+		checkBounds: function(obj, x, y){
+			var bounds = obj.object.getBounds();
+			if(bounds.contains(x, y)){
+				if(obj.data.type == MT.objectTypes.TILE_LAYER){
+					if(obj.getTile(x + this.game.camera.x, y + this.game.camera.y)){
+						return obj;
+					}
+					return null;
+				}
+				return obj;
+			}
+			return null;
+		},
+	   
 		
 		selectRect: function(rect, clear){
 			rect.x -= this.game.camera.x;

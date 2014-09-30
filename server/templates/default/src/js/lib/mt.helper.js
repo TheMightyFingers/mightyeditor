@@ -572,7 +572,7 @@
 					//tile.index = object.widthInTiles*y + x;
 				}
 			}
-			tl.isFixedToCamera = true;
+			tl.fixedToCamera = object.isFixedToCamera;
 			
 			if(container.hasOwnProperty(object.name)){
 				console.warn("dublicate object name - ", object.name);
@@ -632,8 +632,10 @@
 			if(template.type !== mt.GROUP && template.contents === void(0) ){
 				object.anchor.x = template.anchorX;
 				object.anchor.y = template.anchorY;
-				object.scale.x = template.scaleX;
-				object.scale.y = template.scaleY;
+				if(template.scaleX != void(0)){
+					object.scale.x = template.scaleX;
+					object.scale.y = template.scaleY;
+				}
 			}
 			
 			object.x = template.x;
