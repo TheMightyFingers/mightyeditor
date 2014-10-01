@@ -69,7 +69,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var x = e.x - this.ox;
 			var y = e.y - this.oy;
 			
-			obj.mouseMove(x, y, e);
+			if(self.checkAltKey(e)){
+				
+			}
+			else{
+				obj.mouseMove(x, y, e);
+			}
 			return;
 			
 			
@@ -89,15 +94,46 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.tools.mouseMove(e);
 			}
 		},
-		
-		mouseMove: function(e){
-			/*if(this.map.activeObject){
-				var x = e.x - this.map.ox;
-				var y = e.y - this.map.oy;
-				
-				this.map.activeObject.mouseMove(x, y, e);
+		altKeyReady: false,
+		checkAltKey: function(e){
+			
+			if(!this.altKeyReady){
 				return;
-			}*/
+			}
+			this.altKeyReady = false;
+			var copy = [];
+			var sel = this.map.selector;
+			sel.forEach(function(o){
+				copy.push(o.data);
+			});
+			
+			
+			
+			var bounds = null;
+			var cx = this.map.game.camera.x;
+			var cy = this.map.game.camera.y;
+			
+			var data = this.tools.om.multiCopy(copy);
+			sel.clear();
+			
+			var sprite;
+			for(var i=0; i<data.length; i++){
+				sprite = this.map.getById(data[i].id);
+				sprite.object.updateTransform();
+				
+				bounds = sprite.object.getBounds();
+				data[i].x = bounds.x + cx;
+				data[i].y = bounds.y + cy;
+				
+				sel.add(sprite);
+			}
+			if(data.length > 0){
+				this.map.activeObject = null;
+				this.map.emit("select", this.map.settings);
+				this.initMove(e);
+			}
+		},
+		mouseMove: function(e){
 			if(!this.mDown){
 				return;
 			}
@@ -134,11 +170,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 		},
 		
-		
 		initMove: function(e){
 			if(this.tools.activeTool != this){
 				return;
 			}
+			
+			this.checkAltKey(e);
 			
 			var that = this;
 			
@@ -146,36 +183,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.map.handleMouseMove = function(e){
 				that.map.handleMouseMove = that.map._objectMove;
-			}
-			
-			
-			if(e.altKey){
-				var copy = [];
-				var sel = this.map.selector;
-				sel.forEach(function(o){
-					copy.push(o.data);
-				});
-				
-				
-				
-				var bounds = null;
-				var cx = this.map.game.camera.x;
-				var cy = this.map.game.camera.y;
-				
-				var data = this.tools.om.multiCopy(copy);
-				sel.clear();
-				
-				var sprite;
-				for(var i=0; i<data.length; i++){
-					sprite = this.map.getById(data[i].id);
-					sprite.updateTransform();
-					
-					bounds = sprite.getBounds();
-					data[i].x = bounds.x + cx;
-					data[i].y = bounds.y + cy;
-					
-					sel.add(sprite);
-				}
 			}
 		},
 		_lastMD: 0,
@@ -219,7 +226,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			map.handleMouseMove = this.mouseMoveFree;
 		},
 		
-		
 		mouseDown: function(e){
 			this.mDown = true;
 			if(Date.now() - this._lastMD < 300){
@@ -235,6 +241,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			var dx = e.x - this.map.offsetXCam;
 			var dy = e.y - this.map.offsetYCam;
+			
+			if(e.altKey){
+				this.altKeyReady = true;
+			}
+			
 			if(this.map.activeObject && this.map.activeObject.activeHandle != -1){
 				this.map.activeObject.mouseDown(x, y, e);
 				return;
@@ -288,49 +299,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				console.log(this.map.selector.count);
 				this.map.activeObject = null;
 				this.map.emit("select", this.map.settings);
+				this.altKeyReady = e.altKey;
 				this.initMove(e);
-			}
-			
-			
-			
-			return;
-			
-			
-			
-			
-			
-			var that = this;
-			var shift = (e.shiftKey ? true : false);
-			
-		
-			
-			var obj = this.map.pickObject(x, y);
-			var group = this.map.pickGroup(x, y);
-			
-			if(group && (this.map.selector.is(group) || group == this.map.activeObject) ){
-				this.initMove(e);
-				return;
-			}
-			
-			if(obj){
-				if(!shift){
-					if(this.map.selector.is(obj)){
-						this.initMove(e);
-					}
-					else{
-						if(this.map.selector.is(obj)){
-							this.initMove(e);
-						}
-						this.select(obj);
-						this.initMove(e);
-					}
-				}
-				else{
-					this.select(obj);
-				}
-			}
-			else{
-				
 			}
 		}
 	}
