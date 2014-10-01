@@ -960,22 +960,23 @@ MT(
 		},
    
 		set anchorX(val){
-			this.object.anchor.x = val;
-			this.data.anchorX = val;
-			this.updateBox();
-		},
-		get anchorX(){
-			return this.data.anchorX;
-		},
-		
-		set anchorY(val){
-			this.object.anchor.y = val;
-			this.data.anchorY = val;
+			this.object.anchor.x = val || 0;
+			this.data.anchorX = this.object.anchor.x;
 			this.data.width = this.object.width;
 			this.updateBox();
 		},
+		get anchorX(){
+			return this.data.anchorX || 0;
+		},
+		
+		set anchorY(val){
+			this.object.anchor.y = val || 0;
+			this.data.anchorY = val;
+			this.data.height = this.object.height;
+			this.updateBox();
+		},
 		get anchorY(){
-			return this.data.anchorY;
+			return this.data.anchorY || 0;
 		},
 		
 		set width(val){
