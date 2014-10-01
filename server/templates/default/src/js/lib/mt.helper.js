@@ -446,6 +446,9 @@
 				}
 				else if(object.type == this.TILE_LAYER){
 					createdObject = this._addTileLayer(object, container, group);
+					if(object.physics && object.physics.enable){
+						createdObject.map.setCollisionByExclusion([-1]);
+					}
 				}
 				else{
 					createdObject = this._addObject(object, container, group);
