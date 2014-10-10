@@ -337,7 +337,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.tmpObject = new MT.core.MagicObject(om.createObject(asset), this.map.game.world, this.map);
 			}
 			else{
-				this.tmpObject.assetId = asset.id;
+				this.tmpObject.update(om.createObject(asset));
 			}
 			//this.tmpObject =  this.map.createObject();
 			this.map.activeObject = this.tmpObject;
