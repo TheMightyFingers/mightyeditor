@@ -7113,7 +7113,7 @@ MT.extend("core.BasicPlugin")(
 		// cleanup up something from older projects
 		cleanUp: function(){
 			for(var i in this.data){
-				this.data.shift();
+				this.data[i].shift();
 			}
 			this.checkLocalStorageCapacity();
 			this.currentOffset = 0;
