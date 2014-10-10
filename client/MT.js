@@ -7112,13 +7112,15 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		save: function(){
+			
+			var str = JSON.stringify(this.buffer);
+			var off = this.currentOffset;
+			
 			if(off > 100){
 				console.warning("localstorage full");
 				//localStorage.removeItem(this.name);
 				return;
 			}
-			var str = JSON.stringify(this.buffer);
-			var off = this.currentOffset;
 			
 			while(str.length > this.capacity && off < this.step){
 				off++;
