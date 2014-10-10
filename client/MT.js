@@ -7110,16 +7110,22 @@ MT.extend("core.BasicPlugin")(
 			this.enable();
 			
 		},
-		
+		// cleanup up something from older projects
+		cleanUp: function(){
+			for(var i in this.data){
+				this.data.shift();
+			}
+			this.checkLocalStorageCapacity();
+			this.currentOffset = 0;
+		},
 		save: function(){
 			
 			var str = JSON.stringify(this.buffer);
 			var off = this.currentOffset;
 			
 			if(this.step - off <= 0){
-				console.warn("localstorage full");
-				//localStorage.removeItem(this.name);
-				return;
+				this.cleanUp();
+				off = this.currentOffset;
 			}
 			
 			while(str.length > this.capacity && off < this.step){
@@ -8266,7 +8272,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			});
 			
 			this.project.plugins.objectmanager.on(MT.OBJECT_DELETED, function(id){
-				console.log("deleted", id);
 				var tmp;
 				for(var i=0; i<that.loadedObjects.length; i++){
 					tmp = that.loadedObjects[i];
@@ -16446,7 +16451,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var tmp = null;
 			for(var i=0; i<localStorage.length; i++){
 				key = localStorage.key(i);
-				if(key.substring(0, 3) !== "ui-" && key != "UndoRedo"){
+				if(key.substring(0, 3) !== "ui" && key != "UndoRedo"){
 					tmp = JSON.parse(localStorage.getItem(key));
 					if(tmp.id){
 						items.push(tmp );
