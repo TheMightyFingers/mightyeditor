@@ -1221,3 +1221,10 @@ top: 34px;
 bottom: 0;
 background-color: inherit;
 }
+span.ui-timeline-frame {
+width: 5px;
+height: 5px;
+background-color: #333;
+display: inline-block;
+border-right: solid 1px;
+}

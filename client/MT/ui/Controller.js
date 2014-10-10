@@ -1485,7 +1485,10 @@ MT.extend("core.Emitter")(
 				},
 				"source-editor":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isVisible":true,"isDocked":true,
 					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":null,"bottom":null
-				}
+				}/*,
+				"movie-maker":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":null,"bottom":null
+				}*/
 			};
 			
 			var str = JSON.stringify(toLoad);

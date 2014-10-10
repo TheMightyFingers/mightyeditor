@@ -782,6 +782,10 @@ MT.extend("core.Emitter")(
 				}
 			}
 			
+		},
+		
+		show: function(par){
+			this.tree.show(par);
 		}
 		
 	}

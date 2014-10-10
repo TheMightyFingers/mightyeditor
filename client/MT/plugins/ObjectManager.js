@@ -14,7 +14,8 @@ MT.objectTypes = {
 	SPRITE: 0,
 	GROUP: 1,
 	TEXT: 2,
-	TILE_LAYER: 3
+	TILE_LAYER: 3,
+	MOVIE_CLIP: 4
 };
 
 MT.OBJECT_ADDED = "OBJECT_ADDED";
@@ -54,6 +55,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.createGroup();
+						that.panel.options.list.hide();
+					}
+				},
+				{
+					label: "Add Movie Clip",
+					className: "",
+					cb: function(){
+						that.createMovieClip();
 						that.panel.options.list.hide();
 					}
 				},
@@ -298,6 +307,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				name: name,
 				x: 0,
 				y: 0,
+				type: MT.objectTypes.GROUP,
 				angle: 0,
 				contents: [],
 				isVisible: 1,
@@ -315,6 +325,43 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.sync();
 			}
 			return group;
+		},
+		
+		createMovieClip: function(silent){
+			var data = this.tv.getData();
+			
+			var tmpName= "Movie";
+			var name = tmpName;
+			for(var i=0; i<data.length; i++){
+				if(data[i].name == name){
+					name = tmpName+" "+i;
+				}
+			}
+			
+			var group = {
+				id: "tmp"+this.mkid(),
+				name: name,
+				x: 0,
+				y: 0,
+				type: MT.objectTypes.MOVIE_CLIP,
+				angle: 0,
+				contents: [],
+				isVisible: 1,
+				isLocked: 0,
+				isFixedToCamera: 0,
+				alpha: 1
+			};
+			
+			data.unshift(group);
+			
+			this.tv.merge(data);
+			
+			if(!silent){
+				this.update();
+				this.sync();
+			}
+			return group;
+			
 		},
 		
 		createTileLayer: function(silent){

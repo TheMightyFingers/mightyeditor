@@ -10,6 +10,7 @@ MT.require("plugins.SourceEditor");
 MT.require("plugins.GamePreview");
 MT.require("plugins.Physics");
 MT.require("plugins.UserData");
+MT.require("plugins.MovieMaker");
 
 MT.DROP = "drop";
 
@@ -46,7 +47,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"SourceEditor",
 			"GamePreview",
 			"Physics",
-			"UserData"
+			"UserData",
+			"MovieMaker"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){

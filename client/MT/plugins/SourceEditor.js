@@ -58,8 +58,6 @@ MT.extend("core.BasicPlugin")(
 			this.ui = ui;
 			this.panel = this.ui.createPanel("SourceEditor");
 			this.el = this.panel.content;
-			
-			
 		},
 		
 		installUI: function(){
