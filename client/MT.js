@@ -7112,7 +7112,11 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		save: function(){
-			
+			if(off > 100){
+				console.warning("localstorage full");
+				localStorage.removeItem(this.name);
+				//return;
+			}
 			var str = JSON.stringify(this.buffer);
 			var off = this.currentOffset;
 			
@@ -7128,7 +7132,7 @@ MT.extend("core.BasicPlugin")(
 			catch(e){
 				off++;
 				this.buffer.slice(this.step - off, this.step);
-				localStorage.setItem(this.name, JSON.stringify(this.data) );
+				this.save();
 			}
 		},
 		
