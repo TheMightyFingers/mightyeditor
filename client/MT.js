@@ -7116,7 +7116,7 @@ MT.extend("core.BasicPlugin")(
 			var str = JSON.stringify(this.buffer);
 			var off = this.currentOffset;
 			
-			if(off > 100){
+			if(this.step - off <= 0){
 				console.warning("localstorage full");
 				//localStorage.removeItem(this.name);
 				return;
