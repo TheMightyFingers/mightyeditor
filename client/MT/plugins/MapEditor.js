@@ -208,7 +208,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			});
 			
 			this.project.plugins.objectmanager.on(MT.OBJECT_DELETED, function(id){
-				console.log("deleted", id);
 				var tmp;
 				for(var i=0; i<that.loadedObjects.length; i++){
 					tmp = that.loadedObjects[i];

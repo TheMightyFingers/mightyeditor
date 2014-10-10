@@ -127,16 +127,22 @@ MT.extend("core.BasicPlugin")(
 			this.enable();
 			
 		},
-		
+		// cleanup up something from older projects
+		cleanUp: function(){
+			for(var i in this.data){
+				this.data.shift();
+			}
+			this.checkLocalStorageCapacity();
+			this.currentOffset = 0;
+		},
 		save: function(){
 			
 			var str = JSON.stringify(this.buffer);
 			var off = this.currentOffset;
 			
 			if(this.step - off <= 0){
-				console.warn("localstorage full");
-				//localStorage.removeItem(this.name);
-				return;
+				this.cleanUp();
+				off = this.currentOffset;
 			}
 			
 			while(str.length > this.capacity && off < this.step){
