@@ -134,7 +134,7 @@ MT.extend("core.BasicPlugin")(
 			var off = this.currentOffset;
 			
 			if(this.step - off <= 0){
-				console.warning("localstorage full");
+				console.warn("localstorage full");
 				//localStorage.removeItem(this.name);
 				return;
 			}
