@@ -3844,6 +3844,7 @@ MT(
 			this.object.anchor.x = this.data.anchorX;
 			this.object.anchor.y = this.data.anchorY;
 			this.object.loadTexture(this.data.assetId);
+			this.object.frame = this.data.frame;
 		},
 		
 		hide: function(){
@@ -4612,6 +4613,18 @@ MT(
 			return angle;
 		},
 		
+		hasParent: function(parent){
+			var p = parent.object;
+			var t = this.object.parent;
+			while(t){
+				if(t == p){
+					return true;
+				}
+				t = t.parent;
+			}
+			return false;
+		},
+   
 		putTile: function(id, x, y){
 			this.object.map.putTile(id, x, y, this.object);
 			//layer.tilemap.putTile(id, x, y, layer.object);
@@ -4949,9 +4962,7 @@ MT(
 		},
    
 		get isVisible(){
-			if(this.data.isVisible){
-				return true;
-			}
+			
 			var o = this;
 			while(o.parent.magic){
 				if(!o.data.isVisible){
@@ -5171,8 +5182,12 @@ MT.extend("core.Emitter")(
 		},
 		
 		update: function(data){
-			this.tree.el.innerHTML = "";
-			this.createObject(data, this.tree);
+			if(!data){
+				this.merge(this.getData());
+				return;
+			}
+			//this.tree.el.innerHTML = "";
+			this.merge(data, this.tree);
 		},
 		
 		_nextId: 1,
@@ -6417,6 +6432,147 @@ MT.extend("ui.DomElement")(
 	}
 );
 
+//MT/ui/Keyframes.js
+MT.namespace('ui');
+"use strict";
+
+MT.extend("core.Emitter")(
+	MT.ui.Keyframes = function(ui, frames, count, name, d1, d2){
+		this.name = name || "xxx";
+		this.ui = ui;
+		
+		this.el = document.createElement("div");
+		this.el.className = "ui-kf-container";
+		
+		this.label = document.createElement("div");
+		this.label.innerHTML = this.name;
+		this.label.className = "ui-kf-label";
+		
+		var that = this;
+		/*this.label.onmousedown = function(e){
+			
+		};*/
+		
+		/*this.label.ondblclick = function(e){
+			that.label.setAttribute("contenteditable", true);
+			e.preventDefault();
+			e.stopPropagation();
+		};
+		this.label.onkeyup = function(){
+			console.log("UPPP");
+		};
+		ui.on("mousedown", function(e){
+			if(e.target != that.label){
+				console.log("blurr");
+			}
+		});*/
+		this.framesHolder = document.createElement("div");
+		this.framesHolder.className = "ui-kf-frames";
+		
+		
+		
+		this.count = count;
+		this.frames = frames;
+		this.frameElements = [];
+		
+		this.d1 = d1;
+		this.d2 = d2;
+		
+		this.show();
+		
+		this.buildFrames();
+		
+		this.addEvents();
+		
+		this.setActive(0);
+		
+		this.markFrames(frames);
+	},
+	{
+		isVisible: false,
+		hide: function(){
+			if(!this.isVisible){
+				return;
+			}
+			this.isVisible = false;
+			this.d1.removeChild(this.label);
+			this.d2.removeChild(this.framesHolder);
+		},
+		show: function(){
+			if(this.isVisible){
+				return;
+			}
+			this.isVisible = true;
+			this.d1.appendChild(this.label);
+			this.d2.appendChild(this.framesHolder);
+		},
+		buildFrames: function(){
+			var el;
+			for(var i=0; i<this.count; i++){
+				el = new MT.ui.DomElement("span");
+				this.frameElements.push(el);
+				this.framesHolder.appendChild(el.el);
+			}
+		},
+		
+		markFrames: function(frames){
+			this.frames = frames;
+			for(var i=0; i<this.count; i++){
+				if(this.frames[i]){
+					this.frameElements[i].addClass("keyframe");
+				}
+				else{
+					this.frameElements[i].removeClass("keyframe");
+				}
+			}
+		},
+		
+		addEvents: function(){
+			var that = this;
+			var mdown = false;
+			
+			var action = function(e){
+				
+				
+				var index = Array.prototype.indexOf.call(that.framesHolder.childNodes, e.target);
+				if(index === -1){
+					return;
+				}
+				that.setActive(index);
+			};
+			
+			this.framesHolder.onmousemove = function(e){
+				if(mdown){
+					action(e);
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			};
+			this.framesHolder.onmousedown = function(e){
+				mdown = true;
+				action(e);
+			};
+			this.ui.events.on("mouseup", function(){
+				mdown = false;
+			});
+		},
+		
+		setActive: function(index){
+			if(this.active > -1){
+				this.frameElements[this.active].removeClass("active");
+			}
+			
+			this.active = index;
+			this.frameElements[this.active].addClass("active");
+			
+			this.emit("frameChanged", this.active);
+		},
+		
+
+
+
+	}
+);
 //MT/plugins/MapEditor.js
 MT.namespace('plugins');
 "use strict";
@@ -11767,6 +11923,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.content.show(this.el);
 		this.content.addClass("ui-panel-content");
 		
+		this._input = document.createElement("input");
+		this._input.setAttribute("readonly", "readonly");
+		this._input.style.cssText = "position: static; top: -99999px;";
+		document.body.appendChild(this._input);
 		
 		if(title){
 			this.addHeader();
@@ -11812,7 +11972,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.isResizeable = true;
 			this.acceptsPanels = true;
 		},
-		
+		focus: function(){
+			this._input.focus();
+		},
 		addOptions: function(options){
 			this.options = {};
 			var list = this.options.list = new MT.ui.List(options, this.ui, true);
@@ -12780,11 +12942,17 @@ MT(
 MT.namespace('plugins');
 "use strict"
 MT.require("plugins.MapEditor");
+MT.require("ui.Keyframes");
 
 MT(
 	MT.plugins.MovieMaker = function(project){
 		this.project = project;
 		MT.core.BasicPlugin.call(this, "movie");
+		this.activeId = 0;
+		this.activeFrame = 0;
+		this.kf = {};
+		this.keys = ["x", "y", "angle", "anchorX", "anchorY", "scaleX", "scaleY", "alpha"];
+		this.roundKeys = ["frame"];
 	},
 	{
 		initUI: function(ui){
@@ -12795,10 +12963,9 @@ MT(
 			this.panel.on("click", function(e){
 				console.log(e.target);
 			});
+			
 		},
 		installUI: function(){
-			//this.ui.joinPanels(this.project.plugins.mapeditor.panel, this.panel);
-			//this.project.plugins.mapeditor.panel.show();
 			var span = null;
 			var div = null;
 			this.layers = [];
@@ -12808,23 +12975,14 @@ MT(
 				
 				if(obj.type == MT.objectTypes.MOVIE_CLIP){
 					console.log("object selected", obj.id);
-					that.buildKeyFrames(obj);
+					that.setActive(obj.id);
 				}
 			});
 			
-			this.tv = new MT.ui.TreeView([], {
-				root: this.project.path,
-				showHide: true,
-				lock: true
-			});
+			this.om = this.project.plugins.objectmanager;
+			this.map = this.project.plugins.mapeditor;
 			
 			this.addPanels();
-			
-			//var d = document.createElement("div");
-			//this.panel.content.el.appendChild(d);
-			
-			
-			this.tv.show(this.leftPanel.content.el);
 		},
    
 		addPanels: function(){
@@ -12840,7 +12998,7 @@ MT(
 			this.leftPanel.style.setProperty("border-right", "solid 1px #000");
 			this.leftPanel.isResizeable = true;
 			this.leftPanel.removeHeader();
-			
+			this.leftPanel.removeClass("animated");
 			
 			
 			
@@ -12851,17 +13009,206 @@ MT(
 			this.rightPanel.style.left = 200+"px";
 			this.rightPanel.style.width = "auto";
 			this.rightPanel.removeHeader();
+			this.rightPanel.removeClass("animated");
 			
-			this.rightPanel.content.style.overflow = "hidden";
+			this.rightPanel._input.onkeyup = function(e){
+				console.log(e.which);
+				
+				if(e.which == MT.keys.DELETE){
+					that.removeFrame();
+				}
+				if(e.which == MT.keys.SPACE){
+					that.addFrame();
+				}
+				e.preventDefault();
+				e.stopPropagation();
+			
+			};
+			this.rightPanel._input.onfocus = function(){
+				console.log("focus");
+			};
+			
+			//this.rightPanel.content.style.overflow = "hidden";
 			var that = this;
 			this.leftPanel.on("resize", function(w, h){
 				that.rightPanel.style.left = w +"px";
 			});
+			
+		},
+		
+		setActive: function(id){
+			
+			if(this.kf[this.activeId]){
+				this.kf[this.activeId].hide();
+			}
+			
+			this.activeId = id;
+			this.data = this.om.getById(this.activeId);
+			console.log(this.data);
+			
+			if(!this.data.kf){
+				this.data.kf = [this.data.contents];
+			}
+			else{
+				this.updateScene();
+			}
+			
+			if(!this.kf[id]){
+				var that = this;
+				this.kf[id] = new MT.ui.Keyframes(this.ui, this.data.kf, 60, "main", this.leftPanel.content.el, this.rightPanel.content.el);
+				
+				this.kf[id].on("frameChanged", function(frame){
+					if(that.activeFrame == frame){
+						return;
+					}
+					that.changeFrame(frame);
+				});
+				
+				this.om.on(MT.OBJECTS_UPDATED, function(){
+					console.log("update");
+					that.updateData();
+				});
+			}
+			else{
+				this.kf[id].markFrames(this.data.kf);
+				this.kf[id].show();
+			}
+			
+			
+		},
+		
+		changeFrame: function(frame){
+			this.activeFrame = frame;
+			console.log("frame", frame);
+			this.updateScene();
+		},
+   
+		updateData: function(){
+			this.data = this.om.getById(this.activeId);
+			if(!this.data){
+				return;
+			}
+			if(!this.data.kf[this.activeFrame]){
+				return;
+			}
+			this.data.kf[this.activeFrame] = JSON.parse(JSON.stringify(this.data.contents));
+			this.kf[this.activeId].markFrames(this.data.kf);
+		},
+		
+		addFrame: function(){
+			this.data = this.om.getById(this.activeId);
+			if(!this.data){
+				return;
+			}
+			this.data.kf[this.activeFrame] = JSON.parse(JSON.stringify(this.data.contents));
+			this.kf[this.activeId].markFrames(this.data.kf);
 		},
    
 		buildKeyFrames: function(obj){
-			this.tv.merge(obj.contents);
+			//this.tv.merge(obj.contents);
+		},
+   
+		updateScene: function(){
+			var d = this.data.kf[this.activeFrame];
+			console.log(d);
+			
+			if(d){
+				this.updateObjects(d);
+			}
+			else{
+				this.interpolate();
+			}
+		},
+   
+		interpolate: function(){
+			var i, f1, f2, t;
+			for(i=this.activeFrame; i>-1; i--){
+				if(this.data.kf[i]){
+					f1 = i;
+					break;
+				}
+			}
+			
+			
+			for(i=f1+1; i<this.data.kf.length; i++){
+				if(this.data.kf[i]){
+					f2 = i;
+					break;
+				}
+			}
+			t = (this.activeFrame - f1) / (f2 - f1);
+			
+			console.log("int",t, f1, f2, this.activeFrame);
+			
+			var d1 = this.data.kf[f1];
+			var d2 = this.data.kf[f2];
+			
+			if(!d2 || isNaN(t)){
+				return;
+			}
+			this.doInterpolate(t, d1, d2);
+		},
+   
+   
+		doInterpolate: function(t, d1, d2){
+			var o, mo, tmp;
+			for(var i=0; i<d1.length; i++){
+				o = d1[i];
+				mo = this.map.getById(o.id);
+				
+				tmp = this.buildTmpVals(t, d1[i], d2[i]);
+				
+				mo.update(tmp);
+			}
+		},
+   
+		buildTmpVals: function(t, d1, d2){
+			if(!d2){
+				return d1;
+			}
+			var tmp = {};
+			var k;
+			for(var i=0; i<this.keys.length; i++){
+				k = this.keys[i];
+				tmp[k] = this.getInt(t, d1[k], d2[k]);
+			}
+			
+			for(var i=0; i<this.roundKeys.length; i++){
+				k = this.roundKeys[i];
+				tmp[k] = Math.floor(this.getInt(t, d1[k], d2[k]));
+			}
+			return tmp;
+		},
+   
+		getInt: function(t, a, b){
+			return (1 - t) * a + t * b;
+			
+		},
+   
+		updateObjects: function(cont){
+			var o, mo;
+			var group = this.map.getById(this.activeId);
+			
+			for(var i=0; i<cont.length; i++){
+				o = cont[i];
+				mo = this.map.getById(o.id);
+				if(!mo || !mo.hasParent(group)){
+					cont.splice(i, 1);
+					i--;
+					continue;
+				}
+				mo.update(o);
+			}
+			
+			this.om.tv.update();
+		},
+   
+		removeFrame: function(){
+			this.data.kf[this.activeFrame] = null;
+			this.kf[this.activeId].markFrames(this.data.kf);
+			
 		}
+   
 	}
 );
 //MT/plugins/UserData.js
@@ -14596,7 +14943,8 @@ MT.keys = MT.core.keys = {
 	C: 67,
 	D: 68,
 	V: 86,
-	TAB: 9
+	TAB: 9,
+	SPACE: 32
 };
 
 MT.const = {
@@ -14907,6 +15255,9 @@ MT.extend("core.Emitter")(
 			if(!activePanel){
 				if(toTop && !toTop.isDocked){
 					that.updateZ(toTop);
+					window.setTimeout(function(){
+						toTop.focus();
+					},0);
 				}
 				return;
 			}
@@ -14924,6 +15275,9 @@ MT.extend("core.Emitter")(
 			that.updateZ(activePanel);
 			
 			window.x = activePanel;
+			window.setTimeout(function(){
+			activePanel.focus();
+			},0);
 		});
 		
 		this.events.on(this.events.MOUSEUP, function(e){
@@ -15596,10 +15950,14 @@ MT.extend("core.Emitter")(
 			
 			for(var i=0; i<tmp.length; i++){
 				p = tmp[i];
-				if(!p.isDocked || p.dockPosition != MT.BOTTOM || !p.isVisible){
+				if(p.dockPosition != MT.BOTTOM ){
 					continue;
 				}
-				if(p.justUpdated || p.bottom){
+				
+				if(!p.isDocked || !p.isVisible){
+					continue;
+				}
+				if(p.justUpdated ){
 					continue;
 				}
 				
