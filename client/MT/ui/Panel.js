@@ -17,6 +17,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.content.show(this.el);
 		this.content.addClass("ui-panel-content");
 		
+		this._input = document.createElement("input");
+		this._input.setAttribute("readonly", "readonly");
+		this._input.style.cssText = "position: static; top: -99999px;";
+		document.body.appendChild(this._input);
 		
 		if(title){
 			this.addHeader();
@@ -62,7 +66,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.isResizeable = true;
 			this.acceptsPanels = true;
 		},
-		
+		focus: function(){
+			this._input.focus();
+		},
 		addOptions: function(options){
 			this.options = {};
 			var list = this.options.list = new MT.ui.List(options, this.ui, true);
