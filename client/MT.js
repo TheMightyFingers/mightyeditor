@@ -6785,7 +6785,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			});
 			
 			this.project.plugins.objectmanager.on(MT.OBJECT_DELETED, function(id){
-				console.log("deleted", id);
 				var tmp;
 				for(var i=0; i<that.loadedObjects.length; i++){
 					tmp = that.loadedObjects[i];
@@ -7197,73 +7196,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				var sx = bounds.x-off*0.5 | 0;
 				var dx = sx + bounds.width | 0;
 				
-<<<<<<< HEAD
-				that.buffer[that.step] = str;
-				that.step++;
-				that.save();
-			});
-			
-			this.om.on(MT.OBJECTS_UPDATED, function(data){
-				if(that.buffer.length == 0){
-					that.buffer.push(JSON.stringify(data));
-					that.step++;
-				}
-			});
-			
-			
-			this.enable();
-			
-		},
-		// cleanup up something from older projects
-		cleanUp: function(){
-			for(var i in this.data){
-				this.data[i].shift();
-			}
-			this.checkLocalStorageCapacity();
-			this.currentOffset = 0;
-		},
-		save: function(){
-			
-			var str = JSON.stringify(this.buffer);
-			var off = this.currentOffset;
-			
-			if(this.step - off <= 0){
-				this.cleanUp();
-				off = this.currentOffset;
-			}
-			
-			while(str.length > this.capacity && off < this.step){
-				off++;
-				str = JSON.stringify(this.buffer.slice(off, this.step));
-			}
-			this.currentOffset = off;
-			
-			try{
-				localStorage.setItem(this.name, JSON.stringify(this.data) );
-			}
-			catch(e){
-				off++;
-				this.buffer.slice(this.step - off, this.step);
-				this.save();
-			}
-		},
-		
-		checkLocalStorageCapacity: function(){
-			var str = "x";
-			var ret = 0;
-			var koef = 1;
-			
-			while(true){
-				str += str.substring(0, str.length*koef | 0);
-				try{
-					localStorage.setItem("test", str);
-					ret = str.length;
-				}
-				catch(e){
-					koef -= 0.1;
-					if(koef < 0.1){
-						break
-=======
 				var sy = bounds.y-off*0.5 | 0;
 				var dy = sy + bounds.height | 0;
 					
@@ -7275,7 +7207,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						ctx.strokeRect(bounds.x - off | 0, sy + bounds.height*0.5 | 0, off, off);
 						ctx.strokeRect(bounds.x + width | 0, sy + bounds.height*0.5 | 0, off, off);
 						
->>>>>>> moviemaker
 					}
 					
 					ctx.strokeRect(bounds.x | 0, bounds.y | 0, width | 0, bounds.height | 0);
@@ -7954,16 +7885,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			group.x = obj.x;
 			group.y = obj.y;
 			
-<<<<<<< HEAD
-			if(!this.tmpObject){
-				this.tmpObject = new MT.core.MagicObject(om.createObject(asset), this.map.game.world, this.map);
-			}
-			else{
-				this.tmpObject.update(om.createObject(asset));
-=======
 			if(obj.angle){
 				group.angle = obj.angle;
->>>>>>> moviemaker
 			}
 			
 			group.visible = !!obj.isVisible;
@@ -8652,20 +8575,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 			this.data[row][cell] = val;
 			
-<<<<<<< HEAD
-			this.project.plugins.objectmanager.on(MT.OBJECT_DELETED, function(id){
-				var tmp;
-				for(var i=0; i<that.loadedObjects.length; i++){
-					tmp = that.loadedObjects[i];
-					
-					if(tmp.id == id){
-						that.loadedObjects.splice(i, 1);
-						tmp.remove();
-						if(that.activeObject == tmp){
-							that.activeObject = null;
-						}
-						return;
-=======
 			if(this.isKeyValue){
 				// was key deleted?
 				if(val == "" && cell == 0){
@@ -8675,7 +8584,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 					}
 					else{
 						this.table.removeChild(this.table.children[row]);
->>>>>>> moviemaker
 					}
 				}
 				
@@ -9210,11 +9118,23 @@ MT.extend("core.BasicPlugin")(
 			this.enable();
 			
 		},
-		
+		// cleanup up something from older projects
+		cleanUp: function(){
+			for(var i in this.data){
+				this.data[i].shift();
+			}
+			this.checkLocalStorageCapacity();
+			this.currentOffset = 0;
+		},
 		save: function(){
 			
 			var str = JSON.stringify(this.buffer);
 			var off = this.currentOffset;
+			
+			if(this.step - off <= 0){
+				this.cleanUp();
+				off = this.currentOffset;
+			}
 			
 			while(str.length > this.capacity && off < this.step){
 				off++;
@@ -9228,7 +9148,7 @@ MT.extend("core.BasicPlugin")(
 			catch(e){
 				off++;
 				this.buffer.slice(this.step - off, this.step);
-				localStorage.setItem(this.name, JSON.stringify(this.data) );
+				this.save();
 			}
 		},
 		
@@ -9605,7 +9525,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.tmpObject = new MT.core.MagicObject(om.createObject(asset), this.map.game.world, this.map);
 			}
 			else{
-				this.tmpObject.assetId = asset.id;
+				this.tmpObject.update(om.createObject(asset));
 			}
 			//this.tmpObject =  this.map.createObject();
 			this.map.activeObject = this.tmpObject;
@@ -13808,7 +13728,7 @@ MT.namespace('plugins');
 	var addCss = function(src){
 		var style = document.createElement("link");
 		style.setAttribute("rel", "stylesheet");
-		style.setAttribute("type", "text/scc");
+		style.setAttribute("type", "text/css");
 		style.setAttribute("href", src);
 		document.head.appendChild(style);
 	};
