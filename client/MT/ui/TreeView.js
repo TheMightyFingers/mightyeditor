@@ -70,8 +70,12 @@ MT.extend("core.Emitter")(
 		},
 		
 		update: function(data){
-			this.tree.el.innerHTML = "";
-			this.createObject(data, this.tree);
+			if(!data){
+				this.merge(this.getData());
+				return;
+			}
+			//this.tree.el.innerHTML = "";
+			this.merge(data, this.tree);
 		},
 		
 		_nextId: 1,
@@ -782,6 +786,10 @@ MT.extend("core.Emitter")(
 				}
 			}
 			
+		},
+		
+		show: function(par){
+			this.tree.show(par);
 		}
 		
 	}

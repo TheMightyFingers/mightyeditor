@@ -146,6 +146,7 @@ MT(
 			this.object.anchor.x = this.data.anchorX;
 			this.object.anchor.y = this.data.anchorY;
 			this.object.loadTexture(this.data.assetId);
+			this.object.frame = this.data.frame;
 		},
 		
 		hide: function(){
@@ -914,6 +915,18 @@ MT(
 			return angle;
 		},
 		
+		hasParent: function(parent){
+			var p = parent.object;
+			var t = this.object.parent;
+			while(t){
+				if(t == p){
+					return true;
+				}
+				t = t.parent;
+			}
+			return false;
+		},
+   
 		putTile: function(id, x, y){
 			this.object.map.putTile(id, x, y, this.object);
 			//layer.tilemap.putTile(id, x, y, layer.object);
@@ -1251,9 +1264,7 @@ MT(
 		},
    
 		get isVisible(){
-			if(this.data.isVisible){
-				return true;
-			}
+			
 			var o = this;
 			while(o.parent.magic){
 				if(!o.data.isVisible){

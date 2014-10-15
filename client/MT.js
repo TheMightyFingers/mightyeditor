@@ -3844,6 +3844,7 @@ MT(
 			this.object.anchor.x = this.data.anchorX;
 			this.object.anchor.y = this.data.anchorY;
 			this.object.loadTexture(this.data.assetId);
+			this.object.frame = this.data.frame;
 		},
 		
 		hide: function(){
@@ -4612,6 +4613,18 @@ MT(
 			return angle;
 		},
 		
+		hasParent: function(parent){
+			var p = parent.object;
+			var t = this.object.parent;
+			while(t){
+				if(t == p){
+					return true;
+				}
+				t = t.parent;
+			}
+			return false;
+		},
+   
 		putTile: function(id, x, y){
 			this.object.map.putTile(id, x, y, this.object);
 			//layer.tilemap.putTile(id, x, y, layer.object);
@@ -4949,9 +4962,7 @@ MT(
 		},
    
 		get isVisible(){
-			if(this.data.isVisible){
-				return true;
-			}
+			
 			var o = this;
 			while(o.parent.magic){
 				if(!o.data.isVisible){
@@ -5171,8 +5182,12 @@ MT.extend("core.Emitter")(
 		},
 		
 		update: function(data){
-			this.tree.el.innerHTML = "";
-			this.createObject(data, this.tree);
+			if(!data){
+				this.merge(this.getData());
+				return;
+			}
+			//this.tree.el.innerHTML = "";
+			this.merge(data, this.tree);
 		},
 		
 		_nextId: 1,
@@ -5883,6 +5898,10 @@ MT.extend("core.Emitter")(
 				}
 			}
 			
+		},
+		
+		show: function(par){
+			this.tree.show(par);
 		}
 		
 	}
@@ -6413,1648 +6432,142 @@ MT.extend("ui.DomElement")(
 	}
 );
 
-//MT/ui/TableView.js
+//MT/ui/Keyframes.js
 MT.namespace('ui');
-MT.require("ui.InputHelper");
-
-MT.extend("ui.DomElement").extend("core.Emitter")(
-	MT.ui.TableView = function(data, header){
-		MT.ui.DomElement.call(this);
-		
-		this.table = document.createElement("table");
-		this.el.appendChild(this.table);
-		
-		var tr, td, tmp;
-		
-		this.header = header;
-		if(data){
-			this.setData(data, header);
-		}
-		
-		
-		var that = this;
-		
-		this.input = new MT.ui.InputHelper();
-		
-		this.input.on("change", function(value){
-			if(value == ""){
-				console.log("should remove");
-			}
-			
-			
-			that.input.el.innerHTML = value;
-			
-		});
-		
-		this.input.on("blur", function(){
-			that.updateData(that.input.el);
-		});
-		
-		this.input.on("tab", function(e){
-			var el = that.input.el;
-			that.input.blur();
-			that.jumpToNext(el, e.shiftKey);
-		});
-		
-		this.input.on("enter", function(e){
-			var el = that.input.el;
-			that.input.blur();
-			that.jumpToNext(el, e.shiftKey);
-		});
-		
-		this.table.onclick = function(e){
-			e.preventDefault();
-			e.stopPropagation();
-			console.log(e.target.data);
-			
-			if(!e.target.data){
-				return;
-			}
-			
-			that.input.show(e.target);
-		};
-		
-	},
-	{
-		size: 0,
-		isKeyValue: false,
-		
-		toKeyValue: function(){
-			
-		},
-		
-		setData: function(data, header){
-			
-			this.table.innerHTML = "";
-			this._created = false;
-			this._allowEmpty = true;
-			
-			
-			this.origData = data;
-			
-			this.data = JSON.parse(JSON.stringify(data));
-			this.header = this.header || header;
-			
-			
-			if(!Array.isArray(this.data)){
-				this.isKeyValue = true;
-				
-				tmp = this.data;
-				this.data = [];
-				for(var k in tmp){
-					this.data.push([k, tmp[k]]);
-				}
-			}
-			
-			this.createTable();
-			
-		},
-		
-		jumpToNext: function(el, reverse){
-			if(!reverse){
-				if(el.nextSibling){
-					this.input.show(el.nextSibling);
-				}
-				else if(el.parentNode.nextSibling){
-					this.input.show(el.parentNode.nextSibling.firstChild);
-				}
-			}
-			else{
-				if(el.previousSibling){
-					this.input.show(el.previousSibling);
-				}
-				else if(el.parentNode.previousSibling){
-					// check header
-					if(el.parentNode.previousSibling.lastChild.data){
-						this.input.show(el.parentNode.previousSibling.lastChild);
-					}
-				}
-			}
-		},
-		updateData: function(el){
-			var row = el.data.row;
-			var cell = el.data.index;
-			var val = el.innerHTML;
-			console.log(row, cell, val);
-			
-			// is new value added ?
-			if(row == -1){
-				// ignore values without keys
-				if(this.isKeyValue && (cell > 0 || val == "")){
-					this.createTable();
-					return;
-				}
-				
-				var nn = [];
-				var tmp = "";
-				for(var i=0; i<this.size; i++){
-					if(i == cell){
-						nn.push(val);
-					}
-					else{
-						nn.push(tmp);
-					}
-				}
-				
-				row = this.data.length;
-				this.data.push(nn);
-				this.allowEmpty = true;
-			}
-			
-			// bug?
-			if(!this.data[row]){
-				return;
-			}
-			this.data[row][cell] = val;
-			
-			if(this.isKeyValue){
-				// was key deleted?
-				if(val == "" && cell == 0){
-					this.data.splice(row, 1);
-					if(this.header){
-						this.table.removeChild(this.table.children[row+1]);
-					}
-					else{
-						this.table.removeChild(this.table.children[row]);
-					}
-				}
-				
-				
-				// recreate all object - because indexes will mess up
-				for(var key in this.origData){
-					delete this.origData[key];
-				}
-				
-				
-				for(var i=0; i<this.data.length; i++){
-					this.origData[this.data[i][0]] = this.data[i][1];
-				}
-				
-				
-			}
-			else{
-				this.origData.length = 0;
-				for(var i=0; i<this.data.length; i++){
-					this.origData[i] = [];
-					for(var j=0; j<this.data[i].length; j++){
-						this.origData[j] = this.data[i][j];
-					}
-				}
-			}
-			
-			this.createTable();
-			this.emit("change", this.origData);
-		},
-		
-		_allowEmpty: true,
-		set allowEmpty(val){
-			this._allowEmpty = val;
-		},
-		get allowEmpty(){
-			return this._allowEmpty;
-		},
-		_created: false,
-		createTable: function(){
-			var tr, td, tmp;
-			var i, j;
-			var nextTr = this.table.firstChild;
-			
-			if(this.header){
-				j = this.header.length;
-				if(!this._created){
-					tr = document.createElement("tr");
-					this.table.appendChild(tr);
-				}
-				else{
-					tr = nextTr;
-					nextTr = tr.nextSibling;
-				}
-				for(var i=0; i<this.header.length; i++){
-					td = tr.children[i] || document.createElement("th");
-					td.innerHTML = this.header[i];
-					if(!td.parentNode){
-						tr.appendChild(td);
-					}
-				}
-			}
-		
-			for(i=0; i<this.data.length; i++){
-				if(!this._created){
-					tr = document.createElement("tr");
-					this.table.appendChild(tr);
-				}
-				else{
-					tr = nextTr;
-					nextTr = tr.nextSibling;
-				}
-				
-				//internaly we will use array for objects also: 0 - key, 1 - value
-				if(!Array.isArray(this.data[i]) ){
-					this.isKeyValue = true;
-					
-					tmp = this.data[i];
-					this.data[i] = [];
-					for(var k in tmp){
-						this.data[i].push(k);
-						this.data[i].push(i);
-					}
-				}
-				
-				tmp = this.data[i];
-				for(j=0; j<tmp.length; j++){
-					this.addCell(tr, i, j, tmp[j]);
-				}
-				
-			}
-			
-			this.size = j;
-			
-			if(this.allowEmpty){
-				tr = document.createElement("tr");
-				this.table.appendChild(tr);
-				
-				tmp = this.data[i];
-				for(var l=0; l<j; l++){
-					this.addCell(tr, -1, l, "");
-				}
-			}
-			this.allowEmpty = false;
-			this._created = true;
-			
-		},
-		addCell: function(row, rowNum, cellIndex, text){
-			var cell = row.children[cellIndex] || document.createElement("td");
-			if(!cell.parentNode){
-				row.appendChild(cell);
-			}
-			cell.data = {
-				row: rowNum,
-				index: cellIndex
-			};
-			cell.innerHTML = text;
-			cell.setAttribute("width", 100);
-			return cell;
-		}
-
-	}
-);
-//MT/core/BasicPlugin.js
-MT.namespace('core');
-MT(
-	MT.core.BasicPlugin = function(channel){
-		this.channel = channel;
-		this.dealys = {};
-	},
-	{
-		
-		initUI: function(ui){
-			this.ui = ui;
-		},
-		
-		initSocket: function(socket){
-			if(this.channel == void(0)){
-				return;
-			}
-			
-			var that = this;
-			this.socket = socket;
-			
-			this.socket.on(this.channel, function(action, data){
-				var act = "a_"+action;
-				if(that[act]){
-					that[act](data);
-				}
-				else{
-					console.warn("unknown action", that.channel + "["+act+"]", data);
-				}
-			});
-		},
-   
-		send: function(action, data){
-			this.socket.send(this.channel, action, data);
-		},
-   
-		sendDelayed: function(action, data, timeout){
-			var that = this;
-			if(this.dealys[action]){
-				window.clearTimeout(this.dealys[action]);
-			}
-			
-			this.dealys[action] = window.setTimeout(function(){
-				that.send(action, data);
-				that.dealys[action] = 0;
-			}, timeout);
-			
-		}
-	}
-);
-
-//MT/core/Emitter.js
-MT.namespace('core');
-MT(
-	MT.core.Emitter = function(){
-		this.callbacks = {};
-	},
-	{
-		on: function(action, cb, priority){
-			
-			if(action == void(0)){
-				console.error("undefined action");
-				return;
-			}
-			
-			if(typeof cb != "function"){
-				console.error("event",action,"not a function:",cb);
-				return;
-			}
-			if(Array.isArray(action)){
-				for(var i=0; i<action.length; i++){
-					this.on(action[i], cb);
-				}
-				return;
-			}
-			
-			if(!this.callbacks){
-				this.callbacks = {};
-			}
-			
-			if(!this.callbacks[action]){
-				this.callbacks[action] = [];
-			}
-			
-			
-			this.callbacks[action].push(cb);
-			cb.priority = priority || this.callbacks[action].length;
-			this.callbacks[action].sort(function(a, b){
-				return a.priority - b.priority;
-			});
-			
-			return cb;
-		},
-		
-		once: function(action, cb){
-			if(typeof cb != "function"){
-				console.error("event", action, "not a function:", cb);
-				return;
-			}
-			
-			if(Array.isArray(action)){
-				for(var i=0; i<action.length; i++){
-					this.once(action[i], cb);
-				}
-				return;
-			}
-			
-			var that = this;
-			var fn = function(action1, data){
-				cb(action1, cb);
-				that.off(action, fn);
-			};
-			
-			this.on(action, fn);
-			
-		},
-   
-		off: function(type, cb){
-			if(cb === void(0)){
-				cb = type; type = void(0);
-			}
-			
-			if(type && !this.callbacks[type]){
-				return;
-			}
-			
-			if(type){
-				this._off(cb, type);
-				return;
-			}
-			
-			for(var i in this.callbacks){
-				if(cb == void(0)){
-					this.callbacks[i].length = 0;
-					continue;
-				}
-				this._off(cb, i);
-			}
-		},
-		
-		_off: function(cb, type){
-			var i=0, cbs = this.callbacks[type];
-			for(i=0; i<cbs.length; i++){
-				if(cbs[i] === cb){
-					cbs.splice(i, 1);
-				}
-			}
-			return cb;
-		},
-		
-		emit: function(type, action, data){
-			
-			//this.debug(type);
-			
-			//console.log("emit:", type, action);
-			if(!this.callbacks){
-				return;
-			}
-			
-			if(!this.callbacks[type]){
-				//console.warn("received unhandled data", type, data);
-				return;
-			}
-			
-			var cbs = this.callbacks[type];
-			
-			
-			
-			for(var i=0; i<cbs.length; i++){
-				cbs[i](action, data);
-			}
-		},
-   
-		debug: function(type){
-			try{
-				throw new Error();
-			}catch(e){
-				var stack = e.stack.split("\n");
-				//remove self and emit
-				stack.splice(0, 3);
-				console.log("EMIT: ", type);
-				console.log(stack.join("\n"));
-			}
-			
-		}
-	}
-);
-//MT/plugins/Analytics.js
-MT.namespace('plugins');
-MT.extend("core.BasicPlugin")(
-	MT.plugins.Analytics = function(project){
-		MT.core.BasicPlugin.call(this, "Analytics");
-		this.project = project;
-	},
-	{
-		installUI: function(ui){
-			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-				(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-				m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-			})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-			
-			ga('create', 'UA-23132569-11');
-			document.title += " - " + this.project.id;
-			ga('send', 'pageview');
-			
-			var lastUpdate = Date.now();
-			var that = this;
-			this.project.plugins.tools.on("select", function(tool){
-				lastUpdate = Date.now();
-				ga('send', 'event', 'tool-selected', tool);
-			});
-			
-			this.project.plugins.assetmanager.on("added", function(image){
-				lastUpdate = Date.now();
-				ga('send', 'event', 'image-added', image);
-			});
-			
-			this.project.plugins.objectmanager.on("added", function(obj){
-				lastUpdate = Date.now();
-				ga('send', 'event', 'object-added', obj);
-			});
-			
-			this.project.plugins.objectmanager.on("changed", function(obj){
-				lastUpdate = Date.now();
-				ga('send', 'event', 'object-changed', obj);
-			});
-			
-			this.project.plugins.objectmanager.on("beforeSync", function(){
-				lastUpdate = Date.now();
-				ga('send', 'event', 'working-with-map', "sync");
-			});
-			
-			var minute = 1000*60;
-			window.setInterval(function(){
-				if(lastUpdate < Date.now() - minute){
-					ga('send', 'event', 'idle', that.project.id);
-				}
-			}, minute);
-		}
-	}
-);
-//MT/plugins/DataLink.js
-MT.namespace('plugins');
-MT.extend("core.BasicPlugin")(
-	MT.plugins.DataLink = function(project){
-		MT.core.BasicPlugin.call(this, "DataLink");
-		this.project = project;
-		
-	},
-	{ 
-		selectElementContents: function(el) {
-			var range = document.createRange();
-			range.selectNodeContents(el);
-			var sel = window.getSelection();
-			sel.removeAllRanges();
-			sel.addRange(range);
-		},
-		initUI: function(ui){
-			var that = this;
-			
-			var link = window.location.origin;
-			link += "/"+this.project.path+"/phaser/js/lib/mt.data.js";
-			
-			
-			var b = this.project.panel.addButton(link, "datalink", function(e){
-				that.selectElementContents(b.el);
-				e.preventDefault();
-			});
-			
-			b.el.onmouseleave = function(){
-				window.getSelection().removeAllRanges();
-			};
-			
-			b.style.left = "auto";
-			b.style.right = 0;
-			b.style.position = "absolute";
-		}
-		
-		
-	}
-);
-//MT/plugins/UndoRedo.js
-MT.namespace('plugins');
-MT.extend("core.BasicPlugin")(
-	MT.plugins.UndoRedo = function(project){
-		this.project = project;
-		this.buffer = [];
-		
-		this.name = "UndoRedo";
-		
-		this._step = 0;
-		
-		this.max = 20;
-		
-		this.undos = 0;
-		
-		window.ur = this;
-		this.capacity = 0;
-		this.currentOffset = 0;
-		
-		
-		var that = this;
-		this.onKeyDown = function(e){
-			if(!e.ctrlKey){
-				return;
-			}
-			if(e.which !== "Z".charCodeAt(0)){
-				return;
-			}
-			
-			if(!e.shiftKey){
-				if(that.step > 0){
-					that.step--;
-					var data = that.buffer[that.step-1];
-					if(data){
-						that.om.a_receive(JSON.parse(data), true);
-					}
-					else{
-						that.step++;
-					}
-				}
-				else{
-					//console.log("nothing to undo");
-				}
-				return;
-			}
-			
-			if(that.step < that.buffer.length){
-				var data = that.buffer[that.step];
-				if(data){
-					
-					that.om.a_receive(JSON.parse(data), true);
-					that.step++;
-				}
-				else{
-					console.log("nothing to redo - no data?");
-				}
-			}
-			else{
-				console.log("nothing to redo");
-			}
-		};
-		
-		
-		this.checkLocalStorageCapacity();
-	},
-	{
-		set step(val){
-			this._step = val;
-		},
-		
-		get step(){
-			return this._step;
-		},
-		
-		disable: function(){
-			this.ui.events.off(this.ui.events.KEYDOWN, this.onKeyDown);
-		},
-		enable: function(){
-			this.ui.events.on(this.ui.events.KEYDOWN, this.onKeyDown);
-		},
-		
-		installUI: function(){
-			var that = this;
-			
-			var stored = localStorage.getItem(this.name);
-			
-			if(!stored){
-				this.data = {};
-			}
-			else{
-				this.data = JSON.parse(stored);
-			}
-
-			if(this.data[this.project.id]){
-				this.buffer = this.data[this.project.id];
-			}
-			
-			
-			this.step = this.buffer.length;
-			this.data[this.project.id] = this.buffer;
-			
-			this.om = this.project.plugins.objectmanager;
-			this.om.on(MT.OBJECTS_SYNC, function(data){
-				
-				var str = JSON.stringify(data);
-				
-				if(that.buffer[that.step-1] == str){
-					return;
-				}
-				
-				if(that.step > that.max){
-					that.buffer.shift();
-					that.step--;
-				}
-				
-				that.buffer[that.step] = str;
-				that.step++;
-				that.save();
-			});
-			
-			this.om.on(MT.OBJECTS_UPDATED, function(data){
-				if(that.buffer.length == 0){
-					that.buffer.push(JSON.stringify(data));
-					that.step++;
-				}
-			});
-			
-			
-			this.enable();
-			
-		},
-		// cleanup up something from older projects
-		cleanUp: function(){
-			for(var i in this.data){
-				this.data[i].shift();
-			}
-			this.checkLocalStorageCapacity();
-			this.currentOffset = 0;
-		},
-		save: function(){
-			
-			var str = JSON.stringify(this.buffer);
-			var off = this.currentOffset;
-			
-			if(this.step - off <= 0){
-				this.cleanUp();
-				off = this.currentOffset;
-			}
-			
-			while(str.length > this.capacity && off < this.step){
-				off++;
-				str = JSON.stringify(this.buffer.slice(off, this.step));
-			}
-			this.currentOffset = off;
-			
-			try{
-				localStorage.setItem(this.name, JSON.stringify(this.data) );
-			}
-			catch(e){
-				off++;
-				this.buffer.slice(this.step - off, this.step);
-				this.save();
-			}
-		},
-		
-		checkLocalStorageCapacity: function(){
-			var str = "x";
-			var ret = 0;
-			var koef = 1;
-			
-			while(true){
-				str += str.substring(0, str.length*koef | 0);
-				try{
-					localStorage.setItem("test", str);
-					ret = str.length;
-				}
-				catch(e){
-					koef -= 0.1;
-					if(koef < 0.1){
-						break
-					}
-					
-					str = str.substring(0, ret);
-				}
-			}
-			
-			
-			
-			localStorage.removeItem("test");
-			
-			this.capacity = ret;
-		}
-
-	}
-);
-
-
-//MT/plugins/Tools.js
-MT.namespace('plugins');
 "use strict";
 
-MT.require("ui.List");
-MT.require("plugins.tools.Select");
-MT.require("plugins.tools.Stamp");
-MT.require("plugins.tools.Brush");
-MT.require("plugins.tools.Text");
-MT.require("plugins.tools.TileTool");
-MT.require("plugins.tools.Physics");
-
-MT.TOOL_SELECTED = "TOOL_SELECTED";
-
-
-MT.extend("core.BasicPlugin").extend("core.Emitter")(
-	MT.plugins.Tools = function(project){
-		MT.core.Emitter.call(this);
+MT.extend("core.Emitter")(
+	MT.ui.Keyframes = function(ui, frames, count, name, d1, d2){
+		this.name = name || "xxx";
+		this.ui = ui;
 		
-		this.project = project;
+		this.el = document.createElement("div");
+		this.el.className = "ui-kf-container";
 		
-		this.tools = {};
+		this.label = document.createElement("div");
+		this.label.innerHTML = this.name;
+		this.label.className = "ui-kf-label";
 		
-		//var tools = MT.plugins.tools;
-		this.toolsAvailable = {
-			"select": MT.plugins.tools.Select,
-			"Stamp": MT.plugins.tools.Stamp,
-			"Brush": MT.plugins.tools.Brush,
-			"Text": MT.plugins.tools.Text,
-			"TileTool": MT.plugins.tools.TileTool,
-			"Physics": MT.plugins.tools.Physics
+		var that = this;
+		/*this.label.onmousedown = function(e){
+			
+		};*/
+		
+		/*this.label.ondblclick = function(e){
+			that.label.setAttribute("contenteditable", true);
+			e.preventDefault();
+			e.stopPropagation();
 		};
+		this.label.onkeyup = function(){
+			console.log("UPPP");
+		};
+		ui.on("mousedown", function(e){
+			if(e.target != that.label){
+				console.log("blurr");
+			}
+		});*/
+		this.framesHolder = document.createElement("div");
+		this.framesHolder.className = "ui-kf-frames";
 		
-		this.tmpObject = null;
-		this.activeAsset = null;
-		this.activeFrame = 0;
+		
+		
+		this.count = count;
+		this.frames = frames;
+		this.frameElements = [];
+		
+		this.d1 = d1;
+		this.d2 = d2;
+		
+		this.show();
+		
+		this.buildFrames();
+		
+		this.addEvents();
+		
+		this.setActive(0);
+		
+		this.markFrames(frames);
 	},
 	{
-		
-		initUI: function(ui){
-			this.ui = ui;
-			this.panel = ui.createPanel("toolbox",this.ui.left);
-			this.panel.addClass("toolbox");
-			this.panel.removeHeader();
-			this.panel.width = 40;
-			this.panel.isResizeable = false;
-			this.panel.isDockable = true;
-			
-			
-			ui.dockToLeft(this.panel);
-		},
-		
-		installUI: function(){
-			var that = this;
-			var am = this.project.plugins.assetmanager;
-			var map = this.map = this.project.plugins.mapeditor;
-			var om = this.om = this.project.plugins.objectmanager;
-			
-			for(var i in this.toolsAvailable){
-				this.tools[i.toLowerCase()] = new this.toolsAvailable[i](this);
-			}
-			
-			
-			am.on(MT.ASSET_SELECTED, function(asset, element){
-				that.activeAsset = asset;
-				that.activeFrame = am.activeFrame;
-				that.emit(MT.ASSET_SELECTED, asset);
-			});
-			
-			am.on(MT.ASSET_UNSELECTED, function(asset){
-				that.activeAsset = null;
-				that.emit(MT.ASSET_UNSELECTED, asset);
-			});
-			
-			am.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
-				that.activeAsset = asset;
-				that.activeFrame = frame;
-				
-				that.emit(MT.ASSET_FRAME_CHANGED, asset, frame);
-			});
-			
-			var select =  function(object){
-				if(!object){
-					console.error("Failed to select an object");
-					return;
-				}
-				that.select(object);
-			};
-			
-			map.on(MT.TOOL_SELECTED, select);
-			
-			om.on(MT.OBJECT_SELECTED, function(data){
-				select(map.getById(data.id));
-			});
-			
-			
-			/*om.tv.on("click",function(data){
-				//that.setTool(that.tools.select);
-				select(map.getById(data.id));
-			});
-			*/
-			
-			
-			map.selector.on("select", function(obj){
-				//if(map.selector.count == 1){
-					that.emit(MT.OBJECT_SELECTED, obj);
-				//}
-			});
-			
-			map.selector.on("unselect", function(obj){
-				that.emit(MT.OBJECT_UNSELECTED, obj);
-				
-				if(map.selector.count !== 1){
-					window.setTimeout(function(){
-						if(map.selector.count == 1){
-							var obj = map.selector.get(0);
-							this.map.activeObject = null;
-							map.selector.emit("select", obj);
-							this.map.activeObject = obj;
-						}
-					}, 0);
-				}
-			});
-			
-			om.on(MT.OBJECTS_UPDATED, function(){
-				that.emit(MT.OBJECTS_UPDATED);
-			});
-			
-			var lastKey = 0;
-			
-			var toCopy = [];
-			
-			this.ui.events.on(this.ui.events.KEYUP, function(e){
-				
-				if(lastKey == MT.keys.ESC){
-					that.setTool(that.tools.select);
-					window.getSelection().removeAllRanges();
-					lastKey = 0;
-					return;
-				}
-				
-				
-				if(e.which == MT.keys.DELETE){
-					var data = om.tv.getData();
-					
-					that.map.selector.forEach(function(obj){
-						om.deleteObj(obj.id, true, data);
-						om.selector.clear();
-					});
-					
-					om.tv.merge(data);
-					
-					om.sync();
-					om.update();
-					return;
-				}
-				
-				lastKey = e.which;
-				
-				window.setTimeout(function(){
-					lastKey = 0;
-				}, 500);
-				
-				if(e.which === MT.keys.ESC){
-					that.activeTool.deactivate();
-				}
-				
-				
-				var copyStarted = {
-					x: 0,
-					y: 0
-				};
-				
-				if(e.ctrlKey){
-					if(e.which === MT.keys.C){
-						toCopy.length = 0;
-						map.selector.forEach(function(obj){
-							toCopy.push(obj);
-						});
-						return;
-					}
-					
-					if(e.which === MT.keys.V && e.target == document.body){
-						var x = that.ui.events.mouse.lastEvent.x;
-						var y = that.ui.events.mouse.lastEvent.y;
-						that.map.selector.clear();
-						
-						var bounds = null;
-						var midX = 0;
-						var midY = 0;
-						
-						for(var i=0; i<toCopy.length; i++){
-							bounds = toCopy[i].getBounds();
-							midX += bounds.x;
-							midY += bounds.y;
-						}
-						
-						midY /= toCopy.length;
-						midX /= toCopy.length;
-						
-						var cop = null;
-						for(var i=0; i<toCopy.length; i++){
-							bounds = toCopy[i].getBounds();
-							cop = that.copy(toCopy[i].data, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
-							that.map.selector.add(cop);
-						}
-					}
-				}
-			});
-			
-			for(var i in this.tools){
-				this.tools[i].initUI(this.ui);
-			}
-			
-			this.setTool(this.tools.select);
-			
-			
-		},
-		
-		lastAsset: null,
-		
-		
-		select: function(object){
-			this.tools.select.select(object);
-			if(this.activeTool != this.tools.select){
-				this.activeTool.select(object);
-			}
-			
-		},
-		
-		copy: function(toCopy, x, y){
-			if(Array.isArray(toCopy)){
-				for(var i=0; i<toCopy.length; i++){
-					this.copy(toCopy[i], x, y);
-				}
-				return;
-			}
-			
-			
-			
-			var tc = this.om.copy(toCopy, x, y);
-			var sprite = this.map.getById(tc.id);
-			
-			
-			
-			this.om.sync();
-			
-			return sprite;
-		},
-		
-		setTool: function(tool){
-			if(this.activeTool == tool){
-				return;
-			}
-			var oldTool = null;
-			if(this.activeTool){
-				oldTool = this.activeTool;
-				this.activeTool = null;
-				
-				oldTool.button.removeClass("active");
-				
-			}
-			
-			this.activeTool = tool;
-			this.activeTool.button.addClass("active");
-			
-			if(oldTool){
-				oldTool.deactivate();
-			}
-			
-			
-			this.activeTool.init();
-			this.emit(MT.TOOL_SELECTED, tool);
-		},
-		
-		mouseDown: function(e){
-			if(e.button === 2){
-				this.previousMouseMove = this.map.handleMouseMove;
-				this.mouseDown_hand(e);
-				return;
-			}
-			
-			this.activeTool.mouseDown(e);
-		},
-		
-		mouseUp: function(e){
-			
-			if(e.button == 2){
-				this.map.handleMouseMove = this.previousMouseMove;
-				return;
-			}
-			
-			this.activeTool.mouseUp(e);
-		},
-		
-		mouseMove: function(e){
-			this.activeTool.mouseMove(e);
-		},
-		
-		lastSelected: null,
-		
-		selectObject: function(obj, clear){
-			if(this.lastSelected && this.lastSelected == obj && this.map.activeObject){
-				return;
-			}
-			this.lastSelected = obj;
-			if(clear){
-				this.map.selector.clear();
-			}
-			
-			this.map.activeObject = obj;
-			this.map.selector.add(obj);
-			
-			// next line will be launched from selector listeer
-			// this.emit(MT.OBJECT_SELECTED, obj);
-		},
-		
-		
-		initTmpObject: function(asset){
-			
-			asset = asset || this.lastAsset;
-			this.lastAsset = asset;
-			
-			
-			
-			var x = this.ui.events.mouse.x;
-			var y = this.ui.events.mouse.y;
-			var om = this.project.plugins.objectmanager;
-			
-			var dx = 0;
-			var dy = 0;
-			
-			if(this.tmpObject){
-				dx = this.tmpObject.x;
-				dy = this.tmpObject.y;
-			}
-			
-			if(!this.tmpObject){
-				this.tmpObject = new MT.core.MagicObject(om.createObject(asset), this.map.game.world, this.map);
-			}
-			else{
-				this.tmpObject.update(om.createObject(asset));
-			}
-			//this.tmpObject =  this.map.createObject();
-			this.map.activeObject = this.tmpObject;
-			
-			
-			this.tmpObject.x = dx || x;
-			this.tmpObject.y = dy || y;
-			
-			this.tmpObject.bringToTop();
-		},
-		
-		removeTmpObject: function(){
-			if(this.tmpObject){
-				this.tmpObject.hide();
-			}
-			this.tmpObject = null;
-		},
-
-		
-		
-		
-		mouseDown_hand: function(e){
-			this.map.handleMouseMove = this.map._cameraMove;
-		},
-		
-
-		
-
-		unselectObjects: function(){
-			var toUnselect = [];
-			this.map.selector.forEach(function(obj){
-				if(!obj.data.contents){
-					toUnselect.push(obj);
-				}
-			});
-			
-			for(var i=0; i<toUnselect.length; i++){
-				this.map.selector.remove(toUnselect[i]);
-			}
-			this.map.activeObject = null;
-		},
-		
+		isVisible: false,
 		hide: function(){
-			this.object.visible = false;
-		},
-	}
-);
-//MT/plugins/Export.js
-MT.namespace('plugins');
-MT.extend("core.Emitter").extend("core.BasicPlugin")(
-	MT.plugins.Export = function(project){
-		MT.core.BasicPlugin.call(this, "Export");
-		this.project = project;
-		
-	},
-	{
-		initUI: function(ui){
-			var that = this;
-			this.list = new MT.ui.List([
-				{
-					label: "Phaser.io (.js)",
-					className: "",
-					cb: function(){
-						that.export("phaser", function(data){
-							window.location = that.project.path + "/"+ data.file;
-						});
-					}
-				},
-				{
-					label: "Phaser.io (data only) js",
-					className: "",
-					cb: function(){
-						that.export("phaserDataOnly", function(data){
-							that.openDataLink(data, "js");
-						});
-					}
-				},
-				{
-					label: "Phaser.io (data only) json",
-					className: "",
-					cb: function(){
-						that.export("phaserDataOnly", function(data){
-							that.openDataLink(data, "json");
-						});
-					}
-				}
-			
-			], ui, true);
-			
-			var b = this.button= this.project.panel.addButton("Export", null, function(e){
-				that.showList();
-			});
-			
-			this.openGame = this.project.panel.addButton("Open Game", null, function(e){
-				that.openLink();
-			});
-			
-			//this.list.removeHeader();
-			//this.list.content.overflow = "initial";
-			
-		},
-		
-		export: function(dest, data, cb){
-			if(typeof data == "function"){
-				cb = data;
-				data = null;
-			}
-			this.send(dest, data);
-			this.once("done", cb);
-		},
-		
-		showList: function(){
-			this.list.width = 250;
-			this.list.y = this.button.el.offsetHeight;
-			this.list.x = this.button.el.offsetLeft-5;
-			this.list.el.style.bottom = "initial";
-			this.list.show(document.body);
-		},
-		
-		openDataLink: function(data, json){
-			if(json == "json"){
-				data.file += "on";
-			}
-			var w = window.innerWidth*0.5;
-			var h = window.innerHeight*0.8;
-			var l = (window.innerWidth - w)*0.5;
-			var t = (window.innerHeight - h)*0.5;
-			
-			window.open(this.project.path + "/" + data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
-		},
-		
-		openLink: function(){
-			var w = window.open("about:blank",Date.now());
-			w.opener = null;
-			
-			var path = this.project.path;
-			this.export("phaser", function(data){
-				if(w.location){
-					w.location.href = path + "/phaser/index.html";
-				}
-			});
-			
-		},
-		
-		a_complete: function(data){
-			this.emit("done", data);
-		}
-		
-	}
-);
-//MT/plugins/Settings.js
-MT.namespace('plugins');
-MT.require("ui.Input");
-
-MT(
-	MT.plugins.Settings = function(project){
-		
-		this.project = project;
-		this.inputs = [];
-		
-		
-		this.objects = {};
-		
-		this.activeId = 0;
-	},
-	{
-		initUI: function(ui){
-			this.panel = ui.createPanel("Settings");
-			this.panel.setFree();
-			var that = this;
-			this.panel.header.addClass("ui-wrap");
-		},
-		
-		installUI: function(){
-			var that = this;
-			this.project.plugins.tools.on(MT.ASSET_FRAME_CHANGED, function(obj, frame){
-				that.handleAssets(obj);
-			});
-			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
-				that.handleObjects(obj);
-				that.active = obj.id;
-			});
-			this.project.plugins.tools.on(MT.OBJECT_UNSELECTED, function(obj){
-				that.clear();
-			});
-			
-			var map = this.project.plugins.mapeditor;
-			map.on("select", function(obj){
-				that.handleScene(map.settings);
-			});
-			
-		},
-   
-		handleClick: function(obj){
-			
-			
-		},
-   
-		clear: function(){
-			var stack = this.inputs[this.stack];
-			for(var i in stack){
-				stack[i].hide();
-			}
-			this.stack = "";
-			this.lastObj = null;
-			return;
-			
-			this.panel.title = "Settings";
-			for(var i=0; i<this.inputs.length; i++){
-				this.inputs[i].remove();
-			}
-			this.inputs.length = 0;
-			
-		},
-		
-		addInput: function(key, object, right, cb){
-			if(!this.inputs[this.stack]){
-				this.inputs[this.stack] = {};
-			}
-			
-			var stack = this.inputs[this.stack];
-			var k = key;
-			if(typeof key !== "string"){
-				k = key.key;
-			}
-			if(stack[k]){
-				stack[k].setObject(object);
-				stack[k].show();
-				return stack[k];
-			}
-			
-			
-			var p = this.panel.content;
-			
-			var fw = new MT.ui.Input(this.project.ui, key, object);
-			fw.show(p.el);
-			
-			fw.style.position = "relative";
-			fw.style.height = "20px";
-			
-			stack[k] = fw;
-			
-			fw.on("change", cb);
-			return fw;
-		},
-		
-   
-		lastObj: null,
-		handleAssets: function(obj){
-			this.ooo = obj;
-			if(obj.contents !== void(0)){
+			if(!this.isVisible){
 				return;
 			}
-			
-			if(this.lastObj == obj){
+			this.isVisible = false;
+			this.d1.removeChild(this.label);
+			this.d2.removeChild(this.framesHolder);
+		},
+		show: function(){
+			if(this.isVisible){
 				return;
 			}
-			this.lastObj = obj;
-			
-			this.clear();
-			
-			this.panel.title = obj.name;
-			
-			var that = this;
-			var cb = function(){
-				that.project.am.updateData();
-			};
-			
-			if(!obj.key){
-				obj.key = obj.fullPath;
+			this.isVisible = true;
+			this.d1.appendChild(this.label);
+			this.d2.appendChild(this.framesHolder);
+		},
+		buildFrames: function(){
+			var el;
+			for(var i=0; i<this.count; i++){
+				el = new MT.ui.DomElement("span");
+				this.frameElements.push(el);
+				this.framesHolder.appendChild(el.el);
 			}
+		},
+		
+		markFrames: function(frames){
+			this.frames = frames;
+			for(var i=0; i<this.count; i++){
+				if(this.frames[i]){
+					this.frameElements[i].addClass("keyframe");
+				}
+				else{
+					this.frameElements[i].removeClass("keyframe");
+				}
+			}
+		},
+		
+		addEvents: function(){
+			var that = this;
+			var mdown = false;
 			
-			this.stack = "assets";
-			this.addInput( {key: "key", type: "text"}, obj, false, cb);
-			this.addInput( {key: "frameWidth", step: 1, min: 1}, obj, false, cb);
-			this.addInput( {key: "frameHeight", step: 1, min: 1}, obj, true, cb);
-			this.addInput( "frameMax", obj, false, cb);
-			this.addInput( {key: "margin", step: 1, min: 0} , obj, true, cb);
-			this.addInput( {key: "spacing", step: 1, min: 0}, obj, false, cb);
-			this.addInput( {key: "anchorX", step: 0.5}, obj, true, cb);
-			this.addInput( {key: "anchorY", step: 0.5}, obj, true, cb);
-			this.addInput( {key: "fps", step: 1}, obj, true, cb);
-			
-			this.addInput( {key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, asset){
-				if(e.target.files.length === 0){
+			var action = function(e){
+				
+				
+				var index = Array.prototype.indexOf.call(that.framesHolder.childNodes, e.target);
+				if(index === -1){
 					return;
 				}
-				that.project.am.addAtlas(asset, e);
-			});
-			
-			this.addInput( {key: "update", type: "upload", accept: MT.const.IMAGES}, obj, true, function(e, asset){
-				that.project.am.updateImage(asset, e);
-			});
-			
-			
-		},
-   
-		handleObjects: function(obj){
-			/*if(!MO){
-				return;
-			}
-			var obj = MO;
-			*/
-			
-			if(this.lastObj == obj){
-				return;
-			}
-			this.lastObj = obj;
-			
-			this.clear();
-			this.panel.title = obj.name;
-			var that = this;
-			var cb = function(){
-				that.project.om.update();
+				that.setActive(index);
 			};
-			//group
-			if(obj.data.contents){
-				this.stack = "group";
-				this.objects.x = this.addInput( "x", obj, true, cb);
-				this.objects.y = this.addInput( "y", obj, true, cb);
-				this.objects.angle = this.addInput( "angle", obj, true, cb);
-				if(obj.isFixedToCamera === void(0)){
-					obj.isFixedToCamera = 0;
-				}
-				this.objects.isFixedToCamera = this.addInput({key:"isFixedToCamera", min: 0, max: 1, step: 1}, obj, true, cb);
-			}
-			// tile layer
-			else if(obj.data.type == MT.objectTypes.TILE_LAYER){
-				
-				this.stack = "layer";
-				this.objects.x = this.addInput( "x", obj, true, cb);
-				this.objects.y = this.addInput( "y", obj, true, cb);
-				this.addInput("widthInTiles", obj, true, cb);
-				this.addInput("heightInTiles", obj, true, cb);
-				this.addInput("tileWidth", obj, true, cb);
-				this.addInput("tileHeight", obj, true, cb);
-				
-				
-				this.addInput({key:"isFixedToCamera", min: 0, max: 1, step: 1}, obj, true, cb);
-				
-				this.addInput( {
-					key: "anchorX",
-					step: 0.1
-				}, obj, true, cb);
-				this.addInput( {
-					key: "anchorY",
-					step: 0.1
-				}, obj, true, cb);
-				
-				
-			}
-			// tile text
-			else if(obj.data.type == MT.objectTypes.TEXT){
-				this.stack = "sprite";
-				this.objects.x = this.addInput( "x", obj, true, cb);
-				this.objects.y = this.addInput( "y", obj, true, cb);
-				
-				if(obj._framesCount){
-					this.objects.frame = this.addInput( "frame", obj, true, function(){
-						
-						if(obj.frame >= obj._framesCount){
-							obj.frame = 0;
-						}
-						
-						if(obj.frame < 0){
-							obj.frame = obj._framesCount - 1;
-						}
-						
-						that.objects.frame.setValue(obj.frame, true);
-						
-						cb();
-					});
-				}
-				this.objects.angle = this.addInput( "angle", obj, true, cb);
-				this.objects.anchorX = this.addInput( {
-					key: "anchorX",
-					step: 0.1
-				}, obj, true, cb);
-				this.objects.anchorY = this.addInput( {
-					key: "anchorY",
-					step: 0.1
-				}, obj, true, cb);
-				
-				this.objects.width = this.addInput( {
-					key: "width",
-					step: 1,
-				}, obj, true, function(width, oldWidth){
-					var ow = oldWidth / obj.scaleX;
-					var scale = width / ow;
-					that.objects.scaleX.setValue(scale);
-					cb();
-					that.objects.width.setValue(parseInt(width, 10), true);
-				});
-				this.objects.wordWrapWidth = this.addInput( {
-					key: "wordWrapWidth",
-					step: 1,
-				}, obj, true, cb);
-				
-				this.objects.height = this.addInput( {
-					key: "height",
-					step: 1,
-				}, obj, true, function(height, oldHeight){
-					var ov = oldHeight / obj.scaleY;
-					var scale = height / ov;
-					that.objects.scaleY.setValue(scale);
-					cb();
-					that.objects.height.setValue(parseInt(height, 10), true);
-				});
-				
-				this.objects.scaleX = this.addInput( {
-					key: "scaleX",
-					step: 0.1
-				}, obj, true, cb)
-				this.objects.scaleY = this.addInput( {
-					key: "scaleY",
-					step: 0.1
-				}, obj, true, cb);
-			}
-			//sprite
-			else{
-				this.stack = "sprite";
-				this.objects.x = this.addInput( "x", obj, true, cb);
-				this.objects.y = this.addInput( "y", obj, true, cb);
-				
-				if(obj._framesCount){
-					this.objects.frame = this.addInput( "frame", obj, true, function(){
-						
-						if(obj.frame >= obj._framesCount){
-							obj.frame = 0;
-						}
-						
-						if(obj.frame < 0){
-							obj.frame = obj._framesCount - 1;
-						}
-						
-						that.objects.frame.setValue(obj.frame, true);
-						
-						cb();
-					});
-				}
-				this.objects.angle = this.addInput( "angle", obj, true, cb);
-				this.objects.anchorX = this.addInput( {
-					key: "anchorX",
-					step: 0.1
-				}, obj, true, cb);
-				this.objects.anchorY = this.addInput( {
-					key: "anchorY",
-					step: 0.1
-				}, obj, true, cb);
-				
-				this.objects.width = this.addInput( {
-					key: "width",
-					step: 1,
-				}, obj, true, function(width, oldWidth){
-					var ow = oldWidth / obj.scaleX;
-					var scale = width / ow;
-					that.objects.scaleX.setValue(scale);
-					cb();
-					that.objects.width.setValue(parseInt(width, 10), true);
-				});
-				
-				
-				this.objects.height = this.addInput( {
-					key: "height",
-					step: 1,
-				}, obj, true, function(height, oldHeight){
-					var ov = oldHeight / obj.scaleY;
-					var scale = height / ov;
-					that.objects.scaleY.setValue(scale);
-					cb();
-					that.objects.height.setValue(parseInt(height, 10), true);
-				});
-				
-				this.objects.scaleX = this.addInput( {
-					key: "scaleX",
-					step: 0.1
-				}, obj, true, cb)
-				this.objects.scaleY = this.addInput( {
-					key: "scaleY",
-					step: 0.1
-				}, obj, true, cb);
-			}
 			
-			this.objects.alpha = this.addInput( {key: "alpha", min: 0, max: 1, step: 0.1}, obj, true, cb);
-			
+			this.framesHolder.onmousemove = function(e){
+				if(mdown){
+					action(e);
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			};
+			this.framesHolder.onmousedown = function(e){
+				mdown = true;
+				action(e);
+			};
+			this.ui.events.on("mouseup", function(){
+				mdown = false;
+			});
 		},
 		
-		update: function(){
-			for(var i in this.objects){
-				this.objects[i].update();
+		setActive: function(index){
+			if(this.active > -1){
+				this.frameElements[this.active].removeClass("active");
 			}
+			
+			this.active = index;
+			this.frameElements[this.active].addClass("active");
+			
+			this.emit("frameChanged", this.active);
 		},
-   
-		updateObjects: function(obj){
-			if(obj.id != this.activeId){
-				//return;
-			}
-			for(var i in this.objects){
-				this.objects[i].obj = obj;
-				this.objects[i].setValue(obj[i], true);
-			}
-		},
-   
-		handleScene: function(obj){
-			this.clear();
-			
-			this.stack = "scene";
-			var that = this;
-			var cb = function(){
-				that.project.plugins.mapeditor.updateScene(obj);
-			};
-			this.scene = {};
-			
-			this.scene.cameraX = this.addInput( {key: "cameraX"}, obj, true, cb);
-			this.scene.cameraY = this.addInput( {key: "cameraY"}, obj, true, cb);
-			
-			this.scene.worldWidth  = this.addInput( {key: "worldWidth"}, obj, true, cb);
-			this.scene.worldHeight = this.addInput( {key: "worldHeight"}, obj, true, cb);
-			
-			this.scene.viewportWidth  = this.addInput( {key: "viewportWidth"}, obj, true, cb);
-			this.scene.viewportHeight = this.addInput( {key: "viewportHeight"}, obj, true, cb);
-			
-			
-			this.scene.gridX = this.addInput( {key: "gridX", min: 2}, obj, true, cb);
-			this.scene.gridY = this.addInput( {key: "gridY", min: 2}, obj, true, cb);
-			this.scene.showGrid = this.addInput( {key: "showGrid", min: 0, max: 1}, obj, true, cb);
-			this.scene.backgroundColor = this.addInput( {key: "backgroundColor", type: "color" }, obj, true, cb);
-			
-		},
-   
-		updateScene: function(obj){
-			for(var i in this.scene){
-				this.scene[i].obj = obj;
-				this.scene[i].setValue(obj[i]);
-			}
-		},
-
+		
 
 
 
@@ -8272,6 +6785,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			});
 			
 			this.project.plugins.objectmanager.on(MT.OBJECT_DELETED, function(id){
+				console.log("deleted", id);
 				var tmp;
 				for(var i=0; i<that.loadedObjects.length; i++){
 					tmp = that.loadedObjects[i];
@@ -8683,6 +7197,73 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				var sx = bounds.x-off*0.5 | 0;
 				var dx = sx + bounds.width | 0;
 				
+<<<<<<< HEAD
+				that.buffer[that.step] = str;
+				that.step++;
+				that.save();
+			});
+			
+			this.om.on(MT.OBJECTS_UPDATED, function(data){
+				if(that.buffer.length == 0){
+					that.buffer.push(JSON.stringify(data));
+					that.step++;
+				}
+			});
+			
+			
+			this.enable();
+			
+		},
+		// cleanup up something from older projects
+		cleanUp: function(){
+			for(var i in this.data){
+				this.data[i].shift();
+			}
+			this.checkLocalStorageCapacity();
+			this.currentOffset = 0;
+		},
+		save: function(){
+			
+			var str = JSON.stringify(this.buffer);
+			var off = this.currentOffset;
+			
+			if(this.step - off <= 0){
+				this.cleanUp();
+				off = this.currentOffset;
+			}
+			
+			while(str.length > this.capacity && off < this.step){
+				off++;
+				str = JSON.stringify(this.buffer.slice(off, this.step));
+			}
+			this.currentOffset = off;
+			
+			try{
+				localStorage.setItem(this.name, JSON.stringify(this.data) );
+			}
+			catch(e){
+				off++;
+				this.buffer.slice(this.step - off, this.step);
+				this.save();
+			}
+		},
+		
+		checkLocalStorageCapacity: function(){
+			var str = "x";
+			var ret = 0;
+			var koef = 1;
+			
+			while(true){
+				str += str.substring(0, str.length*koef | 0);
+				try{
+					localStorage.setItem("test", str);
+					ret = str.length;
+				}
+				catch(e){
+					koef -= 0.1;
+					if(koef < 0.1){
+						break
+=======
 				var sy = bounds.y-off*0.5 | 0;
 				var dy = sy + bounds.height | 0;
 					
@@ -8694,6 +7275,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						ctx.strokeRect(bounds.x - off | 0, sy + bounds.height*0.5 | 0, off, off);
 						ctx.strokeRect(bounds.x + width | 0, sy + bounds.height*0.5 | 0, off, off);
 						
+>>>>>>> moviemaker
 					}
 					
 					ctx.strokeRect(bounds.x | 0, bounds.y | 0, width | 0, bounds.height | 0);
@@ -9372,8 +7954,16 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			group.x = obj.x;
 			group.y = obj.y;
 			
+<<<<<<< HEAD
+			if(!this.tmpObject){
+				this.tmpObject = new MT.core.MagicObject(om.createObject(asset), this.map.game.world, this.map);
+			}
+			else{
+				this.tmpObject.update(om.createObject(asset));
+=======
 			if(obj.angle){
 				group.angle = obj.angle;
+>>>>>>> moviemaker
 			}
 			
 			group.visible = !!obj.isVisible;
@@ -9908,6 +8498,1656 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		}
 	}
 );
+//MT/ui/TableView.js
+MT.namespace('ui');
+MT.require("ui.InputHelper");
+
+MT.extend("ui.DomElement").extend("core.Emitter")(
+	MT.ui.TableView = function(data, header){
+		MT.ui.DomElement.call(this);
+		
+		this.table = document.createElement("table");
+		this.el.appendChild(this.table);
+		
+		var tr, td, tmp;
+		
+		this.header = header;
+		if(data){
+			this.setData(data, header);
+		}
+		
+		
+		var that = this;
+		
+		this.input = new MT.ui.InputHelper();
+		
+		this.input.on("change", function(value){
+			if(value == ""){
+				console.log("should remove");
+			}
+			
+			
+			that.input.el.innerHTML = value;
+			
+		});
+		
+		this.input.on("blur", function(){
+			that.updateData(that.input.el);
+		});
+		
+		this.input.on("tab", function(e){
+			var el = that.input.el;
+			that.input.blur();
+			that.jumpToNext(el, e.shiftKey);
+		});
+		
+		this.input.on("enter", function(e){
+			var el = that.input.el;
+			that.input.blur();
+			that.jumpToNext(el, e.shiftKey);
+		});
+		
+		this.table.onclick = function(e){
+			e.preventDefault();
+			e.stopPropagation();
+			console.log(e.target.data);
+			
+			if(!e.target.data){
+				return;
+			}
+			
+			that.input.show(e.target);
+		};
+		
+	},
+	{
+		size: 0,
+		isKeyValue: false,
+		
+		toKeyValue: function(){
+			
+		},
+		
+		setData: function(data, header){
+			
+			this.table.innerHTML = "";
+			this._created = false;
+			this._allowEmpty = true;
+			
+			
+			this.origData = data;
+			
+			this.data = JSON.parse(JSON.stringify(data));
+			this.header = this.header || header;
+			
+			
+			if(!Array.isArray(this.data)){
+				this.isKeyValue = true;
+				
+				tmp = this.data;
+				this.data = [];
+				for(var k in tmp){
+					this.data.push([k, tmp[k]]);
+				}
+			}
+			
+			this.createTable();
+			
+		},
+		
+		jumpToNext: function(el, reverse){
+			if(!reverse){
+				if(el.nextSibling){
+					this.input.show(el.nextSibling);
+				}
+				else if(el.parentNode.nextSibling){
+					this.input.show(el.parentNode.nextSibling.firstChild);
+				}
+			}
+			else{
+				if(el.previousSibling){
+					this.input.show(el.previousSibling);
+				}
+				else if(el.parentNode.previousSibling){
+					// check header
+					if(el.parentNode.previousSibling.lastChild.data){
+						this.input.show(el.parentNode.previousSibling.lastChild);
+					}
+				}
+			}
+		},
+		updateData: function(el){
+			var row = el.data.row;
+			var cell = el.data.index;
+			var val = el.innerHTML;
+			console.log(row, cell, val);
+			
+			// is new value added ?
+			if(row == -1){
+				// ignore values without keys
+				if(this.isKeyValue && (cell > 0 || val == "")){
+					this.createTable();
+					return;
+				}
+				
+				var nn = [];
+				var tmp = "";
+				for(var i=0; i<this.size; i++){
+					if(i == cell){
+						nn.push(val);
+					}
+					else{
+						nn.push(tmp);
+					}
+				}
+				
+				row = this.data.length;
+				this.data.push(nn);
+				this.allowEmpty = true;
+			}
+			
+			// bug?
+			if(!this.data[row]){
+				return;
+			}
+			this.data[row][cell] = val;
+			
+<<<<<<< HEAD
+			this.project.plugins.objectmanager.on(MT.OBJECT_DELETED, function(id){
+				var tmp;
+				for(var i=0; i<that.loadedObjects.length; i++){
+					tmp = that.loadedObjects[i];
+					
+					if(tmp.id == id){
+						that.loadedObjects.splice(i, 1);
+						tmp.remove();
+						if(that.activeObject == tmp){
+							that.activeObject = null;
+						}
+						return;
+=======
+			if(this.isKeyValue){
+				// was key deleted?
+				if(val == "" && cell == 0){
+					this.data.splice(row, 1);
+					if(this.header){
+						this.table.removeChild(this.table.children[row+1]);
+					}
+					else{
+						this.table.removeChild(this.table.children[row]);
+>>>>>>> moviemaker
+					}
+				}
+				
+				
+				// recreate all object - because indexes will mess up
+				for(var key in this.origData){
+					delete this.origData[key];
+				}
+				
+				
+				for(var i=0; i<this.data.length; i++){
+					this.origData[this.data[i][0]] = this.data[i][1];
+				}
+				
+				
+			}
+			else{
+				this.origData.length = 0;
+				for(var i=0; i<this.data.length; i++){
+					this.origData[i] = [];
+					for(var j=0; j<this.data[i].length; j++){
+						this.origData[j] = this.data[i][j];
+					}
+				}
+			}
+			
+			this.createTable();
+			this.emit("change", this.origData);
+		},
+		
+		_allowEmpty: true,
+		set allowEmpty(val){
+			this._allowEmpty = val;
+		},
+		get allowEmpty(){
+			return this._allowEmpty;
+		},
+		_created: false,
+		createTable: function(){
+			var tr, td, tmp;
+			var i, j;
+			var nextTr = this.table.firstChild;
+			
+			if(this.header){
+				j = this.header.length;
+				if(!this._created){
+					tr = document.createElement("tr");
+					this.table.appendChild(tr);
+				}
+				else{
+					tr = nextTr;
+					nextTr = tr.nextSibling;
+				}
+				for(var i=0; i<this.header.length; i++){
+					td = tr.children[i] || document.createElement("th");
+					td.innerHTML = this.header[i];
+					if(!td.parentNode){
+						tr.appendChild(td);
+					}
+				}
+			}
+		
+			for(i=0; i<this.data.length; i++){
+				if(!this._created){
+					tr = document.createElement("tr");
+					this.table.appendChild(tr);
+				}
+				else{
+					tr = nextTr;
+					nextTr = tr.nextSibling;
+				}
+				
+				//internaly we will use array for objects also: 0 - key, 1 - value
+				if(!Array.isArray(this.data[i]) ){
+					this.isKeyValue = true;
+					
+					tmp = this.data[i];
+					this.data[i] = [];
+					for(var k in tmp){
+						this.data[i].push(k);
+						this.data[i].push(i);
+					}
+				}
+				
+				tmp = this.data[i];
+				for(j=0; j<tmp.length; j++){
+					this.addCell(tr, i, j, tmp[j]);
+				}
+				
+			}
+			
+			this.size = j;
+			
+			if(this.allowEmpty){
+				tr = document.createElement("tr");
+				this.table.appendChild(tr);
+				
+				tmp = this.data[i];
+				for(var l=0; l<j; l++){
+					this.addCell(tr, -1, l, "");
+				}
+			}
+			this.allowEmpty = false;
+			this._created = true;
+			
+		},
+		addCell: function(row, rowNum, cellIndex, text){
+			var cell = row.children[cellIndex] || document.createElement("td");
+			if(!cell.parentNode){
+				row.appendChild(cell);
+			}
+			cell.data = {
+				row: rowNum,
+				index: cellIndex
+			};
+			cell.innerHTML = text;
+			cell.setAttribute("width", 100);
+			return cell;
+		}
+
+	}
+);
+//MT/core/BasicPlugin.js
+MT.namespace('core');
+MT(
+	MT.core.BasicPlugin = function(channel){
+		this.channel = channel;
+		this.dealys = {};
+	},
+	{
+		
+		initUI: function(ui){
+			this.ui = ui;
+		},
+		
+		initSocket: function(socket){
+			if(this.channel == void(0)){
+				return;
+			}
+			
+			var that = this;
+			this.socket = socket;
+			
+			this.socket.on(this.channel, function(action, data){
+				var act = "a_"+action;
+				if(that[act]){
+					that[act](data);
+				}
+				else{
+					console.warn("unknown action", that.channel + "["+act+"]", data);
+				}
+			});
+		},
+   
+		send: function(action, data){
+			this.socket.send(this.channel, action, data);
+		},
+   
+		sendDelayed: function(action, data, timeout){
+			var that = this;
+			if(this.dealys[action]){
+				window.clearTimeout(this.dealys[action]);
+			}
+			
+			this.dealys[action] = window.setTimeout(function(){
+				that.send(action, data);
+				that.dealys[action] = 0;
+			}, timeout);
+			
+		}
+	}
+);
+
+//MT/core/Emitter.js
+MT.namespace('core');
+MT(
+	MT.core.Emitter = function(){
+		this.callbacks = {};
+	},
+	{
+		on: function(action, cb, priority){
+			
+			if(action == void(0)){
+				console.error("undefined action");
+				return;
+			}
+			
+			if(typeof cb != "function"){
+				console.error("event",action,"not a function:",cb);
+				return;
+			}
+			if(Array.isArray(action)){
+				for(var i=0; i<action.length; i++){
+					this.on(action[i], cb);
+				}
+				return;
+			}
+			
+			if(!this.callbacks){
+				this.callbacks = {};
+			}
+			
+			if(!this.callbacks[action]){
+				this.callbacks[action] = [];
+			}
+			
+			
+			this.callbacks[action].push(cb);
+			cb.priority = priority || this.callbacks[action].length;
+			this.callbacks[action].sort(function(a, b){
+				return a.priority - b.priority;
+			});
+			
+			return cb;
+		},
+		
+		once: function(action, cb){
+			if(typeof cb != "function"){
+				console.error("event", action, "not a function:", cb);
+				return;
+			}
+			
+			if(Array.isArray(action)){
+				for(var i=0; i<action.length; i++){
+					this.once(action[i], cb);
+				}
+				return;
+			}
+			
+			var that = this;
+			var fn = function(action1, data){
+				cb(action1, cb);
+				that.off(action, fn);
+			};
+			
+			this.on(action, fn);
+			
+		},
+   
+		off: function(type, cb){
+			if(cb === void(0)){
+				cb = type; type = void(0);
+			}
+			
+			if(type && !this.callbacks[type]){
+				return;
+			}
+			
+			if(type){
+				this._off(cb, type);
+				return;
+			}
+			
+			for(var i in this.callbacks){
+				if(cb == void(0)){
+					this.callbacks[i].length = 0;
+					continue;
+				}
+				this._off(cb, i);
+			}
+		},
+		
+		_off: function(cb, type){
+			var i=0, cbs = this.callbacks[type];
+			for(i=0; i<cbs.length; i++){
+				if(cbs[i] === cb){
+					cbs.splice(i, 1);
+				}
+			}
+			return cb;
+		},
+		
+		emit: function(type, action, data){
+			
+			//this.debug(type);
+			
+			//console.log("emit:", type, action);
+			if(!this.callbacks){
+				return;
+			}
+			
+			if(!this.callbacks[type]){
+				//console.warn("received unhandled data", type, data);
+				return;
+			}
+			
+			var cbs = this.callbacks[type];
+			
+			
+			
+			for(var i=0; i<cbs.length; i++){
+				cbs[i](action, data);
+			}
+		},
+   
+		debug: function(type){
+			try{
+				throw new Error();
+			}catch(e){
+				var stack = e.stack.split("\n");
+				//remove self and emit
+				stack.splice(0, 3);
+				console.log("EMIT: ", type);
+				console.log(stack.join("\n"));
+			}
+			
+		}
+	}
+);
+//MT/plugins/Analytics.js
+MT.namespace('plugins');
+MT.extend("core.BasicPlugin")(
+	MT.plugins.Analytics = function(project){
+		MT.core.BasicPlugin.call(this, "Analytics");
+		this.project = project;
+	},
+	{
+		installUI: function(ui){
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+				(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+				m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+			})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+			
+			ga('create', 'UA-23132569-11');
+			document.title += " - " + this.project.id;
+			ga('send', 'pageview');
+			
+			var lastUpdate = Date.now();
+			var that = this;
+			this.project.plugins.tools.on("select", function(tool){
+				lastUpdate = Date.now();
+				ga('send', 'event', 'tool-selected', tool);
+			});
+			
+			this.project.plugins.assetmanager.on("added", function(image){
+				lastUpdate = Date.now();
+				ga('send', 'event', 'image-added', image);
+			});
+			
+			this.project.plugins.objectmanager.on("added", function(obj){
+				lastUpdate = Date.now();
+				ga('send', 'event', 'object-added', obj);
+			});
+			
+			this.project.plugins.objectmanager.on("changed", function(obj){
+				lastUpdate = Date.now();
+				ga('send', 'event', 'object-changed', obj);
+			});
+			
+			this.project.plugins.objectmanager.on("beforeSync", function(){
+				lastUpdate = Date.now();
+				ga('send', 'event', 'working-with-map', "sync");
+			});
+			
+			var minute = 1000*60;
+			window.setInterval(function(){
+				if(lastUpdate < Date.now() - minute){
+					ga('send', 'event', 'idle', that.project.id);
+				}
+			}, minute);
+		}
+	}
+);
+//MT/plugins/DataLink.js
+MT.namespace('plugins');
+MT.extend("core.BasicPlugin")(
+	MT.plugins.DataLink = function(project){
+		MT.core.BasicPlugin.call(this, "DataLink");
+		this.project = project;
+		
+	},
+	{ 
+		selectElementContents: function(el) {
+			var range = document.createRange();
+			range.selectNodeContents(el);
+			var sel = window.getSelection();
+			sel.removeAllRanges();
+			sel.addRange(range);
+		},
+		initUI: function(ui){
+			var that = this;
+			
+			var link = window.location.origin;
+			link += "/"+this.project.path+"/phaser/js/lib/mt.data.js";
+			
+			
+			var b = this.project.panel.addButton(link, "datalink", function(e){
+				that.selectElementContents(b.el);
+				e.preventDefault();
+			});
+			
+			b.el.onmouseleave = function(){
+				window.getSelection().removeAllRanges();
+			};
+			
+			b.style.left = "auto";
+			b.style.right = 0;
+			b.style.position = "absolute";
+		}
+		
+		
+	}
+);
+//MT/plugins/UndoRedo.js
+MT.namespace('plugins');
+MT.extend("core.BasicPlugin")(
+	MT.plugins.UndoRedo = function(project){
+		this.project = project;
+		this.buffer = [];
+		
+		this.name = "UndoRedo";
+		
+		this._step = 0;
+		
+		this.max = 20;
+		
+		this.undos = 0;
+		
+		window.ur = this;
+		this.capacity = 0;
+		this.currentOffset = 0;
+		
+		
+		var that = this;
+		this.onKeyDown = function(e){
+			if(!e.ctrlKey){
+				return;
+			}
+			if(e.which !== "Z".charCodeAt(0)){
+				return;
+			}
+			
+			if(!e.shiftKey){
+				if(that.step > 0){
+					that.step--;
+					var data = that.buffer[that.step-1];
+					if(data){
+						that.om.a_receive(JSON.parse(data), true);
+					}
+					else{
+						that.step++;
+					}
+				}
+				else{
+					//console.log("nothing to undo");
+				}
+				return;
+			}
+			
+			if(that.step < that.buffer.length){
+				var data = that.buffer[that.step];
+				if(data){
+					
+					that.om.a_receive(JSON.parse(data), true);
+					that.step++;
+				}
+				else{
+					console.log("nothing to redo - no data?");
+				}
+			}
+			else{
+				console.log("nothing to redo");
+			}
+		};
+		
+		
+		this.checkLocalStorageCapacity();
+	},
+	{
+		set step(val){
+			this._step = val;
+		},
+		
+		get step(){
+			return this._step;
+		},
+		
+		disable: function(){
+			this.ui.events.off(this.ui.events.KEYDOWN, this.onKeyDown);
+		},
+		enable: function(){
+			this.ui.events.on(this.ui.events.KEYDOWN, this.onKeyDown);
+		},
+		
+		installUI: function(){
+			var that = this;
+			
+			var stored = localStorage.getItem(this.name);
+			
+			if(!stored){
+				this.data = {};
+			}
+			else{
+				this.data = JSON.parse(stored);
+			}
+
+			if(this.data[this.project.id]){
+				this.buffer = this.data[this.project.id];
+			}
+			
+			
+			this.step = this.buffer.length;
+			this.data[this.project.id] = this.buffer;
+			
+			this.om = this.project.plugins.objectmanager;
+			this.om.on(MT.OBJECTS_SYNC, function(data){
+				
+				var str = JSON.stringify(data);
+				
+				if(that.buffer[that.step-1] == str){
+					return;
+				}
+				
+				if(that.step > that.max){
+					that.buffer.shift();
+					that.step--;
+				}
+				
+				that.buffer[that.step] = str;
+				that.step++;
+				that.save();
+			});
+			
+			this.om.on(MT.OBJECTS_UPDATED, function(data){
+				if(that.buffer.length == 0){
+					that.buffer.push(JSON.stringify(data));
+					that.step++;
+				}
+			});
+			
+			
+			this.enable();
+			
+		},
+		
+		save: function(){
+			
+			var str = JSON.stringify(this.buffer);
+			var off = this.currentOffset;
+			
+			while(str.length > this.capacity && off < this.step){
+				off++;
+				str = JSON.stringify(this.buffer.slice(off, this.step));
+			}
+			this.currentOffset = off;
+			
+			try{
+				localStorage.setItem(this.name, JSON.stringify(this.data) );
+			}
+			catch(e){
+				off++;
+				this.buffer.slice(this.step - off, this.step);
+				localStorage.setItem(this.name, JSON.stringify(this.data) );
+			}
+		},
+		
+		checkLocalStorageCapacity: function(){
+			var str = "x";
+			var ret = 0;
+			var koef = 1;
+			
+			while(true){
+				str += str.substring(0, str.length*koef | 0);
+				try{
+					localStorage.setItem("test", str);
+					ret = str.length;
+				}
+				catch(e){
+					koef -= 0.1;
+					if(koef < 0.1){
+						break
+					}
+					
+					str = str.substring(0, ret);
+				}
+			}
+			
+			
+			
+			localStorage.removeItem("test");
+			
+			this.capacity = ret;
+		}
+
+	}
+);
+
+
+//MT/plugins/Tools.js
+MT.namespace('plugins');
+"use strict";
+
+MT.require("ui.List");
+MT.require("plugins.tools.Select");
+MT.require("plugins.tools.Stamp");
+MT.require("plugins.tools.Brush");
+MT.require("plugins.tools.Text");
+MT.require("plugins.tools.TileTool");
+MT.require("plugins.tools.Physics");
+
+MT.TOOL_SELECTED = "TOOL_SELECTED";
+
+
+MT.extend("core.BasicPlugin").extend("core.Emitter")(
+	MT.plugins.Tools = function(project){
+		MT.core.Emitter.call(this);
+		
+		this.project = project;
+		
+		this.tools = {};
+		
+		//var tools = MT.plugins.tools;
+		this.toolsAvailable = {
+			"select": MT.plugins.tools.Select,
+			"Stamp": MT.plugins.tools.Stamp,
+			"Brush": MT.plugins.tools.Brush,
+			"Text": MT.plugins.tools.Text,
+			"TileTool": MT.plugins.tools.TileTool,
+			"Physics": MT.plugins.tools.Physics
+		};
+		
+		this.tmpObject = null;
+		this.activeAsset = null;
+		this.activeFrame = 0;
+	},
+	{
+		
+		initUI: function(ui){
+			this.ui = ui;
+			this.panel = ui.createPanel("toolbox",this.ui.left);
+			this.panel.addClass("toolbox");
+			this.panel.removeHeader();
+			this.panel.width = 40;
+			this.panel.isResizeable = false;
+			this.panel.isDockable = true;
+			
+			
+			ui.dockToLeft(this.panel);
+		},
+		
+		installUI: function(){
+			var that = this;
+			var am = this.project.plugins.assetmanager;
+			var map = this.map = this.project.plugins.mapeditor;
+			var om = this.om = this.project.plugins.objectmanager;
+			
+			for(var i in this.toolsAvailable){
+				this.tools[i.toLowerCase()] = new this.toolsAvailable[i](this);
+			}
+			
+			
+			am.on(MT.ASSET_SELECTED, function(asset, element){
+				that.activeAsset = asset;
+				that.activeFrame = am.activeFrame;
+				that.emit(MT.ASSET_SELECTED, asset);
+			});
+			
+			am.on(MT.ASSET_UNSELECTED, function(asset){
+				that.activeAsset = null;
+				that.emit(MT.ASSET_UNSELECTED, asset);
+			});
+			
+			am.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
+				that.activeAsset = asset;
+				that.activeFrame = frame;
+				
+				that.emit(MT.ASSET_FRAME_CHANGED, asset, frame);
+			});
+			
+			var select =  function(object){
+				if(!object){
+					console.error("Failed to select an object");
+					return;
+				}
+				that.select(object);
+			};
+			
+			map.on(MT.TOOL_SELECTED, select);
+			
+			om.on(MT.OBJECT_SELECTED, function(data){
+				select(map.getById(data.id));
+			});
+			
+			
+			/*om.tv.on("click",function(data){
+				//that.setTool(that.tools.select);
+				select(map.getById(data.id));
+			});
+			*/
+			
+			
+			map.selector.on("select", function(obj){
+				//if(map.selector.count == 1){
+					that.emit(MT.OBJECT_SELECTED, obj);
+				//}
+			});
+			
+			map.selector.on("unselect", function(obj){
+				that.emit(MT.OBJECT_UNSELECTED, obj);
+				
+				if(map.selector.count !== 1){
+					window.setTimeout(function(){
+						if(map.selector.count == 1){
+							var obj = map.selector.get(0);
+							this.map.activeObject = null;
+							map.selector.emit("select", obj);
+							this.map.activeObject = obj;
+						}
+					}, 0);
+				}
+			});
+			
+			om.on(MT.OBJECTS_UPDATED, function(){
+				that.emit(MT.OBJECTS_UPDATED);
+			});
+			
+			var lastKey = 0;
+			
+			var toCopy = [];
+			
+			this.ui.events.on(this.ui.events.KEYUP, function(e){
+				
+				if(lastKey == MT.keys.ESC){
+					that.setTool(that.tools.select);
+					window.getSelection().removeAllRanges();
+					lastKey = 0;
+					return;
+				}
+				
+				
+				if(e.which == MT.keys.DELETE){
+					var data = om.tv.getData();
+					
+					that.map.selector.forEach(function(obj){
+						om.deleteObj(obj.id, true, data);
+						om.selector.clear();
+					});
+					
+					om.tv.merge(data);
+					
+					om.sync();
+					om.update();
+					return;
+				}
+				
+				lastKey = e.which;
+				
+				window.setTimeout(function(){
+					lastKey = 0;
+				}, 500);
+				
+				if(e.which === MT.keys.ESC){
+					that.activeTool.deactivate();
+				}
+				
+				
+				var copyStarted = {
+					x: 0,
+					y: 0
+				};
+				
+				if(e.ctrlKey){
+					if(e.which === MT.keys.C){
+						toCopy.length = 0;
+						map.selector.forEach(function(obj){
+							toCopy.push(obj);
+						});
+						return;
+					}
+					
+					if(e.which === MT.keys.V && e.target == document.body){
+						var x = that.ui.events.mouse.lastEvent.x;
+						var y = that.ui.events.mouse.lastEvent.y;
+						that.map.selector.clear();
+						
+						var bounds = null;
+						var midX = 0;
+						var midY = 0;
+						
+						for(var i=0; i<toCopy.length; i++){
+							bounds = toCopy[i].getBounds();
+							midX += bounds.x;
+							midY += bounds.y;
+						}
+						
+						midY /= toCopy.length;
+						midX /= toCopy.length;
+						
+						var cop = null;
+						for(var i=0; i<toCopy.length; i++){
+							bounds = toCopy[i].getBounds();
+							cop = that.copy(toCopy[i].data, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
+							that.map.selector.add(cop);
+						}
+					}
+				}
+			});
+			
+			for(var i in this.tools){
+				this.tools[i].initUI(this.ui);
+			}
+			
+			this.setTool(this.tools.select);
+			
+			
+		},
+		
+		lastAsset: null,
+		
+		
+		select: function(object){
+			this.tools.select.select(object);
+			if(this.activeTool != this.tools.select){
+				this.activeTool.select(object);
+			}
+			
+		},
+		
+		copy: function(toCopy, x, y){
+			if(Array.isArray(toCopy)){
+				for(var i=0; i<toCopy.length; i++){
+					this.copy(toCopy[i], x, y);
+				}
+				return;
+			}
+			
+			
+			
+			var tc = this.om.copy(toCopy, x, y);
+			var sprite = this.map.getById(tc.id);
+			
+			
+			
+			this.om.sync();
+			
+			return sprite;
+		},
+		
+		setTool: function(tool){
+			if(this.activeTool == tool){
+				return;
+			}
+			var oldTool = null;
+			if(this.activeTool){
+				oldTool = this.activeTool;
+				this.activeTool = null;
+				
+				oldTool.button.removeClass("active");
+				
+			}
+			
+			this.activeTool = tool;
+			this.activeTool.button.addClass("active");
+			
+			if(oldTool){
+				oldTool.deactivate();
+			}
+			
+			
+			this.activeTool.init();
+			this.emit(MT.TOOL_SELECTED, tool);
+		},
+		
+		mouseDown: function(e){
+			if(e.button === 2){
+				this.previousMouseMove = this.map.handleMouseMove;
+				this.mouseDown_hand(e);
+				return;
+			}
+			
+			this.activeTool.mouseDown(e);
+		},
+		
+		mouseUp: function(e){
+			
+			if(e.button == 2){
+				this.map.handleMouseMove = this.previousMouseMove;
+				return;
+			}
+			
+			this.activeTool.mouseUp(e);
+		},
+		
+		mouseMove: function(e){
+			this.activeTool.mouseMove(e);
+		},
+		
+		lastSelected: null,
+		
+		selectObject: function(obj, clear){
+			if(this.lastSelected && this.lastSelected == obj && this.map.activeObject){
+				return;
+			}
+			this.lastSelected = obj;
+			if(clear){
+				this.map.selector.clear();
+			}
+			
+			this.map.activeObject = obj;
+			this.map.selector.add(obj);
+			
+			// next line will be launched from selector listeer
+			// this.emit(MT.OBJECT_SELECTED, obj);
+		},
+		
+		
+		initTmpObject: function(asset){
+			
+			asset = asset || this.lastAsset;
+			this.lastAsset = asset;
+			
+			
+			
+			var x = this.ui.events.mouse.x;
+			var y = this.ui.events.mouse.y;
+			var om = this.project.plugins.objectmanager;
+			
+			var dx = 0;
+			var dy = 0;
+			
+			if(this.tmpObject){
+				dx = this.tmpObject.x;
+				dy = this.tmpObject.y;
+			}
+			
+			if(!this.tmpObject){
+				this.tmpObject = new MT.core.MagicObject(om.createObject(asset), this.map.game.world, this.map);
+			}
+			else{
+				this.tmpObject.assetId = asset.id;
+			}
+			//this.tmpObject =  this.map.createObject();
+			this.map.activeObject = this.tmpObject;
+			
+			
+			this.tmpObject.x = dx || x;
+			this.tmpObject.y = dy || y;
+			
+			this.tmpObject.bringToTop();
+		},
+		
+		removeTmpObject: function(){
+			if(this.tmpObject){
+				this.tmpObject.hide();
+			}
+			this.tmpObject = null;
+		},
+
+		
+		
+		
+		mouseDown_hand: function(e){
+			this.map.handleMouseMove = this.map._cameraMove;
+		},
+		
+
+		
+
+		unselectObjects: function(){
+			var toUnselect = [];
+			this.map.selector.forEach(function(obj){
+				if(!obj.data.contents){
+					toUnselect.push(obj);
+				}
+			});
+			
+			for(var i=0; i<toUnselect.length; i++){
+				this.map.selector.remove(toUnselect[i]);
+			}
+			this.map.activeObject = null;
+		},
+		
+		hide: function(){
+			this.object.visible = false;
+		},
+	}
+);
+//MT/plugins/Export.js
+MT.namespace('plugins');
+MT.extend("core.Emitter").extend("core.BasicPlugin")(
+	MT.plugins.Export = function(project){
+		MT.core.BasicPlugin.call(this, "Export");
+		this.project = project;
+		
+	},
+	{
+		initUI: function(ui){
+			var that = this;
+			this.list = new MT.ui.List([
+				{
+					label: "Phaser.io (.js)",
+					className: "",
+					cb: function(){
+						that.export("phaser", function(data){
+							window.location = that.project.path + "/"+ data.file;
+						});
+					}
+				},
+				{
+					label: "Phaser.io (data only) js",
+					className: "",
+					cb: function(){
+						that.export("phaserDataOnly", function(data){
+							that.openDataLink(data, "js");
+						});
+					}
+				},
+				{
+					label: "Phaser.io (data only) json",
+					className: "",
+					cb: function(){
+						that.export("phaserDataOnly", function(data){
+							that.openDataLink(data, "json");
+						});
+					}
+				}
+			
+			], ui, true);
+			
+			var b = this.button= this.project.panel.addButton("Export", null, function(e){
+				that.showList();
+			});
+			
+			this.openGame = this.project.panel.addButton("Open Game", null, function(e){
+				that.openLink();
+			});
+			
+			//this.list.removeHeader();
+			//this.list.content.overflow = "initial";
+			
+		},
+		
+		export: function(dest, data, cb){
+			if(typeof data == "function"){
+				cb = data;
+				data = null;
+			}
+			this.send(dest, data);
+			this.once("done", cb);
+		},
+		
+		showList: function(){
+			this.list.width = 250;
+			this.list.y = this.button.el.offsetHeight;
+			this.list.x = this.button.el.offsetLeft-5;
+			this.list.el.style.bottom = "initial";
+			this.list.show(document.body);
+		},
+		
+		openDataLink: function(data, json){
+			if(json == "json"){
+				data.file += "on";
+			}
+			var w = window.innerWidth*0.5;
+			var h = window.innerHeight*0.8;
+			var l = (window.innerWidth - w)*0.5;
+			var t = (window.innerHeight - h)*0.5;
+			
+			window.open(this.project.path + "/" + data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
+		},
+		
+		openLink: function(){
+			var w = window.open("about:blank",Date.now());
+			w.opener = null;
+			
+			var path = this.project.path;
+			this.export("phaser", function(data){
+				if(w.location){
+					w.location.href = path + "/phaser/index.html";
+				}
+			});
+			
+		},
+		
+		a_complete: function(data){
+			this.emit("done", data);
+		}
+		
+	}
+);
+//MT/plugins/Settings.js
+MT.namespace('plugins');
+MT.require("ui.Input");
+
+MT(
+	MT.plugins.Settings = function(project){
+		
+		this.project = project;
+		this.inputs = [];
+		
+		
+		this.objects = {};
+		
+		this.activeId = 0;
+	},
+	{
+		initUI: function(ui){
+			this.panel = ui.createPanel("Settings");
+			this.panel.setFree();
+			var that = this;
+			this.panel.header.addClass("ui-wrap");
+		},
+		
+		installUI: function(){
+			var that = this;
+			this.project.plugins.tools.on(MT.ASSET_FRAME_CHANGED, function(obj, frame){
+				that.handleAssets(obj);
+			});
+			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
+				that.handleObjects(obj);
+				that.active = obj.id;
+			});
+			this.project.plugins.tools.on(MT.OBJECT_UNSELECTED, function(obj){
+				that.clear();
+			});
+			
+			var map = this.project.plugins.mapeditor;
+			map.on("select", function(obj){
+				that.handleScene(map.settings);
+			});
+			
+		},
+   
+		handleClick: function(obj){
+			
+			
+		},
+   
+		clear: function(){
+			var stack = this.inputs[this.stack];
+			for(var i in stack){
+				stack[i].hide();
+			}
+			this.stack = "";
+			this.lastObj = null;
+			return;
+			
+			this.panel.title = "Settings";
+			for(var i=0; i<this.inputs.length; i++){
+				this.inputs[i].remove();
+			}
+			this.inputs.length = 0;
+			
+		},
+		
+		addInput: function(key, object, right, cb){
+			if(!this.inputs[this.stack]){
+				this.inputs[this.stack] = {};
+			}
+			
+			var stack = this.inputs[this.stack];
+			var k = key;
+			if(typeof key !== "string"){
+				k = key.key;
+			}
+			if(stack[k]){
+				stack[k].setObject(object);
+				stack[k].show();
+				return stack[k];
+			}
+			
+			
+			var p = this.panel.content;
+			
+			var fw = new MT.ui.Input(this.project.ui, key, object);
+			fw.show(p.el);
+			
+			fw.style.position = "relative";
+			fw.style.height = "20px";
+			
+			stack[k] = fw;
+			
+			fw.on("change", cb);
+			return fw;
+		},
+		
+   
+		lastObj: null,
+		handleAssets: function(obj){
+			this.ooo = obj;
+			if(obj.contents !== void(0)){
+				return;
+			}
+			
+			if(this.lastObj == obj){
+				return;
+			}
+			this.lastObj = obj;
+			
+			this.clear();
+			
+			this.panel.title = obj.name;
+			
+			var that = this;
+			var cb = function(){
+				that.project.am.updateData();
+			};
+			
+			if(!obj.key){
+				obj.key = obj.fullPath;
+			}
+			
+			this.stack = "assets";
+			this.addInput( {key: "key", type: "text"}, obj, false, cb);
+			this.addInput( {key: "frameWidth", step: 1, min: 1}, obj, false, cb);
+			this.addInput( {key: "frameHeight", step: 1, min: 1}, obj, true, cb);
+			this.addInput( "frameMax", obj, false, cb);
+			this.addInput( {key: "margin", step: 1, min: 0} , obj, true, cb);
+			this.addInput( {key: "spacing", step: 1, min: 0}, obj, false, cb);
+			this.addInput( {key: "anchorX", step: 0.5}, obj, true, cb);
+			this.addInput( {key: "anchorY", step: 0.5}, obj, true, cb);
+			this.addInput( {key: "fps", step: 1}, obj, true, cb);
+			
+			this.addInput( {key: "atlas", value: obj.atlas, accept: MT.const.DATA, type: "upload"}, obj, true, function(e, asset){
+				if(e.target.files.length === 0){
+					return;
+				}
+				that.project.am.addAtlas(asset, e);
+			});
+			
+			this.addInput( {key: "update", type: "upload", accept: MT.const.IMAGES}, obj, true, function(e, asset){
+				that.project.am.updateImage(asset, e);
+			});
+			
+			
+		},
+   
+		handleObjects: function(obj){
+			/*if(!MO){
+				return;
+			}
+			var obj = MO;
+			*/
+			
+			if(this.lastObj == obj){
+				return;
+			}
+			this.lastObj = obj;
+			
+			this.clear();
+			this.panel.title = obj.name;
+			var that = this;
+			var cb = function(){
+				that.project.om.update();
+			};
+			//group
+			if(obj.data.contents){
+				this.stack = "group";
+				this.objects.x = this.addInput( "x", obj, true, cb);
+				this.objects.y = this.addInput( "y", obj, true, cb);
+				this.objects.angle = this.addInput( "angle", obj, true, cb);
+				if(obj.isFixedToCamera === void(0)){
+					obj.isFixedToCamera = 0;
+				}
+				this.objects.isFixedToCamera = this.addInput({key:"isFixedToCamera", min: 0, max: 1, step: 1}, obj, true, cb);
+			}
+			// tile layer
+			else if(obj.data.type == MT.objectTypes.TILE_LAYER){
+				
+				this.stack = "layer";
+				this.objects.x = this.addInput( "x", obj, true, cb);
+				this.objects.y = this.addInput( "y", obj, true, cb);
+				this.addInput("widthInTiles", obj, true, cb);
+				this.addInput("heightInTiles", obj, true, cb);
+				this.addInput("tileWidth", obj, true, cb);
+				this.addInput("tileHeight", obj, true, cb);
+				
+				
+				this.addInput({key:"isFixedToCamera", min: 0, max: 1, step: 1}, obj, true, cb);
+				
+				this.addInput( {
+					key: "anchorX",
+					step: 0.1
+				}, obj, true, cb);
+				this.addInput( {
+					key: "anchorY",
+					step: 0.1
+				}, obj, true, cb);
+				
+				
+			}
+			// tile text
+			else if(obj.data.type == MT.objectTypes.TEXT){
+				this.stack = "sprite";
+				this.objects.x = this.addInput( "x", obj, true, cb);
+				this.objects.y = this.addInput( "y", obj, true, cb);
+				
+				if(obj._framesCount){
+					this.objects.frame = this.addInput( "frame", obj, true, function(){
+						
+						if(obj.frame >= obj._framesCount){
+							obj.frame = 0;
+						}
+						
+						if(obj.frame < 0){
+							obj.frame = obj._framesCount - 1;
+						}
+						
+						that.objects.frame.setValue(obj.frame, true);
+						
+						cb();
+					});
+				}
+				this.objects.angle = this.addInput( "angle", obj, true, cb);
+				this.objects.anchorX = this.addInput( {
+					key: "anchorX",
+					step: 0.1
+				}, obj, true, cb);
+				this.objects.anchorY = this.addInput( {
+					key: "anchorY",
+					step: 0.1
+				}, obj, true, cb);
+				
+				this.objects.width = this.addInput( {
+					key: "width",
+					step: 1,
+				}, obj, true, function(width, oldWidth){
+					var ow = oldWidth / obj.scaleX;
+					var scale = width / ow;
+					that.objects.scaleX.setValue(scale);
+					cb();
+					that.objects.width.setValue(parseInt(width, 10), true);
+				});
+				this.objects.wordWrapWidth = this.addInput( {
+					key: "wordWrapWidth",
+					step: 1,
+				}, obj, true, cb);
+				
+				this.objects.height = this.addInput( {
+					key: "height",
+					step: 1,
+				}, obj, true, function(height, oldHeight){
+					var ov = oldHeight / obj.scaleY;
+					var scale = height / ov;
+					that.objects.scaleY.setValue(scale);
+					cb();
+					that.objects.height.setValue(parseInt(height, 10), true);
+				});
+				
+				this.objects.scaleX = this.addInput( {
+					key: "scaleX",
+					step: 0.1
+				}, obj, true, cb)
+				this.objects.scaleY = this.addInput( {
+					key: "scaleY",
+					step: 0.1
+				}, obj, true, cb);
+			}
+			//sprite
+			else{
+				this.stack = "sprite";
+				this.objects.x = this.addInput( "x", obj, true, cb);
+				this.objects.y = this.addInput( "y", obj, true, cb);
+				
+				if(obj._framesCount){
+					this.objects.frame = this.addInput( "frame", obj, true, function(){
+						
+						if(obj.frame >= obj._framesCount){
+							obj.frame = 0;
+						}
+						
+						if(obj.frame < 0){
+							obj.frame = obj._framesCount - 1;
+						}
+						
+						that.objects.frame.setValue(obj.frame, true);
+						
+						cb();
+					});
+				}
+				this.objects.angle = this.addInput( "angle", obj, true, cb);
+				this.objects.anchorX = this.addInput( {
+					key: "anchorX",
+					step: 0.1
+				}, obj, true, cb);
+				this.objects.anchorY = this.addInput( {
+					key: "anchorY",
+					step: 0.1
+				}, obj, true, cb);
+				
+				this.objects.width = this.addInput( {
+					key: "width",
+					step: 1,
+				}, obj, true, function(width, oldWidth){
+					var ow = oldWidth / obj.scaleX;
+					var scale = width / ow;
+					that.objects.scaleX.setValue(scale);
+					cb();
+					that.objects.width.setValue(parseInt(width, 10), true);
+				});
+				
+				
+				this.objects.height = this.addInput( {
+					key: "height",
+					step: 1,
+				}, obj, true, function(height, oldHeight){
+					var ov = oldHeight / obj.scaleY;
+					var scale = height / ov;
+					that.objects.scaleY.setValue(scale);
+					cb();
+					that.objects.height.setValue(parseInt(height, 10), true);
+				});
+				
+				this.objects.scaleX = this.addInput( {
+					key: "scaleX",
+					step: 0.1
+				}, obj, true, cb)
+				this.objects.scaleY = this.addInput( {
+					key: "scaleY",
+					step: 0.1
+				}, obj, true, cb);
+			}
+			
+			this.objects.alpha = this.addInput( {key: "alpha", min: 0, max: 1, step: 0.1}, obj, true, cb);
+			
+		},
+		
+		update: function(){
+			for(var i in this.objects){
+				this.objects[i].update();
+			}
+		},
+   
+		updateObjects: function(obj){
+			if(obj.id != this.activeId){
+				//return;
+			}
+			for(var i in this.objects){
+				this.objects[i].obj = obj;
+				this.objects[i].setValue(obj[i], true);
+			}
+		},
+   
+		handleScene: function(obj){
+			this.clear();
+			
+			this.stack = "scene";
+			var that = this;
+			var cb = function(){
+				that.project.plugins.mapeditor.updateScene(obj);
+			};
+			this.scene = {};
+			
+			this.scene.cameraX = this.addInput( {key: "cameraX"}, obj, true, cb);
+			this.scene.cameraY = this.addInput( {key: "cameraY"}, obj, true, cb);
+			
+			this.scene.worldWidth  = this.addInput( {key: "worldWidth"}, obj, true, cb);
+			this.scene.worldHeight = this.addInput( {key: "worldHeight"}, obj, true, cb);
+			
+			this.scene.viewportWidth  = this.addInput( {key: "viewportWidth"}, obj, true, cb);
+			this.scene.viewportHeight = this.addInput( {key: "viewportHeight"}, obj, true, cb);
+			
+			
+			this.scene.gridX = this.addInput( {key: "gridX", min: 2}, obj, true, cb);
+			this.scene.gridY = this.addInput( {key: "gridY", min: 2}, obj, true, cb);
+			this.scene.showGrid = this.addInput( {key: "showGrid", min: 0, max: 1}, obj, true, cb);
+			this.scene.backgroundColor = this.addInput( {key: "backgroundColor", type: "color" }, obj, true, cb);
+			
+		},
+   
+		updateScene: function(obj){
+			for(var i in this.scene){
+				this.scene[i].obj = obj;
+				this.scene[i].setValue(obj[i]);
+			}
+		},
+
+
+
+
+	}
+);
 //MT/plugins/ObjectManager.js
 MT.namespace('plugins');
 /* TODO: 
@@ -9926,7 +10166,8 @@ MT.objectTypes = {
 	SPRITE: 0,
 	GROUP: 1,
 	TEXT: 2,
-	TILE_LAYER: 3
+	TILE_LAYER: 3,
+	MOVIE_CLIP: 4
 };
 
 MT.OBJECT_ADDED = "OBJECT_ADDED";
@@ -9966,6 +10207,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.createGroup();
+						that.panel.options.list.hide();
+					}
+				},
+				{
+					label: "Add Movie Clip",
+					className: "",
+					cb: function(){
+						that.createMovieClip();
 						that.panel.options.list.hide();
 					}
 				},
@@ -10210,6 +10459,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				name: name,
 				x: 0,
 				y: 0,
+				type: MT.objectTypes.GROUP,
 				angle: 0,
 				contents: [],
 				isVisible: 1,
@@ -10227,6 +10477,43 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.sync();
 			}
 			return group;
+		},
+		
+		createMovieClip: function(silent){
+			var data = this.tv.getData();
+			
+			var tmpName= "Movie";
+			var name = tmpName;
+			for(var i=0; i<data.length; i++){
+				if(data[i].name == name){
+					name = tmpName+" "+i;
+				}
+			}
+			
+			var group = {
+				id: "tmp"+this.mkid(),
+				name: name,
+				x: 0,
+				y: 0,
+				type: MT.objectTypes.MOVIE_CLIP,
+				angle: 0,
+				contents: [],
+				isVisible: 1,
+				isLocked: 0,
+				isFixedToCamera: 0,
+				alpha: 1
+			};
+			
+			data.unshift(group);
+			
+			this.tv.merge(data);
+			
+			if(!silent){
+				this.update();
+				this.sync();
+			}
+			return group;
+			
 		},
 		
 		createTileLayer: function(silent){
@@ -11727,6 +12014,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.content.show(this.el);
 		this.content.addClass("ui-panel-content");
 		
+		this._input = document.createElement("input");
+		this._input.setAttribute("readonly", "readonly");
+		this._input.style.cssText = "position: static; top: -99999px;";
+		document.body.appendChild(this._input);
 		
 		if(title){
 			this.addHeader();
@@ -11772,7 +12063,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.isResizeable = true;
 			this.acceptsPanels = true;
 		},
-		
+		focus: function(){
+			this._input.focus();
+		},
 		addOptions: function(options){
 			this.options = {};
 			var list = this.options.list = new MT.ui.List(options, this.ui, true);
@@ -12736,6 +13029,279 @@ MT(
 	}
 );
 
+//MT/plugins/MovieMaker.js
+MT.namespace('plugins');
+"use strict"
+MT.require("plugins.MapEditor");
+MT.require("ui.Keyframes");
+
+MT(
+	MT.plugins.MovieMaker = function(project){
+		this.project = project;
+		MT.core.BasicPlugin.call(this, "movie");
+		this.activeId = 0;
+		this.activeFrame = 0;
+		this.kf = {};
+		this.keys = ["x", "y", "angle", "anchorX", "anchorY", "scaleX", "scaleY", "alpha"];
+		this.roundKeys = ["frame"];
+	},
+	{
+		initUI: function(ui){
+			this.ui = ui;
+			this.panel = this.ui.createPanel("timeline");
+			this.panel.setFree();
+			this.el = this.panel.content;
+			this.panel.on("click", function(e){
+				console.log(e.target);
+			});
+			
+		},
+		installUI: function(){
+			var span = null;
+			var div = null;
+			this.layers = [];
+			this.om = this.project.plugins.objectmanager;
+			var that = this;
+			this.om.on(MT.OBJECT_SELECTED, function(obj){
+				
+				if(obj.type == MT.objectTypes.MOVIE_CLIP){
+					console.log("object selected", obj.id);
+					that.setActive(obj.id);
+				}
+			});
+			
+			this.om = this.project.plugins.objectmanager;
+			this.map = this.project.plugins.mapeditor;
+			
+			this.addPanels();
+		},
+   
+		addPanels: function(){
+			
+			this.leftPanel = this.ui.createPanel("me-layers");
+			this.rightPanel = this.ui.createPanel("me-frames");
+			
+			this.leftPanel.addClass("borderless");
+			this.leftPanel.hide().show(this.el.el);
+			
+			this.leftPanel.fitIn();
+			this.leftPanel.width = 200;
+			this.leftPanel.style.setProperty("border-right", "solid 1px #000");
+			this.leftPanel.isResizeable = true;
+			this.leftPanel.removeHeader();
+			this.leftPanel.removeClass("animated");
+			
+			
+			
+			this.rightPanel.addClass("borderless");
+			this.rightPanel.hide().show(this.el.el);
+			
+			this.rightPanel.fitIn();
+			this.rightPanel.style.left = 200+"px";
+			this.rightPanel.style.width = "auto";
+			this.rightPanel.removeHeader();
+			this.rightPanel.removeClass("animated");
+			
+			this.rightPanel._input.onkeyup = function(e){
+				console.log(e.which);
+				
+				if(e.which == MT.keys.DELETE){
+					that.removeFrame();
+				}
+				if(e.which == MT.keys.SPACE){
+					that.addFrame();
+				}
+				e.preventDefault();
+				e.stopPropagation();
+			
+			};
+			this.rightPanel._input.onfocus = function(){
+				console.log("focus");
+			};
+			
+			//this.rightPanel.content.style.overflow = "hidden";
+			var that = this;
+			this.leftPanel.on("resize", function(w, h){
+				that.rightPanel.style.left = w +"px";
+			});
+			
+		},
+		
+		setActive: function(id){
+			
+			if(this.kf[this.activeId]){
+				this.kf[this.activeId].hide();
+			}
+			
+			this.activeId = id;
+			this.data = this.om.getById(this.activeId);
+			console.log(this.data);
+			
+			if(!this.data.kf){
+				this.data.kf = [this.data.contents];
+			}
+			else{
+				this.updateScene();
+			}
+			
+			if(!this.kf[id]){
+				var that = this;
+				this.kf[id] = new MT.ui.Keyframes(this.ui, this.data.kf, 60, "main", this.leftPanel.content.el, this.rightPanel.content.el);
+				
+				this.kf[id].on("frameChanged", function(frame){
+					if(that.activeFrame == frame){
+						return;
+					}
+					that.changeFrame(frame);
+				});
+				
+				this.om.on(MT.OBJECTS_UPDATED, function(){
+					console.log("update");
+					that.updateData();
+				});
+			}
+			else{
+				this.kf[id].markFrames(this.data.kf);
+				this.kf[id].show();
+			}
+			
+			
+		},
+		
+		changeFrame: function(frame){
+			this.activeFrame = frame;
+			console.log("frame", frame);
+			this.updateScene();
+		},
+   
+		updateData: function(){
+			this.data = this.om.getById(this.activeId);
+			if(!this.data){
+				return;
+			}
+			if(!this.data.kf[this.activeFrame]){
+				return;
+			}
+			this.data.kf[this.activeFrame] = JSON.parse(JSON.stringify(this.data.contents));
+			this.kf[this.activeId].markFrames(this.data.kf);
+		},
+		
+		addFrame: function(){
+			this.data = this.om.getById(this.activeId);
+			if(!this.data){
+				return;
+			}
+			this.data.kf[this.activeFrame] = JSON.parse(JSON.stringify(this.data.contents));
+			this.kf[this.activeId].markFrames(this.data.kf);
+		},
+   
+		buildKeyFrames: function(obj){
+			//this.tv.merge(obj.contents);
+		},
+   
+		updateScene: function(){
+			var d = this.data.kf[this.activeFrame];
+			console.log(d);
+			
+			if(d){
+				this.updateObjects(d);
+			}
+			else{
+				this.interpolate();
+			}
+		},
+   
+		interpolate: function(){
+			var i, f1, f2, t;
+			for(i=this.activeFrame; i>-1; i--){
+				if(this.data.kf[i]){
+					f1 = i;
+					break;
+				}
+			}
+			
+			
+			for(i=f1+1; i<this.data.kf.length; i++){
+				if(this.data.kf[i]){
+					f2 = i;
+					break;
+				}
+			}
+			t = (this.activeFrame - f1) / (f2 - f1);
+			
+			console.log("int",t, f1, f2, this.activeFrame);
+			
+			var d1 = this.data.kf[f1];
+			var d2 = this.data.kf[f2];
+			
+			if(!d2 || isNaN(t)){
+				return;
+			}
+			this.doInterpolate(t, d1, d2);
+		},
+   
+   
+		doInterpolate: function(t, d1, d2){
+			var o, mo, tmp;
+			for(var i=0; i<d1.length; i++){
+				o = d1[i];
+				mo = this.map.getById(o.id);
+				
+				tmp = this.buildTmpVals(t, d1[i], d2[i]);
+				
+				mo.update(tmp);
+			}
+		},
+   
+		buildTmpVals: function(t, d1, d2){
+			if(!d2){
+				return d1;
+			}
+			var tmp = {};
+			var k;
+			for(var i=0; i<this.keys.length; i++){
+				k = this.keys[i];
+				tmp[k] = this.getInt(t, d1[k], d2[k]);
+			}
+			
+			for(var i=0; i<this.roundKeys.length; i++){
+				k = this.roundKeys[i];
+				tmp[k] = Math.floor(this.getInt(t, d1[k], d2[k]));
+			}
+			return tmp;
+		},
+   
+		getInt: function(t, a, b){
+			return (1 - t) * a + t * b;
+			
+		},
+   
+		updateObjects: function(cont){
+			var o, mo;
+			var group = this.map.getById(this.activeId);
+			
+			for(var i=0; i<cont.length; i++){
+				o = cont[i];
+				mo = this.map.getById(o.id);
+				if(!mo || !mo.hasParent(group)){
+					cont.splice(i, 1);
+					i--;
+					continue;
+				}
+				mo.update(o);
+			}
+			
+			this.om.tv.update();
+		},
+   
+		removeFrame: function(){
+			this.data.kf[this.activeFrame] = null;
+			this.kf[this.activeId].markFrames(this.data.kf);
+			
+		}
+   
+	}
+);
 //MT/plugins/UserData.js
 MT.namespace('plugins');
 /* default view depends on settings plugin */
@@ -13239,48 +13805,61 @@ MT.extend("core.BasicPlugin")(
 MT.namespace('plugins');
 (function(){
 	var cmPath = "js/cm";
+	var addCss = function(src){
+		var style = document.createElement("link");
+		style.setAttribute("rel", "stylesheet");
+		style.setAttribute("type", "text/scc");
+		style.setAttribute("href", src);
+		document.head.appendChild(style);
+	};
+		
+	if(window.release){
+		MT.requireFile(cmPath+"/lib/codemirror-full.js",function(){
+			cmPath += "/addon";
+			
+			MT.requireFile(cmPath+"/scroll/scrollpastend.min.js"); 
+			MT.requireFile("js/jshint.min.js");
+			
+			addCss("css/codemirror.css");
+			addCss(cmPath+"/hint/show-hint.css");
+			addCss(cmPath+"/fold/foldgutter.css");
+			addCss(cmPath+"/dialog/dialog.css");
+			addCss("css/cm-tweaks.css");
+		});
+		return;
+	}
+	
 	MT.requireFile(cmPath+"/lib/codemirror.js",function(){
-		
-		
-		
 		cmPath += "/addon";
-		MT.requireFile(cmPath+"/fold/foldcode.js");
-		MT.requireFile(cmPath+"/fold/foldgutter.js");
-		MT.requireFile(cmPath+"/fold/brace-fold.js");
-		MT.requireFile(cmPath+"/fold/xml-fold.js");
-		MT.requireFile(cmPath+"/edit/matchbrackets.js");
-		MT.requireFile(cmPath+"/search/searchcursor.js");
-		MT.requireFile(cmPath+"/search/search.js");
+		MT.requireFile(cmPath+"/comment/comment.js");
+		
 		MT.requireFile(cmPath+"/dialog/dialog.js");
 		
+		MT.requireFile(cmPath+"/edit/matchbrackets.js");
 		
-		MT.requireFile(cmPath+"/search/match-highlighter.js");
+		MT.requireFile(cmPath+"/fold/brace-fold.js");
+		MT.requireFile(cmPath+"/fold/foldgutter.js");
+		MT.requireFile(cmPath+"/fold/foldcode.js");
+		MT.requireFile(cmPath+"/fold/xml-fold.js");
+		
+		MT.requireFile(cmPath+"/hint/show-hint.js");
+		MT.requireFile(cmPath+"/hint/anyword-hint.js");
 		MT.requireFile(cmPath+"/hint/show-hint.js");
 		MT.requireFile(cmPath+"/hint/javascript-hint.js");
-		MT.requireFile(cmPath+"/hint/anyword-hint.js");
-		MT.requireFile(cmPath+"/comment/comment.js");
+		
+		MT.requireFile(cmPath+"/scroll/scrollpastend.js"); //!!
+		
+		MT.requireFile(cmPath+"/search/search.js");
+		MT.requireFile(cmPath+"/search/searchcursor.js");
+		MT.requireFile(cmPath+"/search/match-highlighter.js");
 		MT.requireFile(cmPath+"/selection/active-line.js");
-		MT.requireFile(cmPath+"/scroll/scrollpastend.js");
-		MT.requireFile(cmPath+"/hint/show-hint.js");
-		MT.requireFile(cmPath+"/hint/anyword-hint.js");
 		
 		MT.requireFile("js/jshint.js");
-		
-		
-		var addCss = function(src){
-			var style = document.createElement("link");
-			style.setAttribute("rel", "stylesheet");
-			style.setAttribute("type", "text/scc");
-			style.setAttribute("href", src);
-			document.head.appendChild(style);
-		};
-		
 		
 		addCss("css/codemirror.css");
 		addCss(cmPath+"/hint/show-hint.css");
 		addCss(cmPath+"/fold/foldgutter.css");
 		addCss(cmPath+"/dialog/dialog.css");
-		
 		addCss("css/cm-tweaks.css");
 		
 	});
@@ -13297,8 +13876,6 @@ MT.extend("core.BasicPlugin")(
 			this.ui = ui;
 			this.panel = this.ui.createPanel("SourceEditor");
 			this.el = this.panel.content;
-			
-			
 		},
 		
 		installUI: function(){
@@ -14470,7 +15047,8 @@ MT.keys = MT.core.keys = {
 	C: 67,
 	D: 68,
 	V: 86,
-	TAB: 9
+	TAB: 9,
+	SPACE: 32
 };
 
 MT.const = {
@@ -14781,6 +15359,9 @@ MT.extend("core.Emitter")(
 			if(!activePanel){
 				if(toTop && !toTop.isDocked){
 					that.updateZ(toTop);
+					window.setTimeout(function(){
+						toTop.focus();
+					},0);
 				}
 				return;
 			}
@@ -14798,6 +15379,9 @@ MT.extend("core.Emitter")(
 			that.updateZ(activePanel);
 			
 			window.x = activePanel;
+			window.setTimeout(function(){
+			activePanel.focus();
+			},0);
 		});
 		
 		this.events.on(this.events.MOUSEUP, function(e){
@@ -15470,10 +16054,14 @@ MT.extend("core.Emitter")(
 			
 			for(var i=0; i<tmp.length; i++){
 				p = tmp[i];
-				if(!p.isDocked || p.dockPosition != MT.BOTTOM || !p.isVisible){
+				if(p.dockPosition != MT.BOTTOM ){
 					continue;
 				}
-				if(p.justUpdated || p.bottom){
+				
+				if(!p.isDocked || !p.isVisible){
+					continue;
+				}
+				if(p.justUpdated ){
 					continue;
 				}
 				
@@ -16095,7 +16683,10 @@ MT.extend("core.Emitter")(
 				},
 				"source-editor":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isVisible":true,"isDocked":true,
 					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":null,"bottom":null
-				}
+				}/*,
+				"movie-maker":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":null,"bottom":null
+				}*/
 			};
 			
 			var str = JSON.stringify(toLoad);
@@ -16246,6 +16837,7 @@ MT.require("plugins.SourceEditor");
 MT.require("plugins.GamePreview");
 MT.require("plugins.Physics");
 MT.require("plugins.UserData");
+MT.require("plugins.MovieMaker");
 
 MT.DROP = "drop";
 
@@ -16282,7 +16874,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"SourceEditor",
 			"GamePreview",
 			"Physics",
-			"UserData"
+			"UserData",
+			"MovieMaker"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){

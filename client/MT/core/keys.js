@@ -11,7 +11,8 @@ MT.keys = MT.core.keys = {
 	C: 67,
 	D: 68,
 	V: 86,
-	TAB: 9
+	TAB: 9,
+	SPACE: 32
 };
 
 MT.const = {

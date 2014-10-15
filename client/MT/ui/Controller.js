@@ -171,6 +171,9 @@ MT.extend("core.Emitter")(
 			if(!activePanel){
 				if(toTop && !toTop.isDocked){
 					that.updateZ(toTop);
+					window.setTimeout(function(){
+						toTop.focus();
+					},0);
 				}
 				return;
 			}
@@ -188,6 +191,9 @@ MT.extend("core.Emitter")(
 			that.updateZ(activePanel);
 			
 			window.x = activePanel;
+			window.setTimeout(function(){
+			activePanel.focus();
+			},0);
 		});
 		
 		this.events.on(this.events.MOUSEUP, function(e){
@@ -860,10 +866,14 @@ MT.extend("core.Emitter")(
 			
 			for(var i=0; i<tmp.length; i++){
 				p = tmp[i];
-				if(!p.isDocked || p.dockPosition != MT.BOTTOM || !p.isVisible){
+				if(p.dockPosition != MT.BOTTOM ){
 					continue;
 				}
-				if(p.justUpdated || p.bottom){
+				
+				if(!p.isDocked || !p.isVisible){
+					continue;
+				}
+				if(p.justUpdated ){
 					continue;
 				}
 				
@@ -1485,7 +1495,10 @@ MT.extend("core.Emitter")(
 				},
 				"source-editor":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isVisible":true,"isDocked":true,
 					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":null,"bottom":null
-				}
+				}/*,
+				"movie-maker":{"x":0,"y":0,"width":0,"height":0,"dockPosition":0,"isVisible":true,"isDocked":true,
+					"savedBox":{"x":0,"y":0,"width":250,"height":400},"joints":[],"top":null,"bottom":null
+				}*/
 			};
 			
 			var str = JSON.stringify(toLoad);
