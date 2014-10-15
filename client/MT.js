@@ -13714,48 +13714,61 @@ MT.extend("core.BasicPlugin")(
 MT.namespace('plugins');
 (function(){
 	var cmPath = "js/cm";
+	var addCss = function(src){
+		var style = document.createElement("link");
+		style.setAttribute("rel", "stylesheet");
+		style.setAttribute("type", "text/scc");
+		style.setAttribute("href", src);
+		document.head.appendChild(style);
+	};
+		
+	if(window.release){
+		MT.requireFile(cmPath+"/lib/codemirror-full.js",function(){
+			cmPath += "/addon";
+			
+			MT.requireFile(cmPath+"/scroll/scrollpastend.min.js"); 
+			MT.requireFile("js/jshint.min.js");
+			
+			addCss("css/codemirror.css");
+			addCss(cmPath+"/hint/show-hint.css");
+			addCss(cmPath+"/fold/foldgutter.css");
+			addCss(cmPath+"/dialog/dialog.css");
+			addCss("css/cm-tweaks.css");
+		});
+		return;
+	}
+	
 	MT.requireFile(cmPath+"/lib/codemirror.js",function(){
-		
-		
-		
 		cmPath += "/addon";
-		MT.requireFile(cmPath+"/fold/foldcode.js");
-		MT.requireFile(cmPath+"/fold/foldgutter.js");
-		MT.requireFile(cmPath+"/fold/brace-fold.js");
-		MT.requireFile(cmPath+"/fold/xml-fold.js");
-		MT.requireFile(cmPath+"/edit/matchbrackets.js");
-		MT.requireFile(cmPath+"/search/searchcursor.js");
-		MT.requireFile(cmPath+"/search/search.js");
+		MT.requireFile(cmPath+"/comment/comment.js");
+		
 		MT.requireFile(cmPath+"/dialog/dialog.js");
 		
+		MT.requireFile(cmPath+"/edit/matchbrackets.js");
 		
-		MT.requireFile(cmPath+"/search/match-highlighter.js");
+		MT.requireFile(cmPath+"/fold/brace-fold.js");
+		MT.requireFile(cmPath+"/fold/foldgutter.js");
+		MT.requireFile(cmPath+"/fold/foldcode.js");
+		MT.requireFile(cmPath+"/fold/xml-fold.js");
+		
+		MT.requireFile(cmPath+"/hint/show-hint.js");
+		MT.requireFile(cmPath+"/hint/anyword-hint.js");
 		MT.requireFile(cmPath+"/hint/show-hint.js");
 		MT.requireFile(cmPath+"/hint/javascript-hint.js");
-		MT.requireFile(cmPath+"/hint/anyword-hint.js");
-		MT.requireFile(cmPath+"/comment/comment.js");
+		
+		MT.requireFile(cmPath+"/scroll/scrollpastend.js"); //!!
+		
+		MT.requireFile(cmPath+"/search/search.js");
+		MT.requireFile(cmPath+"/search/searchcursor.js");
+		MT.requireFile(cmPath+"/search/match-highlighter.js");
 		MT.requireFile(cmPath+"/selection/active-line.js");
-		MT.requireFile(cmPath+"/scroll/scrollpastend.js");
-		MT.requireFile(cmPath+"/hint/show-hint.js");
-		MT.requireFile(cmPath+"/hint/anyword-hint.js");
 		
 		MT.requireFile("js/jshint.js");
-		
-		
-		var addCss = function(src){
-			var style = document.createElement("link");
-			style.setAttribute("rel", "stylesheet");
-			style.setAttribute("type", "text/scc");
-			style.setAttribute("href", src);
-			document.head.appendChild(style);
-		};
-		
 		
 		addCss("css/codemirror.css");
 		addCss(cmPath+"/hint/show-hint.css");
 		addCss(cmPath+"/fold/foldgutter.css");
 		addCss(cmPath+"/dialog/dialog.css");
-		
 		addCss("css/cm-tweaks.css");
 		
 	});

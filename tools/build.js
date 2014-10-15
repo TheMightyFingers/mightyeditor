@@ -12,8 +12,7 @@ var ignore = [
 	"js/phaser.js",
 	"js/phaser.min.js",
 	"js/phaserHacks.js",
-	"js/cm/lib/codemirror.js",
-	
+	"js/cm/lib/codemirror.js"
 ];
 
 var fileList = [];
@@ -117,3 +116,11 @@ global.createClass = function(className, classScope, basePath){
 
 require(file);
 
+var miscFiles = ["js/jshint", "js/cm/addon/scroll/scrollpastend"];
+var UglifyJS = require("uglify-js");
+var result;
+for(var i in miscFiles){
+	result = UglifyJS.minify(miscFiles[i]+".js", {outSourceMap: miscFiles[i]+"min.js.map"});
+	fs.writeFile(miscFiles[i]+"min.js", result.code);
+	fs.writeFile(this.filename+".map", result.map);
+}
