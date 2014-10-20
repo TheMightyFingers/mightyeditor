@@ -11826,7 +11826,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.send("newImage", data);
 				that.emit(MT.ASSET_ADDED, path);
 				
-				var nota = that.project.plugins.notification.show("Uploading" + data.name, "", 999999);
+				var nota = that.project.plugins.notification.show(path, "Upload in progress...", 999999);
 				that.notifications[path] = nota;
 			};
 			img.src = that.toPng(src);
