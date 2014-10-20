@@ -58,14 +58,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						that.panel.options.list.hide();
 					}
 				},
-				{
+				/*{
 					label: "Add Movie Clip",
 					className: "",
 					cb: function(){
 						that.createMovieClip();
 						that.panel.options.list.hide();
 					}
-				},
+				},*/
 				{
 					label: "Add TileLayer",
 					className: "",

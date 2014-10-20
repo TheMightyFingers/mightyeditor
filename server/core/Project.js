@@ -88,6 +88,7 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		exec_copy: function(projectId){
+			this.send("copyInProgress");
 			this.id = this.makeID(this.knownProjects.length);
 			
 			var that = this;

@@ -2,8 +2,9 @@
 	"use strict";
 	window.MT = createClass("MT");
 	var hostInInterest = "tools.mightyfingers.com:8080";
-	//hostInInterest = "mightyeditor.mightyfingers.com";
-	
+	if(window.release){
+		hostInInterest = "mightyeditor.mightyfingers.com";
+	}
 	
 	if(window && window.location){
 		// -copy etc

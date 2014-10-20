@@ -138,14 +138,14 @@ MT.extend("core.BasicPlugin")(
 		
 		locate: function(){
 			var cam = this.map.game.camera;
-			var o = this.map.activeObject.object;
-			if(o){
-				this.locateXY(o.x + (o.width*(0.5 - o.anchor.x)), o.y + (o.height*(0.5 - o.anchor.y)));
-			}
-			else{
+			if(!this.map.activeObject || this.map.activeObject.object){
 				this.map.game.camera.x = 0;
 				this.map.game.camera.y = 0;
+				return;
 			}
+			
+			var o = this.map.activeObject.object;
+			this.locateXY(o.x + (o.width*(0.5 - o.anchor.x)), o.y + (o.height*(0.5 - o.anchor.y)));
 		},
 		
 		locateXY: function(x, y){

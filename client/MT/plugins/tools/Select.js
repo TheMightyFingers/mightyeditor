@@ -29,10 +29,15 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.map = this.tools.map;
 		},
-		init: function(){
+		init: function(skipNotify){
 			this.mDown = false;
 			this.map.handleMouseMove = this.mouseMoveFree;
+			if(skipNotify){
+				return;
+			}
+			this.showInfoToolTip();
 		},
+		
 		
 		deactivate: function(){
 			this.mDown = false;

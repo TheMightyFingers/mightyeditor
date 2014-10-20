@@ -94,10 +94,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			script.src = "http://jsonip.appspot.com/?callback=_tmpfn";
 			document.head.appendChild(script);
 			*/
-			navigator.geolocation.getCurrentPosition(function(pos){
+			/*navigator.geolocation.getCurrentPosition(function(pos){
 				console.log(pos);
-				
-			});
+			});*/
 		},
 		a_maintenance: function(data){
 			var seconds = data.seconds;
@@ -137,7 +136,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			localStorage.setItem(info.id, JSON.stringify(info));
 			
-			
+			if(this.copyPopup){
+				this.copyPopup.hide();
+				this.copyPopup = null;
+			}
 		},
 		
 		setUpData: function(){
@@ -204,7 +206,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.data[i] = data[i];
 			}
 		},
-		
+		copyPopup: null,
+		a_copyInProgress: function(){
+			var content = "System is being maintained. Will be back in ";
+			var desc = "<p>Please wait. Editor will load a project automatically.</p>";
+			var pop = new MT.ui.Popup("Copy in progress", desc);
+			pop.showClose();
+			this.copyPopup = pop;
+		},
 		// user get here without hash
 		newProject: function(){
 			var that = this;

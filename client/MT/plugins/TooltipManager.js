@@ -1,3 +1,4 @@
+MT.require("misc.tooltips");
 
 MT(
 	MT.plugins.TooltipManager = function(){
@@ -16,7 +17,7 @@ MT(
 			var that = this;
 			var ev = this.ui.events;
 			var lastTarget = null;
-			var attr;
+			var attr, info, bounds;
 			ev.on(ev.MOUSEMOVE, function(e){
 				if(e.target === lastTarget){
 					return;
@@ -29,16 +30,15 @@ MT(
 					return;
 				}
 				
-				var bounds = e.target.getBoundingClientRect();
+				info = MT.misc.tooltips[attr];
+				bounds = e.target.getBoundingClientRect();
 				
 				that.el.show(document.body);
-				that.el.el.innerHTML = attr;
+				that.el.el.innerHTML = '<div class="ui-tooltip-label">'+info.title+'</div>' + '<div class="ui-tooltip-description">'+info.desc;
 				that.el.x = bounds.left + bounds.width;
 				that.el.y = bounds.top + (bounds.height - that.el.height)*0.5;
 				
-				
 			});
-
-		},
+		}
 	}
 );

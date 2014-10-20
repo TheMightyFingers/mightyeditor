@@ -246,7 +246,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			return sprite;
 		},
 		
-		setTool: function(tool){
+		setTool: function(tool, skipNotify){
 			if(this.activeTool == tool){
 				return;
 			}
@@ -254,9 +254,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(this.activeTool){
 				oldTool = this.activeTool;
 				this.activeTool = null;
-				
 				oldTool.button.removeClass("active");
-				
 			}
 			
 			this.activeTool = tool;
@@ -267,7 +265,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			
-			this.activeTool.init();
+			this.activeTool.init(skipNotify);
 			this.emit(MT.TOOL_SELECTED, tool);
 		},
 		

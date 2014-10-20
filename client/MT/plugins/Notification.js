@@ -1,5 +1,8 @@
+"use strict";
+MT.require("misc.tooltips");
 MT(
-	MT.plugins.Notification = function(){
+	MT.plugins.Notification = function(project){
+		this.project = project;
 		var that = this;
 		this.Notification = function(){
 			this.el = new MT.ui.DomElement();
@@ -19,26 +22,17 @@ MT(
 			this.ui = ui;
 			this.parent = this.ui.centerBottomRightBox;
 			
+			var p = this.project.plugins;
+			var that = this;
+			p.assetmanager.on(MT.ASSETS_UPDATED, function(data){
+				that.enabled = true;
+				if(data.length <= 1){
+					that.showIntro();
+				}
+			});
 		},
    
 		installUI: function(){
-			
-			var that = this;
-			var str = "";
-			function makeid(){
-				var text = "";
-				var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-				
-				for(var j = 0; j< 5; j++){
-					for( var i=0; i < 5; i++ ) {
-						text += possible.charAt(Math.floor(Math.random() * possible.length));
-					}
-				}
-				return text;
-			}
-			//window.setInterval(function(){
-				that.show(makeid(),makeid(), 100000);
-			//}, 1000);
 			
 		},
 		show: function(label, text, tm){
@@ -60,12 +54,44 @@ MT(
 			var idx = this.notifications.push(n);
 			this.align(n, idx-1);
 			
-			window.setTimeout(function(){
-				n.hide();
-			}, tm || 4000);
+			if(isFinite(tm)){
+				window.setTimeout(function(){
+					n.hide();
+				}, tm);
+			}
+			
+			
 			
 			return n;
 		},
+		showToolTips: function(tool, no, isError){
+			var p = this.project.plugins;
+			if(!this.enabled){
+				
+				return;
+			}
+			
+			
+			var info = MT.misc.tooltips[tool.tooltip];
+			if(!info){
+				return;
+			}
+			
+			var tip;
+			if(isError){
+				tip = info.errors[no];
+			}
+			else{
+				tip = info.tips[no];
+			}
+			
+			this.show(info.title, tip, 3000);
+		},
+   
+		showIntro: function(){
+			
+		},
+   
 		hide: function(n){
 			var that = this;
 			n.el.style.opacity = 0;

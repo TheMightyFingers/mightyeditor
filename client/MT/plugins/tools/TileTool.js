@@ -393,7 +393,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		init: function(){
 			this.active = this.tools.map.activeObject;
 			if(!this.active){
-				this.tools.setTool(this.tools.tools.select);
+				this.tools.setTool(this.tools.tools.select, true);
+				this.showInfoToolTip(0, true);
 				console.warn("not tilelayer selected!!!")
 				return;
 			}
