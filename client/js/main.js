@@ -5,7 +5,7 @@
 	//hostInInterest = "mightyeditor.mightyfingers.com";
 	
 	// -copy etc
-	if(window.location.hash.indexOf("-") > 0){
+	if(window && window.location.hash.indexOf("-") > 0){
 		load();
 		return;
 	}
