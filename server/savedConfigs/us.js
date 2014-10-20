@@ -6,8 +6,8 @@ this.config = {
 	index: "index.rel.html",
 	prefix: "u",
 	servers: {
-		p: "tools.mightyfingers.com",
-		u: "us.tools.mightyfingers.com"
+		p: "mightyeditor.mightyfingers.com",
+		u: "us.mightyeditor.mightyfingers.com"
 	},
 	projectsPath: "../client/data/projects"
 };

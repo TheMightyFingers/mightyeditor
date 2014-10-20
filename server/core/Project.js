@@ -71,7 +71,7 @@ MT.extend("core.BasicPlugin")(
 			if(command == "copy"){
 				this.getAllProjects(this.root, function(data){
 					that.knownProjects = data;
-					
+					that.send("copyInProgress");
 					if(projectId.substring(0,1) == that.config.prefix){
 						that.exec_copy(projectId);
 					}
@@ -88,7 +88,6 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		exec_copy: function(projectId){
-			this.send("copyInProgress");
 			this.id = this.makeID(this.knownProjects.length);
 			
 			var that = this;
