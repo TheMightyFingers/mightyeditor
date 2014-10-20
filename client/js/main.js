@@ -5,31 +5,33 @@
 	//hostInInterest = "mightyeditor.mightyfingers.com";
 	
 	// -copy etc
-	if(window && window.location.hash.indexOf("-") > 0){
-		load();
-		return;
-	}
-	
-	// check if we need to redirect
-	if(window.location.host == hostInInterest){
-		if(window.location.hash == "" || window.location.hash.substring(1, 2) == "u"){
-			MT.loader.get("/geoip", function(obj){
-				var parsed = JSON.parse(obj);
-				if(parsed.continent_code == "NA"){
-					window.location.host = "us."+window.location.host;
-					console.log(window.location.host);
-				}
-			});
+	if(window){
+		if(window.location.hash.indexOf("-") > 0){
+			load();
+			return;
+		}
+		
+		// check if we need to redirect
+		if(window.location.host == hostInInterest){
+			if(window.location.hash == "" || window.location.hash.substring(1, 2) == "u"){
+				MT.loader.get("/geoip", function(obj){
+					var parsed = JSON.parse(obj);
+					if(parsed.continent_code == "NA"){
+						window.location.host = "us."+window.location.host;
+						console.log(window.location.host);
+					}
+				});
+			}
+			else{
+				load();
+			}
+		}
+		else if(window.location.hash.substring(1,2) == "p" && window.location.host.substring(0, 3) == "us."){
+			window.location.host = window.location.host.substring(3);
 		}
 		else{
 			load();
 		}
-	}
-	else if(window.location.hash.substring(1,2) == "p" && window.location.host.substring(0, 3) == "us."){
-		window.location.host = window.location.host.substring(3);
-	}
-	else{
-		load();
 	}
 	var img;
 	function main(){
