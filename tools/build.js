@@ -113,7 +113,7 @@ global.createClass = function(className, classScope, basePath){
 	Class.loader = new SourceLoader(className);
 	return Class;
 };
-
+console.log(file);
 require(file);
 
 var miscFiles = ["js/jshint", "js/cm/addon/scroll/scrollpastend"];

@@ -38,6 +38,9 @@
 			load();
 		}
 	}
+	else{
+		load();
+	}
 	var img;
 	function main(){
 		var socket = new MT.Socket();
