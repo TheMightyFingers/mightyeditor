@@ -121,7 +121,7 @@ var UglifyJS = require("uglify-js");
 var result;
 for(var i in miscFiles){
 	console.log("minify: ", miscFiles[i]);
-	result = UglifyJS.minify(miscFiles[i]+".js", {outSourceMap: miscFiles[i]+"min.js.map"});
-	fs.writeFile(miscFiles[i]+"min.js", result.code);
+	result = UglifyJS.minify(miscFiles[i]+".js", {outSourceMap: miscFiles[i]+".min.js.map"});
+	fs.writeFile(miscFiles[i]+".min.js", result.code);
 	fs.writeFile(this.filename+".map", result.map);
 }
