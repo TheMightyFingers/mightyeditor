@@ -67,6 +67,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		this.ui = ui;
 		
+		this.sub = "";
+		if(window.location.hostname.substring(0, 3) == "us."){
+			this.sub = "us";
+		}
 		
 		//this.getIP();
 		
@@ -281,13 +285,19 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				list.appendChild(p);
 			}
 			list.onclick = function(e){
-				e.preventDefault();
+				
 				if(e.target.project){
+					e.preventDefault();
 					window.location.hash = e.target.project;
 					window.location.reload();
 				}
-				
 			};
+			
+			if(items.length == 0 && this.sub != ""){
+				list.innerHTML = '<p>If you can\'t see you recent projects - try to click <a href="http://mightyeditor.mightyfingers.com/#no-redirect">here</a></p>';
+				
+			}
+			
 			
 			projects.appendChild(list);
 			
@@ -367,6 +377,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.setPop.show();
 			});
 			
+			/* TODO: move to config */
+			
 			
 			this.list = new MT.ui.List([
 				{
@@ -377,11 +389,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					}
 				},
 				{
-					label: "Clone",
+					label: "Clone (eu)",
 					className: "",
 					cb: function(){
-						window.location = window.location.toString()+"-copy";
-						window.location.reload();
+						that.clone(this.sub);
+					}
+				},
+				{
+					label: "Clone (us)",
+					className: "",
+					cb: function(){
+						that.clone(this.sub, true);
 					}
 				}
 			], ui, true);
@@ -396,6 +414,40 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				window.location.reload();
 			});
 			
+		},
+		
+		clone: function(sub, us){
+			if(sub == "" && !us){
+				window.location = window.location.toString()+"-copy";
+				window.location.reload();
+				return;
+			}
+			if(sub == "us" && us){
+				window.location = window.location.toString()+"-copy";
+				window.location.reload();
+				return;
+			}
+			
+			// alien server
+			if(sub == "" && us){
+				
+				var loc = window.location.toString()+"-copy";
+				loc = loc.replace("://", "://us.");
+				
+				window.location = loc;
+				//window.location.reload();
+				return;
+			}
+			
+			if(sub == "us" && !us){
+				
+				var loc = window.location.toString()+"-copy";
+				loc = loc.replace("://us.", "://");
+				
+				window.location = loc;
+				//window.location.reload();
+				return;
+			}
 		},
 		
 		createSettings: function(){
@@ -604,7 +656,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			MT.core.BasicPlugin.initSocket.call(this, socket);
 			
 			var pid = window.location.hash.substring(1);
-			if(pid != ""){
+			if(pid != "" && pid != "no-redirect"){
 				this.loadProject(pid);
 			}
 			else{

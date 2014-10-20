@@ -16,13 +16,16 @@
 		// check if we need to redirect
 		if(window.location.host == hostInInterest){
 			if(window.location.hash == "" || window.location.hash.substring(1, 2) == "u"){
-				MT.loader.get("/geoip", function(obj){
+				var cb =  function(obj){
 					var parsed = JSON.parse(obj);
 					if(parsed.continent_code == "NA"){
 						window.location.host = "us."+window.location.host;
-						console.log(window.location.host);
 					}
-				});
+					else{
+						load();
+					}
+				};
+				MT.loader.get("/geoip", cb);
 			}
 			else{
 				load();

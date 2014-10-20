@@ -296,10 +296,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		lastSelected: null,
 		
 		selectObject: function(obj, clear){
-			if(this.lastSelected && this.lastSelected == obj && this.map.activeObject){
+			/*if(this.lastSelected && this.lastSelected == obj && this.map.activeObject){
 				return;
 			}
-			this.lastSelected = obj;
+			this.lastSelected = obj;*/
 			if(clear){
 				this.map.selector.clear();
 			}

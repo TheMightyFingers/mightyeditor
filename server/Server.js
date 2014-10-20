@@ -54,13 +54,12 @@ var server = new MT.http.Httpd(config, function(req, res, httpd){
 	if(!geoip || req.headers.host != hostInIterest || req.url != "/geoip"){
 		return true;
 	}
-	var address = httpd.server.address().address;
+	var address = req.connection.remoteAddress;
 	
-	address = "198.100.30.134";
-	
+	// address = "198.100.30.134";
 	// Synchronous method(the recommended way):
 	var country_obj = country.lookupSync(address);
-	
+	country_obj.ip = address;
 	res.writeHead(200);
 	res.end(JSON.stringify(country_obj));
 	return false;

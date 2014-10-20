@@ -1276,7 +1276,10 @@ top: 34px;
 bottom: 0;
 background-color: inherit;
 }
-
+.ui-popup.starting-popup .project-list .list-content p{
+padding: 10px;
+text-indent: 20px;
+}
 
 span.ui-timeline-frame {
 width: 5px;
