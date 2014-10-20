@@ -83,6 +83,7 @@ SourceLoader.prototype = {
 			var scope = includes[i].split(".");
 			scope.pop();
 			scope = scope.join(".");
+			console.log("including", fileList[i]);
 			
 			src += "//" + fileList[i] + "\n";
 			src += this.name+".namespace('"+scope+"');" + "\n";
