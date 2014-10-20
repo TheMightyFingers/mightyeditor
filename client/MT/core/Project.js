@@ -392,14 +392,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					label: "Clone (eu)",
 					className: "",
 					cb: function(){
-						that.clone(this.sub);
+						that.clone(that.sub);
 					}
 				},
 				{
 					label: "Clone (us)",
 					className: "",
 					cb: function(){
-						that.clone(this.sub, true);
+						that.clone(that.sub, true);
 					}
 				}
 			], ui, true);

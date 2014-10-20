@@ -1,7 +1,7 @@
 "use strict";
 (function(){
 	var phaserSrc = "js/";
-	phaserSrc += (window.release ? "phaser.min.js" : "phaser.js");
+	phaserSrc += (window.release ? "phaser-no-libs.min" : "phaser.js");
 	MT.requireFile(phaserSrc, function(){
 		MT.requireFile("js/phaserHacks.js");
 	});
