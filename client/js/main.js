@@ -4,8 +4,9 @@
 	var hostInInterest = "tools.mightyfingers.com:8080";
 	//hostInInterest = "mightyeditor.mightyfingers.com";
 	
-	// -copy etc
-	if(window){
+	
+	if(window && window.location){
+		// -copy etc
 		if(window.location.hash.indexOf("-") > 0){
 			load();
 			return;
