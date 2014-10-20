@@ -1,7 +1,7 @@
 MT.misc.tooltips = {
 	selectTool: {
 		title: "Select tool",
-		desc: "allows object selection, rectangle selection, object transformation",
+		desc: "object selection, rectangle selection, object transformation",
 		tips: [
 			"Hold down <i><b>ctrl</b></i> key - to snap objects to the grid while moving",
 			"You can easily clone object by holding <i>Alt</i> key before drag"
@@ -18,7 +18,7 @@ MT.misc.tooltips = {
 	
 	brushTool: {
 		title: "Brush tool",
-		desc: "put miltiple objects on the map like drawing tiles"
+		desc: "put multiple objects on the map like drawing tiles"
 	},
 	
 	textTool: {
