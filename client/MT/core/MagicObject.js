@@ -98,6 +98,9 @@ MT(
 		},
 		
 		createSprite: function(){
+			if(!PIXI.BaseTextureCache[this.data.assetId]){
+				this.data.assetId = "__missing";
+			}
 			this.object = this.parent.create(this.data.x, this.data.y, this.data.assetId);
 			
 			this.object.inputEnabled = true;
@@ -323,26 +326,26 @@ MT(
 			// left
 			if(this.activeHandle != 4){
 				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) ;
-				y = (mat.ty - obj.height * (obj.anchor.y)) + obj.height*0.5;
+				y = (mat.ty - obj.height * (obj.anchor.y) * this.map.scale.x) + obj.height*0.5 * this.map.scale.x;
 				this.rp(angle, x, y, ax, ay, this.handles[4]);
 			}
 			
 			// right
 			if(this.activeHandle != 6){
 				x = mat.tx + obj.width * (1 - obj.anchor.x) * this.map.scale.x;
-				y = (mat.ty - obj.height * (obj.anchor.y) * this.map.scale.x) + obj.height*0.5;
+				y = (mat.ty - obj.height * (obj.anchor.y) * this.map.scale.x) + obj.height*0.5 * this.map.scale.x;
 				this.rp(angle, x, y, ax, ay, this.handles[6]);
 			}
 			
 			// top
 			if(this.activeHandle != 5){
-				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) + obj.width*0.5;
+				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) + obj.width*0.5 * this.map.scale.x;
 				y = (mat.ty - obj.height * (obj.anchor.y) * this.map.scale.x) ;
 				this.rp(angle, x, y, ax, ay, this.handles[5]);
 			}
 			// bottom
 			if(this.activeHandle != 7){
-				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) + obj.width*0.5;
+				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) + obj.width*0.5 * this.map.scale.x;
 				y = mat.ty + obj.height * (1 - obj.anchor.y) * this.map.scale.x;
 				this.rp(angle, x, y, ax, ay, this.handles[7]);
 			}

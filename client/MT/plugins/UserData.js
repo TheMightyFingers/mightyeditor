@@ -20,6 +20,9 @@ MT(
 			this.activeObject = null;
 			
 			var updateData = function(obj){
+				if(!obj){
+					return;
+				}
 				if(!obj.userData){
 					obj.userData = {};
 				}

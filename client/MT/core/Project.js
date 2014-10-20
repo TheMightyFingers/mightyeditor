@@ -10,7 +10,9 @@ MT.require("plugins.SourceEditor");
 MT.require("plugins.GamePreview");
 MT.require("plugins.Physics");
 MT.require("plugins.UserData");
-MT.require("plugins.MovieMaker");
+MT.require("plugins.TooltipManager");
+MT.require("plugins.Notification");
+//MT.require("plugins.MovieMaker");
 
 MT.DROP = "drop";
 
@@ -48,7 +50,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"GamePreview",
 			"Physics",
 			"UserData",
-			"MovieMaker"
+			"TooltipManager",
+			"Notification",
+			//"MovieMaker"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
@@ -63,11 +67,38 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		this.ui = ui;
 		
+		
+		//this.getIP();
+		
 		//this.initUI(ui);
 		this.initSocket(socket);
 		
 	},
 	{
+		
+		getIP: function(){
+			/*
+			 * <script type="application/javascript">
+					function getip(json){
+					alert(json.ip); // alerts the ip address
+					}
+				</script>
+
+				<script type="application/javascript" src="http://jsonip.appspot.com/?callback=getip"></script>
+			*/
+			
+			/*window._tmpfn = function(json){
+				console.log(json);
+			};
+			var script = document.createElement("script");
+			script.src = "http://jsonip.appspot.com/?callback=_tmpfn";
+			document.head.appendChild(script);
+			*/
+			navigator.geolocation.getCurrentPosition(function(pos){
+				console.log(pos);
+				
+			});
+		},
 		a_maintenance: function(data){
 			var seconds = data.seconds;
 			var content = "System will go down for maintenance in ";

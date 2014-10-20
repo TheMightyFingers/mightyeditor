@@ -1,7 +1,7 @@
 "use strict";
 MT.require("core.Logger");
 MT(
-	MT.http.Httpd = function(config){
+	MT.http.Httpd = function(config, cb){
 		MT.log("Starting server", config);
 		
 		this.http = require("http");
@@ -26,7 +26,16 @@ MT(
 		this.request = {
 			parts: null
 		};
+		
+		this.req = null;
+		this.res = null;
 		this.server.on("request", function(req, res) {
+			that.req = req;
+			that.res = res;
+			
+			if(cb && cb(req, res, that) === false){
+				return;
+			}
 			
 			if(req.method != "GET"){
 				that.sendAway(req, res);
@@ -174,7 +183,15 @@ MT(
 			if(cors){
 				res.setHeader("Access-Control-Allow-Origin", cors);
 			}
-		}
+		},
+   
+		redirect: function(location, req, res){
+			res.writeHead(302, {
+				'Location': location
+				//add other headers here...
+			});
+			res.end();
+		},
 		
 	}
 );

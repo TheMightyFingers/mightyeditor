@@ -953,7 +953,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.buildAssetsTree(list);
 			this.buildList(list);
 			this.update();
-			
+			this.updateNotifications(list);
 		},
 		
 		buildList: function(list){
@@ -1157,6 +1157,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 		},
 		
+		notifications: [],
+		
 		createImage: function(fileObj){
 			var path = fileObj.path;
 			var src = fileObj.src;
@@ -1189,8 +1191,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				that.send("newImage", data);
 				that.emit(MT.ASSET_ADDED, path);
+				
+				var nota = that.project.plugins.notification.show("Uploading" + data.name, "", 999999);
+				that.notifications[path] = nota;
 			};
 			img.src = that.toPng(src);
+		},
+		
+		updateNotifications: function(list){
+			for(var i =0; i<list.length; i++){
+				if(this.notifications[list[i].key]){
+					this.notifications[list[i].key].hide();
+					return;
+				}
+				if(list[i].contents){
+					this.updateNotifications(list[i].contents);
+				}
+			}
+			
 		},
 		
 		toPng: function(src){

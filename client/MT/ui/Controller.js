@@ -83,6 +83,11 @@ MT.extend("core.Emitter")(
 			height: window.innerHeight
 		};
 		
+		this.centerBottomRightBox = document.createElement("div");
+		document.body.appendChild(this.centerBottomRightBox);
+		this.centerBottomRightBox.style.position = "absolute";
+		
+		
 		this.snapPx = 20;
 		var that = this;
 		var mDown = false;
@@ -909,6 +914,14 @@ MT.extend("core.Emitter")(
 					this.emit(this.events.RESIZE);
 				}
 			}
+			
+			
+			this.centerBottomRightBox.style.left = centerPanel.x + centerPanel.width;
+			this.centerBottomRightBox.style.top = centerPanel.y + centerPanel.height;
+			this.centerBottomRightBox.style.zIndex = 1001;
+			this.centerBottomRightBox.style.backgroundColor = "inherit";
+			//this.centerBottomRightBox.style.overflow = "hidden";
+			//this.centerBottomRightBox.style.pointerEvents = "none;"
 		},
 		
 		

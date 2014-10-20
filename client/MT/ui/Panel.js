@@ -19,8 +19,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		this._input = document.createElement("input");
 		this._input.setAttribute("readonly", "readonly");
-		this._input.style.cssText = "position: static; top: -99999px;";
-		document.body.appendChild(this._input);
+		this._input.style.cssText = "position: fixed; top: -99999px;";
+		this.content.el.appendChild(this._input);
 		
 		if(title){
 			this.addHeader();
@@ -760,14 +760,14 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.content.y = 0;
 		},
 		
-		addButton: function(title, className, cb){
+		addButton: function(title, className, cb, tooltip){
 			var b = null;
 			
 			if(title && typeof title == "object"){
 				b = title;
 			}
 			else{
-				b = new MT.ui.Button(title, className, this.events, cb);
+				b = new MT.ui.Button(title, className, this.events, cb, tooltip);
 			}
 			this.content.addChild(b);
 			this.buttons.push(b);

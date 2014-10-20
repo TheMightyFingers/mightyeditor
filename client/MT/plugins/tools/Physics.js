@@ -2,6 +2,7 @@ MT.extend("core.BasicTool")(
 	MT.plugins.tools.Physics = function(tools){
 		this.tools = tools;
 		this.enabled = false;
+		this.name = "physics";
 	},
 	{
 		initUI: function(){
@@ -18,7 +19,7 @@ MT.extend("core.BasicTool")(
 					that.enabled = true;
 					that.tools.project.plugins.mapeditor.enablePhysics();
 				}
-			});
+			}, this.getTooltip());
 			
 		},
 

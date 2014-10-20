@@ -7,19 +7,21 @@ MT.require("plugins.SourceEditor");
 MT.require("core.JsonDB");
 MT.require("core.FS");
 
+var exec = require('child_process').exec;
+
 MT.extend("core.BasicPlugin")(
-	MT.core.Project = function(socket){
+	MT.core.Project = function(socket, config){
 		this.socket = socket;
 		
 		MT.core.BasicPlugin.call(this, this, "Project");
 		
 		
-		this.root = "../client/data/projects";
+		this.root = config.projectsPath;
 		this.fs = MT.core.FS;
 		this.dbObject  = null;
 		this.dbName = ".db.json";
 		
-		
+		this.config = config;
 		var that = this;
 		socket.onClose(function(){
 			if(that.db){
@@ -65,12 +67,20 @@ MT.extend("core.BasicPlugin")(
 		
 		loadCommand: function(projectId, command){
 			var that = this;
-			
+			MT.debug("loading command", command);
 			if(command == "copy"){
 				this.getAllProjects(this.root, function(data){
 					that.knownProjects = data;
-					that.exec_copy(projectId);
+					
+					if(projectId.substring(0,1) == that.config.prefix){
+						that.exec_copy(projectId);
+					}
+					else{
+						that.copyAlien(projectId);
+					}
+					
 				});
+				
 				return;
 			}
 			
@@ -79,14 +89,54 @@ MT.extend("core.BasicPlugin")(
 		
 		exec_copy: function(projectId){
 			this.id = this.makeID(this.knownProjects.length);
+			
 			var that = this;
-			this.fs.copy(this.root + "/" + projectId, this.root + "/" + this.id, function(){
+			this.fs.copy(this.root + "/" + projectId, this.root + "/" + this.id, function(err){
+				// copying unknown project?
+				if(err){
+					MT.log(err, "copying unknown project:", projectId);
+				}
 				that.openProject(that.id, function(){
 					var info = that.getProjectInfo();
 					info.id = that.id;
 					that.send("selectProject", info);
 				});
 			});
+			
+		},
+		
+		copyAlien: function(projectId){
+			var server = this.config.servers[projectId.substring(0,1)];
+			
+			if(!server){
+				MT.debug("cannot find server for the project", projectId);
+				return;
+			}
+			var that = this;
+			var tmpName = "./tmp/"+(Math.random()+".zip").substring(2);
+			
+			exec("wget "+server+"/export/"+projectId+" -O "+tmpName, {cwd: this.dir}, function(err){
+				if(err){
+					MT.log("Error getting alien project", projectId);
+				}
+				that.id = that.makeID(that.knownProjects.length);
+				
+				var newProjectPath = that.root + "/" + that.id;
+				that.fs.mkdir(newProjectPath, function(){
+				
+					exec("unzip "+ process.cwd() + "/" + tmpName, {cwd: newProjectPath}, function(err){
+						that.openProject(that.id, function(){
+							var info = that.getProjectInfo();
+							info.id = that.id;
+							that.send("selectProject", info);
+						});
+						that.fs.rm(tmpName);
+						
+					});
+				});
+				
+			});
+			//exec("zip -9 -r ../" + that.zipName + " ./", { cwd: that.dir }, cb);
 			
 		},
 		
@@ -104,7 +154,6 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		loadPlugins: function(){
-			console.log("load Plugins");
 			this.unloadPlugins();
 			
 			this.export = new MT.plugins.Export(this);
@@ -131,16 +180,14 @@ MT.extend("core.BasicPlugin")(
 		openProject: function(pid, cb){
 			var that = this;
 			that.path = that.root + MT.core.FS.path.sep + pid;
-			
-			
 			this.fs.exists(this.path, function(yes){
 				if(!yes){
+					MT.log("open project failed", pid);
 					that.send("newProject");
 					return;
 				}
 				
 				that.id = pid;
-				
 				
 				/* fallback for old objects */
 				that.fs.exists(that.path + that.fs.path.sep + that.dbName, function(yes){
@@ -152,6 +199,7 @@ MT.extend("core.BasicPlugin")(
 					}
 					
 					that.fs.exists(that.path + "/JsonDB.json", function(yes){
+						MT.log("opening old project", pid);
 						if(yes){
 							that.fs.copy(that.path + "/JsonDB.json", that.path + that.fs.path.sep + that.dbName);
 							that.fs.rm(that.path + "/JsonDB.json", function(){
@@ -175,7 +223,6 @@ MT.extend("core.BasicPlugin")(
 		// a little bit tricky - may break thinkgs in the future
 		onDbReady: function(db, cb){
 			this.loadData(db);
-			
 			if(!this.getProjectInfo() && !this.isNewProject){
 				this.isNewProject = false;
 				this.send("needUpdate");
@@ -250,7 +297,7 @@ MT.extend("core.BasicPlugin")(
 			info.reg = {};
 			var s = "";
 			for(var i in info){
-				s = "%"+i+"%"
+				s = "%" + i + "%";
 				info.reg[i] = new RegExp(s, "g");
 			}
 				
@@ -260,6 +307,7 @@ MT.extend("core.BasicPlugin")(
 				info.isValid = true;
 			}
 		},
+		
 		isValidVarName: function(name){
 			name = name.replace(/\W/g, '');
 			// TODO: fix this - remove eval
@@ -271,7 +319,6 @@ MT.extend("core.BasicPlugin")(
 			}
 			return true;
 		},
-		
 		
 		createSources: function(data, info, num, cb){
 			num = num || 0;
@@ -343,15 +390,12 @@ MT.extend("core.BasicPlugin")(
 				}
 			}
 			
-			//this.fs.copy("templates/common/db.json", this.path + this.fs.path.sep + ".db.json", function(){
-				this.openProject(this.id, function(){
-					that.fs.after(function(){
-						that.saveProjectInfo(info);
-						that.a_loadProject(that.id);
-						//that.send("selectProject", that.id);
-					});
+			this.openProject(this.id, function(){
+				that.fs.after(function(){
+					that.saveProjectInfo(info);
+					that.a_loadProject(that.id);
 				});
-			//});
+			});
 		},
 		
 		
@@ -360,7 +404,7 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		makeID: function(num){
-			return "p"+(10000+num).toString(36);
+			return this.config.prefix+(10000+num).toString(36);
 		}
 		
 	}

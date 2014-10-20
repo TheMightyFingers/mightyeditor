@@ -1,3 +1,4 @@
+MT.require("misc.tooltips");
 MT(
 	MT.core.BasicTool= function(tools){
 		this.tools = tools;
@@ -8,10 +9,22 @@ MT(
 		initUI: function(ui){
 			var that = this;
 			this.ui = ui;
+			this.tooltip = this.getTooltip();
+			
 			this.button = this.tools.panel.addButton("", "tool."+this.name, function(){
 				that.tools.setTool(that);
-			});
+			}, this.tooltip);
 			
+		},
+   
+		getTooltip: function(name){
+			
+			var tkey = (this.name || name)+"Tool";
+			var tt = MT.misc.tooltips[tkey];
+			if(!tt){
+				console.log("missing tooltip:", tkey);
+			}
+			return tt;
 		},
 		// called when tool has been selected
 		init: function(){

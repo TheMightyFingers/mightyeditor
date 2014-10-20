@@ -254,10 +254,21 @@ MT(
 		ox: 0,
 		oy: 0,
    
-		setAbsolute: function(){
+		setAbsolute: function(bottom, right){
 			this.style.position = "absolute";
-			this.style.top = 0;
-			this.style.left = 0;
+			if(bottom){
+				this.style.bottom = 0;
+			}
+			else{
+				this.style.top = 0;
+			}
+			
+			if(right){
+				this.style.right = 0;
+			}
+			else{
+				this.style.left = 0;
+			}
 		},
 		
 		isFitted: false,

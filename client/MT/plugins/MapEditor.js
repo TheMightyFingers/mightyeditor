@@ -905,13 +905,17 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var h = obj.height;
 			
 			if(p.size.width > 0){
-				w = p.size.width * this.scale.x;
+				w = p.size.width;
 			}
 			if(p.size.height > 0){
-				h = p.size.height * this.scale.y;
+				h = p.size.height;
 			}
 			
-			ctx.setTransform(mat.a, -mat.b, -mat.c, mat.d, mat.tx, mat.ty);
+			ctx.translate(mat.tx, mat.ty);
+			ctx.rotate(obj.object.rotation);
+			ctx.scale(this.scale.x, this.scale.y);
+			
+			//ctx.setTransform(mat.a, -mat.b, -mat.c, mat.d, mat.tx, mat.ty);
 			
 			ctx.fillRect(-w*obj.object.anchor.x + p.size.offsetX ,-h*obj.object.anchor.y + p.size.offsetY, w, h);
 			ctx.restore();
