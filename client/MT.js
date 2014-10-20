@@ -8162,7 +8162,7 @@ MT.namespace('plugins');
 "use strict";
 (function(){
 	var phaserSrc = "js/";
-	phaserSrc += (window.release ? "phaser.min.js" : "phaser.js");
+	phaserSrc += (window.release ? "phaser-no-libs.min" : "phaser.js");
 	MT.requireFile(phaserSrc, function(){
 		MT.requireFile("js/phaserHacks.js");
 	});
@@ -17013,14 +17013,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					label: "Clone (eu)",
 					className: "",
 					cb: function(){
-						that.clone(this.sub);
+						that.clone(that.sub);
 					}
 				},
 				{
 					label: "Clone (us)",
 					className: "",
 					cb: function(){
-						that.clone(this.sub, true);
+						that.clone(that.sub, true);
 					}
 				}
 			], ui, true);
