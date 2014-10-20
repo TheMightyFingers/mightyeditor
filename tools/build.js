@@ -117,7 +117,7 @@ global.createClass = function(className, classScope, basePath){
 console.log(file);
 require(file);
 
-var miscFiles = ["js/jshint", "js/cm/addon/scroll/scrollpastend"];
+var miscFiles = ["js/jshint", "js/cm/addon/scroll/scrollpastend", "js/phaser"];
 var UglifyJS = require("uglify-js");
 var result;
 for(var i in miscFiles){
