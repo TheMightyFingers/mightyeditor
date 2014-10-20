@@ -118,7 +118,7 @@ MT.extend("core.BasicPlugin")(
 			
 			exec("wget "+server+"/export/"+projectId+" -O "+tmpName, {cwd: this.dir}, function(err){
 				if(err){
-					MT.log("Error getting alien project", projectId);
+					MT.log("Error getting alien project", projectId, err);
 				}
 				that.id = that.makeID(that.knownProjects.length);
 				
