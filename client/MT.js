@@ -8162,7 +8162,7 @@ MT.namespace('plugins');
 "use strict";
 (function(){
 	var phaserSrc = "js/";
-	phaserSrc += (window.release ? "phaser-no-libs.min" : "phaser.js");
+	phaserSrc += (window.release ? "phaser-no-libs.min.js" : "phaser.js");
 	MT.requireFile(phaserSrc, function(){
 		MT.requireFile("js/phaserHacks.js");
 	});
