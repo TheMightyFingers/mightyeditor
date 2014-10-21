@@ -2,6 +2,7 @@
 MT.require("ui.Dropdown");
 MT.require("ui.TextColorPicker");
 
+
 MT.extend("core.BasicTool").extend("core.Emitter")(
 	MT.plugins.tools.Text = function(tools){
 		MT.core.BasicTool.call(this, tools);
@@ -221,6 +222,17 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.textArea.style.width = "100%";
 			this.textArea.style.height = "200px";
 			
+			
+			var stopPropagation = function(e){
+				e.stopPropagation();
+			};
+			
+			this.textArea.onkeydown = stopPropagation;
+			this.textArea.onkeyup = stopPropagation;
+			this.textArea.onfocus = stopPropagation;
+			this.textArea.onmousedown = stopPropagation;
+			this.textArea.onmouseup = stopPropagation;
+			
 			this.textPopup.addButton("Done", function(){
 				that.setText(that.textArea.value);
 				that.textPopup.hide();
@@ -357,19 +369,24 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		
 		checkFonts: function(){
-			var objects = this.tools.map.objects;
+			var objects = this.tools.map.loadedObjects;
 			var o = null;
 			var that = this;
 			var toLoad = 0;
+			var font;
+			
 			for(var i=0; i<objects.length; i++){
 				o = objects[i];
-				if(o.type == Phaser.TEXT){
+				if(o.data.type == MT.objectTypes.TEXT){
 					//this._setFontFamily(o);
-					
-					if(this.isUnknownFont(o.font)){
-						this.addFont(o.font);
+					font = o.data.style.fontFamily;
+					if(!font){
+						continue;
+					}
+					if(this.isUnknownFont(font)){
+						this.addFont(font);
 						toLoad++;
-						this.manager.loadFont(o.font, function(){
+						this.manager.loadFont(font, function(){
 							toLoad--;
 							if(toLoad != 0){
 								return;
@@ -385,12 +402,14 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		updateTextObjects: function(fontIn){
 			
-			var objects = this.tools.map.objects;
+			var objects = this.tools.map.loadedObjects;
 			PIXI.Text.heightCache = {};
+			var font;
 			for(var i=0; i<objects.length; i++){
-				if(objects[i].type == Phaser.TEXT ){
-					if(fontIn == void(0) || objects[i].font == fontIn || objects[i].style.font.indexOf(fontIn) > -1 ){ 
-						objects[i].dirty = true;
+				if(objects[i].data.type == MT.objectTypes.TEXT ){
+					font = objects[i].data.style.fontFamily;
+					if(fontIn == void(0) || font == fontIn || font.indexOf(fontIn) > -1 ){ 
+						objects[i].object.dirty = true;
 					}
 				}
 			}

@@ -28,6 +28,7 @@ MT.extend("core.BasicPlugin")(
 			if(!e.shiftKey){
 				if(that.step > 0){
 					that.step--;
+					console.log(that.step);
 					var data = that.buffer[that.step-1];
 					if(data){
 						that.om.a_receive(JSON.parse(data), true);
@@ -113,6 +114,7 @@ MT.extend("core.BasicPlugin")(
 				
 				that.buffer[that.step] = str;
 				that.step++;
+				that.buffer.length = that.step;
 				that.save();
 			});
 			

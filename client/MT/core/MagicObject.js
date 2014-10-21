@@ -137,6 +137,7 @@ MT(
 			this.object.fontSize = this.data.style.fontSize || 32;
 			this.object.font = this.data.style.fontFamily || "Arial";
 			this.object.fontWeight = this.data.style.fontWeight || "";
+			this.object.style.fill = this.fill;
 			
 			if(!this.data.shadow){
 				this.data.shadow = {};
@@ -1134,7 +1135,7 @@ MT(
 			this.data.style.fontWeight = val;
 		},
 		get fontWeight(){
-			this.data.style.fontWeight = val;
+			return this.data.style.fontWeight;
 		},
 		set fontSize(val){
 			var scaleX = this.object.scale.x;

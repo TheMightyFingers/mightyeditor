@@ -950,15 +950,15 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			ctx.fillStyle = "rgba(150, 70, 20, 0.3)";
 			for(var j=0; j<this.loadedObjects.length; j++){
 				o1 = this.loadedObjects[j];
-				if(!o1.isVisible){
+				if(!o1.isVisible || o1.data.contents){
 					continue;
 				}
-				for(var i=0; i<this.loadedObjects.length; i++){
+				for(var i=j; i<this.loadedObjects.length; i++){
 					o2 = this.loadedObjects[i];
 					if(o1 == o2){
 						continue;
 					}
-					if(o1.x == o2.x && o1.y == o2.y && o1.assetId == o2.assetId && o1.width == o2.width){
+					if(o1.x == o2.x && o1.y == o2.y && o1.assetId == o2.assetId && o1.width == o2.width && o1.data.type == o2.data.type){
 						bounds = o1.object.getBounds();
 						ctx.fillRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
 					}
@@ -1258,7 +1258,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					i--;
 				}
 			}
-			
+			this.emit(MT.MAP_OBECTS_ADDED);
 			return;
 		},
 		
