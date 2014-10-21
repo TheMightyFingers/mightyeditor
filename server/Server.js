@@ -14,7 +14,7 @@ var config = (process.env.RELEASE ? require("./config.js").config : require("./c
 var maintenance = false;
 
 var hostInIterest = "tools.mightyfingers.com:8080";
-//var hostInIterest = "mightyeditor.mightyfingers.com";
+hostInIterest = "mightyeditor.mightyfingers.com";
 
 var geoip, Country, country;
 try{
