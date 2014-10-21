@@ -18,7 +18,7 @@
 			if(window.location.hash == "" || window.location.hash.substring(1, 2) == "u"){
 				var cb =  function(obj){
 					var parsed = JSON.parse(obj);
-					if(parsed.continent_code == "NA"){
+					if(parsed.continent_code == "NA" || parsed.ip == "212.93.114.227"){
 						window.location.host = "us."+window.location.host;
 					}
 					else{
