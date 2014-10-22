@@ -34,7 +34,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				}
 			});
 			
-			this.tools.on(MT.ASSET_SELECTED, function(asset){
+			this.tools.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				if(that.tools.activeTool != that){
 					return;
 				}
@@ -441,10 +441,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.panel.content.clear();
 			this.restore();
 			if(this.tools.activeTool == this && this.oldSettings.activeTool && this.tools.activeTool != this.oldSettings.activeTool){
-				this.tools.setTool(this.oldSettings.activeTool);
+				this.tools.setTool(this.oldSettings.activeTool, true);
 			}
 			else{
-				this.tools.setTool(this.tools.tools.select);
+				this.tools.setTool(this.tools.tools.select, true);
 			}
 		},
 		
@@ -489,7 +489,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		updateLayer: function(mo){
 			
-			this.active = mo;
+			//this.active = mo;
 			var obj = mo.object;
 			var data = mo.data;
 			

@@ -1258,7 +1258,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					i--;
 				}
 			}
-			this.emit(MT.MAP_OBECTS_ADDED);
+			this.emit(this, MT.MAP_OBECTS_ADDED);
 			return;
 		},
 		

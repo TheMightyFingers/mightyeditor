@@ -182,11 +182,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active.addClass("active.selected");
 				
 				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
-				// tiletool uses his own preview
-				var tools = that.project.plugins.tools;
-				if( tools && tools.activeTool && tools.activeTool != tools.tools.tiletool){
-					that.setPreviewAssets(data);
-				}
+				that.setPreviewAssets(data);
 			});
 			
 			this.tv.on("select", select);
@@ -302,6 +298,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		_previewCache: null,
 		setPreviewAssets: function(asset){
+			// tiletool uses his own preview
+			var tools = this.project.plugins.tools;
+			if( tools && tools.activeTool && tools.activeTool == tools.tools.tiletool){
+				return;
+			}
+				
 			if(asset == void(0)){
 				if(this.active){
 					asset = this.active.data;
