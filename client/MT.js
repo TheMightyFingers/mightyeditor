@@ -1934,7 +1934,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var tiles = data.tiles;
 			for(var y in tiles){
 				for(var x in tiles[y]){
-					if(tiles[y][x] >= nextId){
+					if(tiles[y][x] >= map.tiles.length){
 						delete tiles[y][x];
 						console.warn("tile out of range: ", tiles[y][x]);
 						continue;
