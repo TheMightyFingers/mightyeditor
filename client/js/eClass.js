@@ -154,8 +154,7 @@
 					if (req.readyState !== 4){
 						return;
 					}
-					console.log(req);
-					cb(req.response);
+					cb(req.response, req);
 				};
 				req.open("GET", url, true);
 				req.send(null);
