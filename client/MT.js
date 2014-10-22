@@ -1450,7 +1450,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				}
 			});
 			
-			this.tools.on(MT.ASSET_SELECTED, function(asset){
+			this.tools.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				if(that.tools.activeTool != that){
 					return;
 				}
@@ -1857,10 +1857,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.panel.content.clear();
 			this.restore();
 			if(this.tools.activeTool == this && this.oldSettings.activeTool && this.tools.activeTool != this.oldSettings.activeTool){
-				this.tools.setTool(this.oldSettings.activeTool);
+				this.tools.setTool(this.oldSettings.activeTool, true);
 			}
 			else{
-				this.tools.setTool(this.tools.tools.select);
+				this.tools.setTool(this.tools.tools.select, true);
 			}
 		},
 		
@@ -1905,7 +1905,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		updateLayer: function(mo){
 			
-			this.active = mo;
+			//this.active = mo;
 			var obj = mo.object;
 			var data = mo.data;
 			
@@ -9441,7 +9441,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					i--;
 				}
 			}
-			this.emit(MT.MAP_OBECTS_ADDED);
+			this.emit(this, MT.MAP_OBECTS_ADDED);
 			return;
 		},
 		
@@ -10838,11 +10838,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active.addClass("active.selected");
 				
 				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
-				// tiletool uses his own preview
-				var tools = that.project.plugins.tools;
-				if( tools && tools.activeTool && tools.activeTool != tools.tools.tiletool){
-					that.setPreviewAssets(data);
-				}
+				that.setPreviewAssets(data);
 			});
 			
 			this.tv.on("select", select);
@@ -10958,6 +10954,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		_previewCache: null,
 		setPreviewAssets: function(asset){
+			// tiletool uses his own preview
+			var tools = this.project.plugins.tools;
+			if( tools && tools.activeTool && tools.activeTool == tools.tools.tiletool){
+				return;
+			}
+				
 			if(asset == void(0)){
 				if(this.active){
 					asset = this.active.data;
