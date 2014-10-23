@@ -599,7 +599,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				var reader = entry.createReader();
 				reader.readEntries(function(ev){
 					for(var i=0; i<ev.length; i++){
-						that.handleEntry(ev[i]);
+						that.handleEntry(ev[i], e);
 					}
 				});
 			}
