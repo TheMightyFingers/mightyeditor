@@ -4007,6 +4007,7 @@ MT(
 			if(this.data.type == MT.objectTypes.TILE_LAYER){
 				this.removeLayer();
 				this.createTileLayer();
+				this.object.visible = this.isVisible;
 			}
 			
 		
