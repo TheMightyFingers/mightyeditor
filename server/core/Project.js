@@ -182,7 +182,7 @@ MT.extend("core.BasicPlugin")(
 			that.path = that.root + MT.core.FS.path.sep + pid;
 			this.fs.exists(this.path, function(yes){
 				if(!yes){
-					MT.log("open project failed", pid);
+					MT.log("open project failed", that.path);
 					that.send("newProject");
 					return;
 				}

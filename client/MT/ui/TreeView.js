@@ -1,6 +1,7 @@
 "use strict";
 /*
  * Needs to be reviewed - too many hacks already
+ * usage: 
  */
 MT.require("ui.DomElement");
 MT.extend("core.Emitter")(
@@ -387,7 +388,27 @@ MT.extend("core.Emitter")(
 		},
 		
 		
-		
+		enableInput: function(ev){
+			var that = this;
+			ev.on("click", function(e){
+				
+				if(!e.target.ctrl){
+					return;
+				}
+				
+				if(!e.target.ctrl.hasParent(that.tree)){
+					return;
+				}
+				
+				if(that.dragged){
+					return;
+				}
+				var item = that.getOwnItem(e.target.parentNode.parentNode);
+				if(item){
+					that.emit("click", item.data, item);
+				}
+			});
+		},
 		
 		sortable: function(ev){
 			
@@ -460,24 +481,7 @@ MT.extend("core.Emitter")(
 				
 			};
 			
-			ev.on("click", function(e){
-				
-				if(!e.target.ctrl){
-					return;
-				}
-				
-				if(!e.target.ctrl.hasParent(that.tree)){
-					return;
-				}
-				
-				if(that.dragged){
-					return;
-				}
-				var item = that.getOwnItem(e.target.parentNode.parentNode);
-				if(item){
-					that.emit("click", item.data, item);
-				}
-			});
+			this.enableInput(ev);
 			
 			ev.on("mousedown", function(e){
 				if(!e.target.parentNode){

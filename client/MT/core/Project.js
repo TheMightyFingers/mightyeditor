@@ -12,7 +12,7 @@ MT.require("plugins.Physics");
 MT.require("plugins.UserData");
 MT.require("plugins.TooltipManager");
 MT.require("plugins.Notification");
-//MT.require("plugins.MovieMaker");
+MT.require("plugins.MovieMaker");
 
 MT.DROP = "drop";
 
@@ -52,7 +52,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"UserData",
 			"TooltipManager",
 			"Notification",
-			//"MovieMaker"
+			"MovieMaker"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
@@ -63,7 +63,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.am = this.plugins.assetmanager;
 		this.om = this.plugins.objectmanager;
 		this.map = this.plugins.mapeditor;
-		//this.settings = this.plugins.settings;
 		
 		this.ui = ui;
 		
@@ -71,37 +70,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		if(window.location.hostname.substring(0, 3) == "us."){
 			this.sub = "us";
 		}
-		
-		//this.getIP();
-		
-		//this.initUI(ui);
 		this.initSocket(socket);
 		
 	},
 	{
-		
-		getIP: function(){
-			/*
-			 * <script type="application/javascript">
-					function getip(json){
-					alert(json.ip); // alerts the ip address
-					}
-				</script>
-
-				<script type="application/javascript" src="http://jsonip.appspot.com/?callback=getip"></script>
-			*/
-			
-			/*window._tmpfn = function(json){
-				console.log(json);
-			};
-			var script = document.createElement("script");
-			script.src = "http://jsonip.appspot.com/?callback=_tmpfn";
-			document.head.appendChild(script);
-			*/
-			/*navigator.geolocation.getCurrentPosition(function(pos){
-				console.log(pos);
-			});*/
-		},
 		a_maintenance: function(data){
 			var seconds = data.seconds;
 			var content = "System will go down for maintenance in ";
@@ -123,7 +95,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				pop.content.innerHTML = content + '<span style="color: red">' + seconds +"</span> seconds." + desc;
 			}, 1000);
-			
 		},
 		
 		a_selectProject: function(info){
@@ -168,7 +139,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			var p = new MT.ui.Panel("Update Project");
-			//p.removeHeader()
 			
 			p.hide().show(pop.content).fitIn();
 			p.removeBorder();

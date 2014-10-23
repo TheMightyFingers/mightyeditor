@@ -233,7 +233,10 @@ MT(
 			upTo = upTo || document.body;
 			var ret = this.el.offsetTop;
 			p = this.el.offsetParent;
-			while(p && p != upTo){
+			while(p){
+				if( p == upTo ){
+					break;
+				}
 				ret += p.offsetTop - p.scrollTop;
 				p = p.offsetParent;
 			}

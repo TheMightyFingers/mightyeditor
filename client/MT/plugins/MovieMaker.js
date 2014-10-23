@@ -8,7 +8,7 @@ MT(
 		MT.core.BasicPlugin.call(this, "movie");
 		this.activeId = 0;
 		this.activeFrame = 0;
-		this.kf = {};
+		this.movies = {};
 		this.keys = ["x", "y", "angle", "anchorX", "anchorY", "scaleX", "scaleY", "alpha"];
 		this.roundKeys = ["frame"];
 	},
@@ -21,26 +21,52 @@ MT(
 			this.panel.on("click", function(e){
 				console.log(e.target);
 			});
+			var that = this;
+			this.panel.addOptions([
+				{
+					label: "Add movie",
+					className: "",
+					cb: function(){
+						that.addMovie();
+						that.panel.options.list.hide();
+					}
+				}
+			]);
+			console.log(this.panel.options);
+			this.panel.options.list.width = 150;
+			this.panel.options.list.style.left = "auto";
+			
+		
+			
 			
 		},
 		installUI: function(){
 			var span = null;
 			var div = null;
 			this.layers = [];
-			this.om = this.project.plugins.objectmanager;
+			this.tools = this.project.plugins.tools;
 			var that = this;
-			this.om.on(MT.OBJECT_SELECTED, function(obj){
+			this.tools.on(MT.OBJECT_SELECTED, function(obj){
 				
-				if(obj.type == MT.objectTypes.MOVIE_CLIP){
-					console.log("object selected", obj.id);
+				//if(obj.type == MT.objectTypes.MOVIE_CLIP){
+				//	console.log("object selected", obj.id);
 					that.setActive(obj.id);
+				//}
+			});
+			this.tools.on(MT.OBJECT_UNSELECTED, function(obj){
+				for(var i in that.movies){
+					that.movies[i].hide();
 				}
 			});
-			
 			this.om = this.project.plugins.objectmanager;
 			this.map = this.project.plugins.mapeditor;
 			
 			this.addPanels();
+			
+			this.slider = document.createElement("div");
+			this.slider.className = "ui-movie-slider";
+			
+			
 		},
    
 		addPanels: function(){
@@ -94,8 +120,30 @@ MT(
 			
 		},
 		
-		setActive: function(id){
+		addMovie: function(){
+			if(!this.data){
+				console.log("no data");
+				return;
+			}
 			
+			this.data.movies["New Movie"] = [this.collect()];
+			console.log("movie added");
+		},
+   
+		setActive: function(id){
+			this.data = this.om.getById(id);
+			console.log(this.data);
+			
+			if(!this.data.movies){
+				this.data.movies = {};
+			}
+			else{
+				//this.updateScene();
+			}
+			
+			this.movies[id] = window.xxx =  new MT.ui.Keyframes(this.ui, this.data, 60, this.leftPanel.content.el, this.rightPanel.content.el);
+			
+			return;
 			if(this.kf[this.activeId]){
 				this.kf[this.activeId].hide();
 			}
@@ -104,8 +152,8 @@ MT(
 			this.data = this.om.getById(this.activeId);
 			console.log(this.data);
 			
-			if(!this.data.kf){
-				this.data.kf = [this.data.contents];
+			if(!this.data.movies){
+				this.data.movies = {};
 			}
 			else{
 				this.updateScene();
@@ -149,7 +197,7 @@ MT(
 			if(!this.data.kf[this.activeFrame]){
 				return;
 			}
-			this.data.kf[this.activeFrame] = JSON.parse(JSON.stringify(this.data.contents));
+			this.data.kf[this.activeFrame] = this.collect();
 			this.kf[this.activeId].markFrames(this.data.kf);
 		},
 		
@@ -158,14 +206,22 @@ MT(
 			if(!this.data){
 				return;
 			}
-			this.data.kf[this.activeFrame] = JSON.parse(JSON.stringify(this.data.contents));
+			this.data.kf[this.activeFrame] = this.collect();
 			this.kf[this.activeId].markFrames(this.data.kf);
 		},
    
 		buildKeyFrames: function(obj){
 			//this.tv.merge(obj.contents);
 		},
-   
+		collect: function(){
+			var out = {};
+			var k;
+			for(var i=0; i<this.keys.length; i++){
+				k = this.keys[i];
+				out[k] = this.data[k];
+			}
+			return out;
+		},
 		updateScene: function(){
 			var d = this.data.kf[this.activeFrame];
 			console.log(d);
@@ -209,15 +265,9 @@ MT(
    
    
 		doInterpolate: function(t, d1, d2){
-			var o, mo, tmp;
-			for(var i=0; i<d1.length; i++){
-				o = d1[i];
-				mo = this.map.getById(o.id);
-				
-				tmp = this.buildTmpVals(t, d1[i], d2[i]);
-				
-				mo.update(tmp);
-			}
+			var med = this.buildTmpVals(t, d1, d2);
+			var mo = this.map.getById(this.activeId);
+			mo.update(med);
 		},
    
 		buildTmpVals: function(t, d1, d2){
@@ -244,18 +294,11 @@ MT(
 		},
    
 		updateObjects: function(cont){
-			var o, mo;
-			var group = this.map.getById(this.activeId);
-			
-			for(var i=0; i<cont.length; i++){
-				o = cont[i];
-				mo = this.map.getById(o.id);
-				if(!mo || !mo.hasParent(group)){
-					cont.splice(i, 1);
-					i--;
-					continue;
-				}
-				mo.update(o);
+			var mo = this.map.getById(this.activeId);
+			var k;
+			for(var i=0; i<this.keys.length; i++){
+				k = this.keys[i]
+				mo[k] = cont[k];
 			}
 			
 			this.om.tv.update();
