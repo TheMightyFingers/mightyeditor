@@ -118,6 +118,10 @@ MT(
 				that.rightPanel.style.left = w +"px";
 			});
 			
+			
+			this.rightPanel.content.el.onmousemove = function(){
+				console.log("ove");
+			};
 		},
 		
 		addMovie: function(){
@@ -141,7 +145,7 @@ MT(
 				//this.updateScene();
 			}
 			
-			this.movies[id] = window.xxx =  new MT.ui.Keyframes(this.ui, this.data, 60, this.leftPanel.content.el, this.rightPanel.content.el);
+			this.movies[id] = new MT.ui.Keyframes(this.ui, this.data, 60, this.leftPanel.content.el, this.rightPanel.content.el);
 			
 			return;
 			if(this.kf[this.activeId]){

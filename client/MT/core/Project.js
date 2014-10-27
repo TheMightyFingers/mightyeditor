@@ -12,11 +12,11 @@ MT.require("plugins.Physics");
 MT.require("plugins.UserData");
 MT.require("plugins.TooltipManager");
 MT.require("plugins.Notification");
-//MT.require("plugins.MovieMaker");
+MT.require("plugins.MovieMaker");
 
 MT.DROP = "drop";
 
-
+ 
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.core.Project = function(ui, socket){
 		MT.core.BasicPlugin.call(this, "Project");
@@ -51,8 +51,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"Physics",
 			"UserData",
 			"TooltipManager",
-			"Notification"
-			//"MovieMaker"
+			"Notification",
+			"MovieMaker"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
@@ -234,7 +234,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(key.substring(0, 2) !== "ui" && key != "UndoRedo"){
 					tmp = JSON.parse(localStorage.getItem(key));
 					if(tmp.id){
-						items.push(tmp );
+						items.push(tmp);
 					}
 					else{
 						items.push({
@@ -245,17 +245,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			}
 			
-			var p;
+			var p, del;
 			for(var i=0; i<items.length; i++){
 				p = document.createElement("div");
 				p.className = "projectItem"
-				p.innerHTML = items[i].title + " ("+items[i].id+")";
+				p.innerHTML = items[i].title + " ("+items[i].id+") <span class=\"remove\"></span>";
 				p.project = items[i].id;
+				
 				
 				list.appendChild(p);
 			}
 			list.onclick = function(e){
-				
+				if(e.target.className == "remove"){
+					localStorage.removeItem(e.target.parentNode.project);
+					e.target.parentNode.parentNode.removeChild(e.target.parentNode);
+					return;
+				}
 				if(e.target.project){
 					e.preventDefault();
 					window.location.hash = e.target.project;

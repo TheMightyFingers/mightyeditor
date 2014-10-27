@@ -182,16 +182,19 @@ div.ui-panel-header:after {
 	border-bottom: solid 1px #000;
 }
 span.panel-head-tab {
-	display: inline-block;
-	white-space: pre;
-	text-align: center;
-	max-width: 100px;
-	border-right: 1px solid rgba(0,0,0,0.6);
-	border-bottom: 1px transparent;
-	text-shadow: 1px 1px 1px rgba(255,255,255,0.4);
-	position: relative;
-	z-index: 1;
-	padding: 0 3px;
+display: inline-block;
+white-space: pre;
+text-align: center;
+max-width: 100px;
+border-right: 1px solid rgba(0,0,0,0.6);
+border-bottom: 1px transparent;
+text-shadow: 1px 1px 1px rgba(255,255,255,0.4);
+position: relative;
+z-index: 1;
+padding: 0 3px;
+margin-top: 1px;
+line-height: 17px;
+height: 15px;
 }
 /*
 .panel-head-tab:after{
@@ -232,10 +235,13 @@ span.panel-head-tab > span{
 }
 
 span.panel-head-tab.active {
-	color: #eee;
-	border-bottom-color: transparent;
-	text-shadow: 0px 0px 1px rgba(0,0,0,0.9);
-	background: inherit;
+color: #eee;
+border-bottom-color: transparent;
+text-shadow: 0px 0px 1px rgba(0,0,0,0.9);
+background: inherit;
+border-top: 1px solid #000;
+line-height: 17px;
+height: 17px;
 }
 
 div.ui-panel.small {
@@ -1266,6 +1272,7 @@ background-image: none;
 	background-image: url("../img/icons/ui_folder_open.png");
 	background-repeat: no-repeat;
 	background-position: 16px 13px;
+	position: relative;
 }
 .ui-popup.starting-popup .project-list .list-content{
 overflow: auto;
@@ -1279,6 +1286,16 @@ background-color: inherit;
 .ui-popup.starting-popup .project-list .list-content p{
 padding: 10px;
 text-indent: 20px;
+}
+
+.ui-popup.starting-popup .project-list .list-content span.remove{
+position: absolute;
+display: block;
+width: 17px;
+height: 16px;
+right: 5px;
+top: 9px;
+background-color: rgba(255,0,0,0.5);
 }
 
 span.ui-timeline-frame {

@@ -75,16 +75,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					continue;
 				}
 				
-				p = new MT.ui.Panel(images[id].name);
-				p.fitIn();
-				p.addClass("borderless");
-				
+				p = this.addPanel(images[id], id);
 				if(pp){
 					p.addJoint(pp);
 				}
-				
-				this.createImage(p, images[id]);
-				this.panels[id] = p;
 				pp = p;
 			}
 			
@@ -92,6 +86,24 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.activePanel = pp;
 				pp.show(this.panel.content.el);
 			}
+		},
+		
+		addPanel: function(image, id){
+			var p = new MT.ui.Panel(image.name);
+			p.fitIn();
+			p.addClass("borderless");
+			
+			
+			
+			this.createImage(p, image);
+			this.panels[id] = p;
+			var that = this;
+			p.on("show", function(){
+				that.stop = that.getTile(0, 0, p.data.image, p.data.data);
+				that.activePanel = p;
+			});
+			
+			return p;
 		},
 		
 		createImage: function(panel, image){

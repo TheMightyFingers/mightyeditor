@@ -6,7 +6,7 @@ MT.extend("core.Emitter")(
 		
 		this.data = this.buildData(dataIn);
 		
-		this.tv = new MT.ui.TreeView(this.data, pp.path);
+		this.tv = new MT.ui.TreeView(this.data, {root: pp.path});
 		this.tv.on("click", function(){
 			console.log("selected", arguments);
 		});
@@ -28,8 +28,6 @@ MT.extend("core.Emitter")(
 		
 		this.framesHolders = [];
 		this.createKeyFrames();
-		
-		
 		
 		this.count = count;
 		this.frames = frames;
@@ -62,7 +60,7 @@ MT.extend("core.Emitter")(
 					name: key,
 					contents: [inp]
 				});
-				
+				break;
 			}
 			
 			
