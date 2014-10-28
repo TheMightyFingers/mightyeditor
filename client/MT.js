@@ -6799,7 +6799,9 @@ MT.extend("core.Emitter")(
 			}
 			
 			var mo = this.mm.getById(item.data.id);
-			
+			if(!mo.movies){
+				mo.movies = {};
+			}
 			var frames = mo.movies[this.activeMovie];
 			var frame = 0;
 			var el;
