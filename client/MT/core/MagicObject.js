@@ -236,6 +236,9 @@ MT(
 			if(data){
 				for(var i in data){
 					this.data[i] = data[i];
+					if(i == "scaleX"){
+						console.log("scaleX", data[i], this.scaleX);
+					}
 				}
 				
 			}
@@ -247,9 +250,7 @@ MT(
 			}
 			
 			this.updateBox();
-			if(this.map.activeObject == this){
-				this.settings.update();
-			}
+			
 			
 			if(!this.data.isVisible){
 				this.hide();
@@ -285,6 +286,10 @@ MT(
 			}
 			
 			this.map.resort();
+			
+			if(this.map.activeObject == this){
+				this.settings.update();
+			}
 		},
    
 		updateBox: function(){

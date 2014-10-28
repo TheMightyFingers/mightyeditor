@@ -1807,14 +1807,14 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 			}*/
 			
-			if(obj.scaleX != void(0)){
+			/*if(obj.scaleX != void(0)){
 				if(sp.scale.x != obj.scaleX || sp.scale.y != obj.scaleY){
 					sp.scale.x = obj.scaleX;
 					sp.scale.y = obj.scaleY;
 					//obj.width = sp.width;
 					//obj.height = sp.height;
 				}
-			}
+			}*/
 			
 			
 			

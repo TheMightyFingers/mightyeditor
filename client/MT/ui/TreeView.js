@@ -237,8 +237,10 @@ MT.extend("core.Emitter")(
 					return;
 				}
 				that.enableRename(el, e);
+				
 				e.stopPropagation();
 				e.preventDefault();
+				
 			};
 			
 			el.el.onmouseover = function(e){
@@ -647,6 +649,7 @@ MT.extend("core.Emitter")(
 					
 					if(o !== n){
 						that.emit("change", part + "/" + op, part + "/" + this.value);
+						that.emit("rename", el, op);
 					}
 				}
 				else{
