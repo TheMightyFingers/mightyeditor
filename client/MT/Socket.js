@@ -33,8 +33,9 @@ MT.extend("core.Emitter")(
 			var that = this;
 			
 			this.ws = new WebSocket(this.url);
-			
+			console.log("connecting....");
 			this.ws.onopen = function(e){
+				console.log("connected");
 				that.emit("core","open");
 			};
 			
@@ -55,7 +56,7 @@ MT.extend("core.Emitter")(
 				},1000);
 			};
 			
-			return this.connection;
+			return;
 		},
 		
 		send: function(channel, action, data){

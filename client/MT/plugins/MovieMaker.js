@@ -49,8 +49,9 @@ MT(
 			var that = this;
 			this.tools.on(MT.OBJECT_SELECTED, function(obj){
 				
-				if(that.items && that.items[obj.id]){
+				if(that.items && that.items[obj.id] && !that.movies[obj.id]){
 					that.movies[that.activeId].show();
+					that.slider.show();
 					that.activeMovie.setActiveObject(obj.id);
 					return;
 				}
@@ -67,6 +68,7 @@ MT(
 				that.data = null;*/
 				if(that.items && that.items[obj.id]){
 					that.movies[that.activeId].show();
+					that.slider.show();
 					that.activeMovie.unselect(obj.id);
 					return;
 				}
@@ -92,6 +94,8 @@ MT(
    
 		addPanels: function(){
 			
+			this.panel.content.style.paddingTop = "19px";
+			
 			this.leftPanel = this.ui.createPanel("me-layers");
 			this.rightPanel = this.ui.createPanel("me-frames");
 			
@@ -112,6 +116,7 @@ MT(
 			
 			this.rightPanel.fitIn();
 			this.rightPanel.style.left = 200+"px";
+			this.rightPanel.style.top = 19+"px";
 			this.rightPanel.style.width = "auto";
 			this.rightPanel.removeHeader();
 			this.rightPanel.removeClass("animated");
@@ -121,10 +126,11 @@ MT(
 			this.leftPanel.content.el.style.position = "relative";
 			this.leftPanel.content.el.style["min-height"] = "100%";
 			
+			
 			this.leftPanel.content.style.overflow = "visible";
 			this.rightPanel.content.style.overflow = "visible";
 			
-			this.rightPanel.content.style["overflow-y"] = "auto";
+			//this.rightPanel.content.style["overflow-y"] = "auto";
 			
 			this.rightPanel._input.onkeyup = function(e){
 				console.log(e.which);
@@ -218,6 +224,12 @@ MT(
 		},
 		_addMovie: function(name){
 			this.data.movies[name] = [this.collect(this.data)];
+			var m = this.movies[this.activeId];
+			m.activeMovie = name;
+			if(m){
+				m.rebuildData();
+			}
+			this.slider.show(this.rightPanel.content.el);
 		},
 		
 		activeMovie: null,
@@ -233,15 +245,18 @@ MT(
 				//this.updateScene();
 			}
 			
-			if(Object.keys(this.data.movies).length == 0){
-				return;
-			}
+			
 			
 			if(this.activeMovie){
 				this.activeMovie.hide();
+				this.slider.hide();
 			}
 			
 			this.movies[id] = new MT.ui.Keyframes(this, 60);
+			
+			if(Object.keys(this.data.movies).length == 0){
+				return;
+			}
 			
 			var that = this;
 			this.movies[id].on("select", function(data){
@@ -326,7 +341,11 @@ MT(
 		},
 		
 		getById: function(id){
-			return this.project.plugins.mapeditor.getById(id).data;
+			var mo = this.project.plugins.mapeditor.getById(id);
+			if(mo){
+				return mo.data;
+			}
+			return;
 		},
    
 		collect: function(data){
@@ -355,6 +374,9 @@ MT(
 			frame = frame || 0;
 			
 			var mo = this.project.plugins.mapeditor.getById(id);
+			if(!mo){
+				return;
+			}
 			mo.update(data);
 		},
 		

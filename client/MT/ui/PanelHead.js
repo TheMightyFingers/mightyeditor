@@ -32,6 +32,10 @@ MT.extend("ui.DomElement")(
 			return tab;
 		},
 		
+		allowRename: function(){
+			
+			
+		},
 		
 		removeTab: function(tab){
 			for(var i=0; i<this.tabs.length; i++){

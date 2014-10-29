@@ -42,6 +42,7 @@ MT(
 		KEYUP: "keyup",
 		DROP: "drop",
 		WHEEL: "wheel",
+		DBLCLICK: "dblclick",
 		
 		enable: function(){
 			var that = this;

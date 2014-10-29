@@ -3,7 +3,7 @@
 MT.extend("core.Emitter")(
 	MT.ui.Keyframes = function(mm, count){
 		var ui = mm.ui;
-		var dataIn = mm.data;
+		var dataIn = window.ddd = mm.data;
 		var d1 = mm.leftPanel.content;
 		var d2 = mm.rightPanel.content;
 		
@@ -64,30 +64,6 @@ MT.extend("core.Emitter")(
 			
 			that.showFrames();
 		});
-		this.tv.on("rename", function(el, oldName){
-			if(!el.data.isMovie){
-				return;
-			}
-			console.log("rename", el.data.name, oldName);
-			
-			
-			var t = that.dataIn.movies[oldName];
-			
-			delete that.dataIn.movies[oldName];
-			
-			that.dataIn.movies[el.data.name] = t;
-			
-			if(that.activeMovie == oldName){
-				that.activeMovie = el.data.name;
-			}
-			
-			that.hideFrames();
-			
-			that.buildData();
-			that.tv.merge(that.data);
-			
-		});
-		
 		
 		this.tv.enableInput(ui.events);
 		
@@ -115,43 +91,98 @@ MT.extend("core.Emitter")(
 		this.addControls();
 		
 		this.show();
+		
+		if(Object.keys(this.dataIn.movies).length == 0){
+			this.hide();
+		}
 	},
 	{
 		activeMovie: "",
 		
+		get isReady(){
+			return !!Object.keys(this.dataIn.movies).length;
+		},
+		
 		buildData: function(inp){
+			this.panels = {};
+			
 			inp = inp || this.dataIn;
-			var ret = [];
 			var movies = inp.movies;
+			
+			
 			var c = [inp];
+			var pp;
 			for(var key in movies){
 				if(this.activeMovie == ""){
 					this.activeMovie = key;
 				}
-				if(this.activeMovie == key){
-					ret.push({
-						name: key,
-						contents: c,
-						isClosed: false,
-						isMovie: true
-					});
+				if(pp){
+					this.createPanel(key, pp);
+				}
+				else{
+					pp = this.createPanel(key, pp);
 				}
 			}
-			for(var key in movies){
-				if(this.activeMovie !== key){
-					ret.push({
-						name: key,
-						contents: [],
-						isClosed: true,
-						isMovie: true
-					});
-				}
+			if(pp){
+				pp.show();
 			}
-			
-			
-			this.data = ret;
+			this.data = c;
 		},
 		
+		rebuildData: function(){
+			var pp;
+			var p;
+			for(var key in this.dataIn.movies){
+				if(!this.panels[key]){
+					p = this.createPanel(key, pp);
+					p.show();
+				}
+				else if(!pp){
+					pp = this.panels[key];
+				}
+			}
+			this.show();
+			this.panels[this.activeMovie].show();
+		},
+		
+		createPanel: function(name, pp){
+			var p = new MT.ui.Panel(name);
+			this.panels[name] = p;
+			p.hide();
+			p.fitIn();
+			
+			if(pp){
+				pp.addJoint(p);
+			}
+			else{
+				p.show(this.mm.panel.content.el);
+				p.fitIn();
+			}
+			p.el.style.height = "18px";
+			var that = this;
+			p.on("show", function(){
+				that.activeMovie = name;
+				that.updateFrames();
+			});
+			p.on("rename", function(n, o){
+				that.rename(n, o);
+			});
+			p.isRenamable = true;
+			return p;
+		},
+		rename: function(newName, oldName){
+			var t = this.dataIn.movies[oldName];
+			
+			delete this.dataIn.movies[oldName];
+			
+			this.dataIn.movies[newName] = t;
+			
+			if(this.activeMovie == oldName){
+				this.activeMovie = newName;
+			}
+			this.updateFrames();
+			
+		},
 		isVisible: false,
 		hide: function(){
 			if(!this.isVisible){
@@ -163,6 +194,11 @@ MT.extend("core.Emitter")(
 			if(this.controlsHolder.parentNode){
 				this.controlsHolder.parentNode.removeChild(this.controlsHolder);
 			}
+			
+			for(var key in this.panels){
+				this.panels[key].hide();
+			}
+			this.mm.leftPanel.style.borderRightStyle = "none";
 		},
 		hideFrames: function(){
 			var f;
@@ -178,6 +214,13 @@ MT.extend("core.Emitter")(
 			//this.d1.appendChild(this.tv);
 			this.tv.tree.show(this.d1.el);
 			this.showFrames();
+			
+			for(var key in this.panels){
+				this.panels[key].show();
+				break;
+			}
+			
+			this.mm.leftPanel.style.borderRightStyle = "solid";
 		},
 		showFrames: function(){
 			var it, f, b;
@@ -278,8 +321,15 @@ MT.extend("core.Emitter")(
 			}
 			
 			var mo = this.mm.getById(item.data.id);
+			if(!mo){
+				return;
+			}
 			if(!mo.movies){
 				mo.movies = {};
+			}
+			
+			if(!this.activeMovie){
+				return;
 			}
 			var frames = mo.movies[this.activeMovie];
 			if(!frames){
@@ -320,9 +370,80 @@ MT.extend("core.Emitter")(
 				this.controlsHolder.appendChild(c[k]);
 			}
 			
+			var isPlaying = false;
+			var currFrame = this.mm.activeFrame;
+			var that = this;
+			
+			var lastFrame = 0;
+			
+			var loop = function(){
+				if(!isPlaying){
+					return;
+				}
+				
+				that.mm.activeFrame++;
+				if(that.mm.activeFrame > lastFrame){
+					that.mm.activeFrame = 0;
+				}
+				
+				that.mm.changeFrame(that.mm.activeFrame);
+				
+				window.setTimeout(loop, 1000/60);
+			};
+			
+			var playPause = function(){
+				if(!isPlaying){
+					lastFrame =  that.getLastFrame();
+					c.play.className = "ui-keyframes-pause";
+					isPlaying = true;
+					loop();
+				}
+				else{
+					isPlaying = false;
+					c.play.className = "ui-keyframes-play";
+				}
+			};
+			
+			var stop = function(){
+				isPlaying = false;
+				that.mm.changeFrame(0);
+				c.play.className = "ui-keyframes-play";
+			};
+			
+			
+			this.controlsHolder.onmousedown = this.controlsHolder.onmouseup = function(e){
+				e.preventDefault();
+				e.stopPropagation();
+			};
+			
+			this.controlsHolder.onclick = function(e){
+				if(e.target == c.play){
+					playPause();
+					e.preventDefault();
+					e.stopPropagation();
+				}
+				if(e.target == c.stop){
+					stop();
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			};
 			this.controls = c;
 		},
-		
+		getLastFrame: function(){
+			var max = 0;
+			var m = this.dataIn.movies;
+			var l, mov;
+			for(var k in m){
+				mov = m[k];
+				l = mov[mov.length - 1];
+				if(max < l.frame){
+					max = l.frame;
+				}
+			}
+			
+			return max;
+		},
 		markFirstFrame: function(){
 			console.log("mark frames for movie", this.activeMovie);
 			console.log(this.mm.items);

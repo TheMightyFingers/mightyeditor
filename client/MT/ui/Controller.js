@@ -161,6 +161,22 @@ MT.extend("core.Emitter")(
 			
 			that.movePanel(activePanel, e);
 		});
+		
+		this.events.on(this.events.DBLCLICK, function(e){
+			console.log("rename");
+			if(!activePanel){
+				return;
+			}
+			if(!activePanel.isRenamable){
+				return;
+			}
+			
+			activePanel.startRename();
+			
+		});
+		
+		var prevClicked = null;
+		
 		this.events.on(this.events.MOUSEDOWN, function(e){
 			if(e.button != 0){
 				if(e.button == 1){
@@ -184,9 +200,14 @@ MT.extend("core.Emitter")(
 			}
 			
 			if(e.target.data && e.target.data.panel){
-				activePanel = e.target.data.panel;
+				
+				
+				if(e.target.data.panel !== prevClicked){
+					prevClicked = e.target.data.panel;
+					activePanel.show(null);
+				}
+				
 				activePanel.isNeedUnjoin = true;
-				activePanel.show(null);
 			}
 			else{
 				activePanel.isNeedUnjoin = false;
@@ -197,7 +218,7 @@ MT.extend("core.Emitter")(
 			
 			window.x = activePanel;
 			window.setTimeout(function(){
-			activePanel.focus();
+				activePanel.focus();
 			},0);
 		});
 		

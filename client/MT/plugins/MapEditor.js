@@ -1761,86 +1761,20 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			sp = group.create(obj.x, obj.y, obj.assetId);
-			
-			this.inheritSprite(sp, obj);
-			
-			
-			var frameData = game.cache.getFrameData(obj.assetId);
-			
-			if(frameData){
-				//sp.animations.add("default");
-			}
-			
 			return sp;
 		},
-		
-		inheritSprite: function(sp, obj){
-			console.log("removed");
-			return;
-			sp.xxx = obj;
-			
-			sp.anchor.x = obj.anchorX;
-			sp.anchor.y = obj.anchorY;
-			
-			sp.x = obj.x;
-			sp.y = obj.y;
-			
-			sp.angle = obj.angle;
-			if(obj.alpha == void(0)){
-				sp.alpha = 1;
-			}
-			
-			obj._framesCount = 0;
-			
-			
-			if(obj.frame){
-				sp.frame = obj.frame;
-			}
-			
-			/*if(obj.width && obj.height && sp.scale.x == obj.scaleX && sp.scale.y == obj.scaleY){
-				if(obj.width != sp.width || obj.height != sp.height){
-					sp.width = obj.width;
-					sp.height = obj.height;
-					
-					obj.scaleX = sp.scale.x;
-					obj.scaleY = sp.scale.y;
-				}
-			}*/
-			
-			/*if(obj.scaleX != void(0)){
-				if(sp.scale.x != obj.scaleX || sp.scale.y != obj.scaleY){
-					sp.scale.x = obj.scaleX;
-					sp.scale.y = obj.scaleY;
-					//obj.width = sp.width;
-					//obj.height = sp.height;
-				}
-			}*/
-			
-			
-			
-			sp.visible = !!obj.isVisible;
-			
-		},
-		
 		
 		isGroupSelected: function(group){
 			return false;
 		},
 		
-		updateSelected: function(){
-			console.log("removed");
-			
-			
-			return;
-			if(!this.activeObject){
-				return;
-			}
-			this.activeObject = this.getById(this.activeObject.id);
-		},
-		
 		/* TODO: refactor so all can use MagicObject */
 		getById: function(id){
 			for(var i=0; i<this.loadedObjects.length; i++){
+				if(!this.loadedObjects[i].data){
+					console.warn("smth wrong");
+					continue;
+				}
 				if(this.loadedObjects[i].data.id == id){
 					return this.loadedObjects[i];
 				}

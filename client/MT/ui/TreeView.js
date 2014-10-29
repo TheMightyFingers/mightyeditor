@@ -684,10 +684,7 @@ MT.extend("core.Emitter")(
 				len += tmp[i].length+1;
 			}
 			
-			
-			
 			this.input.setSelectionRange(0, len);
-			
 			
 			this.inputEnabled = true;
 			

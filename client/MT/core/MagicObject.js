@@ -952,8 +952,8 @@ MT(
 		set x(x){
 			
 			if(x == void(0) || isNaN(x)){
-				throw new Error("x = nan?");
-				return;
+				//throw new Error("x = nan?");
+				return 0;
 			}
 			
 			this.object.x = x;
@@ -961,7 +961,7 @@ MT(
 			this.updateBox();
 		},
 		get x(){
-			return this.data.x;
+			return this.data.x || 0;
 		},
 		
 		set y(y){

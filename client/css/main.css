@@ -691,6 +691,13 @@ input.ui-input, textarea.ui-input{
 	font-weight: bold;
 }
 
+input.ui-input.ui-panel-rename{
+margin-left: 10px;
+margin-top: 2px;
+font-size: 11px;
+}
+
+
 input.ui-input.ui-input-helper{
 	margin: 0;
 	margin-top: 2px;
@@ -1351,8 +1358,10 @@ text-align: center;
 line-height: 18px;
 text-indent: 1px;
 }
-.ui-keyframes-controls{
-	float: right;
+.ui-keyframes-controls {
+float: right;
+position: relative;
+z-index: 2;
 }
 
 .ui-keyframes-play, .ui-keyframes-pause, .ui-keyframes-stop{
