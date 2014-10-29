@@ -1,7 +1,12 @@
 this.config = {
 	root: "../client",
-	host: "85.31.102.56",
+	host: "123.123.123.123",
 	port: 8080,
-	shutdownTimeout: 1,
-	index: "index.html"
+	shutdownTimeout: 3,
+	index: "index.html",
+	prefix: "p",
+	servers: {
+		p: "tools.mightyfingers.com"
+	},
+	projectsPath: "../client/data/projects"
 };
