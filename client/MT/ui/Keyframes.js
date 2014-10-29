@@ -432,16 +432,20 @@ MT.extend("core.Emitter")(
 		},
 		getLastFrame: function(){
 			var max = 0;
-			var m = this.dataIn.movies;
-			var l, mov;
-			for(var k in m){
-				mov = m[k];
+			var items = this.mm.items;
+			var m, l, mov;
+			
+			for(var key in items){
+				m = items[key].movies;
+				if(!m){
+					return;
+				}
+				mov = m[this.activeMovie];
 				l = mov[mov.length - 1];
 				if(max < l.frame){
 					max = l.frame;
 				}
 			}
-			
 			return max;
 		},
 		markFirstFrame: function(){
