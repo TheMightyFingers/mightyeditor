@@ -12,7 +12,7 @@ MT.require("plugins.Physics");
 MT.require("plugins.UserData");
 MT.require("plugins.TooltipManager");
 MT.require("plugins.Notification");
-MT.require("plugins.MovieMaker");
+//MT.require("plugins.MovieMaker");
 
 MT.DROP = "drop";
 
@@ -51,8 +51,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"Physics",
 			"UserData",
 			"TooltipManager",
-			"Notification",
-			"MovieMaker"
+			"Notification"
+			//"MovieMaker"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
