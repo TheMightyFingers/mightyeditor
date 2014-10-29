@@ -49,7 +49,7 @@ MT(
 			var that = this;
 			this.tools.on(MT.OBJECT_SELECTED, function(obj){
 				
-				if(that.items && that.items[obj.id] && !that.movies[obj.id]){
+				if(that.items && that.items[obj.id]){
 					that.movies[that.activeId].show();
 					that.slider.show();
 					that.activeMovie.setActiveObject(obj.id);
@@ -235,6 +235,11 @@ MT(
 		activeMovie: null,
 		items: null,
 		setActive: function(id){
+			this.items = {};
+			if(this.movies[this.activeId]){
+				this.movies[this.activeId].hide();
+			}
+			
 			this.activeId = id;
 			
 			this.data = this.om.getById(id);
@@ -273,7 +278,6 @@ MT(
 		},
 		
 		collectItems: function(){
-			this.items = {};
 			this._collectItems(this.data);
 		},
 		_collectItems: function(data){
