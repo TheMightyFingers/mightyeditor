@@ -88,7 +88,21 @@ MT(
 			this.slider.addClass("ui-movie-slider");
 			this.slider.setAbsolute();
 			
+			this.sidebar = new MT.ui.DomElement("div");
+			this.sidebar.addClass("ui-movie-sidebar");
+			this.sidebar.setAbsolute();
 			
+			
+			this.buttons = {
+				saveKeyFrame: new MT.ui.Button("", "ui-movie-saveKeyFrame", null, function(e){
+					console.log("CLICK");
+					
+					e.preventDefault();
+					e.stopPropagation();
+				})
+			};
+			
+			this.buttons.saveKeyFrame.show(this.sidebar.el);
 			
 		},
    
@@ -103,7 +117,7 @@ MT(
 			this.leftPanel.hide().show(this.el.el);
 			
 			this.leftPanel.fitIn();
-			this.leftPanel.width = 200;
+			this.leftPanel.width = 270;
 			this.leftPanel.style.setProperty("border-right", "solid 1px #000");
 			this.leftPanel.isResizeable = true;
 			this.leftPanel.removeHeader();
@@ -115,7 +129,7 @@ MT(
 			this.rightPanel.hide().show(this.el.el);
 			
 			this.rightPanel.fitIn();
-			this.rightPanel.style.left = 200+"px";
+			this.rightPanel.style.left = 270+"px";
 			this.rightPanel.style.top = 19+"px";
 			this.rightPanel.style.width = "auto";
 			this.rightPanel.removeHeader();
@@ -182,7 +196,7 @@ MT(
 					off += e.target.offsetLeft;
 				}
 					sl.reset(off);
-					that.changeFrame(sl / that.frameSize);
+					that.changeFrame((sl - that.frameOffset) / that.frameSize);
 			};
 			
 			
@@ -199,7 +213,7 @@ MT(
 				}
 				
 				sl.change(that.ui.events.mouse.mx);
-				that.changeFrame(sl / that.frameSize);
+				that.changeFrame((sl - that.frameOffset) / that.frameSize);
 			});
 			this.ui.events.on("mouseup", function(e){
 				down = false;
@@ -229,9 +243,18 @@ MT(
 			if(m){
 				m.rebuildData();
 			}
-			this.slider.show(this.rightPanel.content.el);
+			this.showHelpers();
+			
 		},
 		
+   
+		showHelpers: function(){
+			this.slider.show(this.rightPanel.content.el);
+			this.sidebar.show(this.rightPanel.content.el);
+			
+			this.sidebar.width = this.frameOffset;
+			
+		},
 		activeMovie: null,
 		items: null,
 		setActive: function(id){
@@ -267,12 +290,17 @@ MT(
 			this.movies[id].on("select", function(data){
 				that.project.plugins.objectmanager.emit(MT.OBJECT_SELECTED, data);
 			});
-			this.slider.show(this.rightPanel.content.el);
+			this.showHelpers();
 			
 			this.activeMovie = this.movies[id];
 			
 			this.collectItems();
-			
+			if(!this.activeFrame){
+				this.changeFrame(0);
+			}
+			else{
+				this.changeFrame(this.activeFrame);
+			}
 			this.activeMovie.markFirstFrame();
 			
 		},
@@ -291,13 +319,14 @@ MT(
 			}
 		},
 		
+		frameOffset: 40,
 		changeFrame: function(frameApprox){
 			var sl = this.sliderHelper;
 			var frame = Math.floor(frameApprox);
 			if(frame < 0){
-				frame = 0;
+				return;
 			}
-			this.slider.x = frame * this.frameSize + (this.frameSize - this.slider.width)*0.5;
+			this.slider.x = frame * this.frameSize + (this.frameSize - this.slider.width)*0.5 + this.frameOffset;
 			
 			
 			console.log("change frame", frame);
@@ -395,34 +424,6 @@ MT(
 			
 			
 		},
-   
-		interpolate_old: function(){
-			var i, f1, f2, t;
-			for(i=this.activeFrame; i>-1; i--){
-				if(this.data.kf[i]){
-					f1 = i;
-					break;
-				}
-			}
-			
-			
-			for(i=f1+1; i<this.data.kf.length; i++){
-				if(this.data.kf[i]){
-					f2 = i;
-					break;
-				}
-			}
-			t = (this.activeFrame - f1) / (f2 - f1);
-			
-			var d1 = this.data.kf[f1];
-			var d2 = this.data.kf[f2];
-			
-			if(!d2 || isNaN(t)){
-				return;
-			}
-			this.doInterpolate(t, d1, d2);
-		},
-   
    
 		doInterpolate: function(t, d1, d2){
 			var med = this.buildTmpVals(t, d1, d2);

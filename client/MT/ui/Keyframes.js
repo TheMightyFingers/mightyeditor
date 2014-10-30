@@ -15,9 +15,8 @@ MT.extend("core.Emitter")(
 		this.buildData(dataIn);
 		
 		this.tv = new MT.ui.TreeView(JSON.parse(JSON.stringify(this.data)), {root: pp.path});
-		
-		this.tv.tree.style.paddingTop = "30px";
-		
+		this.tv.tree.addClass("ui-keyframes-tree");
+
 		var select = function(data, el){
 			if(data.isMovie){
 				that.unselect();
@@ -168,6 +167,7 @@ MT.extend("core.Emitter")(
 				that.rename(n, o);
 			});
 			p.isRenamable = true;
+			p.removeBorder();
 			return p;
 		},
 		rename: function(newName, oldName){
@@ -225,29 +225,27 @@ MT.extend("core.Emitter")(
 		showFrames: function(){
 			var it, f, b;
 			var t = 7;
-			var shouldBreak = false;
 			var db = this.d2.bounds;
 			for(var i=0; i<this.framesHolders.length; i++){
 				f = this.framesHolders[i];
-
-				if(this.tv.items[i].data.isMovie){
-					if(shouldBreak){
-						break;
-					}
-					f.addClass("top");
-					shouldBreak = true;
-				}
-				else{
-					f.removeClass("top");
-				}
-				
-				
 				it = this.tv.items[i].head;
 				if(it.isVisible){
 					b = it.bounds;
 
-					f.style.top = (b.top - db.top + this.d2.el.scrollTop +1)+"px";
-					f.style.height = b.height + "px";
+					
+					
+					if(i==0){
+						f.addClass("top");
+						f.style.height = b.height + 2 +"px";
+						f.style.top = (b.top - db.top + this.d2.el.scrollTop -1)+"px";
+					}
+					else{
+						f.removeClass("top");
+						f.style.height = b.height + "px";
+						f.style.top = (b.top - db.top + this.d2.el.scrollTop +1)+"px";
+					}
+					
+					
 					if(b.height > 0){
 						this.d2.el.appendChild(f.el);
 					}
@@ -345,7 +343,7 @@ MT.extend("core.Emitter")(
 				el.className = "ui-kf-frame";
 				track.appendChild(el);
 				el.style.width = this.mm.frameSize + "px";
-				el.style.left = (frame * this.mm.frameSize) + "px";
+				el.style.left = (frame * this.mm.frameSize + this.mm.frameOffset) + "px";
 				el.setAttribute("frame", frame);
 			}
 			
@@ -365,6 +363,10 @@ MT.extend("core.Emitter")(
 			c.stop.className = "ui-keyframes-stop";
 			
 			this.d1.el.appendChild(this.controlsHolder);
+			
+			c.delete = document.createElement("div");
+			c.delete.className = "ui-keyframes-delete";
+			
 			
 			for(var k in c){
 				this.controlsHolder.appendChild(c[k]);
