@@ -183,6 +183,19 @@ MT.extend("core.Emitter")(
 			this.updateFrames();
 			
 		},
+		
+		remove: function(name){
+			delete this.dataIn.movies[name];
+			this.panels[name].close();
+			
+			
+			var k = Object.keys(this.dataIn.movies);
+			if(!k.length){
+				this.hide();
+			}
+			this.activeMovie = k[0];
+			this.updateFrames();
+		},
 		isVisible: false,
 		hide: function(){
 			if(!this.isVisible){
@@ -228,12 +241,10 @@ MT.extend("core.Emitter")(
 			var db = this.d2.bounds;
 			for(var i=0; i<this.framesHolders.length; i++){
 				f = this.framesHolders[i];
+				var data = this.tv.items[i].data
 				it = this.tv.items[i].head;
 				if(it.isVisible){
 					b = it.bounds;
-
-					
-					
 					if(i==0){
 						f.addClass("top");
 						f.style.height = b.height + 2 +"px";
@@ -245,6 +256,8 @@ MT.extend("core.Emitter")(
 						f.style.top = (b.top - db.top + this.d2.el.scrollTop +1)+"px";
 					}
 					
+					
+					f.el.data = data;
 					
 					if(b.height > 0){
 						this.d2.el.appendChild(f.el);
@@ -429,6 +442,9 @@ MT.extend("core.Emitter")(
 					e.preventDefault();
 					e.stopPropagation();
 				}
+				if(e.target == c.delete){
+					that.remove(that.activeMovie);
+				}
 			};
 			this.controls = c;
 		},
@@ -443,6 +459,9 @@ MT.extend("core.Emitter")(
 					return;
 				}
 				mov = m[this.activeMovie];
+				if(!mov.length){
+					continue;
+				}
 				l = mov[mov.length - 1];
 				if(max < l.frame){
 					max = l.frame;

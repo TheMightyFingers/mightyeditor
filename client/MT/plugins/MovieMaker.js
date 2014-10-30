@@ -48,18 +48,7 @@ MT(
 			this.tools = this.project.plugins.tools;
 			var that = this;
 			this.tools.on(MT.OBJECT_SELECTED, function(obj){
-				
-				if(that.items && that.items[obj.id]){
-					that.movies[that.activeId].show();
-					that.slider.show();
-					that.activeMovie.setActiveObject(obj.id);
-					return;
-				}
-				
-				that.setActive(obj.id);
-				if(that.activeMovie){
-					that.activeMovie.setActiveObject(obj.id);
-				}
+				that.selectObject(obj);
 			});
 			this.tools.on(MT.OBJECT_UNSELECTED, function(obj){
 				/*for(var i in that.movies){
@@ -96,7 +85,7 @@ MT(
 			this.buttons = {
 				saveKeyFrame: new MT.ui.Button("", "ui-movie-saveKeyFrame", null, function(e){
 					console.log("CLICK");
-					
+					that.addFrame();
 					e.preventDefault();
 					e.stopPropagation();
 				})
@@ -188,7 +177,13 @@ MT(
 			
 			var down = false;
 			this.rightPanel.content.el.onmousedown = function(e){
-				down = true;
+				console.log(e.target.data);
+				
+				if(e.target.data){
+					that.project.plugins.objectmanager.emit(MT.OBJECT_SELECTED, e.target.data);
+				}
+				
+				
 				var off = e.offsetX;
 				
 				
@@ -196,7 +191,11 @@ MT(
 					off += e.target.offsetLeft;
 				}
 					sl.reset(off);
-					that.changeFrame((sl - that.frameOffset) / that.frameSize);
+					var f = (sl - that.frameOffset) / that.frameSize;
+					if(f > -1){
+						down = true;
+						that.changeFrame(f);
+					}
 			};
 			
 			
@@ -213,6 +212,7 @@ MT(
 				}
 				
 				sl.change(that.ui.events.mouse.mx);
+				
 				that.changeFrame((sl - that.frameOffset) / that.frameSize);
 			});
 			this.ui.events.on("mouseup", function(e){
@@ -221,6 +221,22 @@ MT(
 			
 		},
 		
+		selectObject: function(obj){
+		
+			if(this.items && this.items[obj.id]){
+				this.movies[this.activeId].show();
+				this.slider.show();
+				this.activeMovie.setActiveObject(obj.id);
+				return;
+			}
+			
+			this.setActive(obj.id);
+			if(this.activeMovie){
+				this.activeMovie.setActiveObject(obj.id);
+			}
+			
+		},
+   
 		addMovie: function(){
 			if(!this.data){
 				return;
@@ -324,7 +340,7 @@ MT(
 			var sl = this.sliderHelper;
 			var frame = Math.floor(frameApprox);
 			if(frame < 0){
-				return;
+				frame = 0;
 			}
 			this.slider.x = frame * this.frameSize + (this.frameSize - this.slider.width)*0.5 + this.frameOffset;
 			

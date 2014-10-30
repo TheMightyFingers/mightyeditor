@@ -1361,7 +1361,6 @@ line-height: 18px;
 text-indent: 1px;
 }
 .ui-keyframes-controls {
-float: right;
 position: relative;
 z-index: 2;
 margin-right: 4px;
@@ -1375,9 +1374,15 @@ border: solid 1px #676767;
 box-shadow: inset 0 0 0px 1px #1e1a1a;
 cursor: pointer;
 margin: 3px 1px;
-float: left;
+float: right;
 background: linear-gradient(to top, rgba(49,49,49,0.9) 0%,rgba(79,79,79,0.9) 100%);
 position: relative;
+}
+
+
+.ui-keyframes-delete {
+	left: 0;
+	position: absolute !important;
 }
 
 .ui-keyframes-controls > div:hover, .ui-button.ui-movie-saveKeyFrame:hover {
@@ -1404,7 +1409,8 @@ position: relative;
 	cursor: pointer;
 	margin: 3px 1px;
 	float: left;
-	background: linear-gradient(to top, rgba(49,49,49,0.9) 0%,rgba(79,79,79,0.9) 100%);
+	/*background: linear-gradient(to top, rgba(49,49,49,0.9) 0%,rgba(79,79,79,0.9) 100%);*/
+	background: linear-gradient(to top, rgba(49,49,49,0.9) 0%,rgba(79,79,79,0.5) 100%);
 	position: relative;
 	margin-left: 6px;
 }
@@ -1423,6 +1429,11 @@ position: relative;
 .ui-movie-saveKeyFrame:after {
 	background-image: url("../img/icons/timeline/set.png");
 }
+
+.ui-keyframes-delete:after {
+	background-image: url("../img/icons/timeline/trash.png");
+}
+
 .ui-movie-saveKeyFrame:after {
 	position: absolute;
 	left: 5px;
