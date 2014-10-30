@@ -385,7 +385,7 @@
 			}
 			
 			if(asset.atlas){
-				this.game.load.atlas(asset.key, this.assetsPath + asset.fullPath, this.assetsPath + "/" + asset.atlas);
+				this.game.load.atlas(asset.key, this.assetsPath + asset.fullPath, this.assetsPath + "/" + asset.atlas, null,  asset.type);
 			}
 			else if(asset.width != asset.frameWidth || asset.height != asset.frameHeight){
 				this.game.load.spritesheet(asset.key, this.assetsPath + asset.fullPath, asset.frameWidth, asset.frameHeight, asset.frameMax, asset.margin, asset.spacing);
