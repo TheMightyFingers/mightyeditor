@@ -306,9 +306,6 @@ MT.extend("core.Emitter")(
 		},
 		
 		updateFrames: function(){
-			
-			console.log("UPDATE!!!!");
-			
 			var it = this.tv.items;
 			var f;
 			for(var i=0; i<it.length; i++){
@@ -322,7 +319,7 @@ MT.extend("core.Emitter")(
 		},
 		
 		makeControls: function(){
-			console.log("make controls", this.tv.items[0]);
+			//console.log("make controls", this.tv.items[0]);
 		},
 		
 		
@@ -350,13 +347,20 @@ MT.extend("core.Emitter")(
 			var frame = 0;
 			var el;
 			
+			var startFrame = this.mm.startFrame;
+			
 			for(var i=0; i<frames.length; i++){
 				frame = frames[i].frame;
+				if(frame < startFrame){
+					continue;
+				}
+				
+				
 				el = document.createElement("span");
 				el.className = "ui-kf-frame";
 				track.appendChild(el);
 				el.style.width = this.mm.frameSize + "px";
-				el.style.left = (frame * this.mm.frameSize + this.mm.frameOffset) + "px";
+				el.style.left = (frame * this.mm.frameSize + this.mm.frameOffset) - startFrame*this.mm.frameSize + "px";
 				el.setAttribute("frame", frame);
 			}
 			
@@ -403,7 +407,7 @@ MT.extend("core.Emitter")(
 				
 				that.mm.changeFrame(that.mm.activeFrame);
 				
-				window.setTimeout(loop, 1000/60);
+				window.setTimeout(loop, 1000/that.getFps());
 			};
 			
 			var playPause = function(){
@@ -468,6 +472,9 @@ MT.extend("core.Emitter")(
 				}
 			}
 			return max;
+		},
+		getFps: function(){
+			return 60;
 		},
 		markFirstFrame: function(){
 			console.log("mark frames for movie", this.activeMovie);

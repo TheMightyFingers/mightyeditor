@@ -236,9 +236,6 @@ MT(
 			if(data){
 				for(var i in data){
 					this.data[i] = data[i];
-					if(i == "scaleX"){
-						console.log("scaleX", data[i], this.scaleX);
-					}
 				}
 				
 			}
@@ -282,7 +279,6 @@ MT(
 			if(this.data.scaleX){
 				this.object.scale.x = this.scaleX;
 				this.object.scale.y = this.scaleY;
-				//console.log(this.scaleX, this.scaleY);
 			}
 			
 			this.map.resort();
@@ -678,7 +674,6 @@ MT(
 				this.data.angle = this.object.angle;
 				
 				if(e.ctrlKey){
-					console.log(Math.abs(this.object.rotation - rot));
 					this.object.angle = Math.round(this.object.angle / 15)*15;
 					this.data.angle = this.object.angle;
 				}
@@ -1109,7 +1104,7 @@ MT(
 		},
 		
 		set style(val){
-			console.log("do not se style");
+			console.log("do not set style!!");
 			return;
 			this.data.style = val;
 			this.object.style = val;
