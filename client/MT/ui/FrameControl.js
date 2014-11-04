@@ -31,7 +31,7 @@ MT.extend("core.Emitter")(
 		
 		this.sliderContainer.appendChild(this.slider);
 		
-		this.mm.rightPanel.el.appendChild(this.sliderContainer);
+		//this.mm.rightPanel.el.appendChild(this.sliderContainer);
 		
 		var mdown = false;
 		var that = this;
@@ -178,6 +178,7 @@ MT.extend("core.Emitter")(
 			
 			this.sepHolder.appendChild(this.handle);
 			this.adjustHandle();
+			this.mm.rightPanel.el.appendChild(this.sliderContainer);
 		},
 		
 		adjustHandle: function(){

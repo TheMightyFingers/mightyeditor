@@ -477,6 +477,8 @@ MT.extend("core.Emitter")(
 			return 60;
 		},
 		markFirstFrame: function(){
+			this.mm.changeFrame(0);
+			
 			console.log("mark frames for movie", this.activeMovie);
 			console.log(this.mm.items);
 			var item, frameData;
@@ -491,7 +493,7 @@ MT.extend("core.Emitter")(
 				frameData = item.movies[this.activeMovie][0];
 				if(frameData){
 					if(frameData.frame == void(0)){
-						frameData.frame = this.mm.activeFrame;
+						frameData.frame = 0;
 					}
 					this.mm.loadState(i, frameData, 0);
 				}

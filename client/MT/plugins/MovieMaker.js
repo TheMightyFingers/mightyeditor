@@ -280,6 +280,8 @@ MT(
 		},
 		_addMovie: function(name){
 			this.data.movies[name] = [this.collect(this.data)];
+			this.setActive(this.activeId);
+			
 			var m = this.movies[this.activeId];
 			m.activeMovie = name;
 			if(m){
@@ -453,7 +455,9 @@ MT(
 			var k;
 			for(var i=0; i<this.keys.length; i++){
 				k = this.keys[i];
-				out[k] = data[k];
+				if(data[k] != void(0)){
+					out[k] = data[k];
+				}
 			}
 			return out;
 		},
