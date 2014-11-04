@@ -151,18 +151,27 @@ MT.extend("core.Emitter")(
 			}
 			
 			var off = 0;
+			var rightBorder = 0;
 			for(var i=0; i<totTime + start+5; i++){
 				if( (i) % 2){
 					off += framesize*fps ;
 					continue;
 				}
+				
+				rightBorder = framesize*(fps) + (-this.mm.startFrame*framesize + off);
+				if(rightBorder < 0){
+					off += framesize*fps ;
+					continue;
+				}
+				
 				el = document.createElement("div");
 				el.className = "ui-frame-seconds";
 				el.style.width = framesize*(fps) + "px";
 				el.style.left = -this.mm.startFrame*framesize + off+"px";
-				off += framesize*fps ;
+				
 				this.background.appendChild(el);
 				
+				off += framesize*fps;
 			}
 			
 			

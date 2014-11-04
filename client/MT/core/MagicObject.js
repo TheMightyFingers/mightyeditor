@@ -969,6 +969,9 @@ MT(
 		},
    
 		set angle(val){
+			if(isNaN(val)){
+				val = 0;
+			}
 			this.object.angle = val;
 			this.data.angle = val;
 			this.updateBox();

@@ -284,6 +284,7 @@ MT(
 			m.activeMovie = name;
 			if(m){
 				m.rebuildData();
+				m.markFirstFrame();
 			}
 			this.showHelpers();
 			
@@ -304,7 +305,8 @@ MT(
 			this.activeMovie.hide();
 			this.slider.hide();
 			this.frameControl.clear();
-			
+			this.sidebar.hide();
+			console.log("hide");
 		},
 		
 		activeMovie: null,
