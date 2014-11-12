@@ -179,6 +179,7 @@ MT.extend("core.Emitter")(
 		
 		
 		rename: function(newName, oldName){
+			var item, movie;
 			
 			for(var i in this.mm.items){
 				item = this.mm.items[i];
