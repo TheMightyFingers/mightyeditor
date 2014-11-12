@@ -2,7 +2,6 @@ MT.extend("core.Emitter")(
 	MT.ui.FrameControl = function(mm){
 		this.mm = mm;
 		this.el = new MT.ui.DomElement("div");
-		this.el.style.pointerEvents = "none";
 		
 		this.el.addClass("ui-frame-control");
 		
@@ -31,7 +30,7 @@ MT.extend("core.Emitter")(
 		
 		this.sliderContainer.appendChild(this.slider);
 		
-		//this.mm.rightPanel.el.appendChild(this.sliderContainer);
+		this.showSlider();
 		
 		var mdown = false;
 		var that = this;
@@ -96,6 +95,10 @@ MT.extend("core.Emitter")(
 			
 		});
 		
+		
+			
+		
+		
 		this.labels = [];
 	},
 	{
@@ -106,8 +109,11 @@ MT.extend("core.Emitter")(
 			var m = this.mm.getActiveMovie();
 			var len = m.getLastFrame();
 			var framesize = this.mm.frameSize;
-			this.el.style.marginLeft = Math.floor(this.mm.frameOffset + framesize*0.5) + "px";
-			this.handle.style.marginLeft = -Math.floor(this.mm.frameOffset + framesize*0.5) + "px";
+			
+			var drawOffset = Math.floor(this.mm.frameOffset + framesize*0.5);
+			
+			//this.el.style.marginLeft = Math.floor(this.mm.frameOffset + framesize*0.5) + "px";
+			//this.handle.style.marginLeft = -Math.floor(this.mm.frameOffset + framesize*0.5) + "px";
 			
 			var width = this.mm.rightPanel.width;
 			
@@ -133,7 +139,7 @@ MT.extend("core.Emitter")(
 				el = document.createElement("span");
 				this.sepHolder.appendChild(el);
 				el.className = "ui-frame-sep";
-				el.style.left = i*framesize;
+				el.style.left = i*framesize + drawOffset;
 				info = i + this.mm.startFrame;
 				
 				if((info+"").length > 2){
@@ -159,7 +165,7 @@ MT.extend("core.Emitter")(
 				}
 				
 				rightBorder = framesize*(fps) + (-this.mm.startFrame*framesize + off);
-				if(rightBorder < 0){
+				if(rightBorder < -40){
 					off += framesize*fps ;
 					continue;
 				}
@@ -167,7 +173,7 @@ MT.extend("core.Emitter")(
 				el = document.createElement("div");
 				el.className = "ui-frame-seconds";
 				el.style.width = framesize*(fps) + "px";
-				el.style.left = -this.mm.startFrame*framesize + off+"px";
+				el.style.left = -this.mm.startFrame*framesize + off + drawOffset + "px";
 				
 				this.background.appendChild(el);
 				
@@ -178,24 +184,37 @@ MT.extend("core.Emitter")(
 			
 			this.sepHolder.appendChild(this.handle);
 			this.adjustHandle();
-			this.mm.rightPanel.el.appendChild(this.sliderContainer);
+			
+			
+			this.showSlider();
 		},
 		
 		adjustHandle: function(){
 			this.handle.style.left = this.mm.slider.x  - this.handle.offsetWidth*0.5 + this.mm.slider.width*0.5 + "px";
 			this.handle.innerHTML = this.mm.activeFrame;
 		},
-   
-   
+		
 		clear: function(){
+			//this.el.hide();
+			this.sepHolder.innerHTML = "";
+			this.background.innerHTML = "";
+			
 			if(this.handle.parentNode){
 				this.handle.parentNode.removeChild(this.handle);
 			}
-			this.sepHolder.innerHTML = "";
-			this.background.innerHTML = "";
-		}
+			
+			this.hideSlider();
+		},
 		
+		showSlider: function(){
+			this.mm.rightPanel.el.appendChild(this.sliderContainer);
+		},
 		
-		
+		hideSlider: function(){
+			if(!this.sliderContainer.parentNode){
+				return;
+			}
+			this.sliderContainer.parentNode.removeChild(this.sliderContainer);
+		},
 	}
 );

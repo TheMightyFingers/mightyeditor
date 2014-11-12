@@ -1,3 +1,4 @@
+"use strict";
 MT.keys = MT.core.keys = {
 	ESC: 27,
 	ENTER: 13,
@@ -6,14 +7,13 @@ MT.keys = MT.core.keys = {
 	RIGHT: 39,
 	DOWN: 40,
 	DELETE: 46,
-	A: 65,
-	B: 66,
-	C: 67,
-	D: 68,
-	V: 86,
 	TAB: 9,
 	SPACE: 32
 };
+// A-Z
+for(var i=65; i<91; i++){
+	MT.keys[String.fromCharCode(i)] = i;
+}
 
 MT.const = {
 	IMAGES: "image/*",

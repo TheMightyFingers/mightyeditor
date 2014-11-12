@@ -7,6 +7,8 @@ MT.extend("core.Emitter")(
 		var d1 = mm.leftPanel.content;
 		var d2 = mm.rightPanel.content;
 		
+		this.frameHolderWrapper = document.createElement("div");
+		this.frameHolderWrapper.className = "ui-frameHolderWrapper";
 		
 		this.mm = mm;
 		
@@ -16,7 +18,12 @@ MT.extend("core.Emitter")(
 		
 		this.tv = new MT.ui.TreeView(JSON.parse(JSON.stringify(this.data)), {root: pp.path});
 		this.tv.tree.addClass("ui-keyframes-tree");
-
+		
+		this.tv.tree.el.onscroll = function(){
+			that.hideFrames();
+			that.showFrames();
+		};
+		
 		var select = function(data, el){
 			if(data.isMovie){
 				that.unselect();
@@ -27,10 +34,8 @@ MT.extend("core.Emitter")(
 			
 			if(!data.isMovie || that.activeMovie == data.name){
 				that.hideFrames();
-				that.showFrames();
-				that.markActive( data );
-				
 				that.emit("select",data);
+				that.showFrames();
 				return;
 			}
 			
@@ -161,6 +166,7 @@ MT.extend("core.Emitter")(
 			var that = this;
 			p.on("show", function(){
 				that.activeMovie = name;
+				that.mm.changeFrame(0);
 				that.updateFrames();
 			});
 			p.on("rename", function(n, o){
@@ -170,12 +176,16 @@ MT.extend("core.Emitter")(
 			p.removeBorder();
 			return p;
 		},
+		
+		
 		rename: function(newName, oldName){
-			var t = this.dataIn.movies[oldName];
 			
-			delete this.dataIn.movies[oldName];
-			
-			this.dataIn.movies[newName] = t;
+			for(var i in this.mm.items){
+				item = this.mm.items[i];
+				movie = item.movies[oldName];
+				delete item.movies[oldName];
+				item.movies[newName] = movie;
+			}
 			
 			if(this.activeMovie == oldName){
 				this.activeMovie = newName;
@@ -184,17 +194,47 @@ MT.extend("core.Emitter")(
 			
 		},
 		
+		removeConf: function(name){
+			var pop = new MT.ui.Popup("Delete movie?", "Are you sure you want to delete movie: " + MT.core.Helper.htmlEntities(name) + "?");
+			var that = this;
+			pop.addButton("no", function(){
+				pop.hide();
+			});
+			
+			pop.addButton("yes", function(){
+				that.remove(name);
+				pop.hide();
+			});
+			
+			pop.showClose();
+		},
+		
 		remove: function(name){
-			delete this.dataIn.movies[name];
+			var item, movie;
+			for(var i in this.mm.items){
+				item = this.mm.items[i];
+				movie = item.movies[name];
+				delete item.movies[name];
+			}
+			
+			
+			
+			//delete this.dataIn.movies[name];
 			this.panels[name].close();
 			
 			
 			var k = Object.keys(this.dataIn.movies);
 			if(!k.length){
-				this.hide();
+				console.log("NO more movies");
+				this.mm.clear();
+				this.activeMovie = null;
+				return;
 			}
+			
 			this.activeMovie = k[0];
 			this.updateFrames();
+			
+			return 
 		},
 		isVisible: false,
 		hide: function(){
@@ -214,7 +254,10 @@ MT.extend("core.Emitter")(
 			this.mm.leftPanel.style.borderRightStyle = "none";
 		},
 		hideFrames: function(){
-			var f;
+			if(this.frameHolderWrapper.parentNode){
+				this.frameHolderWrapper.parentNode.removeChild(this.frameHolderWrapper);
+			}
+			
 			for(var i=0; i<this.framesHolders.length; i++){
 				this.framesHolders[i].hide();
 			}
@@ -235,38 +278,63 @@ MT.extend("core.Emitter")(
 			
 			this.mm.leftPanel.style.borderRightStyle = "solid";
 		},
+		
 		showFrames: function(){
+			this.d2.el.appendChild(this.frameHolderWrapper);
+			
+			var wrap = this.frameHolderWrapper;
 			var it, f, b;
 			var t = 7;
 			var db = this.d2.bounds;
-			for(var i=0; i<this.framesHolders.length; i++){
+			var top;
+			for(var i=0; i<this.tv.items.length; i++){
 				f = this.framesHolders[i];
 				var data = this.tv.items[i].data
 				it = this.tv.items[i].head;
-				if(it.isVisible){
-					b = it.bounds;
-					if(i==0){
-						f.addClass("top");
-						f.style.height = b.height + 2 +"px";
-						f.style.top = (b.top - db.top + this.d2.el.scrollTop -1)+"px";
-					}
-					else{
-						f.removeClass("top");
-						f.style.height = b.height + "px";
-						f.style.top = (b.top - db.top + this.d2.el.scrollTop +1)+"px";
-					}
-					
-					
-					f.el.data = data;
-					
-					if(b.height > 0){
-						this.d2.el.appendChild(f.el);
-					}
-					else{
-						f.hide();
-					}
+				if(this.active == this.tv.items[i]){
+					f.addClass("active");
 				}
-			}
+				else{
+					f.removeClass("active");
+				}
+				
+				if(!it.isVisible){
+					return;
+				}
+				
+				b = it.bounds;
+				
+				
+				if(i==0){
+					f.addClass("top");
+					f.style.height = b.height + 2 +"px";
+					top = (b.top - db.top + this.d2.el.scrollTop -1 - wrap.offsetTop);
+				}
+				else{
+					f.removeClass("top");
+					f.style.height = b.height + "px";
+					 top = (b.top - db.top + this.d2.el.scrollTop +1 - wrap.offsetTop);
+				}
+				
+				/*
+				if(top < 0){
+					if(f.el.parentNode){
+						f.el.parentNode.removeChild(f.el);
+					}
+					continue;
+				}
+				*/
+				
+				f.style.top = top + "px";
+				f.el.data = data;
+				
+				if(b.height > 0){
+					wrap.appendChild(f.el);
+				}
+				else{
+					f.hide();
+				}
+		}
 			
 		},
 		active: null,
@@ -316,6 +384,8 @@ MT.extend("core.Emitter")(
 			
 			this.firstFrame = this.framesHolders[0];
 			this.makeControls();
+			
+			this.showFrames();
 		},
 		
 		makeControls: function(){
@@ -327,43 +397,59 @@ MT.extend("core.Emitter")(
 			if(item.data.isMovie){
 				return;
 			}
+			if(!this.activeMovie){
+				return;
+			}
 			
 			var mo = this.mm.getById(item.data.id);
 			if(!mo){
 				return;
 			}
-			if(!mo.movies){
-				mo.movies = {};
+			
+			if(!mo.movies || !mo.movies[this.activeMovie]){
+				this.mm.addMovie(mo, this.activeMovie);
 			}
 			
-			if(!this.activeMovie){
-				return;
-			}
-			var frames = mo.movies[this.activeMovie];
+			var frames = mo.movies[this.activeMovie].frames;
 			if(!frames){
-				mo.movies[this.activeMovie] = [];
-				frames = mo.movies[this.activeMovie];
+				this.mm.addMovie(mo, this.activeMovie);
+				frames = mo.movies[this.activeMovie].frames;
 			}
+			
+			
 			var frame = 0;
-			var el;
-			
-			var startFrame = this.mm.startFrame;
-			
 			for(var i=0; i<frames.length; i++){
-				frame = frames[i].frame;
-				if(frame < startFrame){
+				frame = frames[i].keyframe;
+				if(frame < this.mm.startFrame){
 					continue;
 				}
 				
-				
-				el = document.createElement("span");
-				el.className = "ui-kf-frame";
-				track.appendChild(el);
-				el.style.width = this.mm.frameSize + "px";
-				el.style.left = (frame * this.mm.frameSize + this.mm.frameOffset) - startFrame*this.mm.frameSize + "px";
-				el.setAttribute("frame", frame);
+				this.addFrame(frames, i, track);
 			}
+		},
+		
+		addFrame: function(frames, index, track){
+			var item = frames[index];
+			var startFrame = this.mm.startFrame;
+			var el = document.createElement("span");
+			if(this.mm.selectedFrame == item){
+				el.className = "ui-kf-frame active";
+			}
+			else{
+				el.className = "ui-kf-frame";
+			}
+			track.appendChild(el);
 			
+			el.style.width = this.mm.frameSize + "px";
+			el.style.left = (item.keyframe * this.mm.frameSize + this.mm.frameOffset) - startFrame*this.mm.frameSize + "px";
+			el.frameInfo = {
+				frames: frames,
+				index: index
+			};
+		},
+		
+		moveFrame: function(frame, num){
+			frame.keyframe = num;
 			
 		},
 		
@@ -395,6 +481,8 @@ MT.extend("core.Emitter")(
 			
 			var lastFrame = 0;
 			
+			var playStartFrame = 0;
+			
 			var loop = function(){
 				if(!isPlaying){
 					return;
@@ -415,6 +503,7 @@ MT.extend("core.Emitter")(
 					lastFrame =  that.getLastFrame();
 					c.play.className = "ui-keyframes-pause";
 					isPlaying = true;
+					playStartFrame = that.mm.activeFrame;
 					loop();
 				}
 				else{
@@ -424,8 +513,11 @@ MT.extend("core.Emitter")(
 			};
 			
 			var stop = function(){
+				if(!isPlaying){
+					playStartFrame = 0;
+				}
 				isPlaying = false;
-				that.mm.changeFrame(0);
+				that.mm.changeFrame(playStartFrame);
 				c.play.className = "ui-keyframes-play";
 			};
 			
@@ -447,7 +539,7 @@ MT.extend("core.Emitter")(
 					e.stopPropagation();
 				}
 				if(e.target == c.delete){
-					that.remove(that.activeMovie);
+					that.removeConf(that.activeMovie);
 				}
 			};
 			this.controls = c;
@@ -462,13 +554,13 @@ MT.extend("core.Emitter")(
 				if(!m){
 					return;
 				}
-				mov = m[this.activeMovie];
+				mov = m[this.activeMovie].frames;
 				if(!mov.length){
 					continue;
 				}
 				l = mov[mov.length - 1];
-				if(max < l.frame){
-					max = l.frame;
+				if(max < l.keyframe){
+					max = l.keyframe;
 				}
 			}
 			return max;
@@ -484,22 +576,22 @@ MT.extend("core.Emitter")(
 			var item, frameData;
 			for(var i in this.mm.items){
 				item = this.mm.items[i];
+				
 				if(!item.movies){
-					item.movies = {};
+					this.mm.addMovie(item, this.activeMovie);
 				}
-				if(!item.movies[this.activeMovie]){
-					item.movies[this.activeMovie] = [this.mm.collect(item)];
-				}
-				frameData = item.movies[this.activeMovie][0];
+				
+				frameData = item.movies[this.activeMovie].frames[0];
 				if(frameData){
-					if(frameData.frame == void(0)){
-						frameData.frame = 0;
+					if(frameData.keyframe == void(0)){
+						frameData.keyframe = 0;
 					}
 					this.mm.loadState(i, frameData, 0);
+					console.log("Frame added");
 				}
 				else{
 					frameData = this.mm.collect(item);
-					frameData.frame = 0;
+					frameData.keyframe = 0;
 					item.movies[this.activeMovie] = [frameData];
 				}
 			}
@@ -508,6 +600,9 @@ MT.extend("core.Emitter")(
 		},
 		
 		saveActiveFrame: function(ni){
+			if(!this.activeMovie){
+				return;
+			}
 			var item, frameData;
 			var movie;
 			var found = false;
@@ -517,12 +612,16 @@ MT.extend("core.Emitter")(
 					continue;
 				}
 				movie = item.movies[this.activeMovie];
+				if(!movie){
+					this.mm.clear();
+					return;
+				}
 				found = false;
-				for(var j=0; j<movie.length; j++){
-					frameData = movie[j];
-					if(frameData.frame == this.mm.activeFrame){
-						movie[j] = this.mm.collect(item);
-						movie[j].frame = this.mm.activeFrame;
+				for(var j=0; j<movie.frames.length; j++){
+					frameData = movie.frames[j];
+					if(frameData.keyframe == this.mm.activeFrame){
+						movie.frames[j] = this.mm.collect(item);
+						movie.frames[j].keyframe  = this.mm.activeFrame;
 						console.log("frame updated", this.mm.activeFrame);
 						found = true;
 						break;
@@ -530,18 +629,27 @@ MT.extend("core.Emitter")(
 				}
 				if(!found && !ni){
 					frameData = this.mm.collect(item);
-					frameData.frame = this.mm.activeFrame;
+					frameData.keyframe = this.mm.activeFrame;
 					console.log("frame added", this.mm.activeFrame);
-					movie.push(frameData);
+					movie.frames.push(frameData);
 				}
-				
-				movie.sort(function(a,b){
-					return a.frame - b.frame;
-				});
 			}
 			
 			this.updateFrames();
 		},
+		
+		sortFrames: function(){
+			for(var i in this.mm.items){
+				item = this.mm.items[i];
+				for(var m in item.movies){
+					movie = item.movies[m];
+					movie.sort(function(a,b){
+						return a.keyframe - b.keyframe ;
+					});
+				}
+			}
+		},
+		
 		removeFrame: function(){
 			if(this.mm.activeFrame === 0){
 				return;
@@ -555,7 +663,7 @@ MT.extend("core.Emitter")(
 				found = false;
 				for(var j=0; j<movie.length; j++){
 					frameData = movie[j];
-					if(frameData.frame == this.mm.activeFrame){
+					if(frameData.keyframe  == this.mm.activeFrame){
 						movie.splice(j, 1);
 						break;
 					}
@@ -568,7 +676,7 @@ MT.extend("core.Emitter")(
 		changeFrame: function(frame){
 			
 			var item, frameData;
-			var movie;
+			var movie, frames;
 			var found = false;
 			var start = 0;
 			var end = 0;
@@ -576,26 +684,25 @@ MT.extend("core.Emitter")(
 			for(var i in this.mm.items){
 				item = this.mm.items[i];
 				movie = item.movies[this.activeMovie];
+				frames = movie.frames;
 				found = false;
 				start = end = 0; 
 				// check keyframe
-				for(var j=0; j<movie.length; j++){
-					frameData = movie[j];
-					if(frameData.frame < this.mm.activeFrame){
+				for(var j=0; j<frames.length; j++){
+					frameData = frames[j];
+					if(frameData.keyframe  < this.mm.activeFrame){
 						start = j;
 					}
 					
 					
-					if(frameData.frame == this.mm.activeFrame){
+					if(frameData.keyframe  == this.mm.activeFrame){
 						found = true;
-						this.mm.loadState(i, frameData, frameData.frame);
-						console.log("LOAD:", frameData);
-						
+						this.mm.loadState(i, frameData, frameData.keyframe );
 						break;
 					}
 					
 					
-					if(frameData.frame > this.mm.activeFrame){
+					if(frameData.keyframe  > this.mm.activeFrame){
 						end = j;
 						break;
 					}
@@ -605,22 +712,20 @@ MT.extend("core.Emitter")(
 					continue;
 				}
 				
-				//console.log("interpolate", start, end);
-				
 				// only 1 frame has been found
 				if(start == end){
-					this.mm.loadState(i, movie[start], start);
+					this.mm.loadState(i, frames[start], start);
 					continue;
 				}
 				
 				// final frame
 				if(start > end){
-					this.mm.loadState(i, movie[start], start);
+					this.mm.loadState(i, frames[start], start);
 					continue;
 				}
 				
 				// interpolate between frames
-				this.mm.interpolate(i, movie[start], movie[end], this.mm.activeFrame);
+				this.mm.interpolate(i, frames[start], frames[end], this.mm.activeFrame);
 				
 				
 				

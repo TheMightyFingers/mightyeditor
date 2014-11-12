@@ -1268,8 +1268,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		_addObjects: function(objs, group){
 			
-			var tmp;
-			var k = 0;
+			var tmp, k=0;
 			for(var i=objs.length-1; i>-1; i--){
 				tmp = this.getById(objs[i].id);
 				
@@ -1277,24 +1276,35 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					tmp = new MT.core.MagicObject(objs[i], group, this);
 					this.loadedObjects.push(tmp);
 				}
-				tmp.bringToTop();
 				tmp.isRemoved = false;
 				tmp.update(objs[i], group);
+				tmp.object.z = 0;
 				
 				// handle group
 				if(objs[i].contents){
 					this._addObjects(objs[i].contents, tmp.object);
 					continue;
 				}
+				
+			}
+			
+			
+			for(var i=objs.length-1; i>-1; i--){
+				tmp = this.getById(objs[i].id);
+				tmp.bringToTop();
+			}
+			if(this.tools.tmpObject){
+				this.tools.tmpObject.bringToTop();
 			}
 		},
 		
 		resort: function(){
 			var tmp;
-			for(var i=0; i<this.loadedObjects.length; i++){
+			/*for(var i=0; i<this.loadedObjects.length; i++){
 				tmp = this.loadedObjects[i];
 				tmp.bringToTop();
-			}
+			}*/
+			
 			if(this.tools.tmpObject){
 				this.tools.tmpObject.bringToTop();
 			}

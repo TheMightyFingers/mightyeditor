@@ -273,6 +273,7 @@ MT(
 		
 			this.object.x = this.data.x;
 			this.object.y = this.data.y;
+			this.object.alpha = this.data.alpha;
 			
 			this.object.angle = this.data.angle;
 			
@@ -286,6 +287,8 @@ MT(
 			if(this.map.activeObject == this){
 				this.settings.update();
 			}
+			
+			this.object.dirty = true;
 		},
    
 		updateBox: function(){

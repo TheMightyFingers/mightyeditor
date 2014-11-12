@@ -46,31 +46,68 @@ MT(
 			this.panel.options.list.width = 150;
 			this.panel.options.list.style.left = "auto";
 		},
+		
 		installUI: function(){
-			var span = null;
-			var div = null;
+			var span = null, div = null;
+			var that = this;
+			var ev = this.ui.events;
 			this.layers = [];
 			this.tools = this.project.plugins.tools;
-			var that = this;
+			
+			
 			this.tools.on(MT.OBJECT_SELECTED, function(obj){
 				that.selectObject(obj);
 			});
 			this.tools.on(MT.OBJECT_UNSELECTED, function(obj){
-				/*for(var i in that.movies){
-					that.movies[i].hide();
+				if(!that.activeMovie){
+					return;
 				}
-				that.data = null;*/
-				if(that.items && that.items[obj.id]){
-					that.movies[that.activeId].show();
-					that.slider.show();
-					that.activeMovie.unselect(obj.id);
+				if(!that.items || !that.items[obj.id]){
+					return;
+				}
+				
+				that.movies[that.activeId].show();
+				that.slider.show();
+				that.activeMovie.unselect(obj.id);
+			});
+			this.tools.on(MT.OBJECTS_UPDATED, function(obj){
+				//console.log("UPDATE!!!");
+				that.saveActiveFrame();
+			});
+			
+			ev.on(ev.KEYUP, function(e){
+				if(e.which == MT.keys.ESC){
+					that.clear();
 					return;
 				}
 			});
 			
-			this.tools.on(MT.OBJECTS_UPDATED, function(obj){
-				//console.log("UPDATE!!!");
-				that.saveActiveFrame();
+			
+			ev.on(ev.WHEEL, function(e){
+				if(e.target !== that.frameControl.sepHolder){
+					if(e.wheelDelta > 0){
+						
+					}
+					else{
+						
+					}
+					
+					return;
+				}
+				
+				
+				if(e.wheelDelta > 0){
+					that.scale += 0.1;
+				}
+				else{
+					that.scale -= 0.1;
+				}
+				
+				if(that.scale < 0.1){
+					that.scale = 0.1;
+				}
+				console.log(that.scale );
+				that.redrawAll();
 			});
 			
 			this.om = this.project.plugins.objectmanager;
@@ -100,9 +137,10 @@ MT(
 					e.stopPropagation();
 				})
 			};
-			
 			this.buttons.saveKeyFrame.show(this.sidebar.el);
 			
+			
+			this.clear();
 		},
 		
 		redrawAll: function(){
@@ -110,6 +148,22 @@ MT(
 			m.updateFrames();
 			this.frameControl.build();
 			this.changeFrame();
+		},
+		
+		hide: function(){
+			var mov = this.getActiveMovie();
+			if(mov){
+				mov.hide();
+			}
+			this.hideHelpers();
+			if(this.newMovieButton){
+				this.newMovieButton.hide();
+			}
+		},
+		
+		clear: function(){
+			this.items = null;
+			this.hide();
 		},
    
 		addPanels: function(){
@@ -124,12 +178,10 @@ MT(
 			
 			this.leftPanel.fitIn();
 			this.leftPanel.width = 270;
-			this.leftPanel.style.setProperty("border-right", "solid 1px #000");
+			this.leftPanel.style.setProperty("border-right", "none 1px #000");
 			this.leftPanel.isResizeable = true;
 			this.leftPanel.removeHeader();
 			this.leftPanel.removeClass("animated");
-			
-			
 			
 			this.rightPanel.addClass("borderless");
 			this.rightPanel.hide().show(this.el.el);
@@ -150,11 +202,18 @@ MT(
 			this.leftPanel.content.style.overflow = "visible";
 			this.rightPanel.content.style.overflow = "visible";
 			
-			//this.rightPanel.content.style["overflow-y"] = "auto";
+			var activeFrame = null;
+			
+			var down = false;
+			var target;
+			
+			// 0 - nothing;
+			// 1 - moveFrame;
+			var action = 0;
 			
 			this.rightPanel._input.onkeyup = function(e){
 				if(e.which == MT.keys.DELETE){
-					that.removeFrame();
+					that.removeFrame(activeFrame);
 					e.preventDefault();
 					e.stopPropagation();
 				}
@@ -176,8 +235,25 @@ MT(
 					e.stopPropagation();
 				}
 				
-			
+				if(e.ctrlKey){
+					console.log("CTRL+", e.which);
+					if(activeFrame){
+						if(e.which == MT.keys.C){
+							//copy frame;
+							that.copyFrame(activeFrame);
+						}
+						if(e.which == MT.keys.X){
+							//copy frame;
+							that.cutFrame(activeFrame);
+						}
+					}
+					if(e.which == MT.keys.V){
+						that.pasteFrame();
+					}
+				}
+				
 			};
+			
 			this.rightPanel._input.onfocus = function(){
 				console.log("focus");
 			};
@@ -189,11 +265,29 @@ MT(
 				that.rightPanel.style.left = w +"px";
 			});
 			
-			var down = false;
+			this.selectedFrame = null;
+			
 			this.rightPanel.content.el.onmousedown = function(e){
-				if(e.target.data){
-					that.project.plugins.objectmanager.emit(MT.OBJECT_SELECTED, e.target.data);
+				
+				if(e.target.frameInfo){
+					console.log("Frame:",e.target.frameInfo);
+					target = e.target.parentNode;
+					activeFrame = e.target.frameInfo;
+					action = 1;
+					that.selectedFrame = activeFrame.frames[activeFrame.index];
 				}
+				else{
+					action = 0;
+					activeFrame = null;
+					target = e.target;
+					that.selectedFrame = null;
+				}
+				
+				if(target.data){
+					that.project.plugins.objectmanager.emit(MT.OBJECT_SELECTED, target.data);
+					//that.selectObject(target.data);
+				}
+				
 				var off = e.offsetX;
 				if(e.target != that.rightPanel.content.el){
 					off += e.target.offsetLeft;
@@ -205,6 +299,7 @@ MT(
 					down = true;
 					that.changeFrame(f);
 				}
+				
 			};
 			
 			this.rightPanel.content.el.onmouseup = function(e){
@@ -217,29 +312,12 @@ MT(
 				}
 				
 				sl.change(that.ui.events.mouse.mx);
-				
 				that.changeFrame((sl - that.frameOffset) / that.frameSize + that.startFrame);
+				if(action == 1 && activeFrame){
+					that.moveFrame(activeFrame);
+				}
+				
 			});
-			
-			
-			
-			this.rightPanel.el.addEventListener("wheel", function(e){
-				if(e.wheelDelta > 0){
-					that.scale += 0.1;
-				}
-				else{
-					that.scale -= 0.1;
-				}
-				
-				if(that.scale < 0.1){
-					that.scale = 0.1;
-				}
-				
-				console.log(that.scale );
-				
-				that.redrawAll();
-			});
-			
 			
 			this.ui.events.on("mouseup", function(e){
 				down = false;
@@ -247,23 +325,50 @@ MT(
 			
 		},
 		
-		selectObject: function(obj){
-		
-			if(this.items && this.items[obj.id]){
-				this.movies[this.activeId].show();
-				this.slider.show();
-				this.activeMovie.setActiveObject(obj.id);
-				return;
-			}
+   
+		showNewMovie: function(){
+			this.newMovieButton = new MT.ui.DomElement("div");
+			this.newMovieButton.addClass("ui-new-movie-wrapper");
 			
+			var that = this;
+			this.newMovieButton.button = new MT.ui.Button("New Movie", "ui-new-movie style2", null, function(){
+				console.log("clicked");
+				that.addMovie();
+			});
+			
+			this.newMovieButton.button.show(this.newMovieButton.el);
+			
+			this.newMovieButton.show(this.panel.el);
+			
+		},
+   
+		selectObject: function(obj){
+			
+			
+			if(this.items && this.items[obj.id] && this.activeMovie){
+				
+					this.movies[this.activeId].show();
+					this.slider.show();
+					this.activeMovie.setActiveObject(obj.id);
+					this.activeMovie.showFrames();
+					return;
+				
+			}
 			this.setActive(obj.id);
+			
 			if(this.activeMovie){
 				this.activeMovie.setActiveObject(obj.id);
 			}
 			
 		},
    
-		addMovie: function(){
+		addMovie: function(item, name){
+			
+			if(item && name){
+				this.__addMovie(item, name);
+				return;
+			}
+			
 			if(!this.data){
 				return;
 			}
@@ -278,10 +383,12 @@ MT(
 			
 			this._addMovie(name)
 		},
-		_addMovie: function(name){
-			this.data.movies[name] = [this.collect(this.data)];
+		_addMovie: function(name, data){
+			for(var i in this.items){
+				data = this.items[i];
+				this.__addMovie(data, name);
+			}
 			this.setActive(this.activeId);
-			
 			var m = this.movies[this.activeId];
 			m.activeMovie = name;
 			if(m){
@@ -289,7 +396,19 @@ MT(
 				m.markFirstFrame();
 			}
 			this.showHelpers();
+		},
+   
+		__addMovie: function(item, name){
+			if(!item.movies){
+				item.movies = {};
+			}
 			
+			item.movies[name] = {
+				frames: [this.collect(item, 0)],
+				info: {
+					fps: 60
+				}
+			};
 		},
 		
    
@@ -304,7 +423,9 @@ MT(
 			
 		},
 		hideHelpers: function(){
-			this.activeMovie.hide();
+			if(this.activeMovie){
+				this.activeMovie.hide();
+			}
 			this.slider.hide();
 			this.frameControl.clear();
 			this.sidebar.hide();
@@ -314,6 +435,10 @@ MT(
 		activeMovie: null,
 		items: null,
 		setActive: function(id){
+			if(this.newMovieButton){
+				this.newMovieButton.hide();
+			}
+			
 			this.items = {};
 			if(this.movies[this.activeId]){
 				this.movies[this.activeId].hide();
@@ -325,9 +450,6 @@ MT(
 			if(!this.data.movies){
 				this.data.movies = {};
 			}
-			else{
-				//this.updateScene();
-			}
 			
 			if(this.activeMovie){
 				this.hideHelpers();
@@ -336,6 +458,9 @@ MT(
 			this.movies[id] = new MT.ui.Keyframes(this, 60);
 			
 			if(Object.keys(this.data.movies).length == 0){
+				
+				this.showNewMovie();
+				this.collectItems();
 				return;
 			}
 			
@@ -417,16 +542,60 @@ MT(
 		},
 		
 		addFrame: function(){
-			if(this.activeMovie){
-				this.activeMovie.saveActiveFrame();
+			if(!this.activeMovie){
+				return;
 			}
+			this.activeMovie.saveActiveFrame();
+		},
+		
+		moveFrame: function(fi){
+			var frame = fi.frames[fi.index];
+			frame.keyframe = this.activeFrame;
+			
+			this.sortFrames(fi.frames);
+			
+			this.redrawAll();
+		},
+		
+		frameBuffer: null,
+   
+		cutFrame: function(fi){
+			this.copyFrame(fi);
+			fi.frames.splice(fi.index, 1);
+		},
+		copyFrame: function(fi){
+			this.frameBuffer = fi;
+		},
+		pasteFrame: function(){
+			if(!this.frameBuffer){
+				return;
+			}
+			var frames = this.frameBuffer.frames;
+			var frame = JSON.parse(JSON.stringify(frames[this.frameBuffer.index]));
+			
+			frame.keyframe = this.activeFrame;
+			frames.push( frame );
+			
+			this.sortFrames(frames);
+			
+			this.redrawAll();
+		},
+		
+		sortFrames: function(frames){
+			frames.sort(function(a,b){
+				return a.keyframe - b.keyframe ;
+			});
 		},
    
-		removeFrame: function(){
-			if(this.activeMovie){
-				this.activeMovie.removeFrame();
+		removeFrame: function(fi){
+			if(!fi){
+				// debug this
+				return;
 			}
+			fi.frames.splice(fi.index, 1);
+			this.redrawAll();
 		},
+		
 		saveActiveFrame: function(){
 			if(this.activeMovie){
 				this.activeMovie.saveActiveFrame(true);
@@ -435,7 +604,6 @@ MT(
    
 		getActiveMovie: function(){
 			return this.movies[this.activeId];
-			
 		},
    
 		buildKeyFrames: function(obj){
@@ -450,7 +618,7 @@ MT(
 			return;
 		},
    
-		collect: function(data){
+		collect: function(data, kf){
 			var out = {};
 			var k;
 			for(var i=0; i<this.keys.length; i++){
@@ -459,6 +627,7 @@ MT(
 					out[k] = data[k];
 				}
 			}
+			out.keyframe = kf;
 			return out;
 		},
    
@@ -479,6 +648,7 @@ MT(
 			
 			var mo = this.project.plugins.mapeditor.getById(id);
 			if(!mo){
+				console.log("cannto find MO");
 				return;
 			}
 			mo.update(data);
@@ -486,7 +656,7 @@ MT(
 		
 		
 		interpolate: function(id, start, end, frame){
-			var t = (frame - start.frame) / (end.frame - start.frame);
+			var t = (frame - start.keyframe) / (end.keyframe - start.keyframe);
 			var mo = this.project.plugins.mapeditor.getById(id);
 			
 			var med = this.buildTmpVals(t, start, end);
