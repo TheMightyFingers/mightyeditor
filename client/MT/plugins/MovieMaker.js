@@ -299,7 +299,7 @@ MT(
 					down = true;
 					that.changeFrame(f);
 				}
-				
+				that.redrawAll();
 			};
 			
 			this.rightPanel.content.el.onmouseup = function(e){
@@ -473,14 +473,16 @@ MT(
 			this.activeMovie = this.movies[id];
 			
 			this.collectItems();
+			
+			this.activeMovie.markFirstFrame();
+			this.showHelpers();
+			
 			if(!this.activeFrame){
 				this.changeFrame(0);
 			}
 			else{
 				this.changeFrame(this.activeFrame);
 			}
-			this.activeMovie.markFirstFrame();
-			this.showHelpers();
 		},
 		
 		collectItems: function(){
@@ -618,8 +620,8 @@ MT(
 			return;
 		},
    
-		collect: function(data, kf){
-			var out = {};
+		collect: function(data, kf, ref){
+			var out = ref || {};
 			var k;
 			for(var i=0; i<this.keys.length; i++){
 				k = this.keys[i];

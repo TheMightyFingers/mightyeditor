@@ -1345,7 +1345,7 @@ position: absolute;
 
 .ui-kf-frames span.active {
 content: "*";
-background-color: rgba(0,255,0,0.3);
+background-color: rgba(0, 255, 187, 0.3)
 }
 .ui-kf-frames.active {
 	background-color: rgba(0,0,0,0.3);

@@ -442,6 +442,7 @@ MT.extend("core.Emitter")(
 			
 			el.style.width = this.mm.frameSize + "px";
 			el.style.left = (item.keyframe * this.mm.frameSize + this.mm.frameOffset) - startFrame*this.mm.frameSize + "px";
+
 			el.frameInfo = {
 				frames: frames,
 				index: index
@@ -620,17 +621,14 @@ MT.extend("core.Emitter")(
 				for(var j=0; j<movie.frames.length; j++){
 					frameData = movie.frames[j];
 					if(frameData.keyframe == this.mm.activeFrame){
-						movie.frames[j] = this.mm.collect(item);
-						movie.frames[j].keyframe  = this.mm.activeFrame;
+						movie.frames[j] = this.mm.collect(item, this.mm.activeFrame, movie.frames[j]);
 						console.log("frame updated", this.mm.activeFrame);
 						found = true;
 						break;
 					}
 				}
 				if(!found && !ni){
-					frameData = this.mm.collect(item);
-					frameData.keyframe = this.mm.activeFrame;
-					console.log("frame added", this.mm.activeFrame);
+					frameData = this.mm.collect(item, this.mm.activeFrame);
 					movie.frames.push(frameData);
 				}
 			}
