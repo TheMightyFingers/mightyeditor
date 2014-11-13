@@ -260,6 +260,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				that.needEnalbe = false;
 			});
 			
+			this.el.onmouseup = this.mouseup;
+			
 			this.mousemove = events.on("mousemove",function(e){
 				if(!down){
 					return;

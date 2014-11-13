@@ -666,6 +666,8 @@ div.ui-input .ui-input-value{
 	outline: none;
 	float: right;
 	min-height: 20px;
+	position: relative;
+	z-index: 5;
 }
 
 div.ui-input.ui-input-number .ui-input-value{
@@ -1638,3 +1640,9 @@ border-top: solid 1px rgba(0,0,0,0.5);
 }
 
 
+.ui-input-number.ui-input.keyframes-fps{
+	left: 32px;
+width: 90px;
+position: absolute;
+line-height: 25px;
+}

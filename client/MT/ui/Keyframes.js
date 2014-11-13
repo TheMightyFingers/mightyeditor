@@ -493,6 +493,16 @@ MT.extend("core.Emitter")(
 			c.delete = document.createElement("div");
 			c.delete.className = "ui-keyframes-delete";
 			
+			var mov = this.getMainMovie();
+			if(mov){
+				var fpsInput = new MT.ui.Input(this.ui, {key: "fps", min: 1}, mov.info);;
+				fpsInput.el.className += " keyframes-fps";
+				this.controlsHolder.appendChild(fpsInput.el);
+				var that = this;
+				fpsInput.on("change", function(){
+					that.mm.redrawAll();
+				});
+			}
 			
 			for(var k in c){
 				this.controlsHolder.appendChild(c[k]);
@@ -590,8 +600,20 @@ MT.extend("core.Emitter")(
 			return max;
 		},
 		getFps: function(){
-			return 60;
+			var fps = 60;
+			var mov = this.getMainMovie();
+			if(mov){
+				fps = mov.info.fps;
+			}
+			return fps;
 		},
+		getMainMovie: function(){
+			if(this.dataIn.movies[this.activeMovie]){
+				return this.dataIn.movies[this.activeMovie];
+			}
+			return null;
+		},
+		
 		markFirstFrame: function(){
 			this.mm.changeFrame(0);
 			
