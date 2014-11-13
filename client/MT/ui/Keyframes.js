@@ -46,8 +46,7 @@ MT.extend("core.Emitter")(
 			that.hideFrames();
 			that.showFrames();
 			
-			that.buildData();
-			that.tv.merge(that.data);
+			that.updateTree(data);
 		}
 		
 		this.tv.on("click", function(data, el){
@@ -71,6 +70,7 @@ MT.extend("core.Emitter")(
 		
 		this.tv.enableInput(ui.events);
 		
+		this.tv.disableRename();
 		
 		this.ui = ui;
 		
@@ -147,6 +147,15 @@ MT.extend("core.Emitter")(
 			}
 			this.show();
 			this.panels[this.activeMovie].show();
+		},
+		
+		updateTree: function(data){
+			this.data = data;
+			this.buildData();
+			this.tv.merge(this.data);
+			
+			this.hideFrames();
+			this.showFrames();
 		},
 		
 		createPanel: function(name, pp){
@@ -290,6 +299,9 @@ MT.extend("core.Emitter")(
 			var top;
 			for(var i=0; i<this.tv.items.length; i++){
 				f = this.framesHolders[i];
+				if(!f){
+					f = this.addFrameHolder();
+				}
 				var data = this.tv.items[i].data
 				it = this.tv.items[i].head;
 				if(this.active == this.tv.items[i]){
@@ -360,11 +372,7 @@ MT.extend("core.Emitter")(
 			var it = this.tv.items;
 			var f;
 			for(var i=0; i<it.length; i++){
-				f = new MT.ui.DomElement("div");
-				f.addClass("ui-kf-frames");
-				f.style.position = "absolute";
-				this.framesHolders.push(f);
-				f.el.innerHTML = "";
+				f = this.addFrameHolder();
 				
 				this.markFrames(it[i], f.el);
 				
@@ -374,11 +382,24 @@ MT.extend("core.Emitter")(
 			this.makeControls();
 		},
 		
+		addFrameHolder: function(){
+			var f = new MT.ui.DomElement("div");
+			f.addClass("ui-kf-frames");
+			f.style.position = "absolute";
+			this.framesHolders.push(f);
+			f.el.innerHTML = "";
+			return f;
+		},
+		
 		updateFrames: function(){
 			var it = this.tv.items;
 			var f;
 			for(var i=0; i<it.length; i++){
 				f = this.framesHolders[i];
+				if(!f){
+					f = this.addFrameHolder();
+				}
+				
 				f.el.innerHTML = "";
 				this.markFrames(it[i], f.el);
 			}

@@ -236,6 +236,8 @@ MT.extend("core.Emitter")(
 				if(el.isFolder && e.offsetX < 30){
 					return;
 				}
+				
+				that.emit("dblclick", e, el);
 				that.enableRename(el, e);
 				
 				e.stopPropagation();
@@ -600,10 +602,14 @@ MT.extend("core.Emitter")(
 			});
 			
 		},
-		
-		
-		
+		disableRename: function(){
+			this.renameEnabled = false;
+		},
+		renameEnabled: true,
 		enableRename: function(el){
+			if(!this.renameEnabled){
+				return;
+			}
 			var that = this;
 			this.emit("renameStart");
 			

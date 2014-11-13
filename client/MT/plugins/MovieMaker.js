@@ -70,9 +70,14 @@ MT(
 				that.slider.show();
 				that.activeMovie.unselect(obj.id);
 			});
+			
+			
 			this.tools.on(MT.OBJECTS_UPDATED, function(obj){
-				//console.log("UPDATE!!!");
 				that.saveActiveFrame();
+				if(that.activeMovie){
+					that.collectItems();
+					that.activeMovie.updateTree();
+				}
 			});
 			
 			ev.on(ev.KEYUP, function(e){
@@ -350,11 +355,15 @@ MT(
 					this.movies[this.activeId].show();
 					this.slider.show();
 					this.activeMovie.setActiveObject(obj.id);
+					this.activeMovie.updateTree(obj.data);
 					this.activeMovie.showFrames();
+					
 					return;
 				
 			}
 			this.setActive(obj.id);
+			
+			this.activeMovie.updateTree(obj.data);
 			
 			if(this.activeMovie){
 				this.activeMovie.setActiveObject(obj.id);
@@ -661,11 +670,12 @@ MT(
 			var t = (frame - start.keyframe) / (end.keyframe - start.keyframe);
 			var mo = this.project.plugins.mapeditor.getById(id);
 			
+			// deleted?
+			if(!mo){
+				return;
+			}
 			var med = this.buildTmpVals(t, start, end);
 			mo.update(med);
-			
-			
-			
 		},
    
 		doInterpolate: function(t, d1, d2){
