@@ -133,12 +133,7 @@
 			
 			data = o.getData();
 			
-			
-			
-			if(data.movies){
-				console.log("movie found");
-			}
-			
+			var that = this;
 			var tween, tmp, kf, ctween = [], info, fps, totalTime;
 			for(var key in data.movies){
 				info = data.movies[key];
@@ -162,34 +157,14 @@
 						console.log("time",lastFrame.keyframe/fps);
 					}
 					
-					
 					tween.onStart.add(function(){
 						console.log("starting sub tweens");
+						
 						for(var i=0; i<ctween.length; i++){
 							ctween[i].stop();
 							ctween[i].start();
 						}
 					});
-					/*tween.onComplete.add(function(a,b,c){
-						console.log("complete sub tweens",a,b,c);
-						for(var i=0; i<ctween.length; i++){
-							ctween[i].stop();
-						}
-					});*/
-					
-					var mainTime = info.frames[info.frames.length - 1].keyframe/fps;
-					
-					if(mainTime < totalTime){
-						tween.delay((totalTime - mainTime)*1000);
-					}
-					
-					
-					
-					/*tween.onComplete.add(function(){
-						for(var i=0; i<ctween.length; i++){
-							ctween[i].stop();
-						}
-					});*/
 				}
 				
 				out[key] = tween;
@@ -202,14 +177,88 @@
 			
 			var tmp = this.game.add.tween(object);
 			var kf, pkf = 0;
+			var prev, curr, diff, time;
+			var that = this;
 			
-			for(var i=0; i<info.frames.length; i++){
-				kf = info.frames[i].keyframe;
-				tmp = tmp.to(info.frames[i], (kf - pkf)/fps*1000 + 0.0000001);
+			var firstFrame = info.frames[0];
+			
+			
+			var atween = this.game.add.tween(object.anchor), 
+				stween = this.game.add.tween(object.scale);
+			
+			for(var i=1; i<info.frames.length; i++){
+				curr = info.frames[i];
+				kf = curr.keyframe;
+				prev = info.frames[i-1];
+				diff = this._mkDiff(prev, curr);
+				time = (kf - pkf)/fps*1000;
+				tmp = tmp.to(diff, time);
+				
+				stween.to(this._mk_scale(diff), time);
+				atween.to(this._mk_anchor(diff), time);
 				
 				pkf = kf;
 			}
+			
+			tmp.onStart.add(function(){
+				that._updateCommonProperties(firstFrame, object);
+				atween.start();
+				stween.start();
+			});
+			
+			if(!tmp._lastChild){
+				tmp._lastChild = tmp;
+			}
+			
 			return tmp;
+		},
+ 
+		_mkDiff: function(o1, o2){
+			var out = {};
+			for(var i in o1){
+				if(typeof o1[i] === "object"){
+					continue;
+				}
+				if(o1[i] === void(0)){
+					continue;
+				}
+				if(o1[i] != o2[i]){
+					out[i] = o2[i];
+				}
+			}
+			for(var i in o2){
+				if(typeof o2[i] === "object"){
+					continue;
+				}
+				if(o1[i] === void(0)){
+					continue;
+				}
+				if(o1[i] != o2[i]){
+					out[i] = o2[i];
+				}
+			}
+			return out;
+		},
+		
+		_mk_scale: function(diff){
+			var out = {};
+			if(diff.scaleX != void(0)){
+				out.x = diff.scaleX;
+			}
+			if(diff.scaleY != void(0)){
+				out.y = diff.scaleY;
+			}
+			return out;
+		},
+		_mk_anchor: function(diff){
+			var out = {};
+			if(diff.anchorX != void(0)){
+				out.x = diff.anchorX;
+			}
+			if(diff.anchorX != void(0)){
+				out.y = diff.anchorY;
+			}
+			return out;
 		},
  
 		getObjectData: function(name, container){
@@ -549,7 +598,9 @@
 				this._updateCommonProperties(object, createdObject, keepVisibility);
 			}
 			
-			
+			createdObject.getData = function(){
+				return object;
+			};
 		},
 		
 		addPhysics: function(tpl, sprite, parent){
@@ -723,7 +774,7 @@
 				object.angle = template.angle;
 			}
 			
-			if(template.type !== mt.GROUP && template.contents === void(0) ){
+			if(template.type !== mt.GROUP && template.contents === void(0) && object.type != Phaser.GROUP){
 				object.anchor.x = template.anchorX;
 				object.anchor.y = template.anchorY;
 				if(template.scaleX != void(0)){
@@ -736,16 +787,9 @@
 			object.y = template.y;
 			object.alpha = template.alpha || 1;
 			
-			object.getData = function(){
-				return template;
-			}
-			
-			
-			
 			if(keepVisibility){
 				object.visible = template.isVisible;
 			}
-			
 		},
 		
 		//mark all texts dirty to force redraw

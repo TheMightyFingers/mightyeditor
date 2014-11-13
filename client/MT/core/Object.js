@@ -13,7 +13,6 @@ MT(
 	{
 		move: function(x, y){
 			
-		},
-		
+		}
 	}
 );

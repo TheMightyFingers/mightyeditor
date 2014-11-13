@@ -1305,6 +1305,7 @@ height: 16px;
 right: 5px;
 top: 9px;
 background-color: rgba(255,0,0,0.5);
+background: url(../img/icons/timeline/trash.png) -4 -4;
 }
 
 span.ui-timeline-frame {

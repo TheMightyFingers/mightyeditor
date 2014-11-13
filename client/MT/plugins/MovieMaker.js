@@ -149,6 +149,12 @@ MT(
 		},
 		
 		redrawAll: function(){
+			if(!this.activeMovie){
+				return;
+			}
+			if(Object.keys(this.items).length == 0){
+				return;
+			}
 			var m = this.getActiveMovie();
 			m.updateFrames();
 			this.frameControl.build();
@@ -156,6 +162,7 @@ MT(
 		},
 		
 		hide: function(){
+			console.log("hide all");
 			var mov = this.getActiveMovie();
 			if(mov){
 				mov.hide();
@@ -167,7 +174,7 @@ MT(
 		},
 		
 		clear: function(){
-			this.items = null;
+			this.items = {};
 			this.hide();
 		},
    
@@ -363,10 +370,11 @@ MT(
 			}
 			this.setActive(obj.id);
 			
-			this.activeMovie.updateTree(obj.data);
+			
 			
 			if(this.activeMovie){
 				this.activeMovie.setActiveObject(obj.id);
+				this.activeMovie.updateTree(obj.data);
 			}
 			
 		},
@@ -436,7 +444,8 @@ MT(
 				this.activeMovie.hide();
 			}
 			this.slider.hide();
-			this.frameControl.clear();
+			this.frameControl.hide();
+			
 			this.sidebar.hide();
 			console.log("hide");
 		},
@@ -470,6 +479,7 @@ MT(
 				
 				this.showNewMovie();
 				this.collectItems();
+				this.activeMovie = null;
 				return;
 			}
 			
@@ -531,12 +541,12 @@ MT(
 			
 			this.slider.x = x;
 			
-			this.activeFrame = frame;
 			
-			if(this.activeMovie){
+			if(this.activeMovie && this.activeFrame != frame){
 				this.activeMovie.changeFrame();
 			}
 			
+			this.activeFrame = frame;
 			this.frameControl.adjustHandle();
 		},
    
@@ -557,6 +567,7 @@ MT(
 				return;
 			}
 			this.activeMovie.saveActiveFrame();
+			
 		},
 		
 		moveFrame: function(fi){
@@ -659,7 +670,6 @@ MT(
 			
 			var mo = this.project.plugins.mapeditor.getById(id);
 			if(!mo){
-				console.log("cannto find MO");
 				return;
 			}
 			mo.update(data);

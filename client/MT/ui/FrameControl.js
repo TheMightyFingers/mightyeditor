@@ -194,8 +194,14 @@ MT.extend("core.Emitter")(
 			this.handle.innerHTML = this.mm.activeFrame;
 		},
 		
+		hide: function(){
+			if(this.el.el.parentNode){
+				this.el.el.parentNode.removeChild(this.el.el);
+			}
+			this.clear();
+		},
+		
 		clear: function(){
-			//this.el.hide();
 			this.sepHolder.innerHTML = "";
 			this.background.innerHTML = "";
 			

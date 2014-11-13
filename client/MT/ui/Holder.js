@@ -33,7 +33,6 @@ MT.extend("ui.DomElement")(
 			if(that.seperators.mdown > -1){
 				that.moveSeperator(that.seperators.mdown);
 			}
-				
 		});
 		
 		this.events.on("mousedown", function(e){

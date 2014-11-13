@@ -506,17 +506,18 @@ MT.extend("core.Emitter")(
 			
 			var playStartFrame = 0;
 			
+			var next;
 			var loop = function(){
 				if(!isPlaying){
 					return;
 				}
 				
-				that.mm.activeFrame++;
-				if(that.mm.activeFrame > lastFrame){
-					that.mm.activeFrame = 0;
+				next = that.mm.activeFrame + 1;
+				if(next > lastFrame){
+					next = 0;
 				}
 				
-				that.mm.changeFrame(that.mm.activeFrame);
+				that.mm.changeFrame(next);
 				
 				window.setTimeout(loop, 1000/that.getFps());
 			};
@@ -654,16 +655,17 @@ MT.extend("core.Emitter")(
 					movie.frames.push(frameData);
 				}
 			}
-			
+			this.sortFrames();
 			this.updateFrames();
 		},
 		
 		sortFrames: function(){
+			var item, movie;
 			for(var i in this.mm.items){
 				item = this.mm.items[i];
 				for(var m in item.movies){
 					movie = item.movies[m];
-					movie.sort(function(a,b){
+					movie.frames.sort(function(a,b){
 						return a.keyframe - b.keyframe ;
 					});
 				}
