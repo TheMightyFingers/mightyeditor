@@ -223,6 +223,8 @@ MT(
 			// 1 - moveFrame;
 			var action = 0;
 			
+			
+			
 			this.rightPanel._input.onkeyup = function(e){
 				if(e.which == MT.keys.DELETE){
 					that.removeFrame(activeFrame);
@@ -263,8 +265,18 @@ MT(
 						that.pasteFrame();
 					}
 				}
-				
 			};
+			
+			// global shortcuts
+			this.ui.events.on(this.ui.events.KEYUP, function(e){
+				if(e.ctrlKey){
+					if(e.which == MT.keys.SPACE){
+						that.addFrame();
+						e.preventDefault();
+						e.stopPropagation();
+					}
+				}
+			});
 			
 			this.rightPanel._input.onfocus = function(){
 				console.log("focus");
@@ -334,6 +346,8 @@ MT(
 			this.ui.events.on("mouseup", function(e){
 				down = false;
 			});
+			
+			
 			
 		},
 		
