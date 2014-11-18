@@ -73,10 +73,15 @@ MT(
 			
 			
 			this.tools.on(MT.OBJECTS_UPDATED, function(obj){
-				that.saveActiveFrame();
 				if(that.activeMovie){
+					that.saveActiveFrame();
 					that.collectItems();
 					that.activeMovie.updateTree();
+				}
+				else{
+					if(that.activeId){
+						that.setActive(that.activeId);
+					}
 				}
 			});
 			
@@ -555,8 +560,7 @@ MT(
 			
 			this.slider.x = x;
 			
-			
-			if(this.activeMovie && this.activeFrame != frame){
+			if(this.activeMovie){
 				this.activeMovie.changeFrame();
 			}
 			
@@ -615,6 +619,8 @@ MT(
 			this.sortFrames(frames);
 			
 			this.redrawAll();
+			
+			this.changeFrame(this.activeFrame);
 		},
 		
 		sortFrames: function(frames){
@@ -707,7 +713,7 @@ MT(
 			var mo = this.map.getById(this.activeId);
 			mo.update(med);
 		},
-   
+		
 		buildTmpVals: function(t, d1, d2){
 			if(!d2){
 				return d1;

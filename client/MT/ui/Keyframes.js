@@ -19,9 +19,12 @@ MT.extend("core.Emitter")(
 		this.tv = new MT.ui.TreeView(JSON.parse(JSON.stringify(this.data)), {root: pp.path});
 		this.tv.tree.addClass("ui-keyframes-tree");
 		
+		
+		this.scrollTop = 0;
 		this.tv.tree.el.onscroll = function(){
 			that.hideFrames();
 			that.showFrames();
+			that.scrollTop = that.tv.tree.el.scrollTop;
 		};
 		
 		var select = function(data, el){
@@ -59,7 +62,6 @@ MT.extend("core.Emitter")(
 		});
 		
 		this.tv.on("close", function(el){
-
 			that.hideFrames();
 			
 			that.buildData();
@@ -238,11 +240,12 @@ MT.extend("core.Emitter")(
 				console.log("NO more movies");
 				this.mm.clear();
 				this.activeMovie = null;
+				this.mm.activeMovie = null;
 				return;
 			}
 			
 			this.activeMovie = k[0];
-			this.updateFrames();
+			this.mm.redrawAll();
 			
 			return 
 		},
@@ -347,8 +350,9 @@ MT.extend("core.Emitter")(
 				else{
 					f.hide();
 				}
-		}
+			}
 			
+			this.tv.tree.el.scrollTop = this.scrollTop;
 		},
 		active: null,
 		setActiveObject: function(id){

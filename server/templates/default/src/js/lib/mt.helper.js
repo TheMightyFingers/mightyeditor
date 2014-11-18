@@ -161,7 +161,7 @@
 						console.log("starting sub tweens");
 						
 						for(var i=0; i<ctween.length; i++){
-							ctween[i].stop();
+							//ctween[i].stop();
 							ctween[i].start();
 						}
 					});
