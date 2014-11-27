@@ -374,6 +374,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		currOption: -1,
 		activeOption: null,
 		showNextOption: function(){
+			if(!this.selectInput){
+				return;
+			}
 			if(this.activeOption){
 				this.activeOption.className = "";
 			}
@@ -397,6 +400,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		},
 		
 		showPrevOption: function(){
+			if(!this.selectInput){
+				return;
+			}
 			if(this.activeOption){
 				this.activeOption.className = "";
 			}

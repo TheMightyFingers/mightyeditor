@@ -106,6 +106,9 @@ MT(
 		},
 		
 		createSprite: function(){
+			if(!this.data.contents){
+				this.data.contents = [];
+			}
 			if(!PIXI.BaseTextureCache[this.data.assetId]){
 				this.data.assetId = "__missing";
 			}
