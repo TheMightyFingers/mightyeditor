@@ -895,6 +895,7 @@ MT.extend("core.Emitter")(
 		},
 		
 		createMainMovie: function(){
+			return;
 			var mainMovie = [];
 			var data = this.om.getData();
 			

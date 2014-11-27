@@ -740,6 +740,7 @@ MT.extend("core.Emitter")(
 			var item, frameData;
 			var movie;
 			var found = false;
+			var needSave = false;
 			for(var i in this.mm.items){
 				item = this.mm.items[i];
 				if(!all && this.active && this.active.data.id && this.active.data.id != item.id){
@@ -758,6 +759,7 @@ MT.extend("core.Emitter")(
 					frameData = movie.frames[j];
 					if(frameData.keyframe == this.mm.activeFrame){
 						movie.frames[j] = this.mm.collect(item, this.mm.activeFrame, movie.frames[j]);
+						needSave = true;
 						console.log("frame updated", this.mm.activeFrame);
 						found = true;
 						break;
@@ -766,11 +768,14 @@ MT.extend("core.Emitter")(
 				if(!found && !ni){
 					frameData = this.mm.collect(item, this.mm.activeFrame);
 					movie.frames.push(frameData);
+					needSave = true;
 				}
 			}
 			this.sortFrames();
 			this.updateFrames();
-			this.om.sync();
+			if(needSave){
+				this.om.sync();
+			}
 		},
 		
 		sortFrames: function(){

@@ -274,7 +274,7 @@ MT(
 				}
 				
 				if(parent.type == Phaser.GROUP){
-					parent.add(this.object);
+					parent.add(this.object, true);
 				}
 				else{
 					parent.addChild(this.object);
@@ -1519,7 +1519,6 @@ MT(
 			this.object.destroy();
 			var i = this.map.tileLayers.indexOf(this.object);
 			this.map.tileLayers.splice(i, 1);
-			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
    
 		get isVisible(){
