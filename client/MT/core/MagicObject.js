@@ -763,33 +763,28 @@ MT(
 				
 				var rot = Math.atan2( mat.ty - this.rotator.y, mat.tx - this.rotator.x) - Math.PI * 0.5;
 				
-				var diff = rot - this.object.rotation;
-				
-				
-				
+				var diff = rot - Phaser.Math.degToRad(this.angle);
 				
 				mi.x = x;
 				mi.y = y;
 				
-				if(diff > Math.PI){
-					diff = Math.PI*2 - diff;
+				while(diff > Math.PI){
+					diff = diff - Math.PI*2;
 				}
-				if(diff < -Math.PI){
+				while(diff < -Math.PI){
 					diff = Math.PI*2 + diff;
 				}
 				
-				//console.log(diff);
 				
-				this.object.rotation += diff;
-				this.data.angle += Phaser.Math.radToDeg(diff);
+				//this.object.rotation += diff;
+				this.angle += Phaser.Math.radToDeg(diff);
+				
+				console.log(Math.round(Phaser.Math.radToDeg(diff)));
+				
 				
 				if(e.ctrlKey){
-					//this.object.angle = Math.round(this.object.angle / 15)*15;
-					this.data.angle = Math.round(this.data.angle / 15)*15;
-					this.object.angle = this.data.angle;
+					this.angle = Math.round(this.data.angle / 15)*15;
 				}
-				
-				
 				
 				this.update();
 				return;

@@ -608,11 +608,13 @@ MT.extend("core.Emitter")(
 				that.mm.changeFrame(next);
 				
 				var tm = 1000/that.getFps() - (Date.now() - start);
-				if(tm<0){
-					tm = 0;
+				while(tm < 0){
+					tm += 1000/that.getFps();
+					console.log("too slow");
+					that.mm.activeFrame++;
 				}
-				
 				window.setTimeout(loop, tm);
+				
 			};
 			
 			var playPause = function(){
