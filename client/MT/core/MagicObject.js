@@ -332,18 +332,33 @@ MT(
 		},
    
 		updateBox: function(){
-			if(this.data.type == MT.objectTypes.GROUP || this.data.type == MT.objectTypes.TILE_LAYER){
+			if( this.data.type == MT.objectTypes.TILE_LAYER){
 				return;
 			}
-			
 			var obj = this.object;
 			obj.updateTransform();
+			
 			var mat = obj.worldTransform;
 			var ax = mat.tx;
 			var ay = mat.ty;
 			
 			var angle = this.getOffsetAngle();
 			var x, y, dx, dy;
+			var rx = ax;
+			var ry = ay - 60;
+			
+			
+			if(this.data.type == MT.objectTypes.GROUP){
+				if(this.activeHandle != -3){
+					this.rotator.x = this.rpx(this.object.rotation, rx, ry, ax, ay);
+					this.rotator.y = this.rpy(this.object.rotation, rx, ry, ax, ay);
+				}
+				return;
+			}
+			
+			rx = ax;
+			ry = ay - this.object.height * this.map.scale.x * 0.6 - 20;
+		
 			
 			if(this.activeHandle != 0){
 				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) ;
@@ -396,8 +411,7 @@ MT(
 				this.rp(angle, x, y, ax, ay, this.handles[7]);
 			}
 			
-			var rx = ax;
-			var ry = ay - this.object.height * this.map.scale.x * 0.6 - 20;
+			
 			
 			if(this.activeHandle != -3){
 				this.rotator.x = this.rpx(this.object.rotation, rx, ry, ax, ay);
@@ -426,6 +440,30 @@ MT(
 				var bounds = this.object.getBounds();
 				ctx.strokeRect(bounds.left, bounds.top, bounds.width, bounds.height);
 				this.drawGroupHandle(ctx, this.object);
+				
+				if(this.map.activeObject == this){
+					ctx.strokeStyle = "#ffee22";
+				
+					// rotate
+					ctx.beginPath();
+					if(this.activeHandle == -3){
+						ctx.arc(this.rotator.x, this.rotator.y, this.activeRadius, 0, 2*Math.PI);
+						
+					}
+					else{
+						ctx.arc(this.rotator.x, this.rotator.y, this.radius, 0, 2*Math.PI);
+					}
+					grd = ctx.createRadialGradient(this.rotator.x, this.rotator.y, 0, this.rotator.x, this.rotator.y, this.radius);
+					grd.addColorStop(0,"rgba(255, 255, 255, 0)");
+					grd.addColorStop(1,"rgba(0, 70, 70, 1)");
+					ctx.fillStyle = grd;
+					
+					ctx.fill();
+					ctx.stroke();
+				}
+				
+				
+				
 				ctx.restore();
 				return;
 			}
