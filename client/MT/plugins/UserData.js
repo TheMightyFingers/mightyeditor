@@ -32,9 +32,9 @@ MT(
 			};
 			
 			tools.on(MT.ASSET_FRAME_CHANGED, function(obj){
-				updateData(obj);
+				/*updateData(obj);
 				that.type = "asset";
-				console.log("asset GO");
+				console.log("asset GO");*/
 			});
 			tools.on(MT.OBJECT_SELECTED, function(mo){
 				updateData(mo.data);

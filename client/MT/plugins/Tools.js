@@ -91,18 +91,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				select(map.getById(data.id));
 			});
 			
-			
-			/*om.tv.on("click",function(data){
-				//that.setTool(that.tools.select);
-				select(map.getById(data.id));
-			});
-			*/
-			
-			
 			map.selector.on("select", function(obj){
-				//if(map.selector.count == 1){
-					that.emit(MT.OBJECT_SELECTED, obj);
-				//}
+				that.emit(MT.OBJECT_SELECTED, obj);
 			});
 			
 			map.selector.on("unselect", function(obj){
@@ -204,6 +194,26 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						}
 					}
 				}
+				else{
+					var tools = Object.keys(that.tools);
+					if(e.which == "1".charCodeAt(0)){
+						that.setTool(that.tools[tools[0]]);
+					}
+					if(e.which == "2".charCodeAt(0)){
+						that.setTool(that.tools[tools[1]]);
+					}
+					if(e.which == "3".charCodeAt(0)){
+						that.setTool(that.tools[tools[2]]);
+					}
+					if(e.which == "4".charCodeAt(0)){
+						that.setTool(that.tools[tools[3]]);
+					}
+					if(e.which == "5".charCodeAt(0)){
+						that.setTool(that.tools[tools[4]]);
+					}
+					
+				}
+				
 			});
 			
 			for(var i in this.tools){

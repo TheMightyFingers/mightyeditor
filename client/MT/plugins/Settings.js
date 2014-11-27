@@ -22,7 +22,12 @@ MT(
 		installUI: function(){
 			var that = this;
 			this.project.plugins.tools.on(MT.ASSET_FRAME_CHANGED, function(obj, frame){
-				that.handleAssets(obj);
+				if(obj){
+					that.handleAssets(obj);
+				}
+				else{
+					that.clear();
+				}
 			});
 			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
 				that.handleObjects(obj);
@@ -37,6 +42,12 @@ MT(
 				that.handleScene(map.settings);
 			});
 			
+			/*
+			this.project.plugins.moviemaker.on(MT.FRAME_SELECTED, function(obj){
+				console.log("FRAME", obj);
+				that.addEasingOptions(obj);
+			});
+			*/
 		},
    
 		handleClick: function(obj){
@@ -143,6 +154,75 @@ MT(
 			
 		},
    
+		/* TODO: add this to input class*/
+		addEasingOptions: function(obj){
+			
+			var buff = [];
+			
+			var eas = Phaser.Easing;
+			this.genEasings(eas, "Phaser.Easing", buff);
+			
+			obj.easing = obj.easing || buff[0].label;
+			
+			this.addInput({key: "easing", type: "select", options: buff}, obj); 
+			
+			
+			return;
+			var div = document.createElement("div");
+			div.className = "ui-input";
+			
+			var label = document.createElement("div");
+			label.style.right = "50%";
+			label.innerHTML = "easing";
+			div.appendChild(label);
+			
+			
+			var sel = document.createElement("select");
+			sel.className = "ui-input-value";
+			
+			
+			
+			
+			console.log(buff);
+			
+			var opt;
+			for(var i=0; i<buff.length; i++){
+				opt = document.createElement("option");
+				opt.innerHTML = buff[i].label;
+				opt.value = buff[i].label;
+				
+				sel.appendChild(opt);
+			}
+			
+			sel.onchange = function(){
+				console.log("change", this.value);
+			};
+			
+			div.appendChild(sel);
+			
+			this.panel.content.el.appendChild(div);
+			
+		},
+   
+		genEasings: function(eas, label, buffer){
+			buffer = buffer || [];
+			var lab = label;
+			for(var k in eas){
+				if(typeof eas[k] == "object"){
+					this.genEasings(eas[k], label+"."+k, buffer);
+					continue;
+				}
+				
+				buffer.push({
+					label: label + "." + k,
+					value: label + "." + k
+				});
+			}
+			
+			return buffer;
+			
+		},
+   
 		handleObjects: function(obj){
 			/*if(!MO){
 				return;
@@ -162,7 +242,7 @@ MT(
 				that.project.om.update();
 			};
 			//group
-			if(obj.data.contents){
+			if(obj.data.type == MT.objectTypes.GROUP){
 				this.stack = "group";
 				this.objects.x = this.addInput( "x", obj, true, cb);
 				this.objects.y = this.addInput( "y", obj, true, cb);
@@ -171,6 +251,15 @@ MT(
 					obj.isFixedToCamera = 0;
 				}
 				this.objects.isFixedToCamera = this.addInput({key:"isFixedToCamera", min: 0, max: 1, step: 1}, obj, true, cb);
+				
+				this.objects.scaleX = this.addInput( {
+					key: "scaleX",
+					step: 0.1
+				}, obj, true, cb)
+				this.objects.scaleY = this.addInput( {
+					key: "scaleY",
+					step: 0.1
+				}, obj, true, cb);
 			}
 			// tile layer
 			else if(obj.data.type == MT.objectTypes.TILE_LAYER){
@@ -195,7 +284,7 @@ MT(
 					step: 0.1
 				}, obj, true, cb);
 				
-				
+			
 			}
 			// tile text
 			else if(obj.data.type == MT.objectTypes.TEXT){

@@ -180,6 +180,7 @@ MT.extend("core.Emitter")(
 						}
 						that.emit("close", el);
 					}
+					
 				};
 				el.show();
 				el.isFolder = true;
@@ -189,15 +190,7 @@ MT.extend("core.Emitter")(
 			if(type == "item"){
 				el.isFolder = false;
 				if(!data.type){
-					var im = document.createElement("img");
-					if(data.__image){
-						im.src = this.rootPath + "/" +data.__image;
-					}
 					
-					
-					head.el.appendChild(im);
-					im.style.pointerEvents = "none";
-					el.img = im;
 				}
 				
 				if(data.type == "input"){
@@ -210,8 +203,15 @@ MT.extend("core.Emitter")(
 					el.head = input;
 					
 				}
-				
 			}
+			
+			var im;
+			if(data.__image){
+				this.addImage(el, data);
+			}
+			
+			
+			
 			
 			if(this.options.showHide){
 				el.addClass("show-hide-enabled");
@@ -258,6 +258,26 @@ MT.extend("core.Emitter")(
 				el.hide();
 			}
 			return el;
+		},
+		
+		addImage: function(el, data){
+			var im;
+			el.head.addClass("has-image");
+			im = document.createElement("img");
+			im.src = this.rootPath + "/" +data.__image;
+			el.head.el.appendChild(im);
+			im.style.pointerEvents = "none";
+			el.img = im;
+			
+		},
+		
+		removeImage: function(el){
+			el.head.removeClass("has-image");
+			if(!el.img){
+				return;
+			}
+			el.head.el.removeChild(el.img);
+			el.img = null;
 		},
 		
 		checkExistingItem: function(data, parent, index, isVirtual){
@@ -323,10 +343,11 @@ MT.extend("core.Emitter")(
 							item.img.src = this.rootPath + "/" + data.__image + "?"+Date.now();
 						}
 						else{
-							console.log("WHERE IS IMG?");
+							this.addImage(item, data);
 						}
-							
-						
+					}
+					else{
+						this.removeImage(item);
 						
 					}
 					
@@ -416,21 +437,23 @@ MT.extend("core.Emitter")(
 		
 		sortable: function(ev){
 			
-			var dragHelper = this.addItem({name: "xxx", skip: true}, this.tree, 0, true);
+			var dragHelper = this.addItem({name: "&nbsp;", skip: true}, this.tree, 0, true);
 			
 			dragHelper.style.position = "absolute";
 			dragHelper.style.pointerEvents = "none";
 			dragHelper.style.bottom = "auto";
-			dragHelper.style.opacity = 0.6;
+			dragHelper.style.opacity = 0.8;
+			dragHelper.style.border = "solid 1px #000";
+			dragHelper.style.zindex = 9999;
+			dragHelper.style.backgroundColor = "#f00";
 			
-			var dd = document.createElement("div");
+			var dd = new MT.ui.DomElement("div");
 			dd.style.position = "absolute";
 			dd.style.height = "4px";
-			dd.style.border = "solid 1px #000";
-			dd.style.left = 0;
-			dd.style.right = 0;
+			//dd.style.border = "solid 1px #000";
 			dd.style.pointerEvents = "none";
 			dd.style.display = "none";
+			dd.style.zIndex = 9999;
 			
 			
 			var p = dragHelper.el.parentNode;
@@ -438,7 +461,7 @@ MT.extend("core.Emitter")(
 			p.appendChild(dragHelper.el);
 			dragHelper.style.display = "none";
 			
-			p.appendChild(dd);
+			document.body.appendChild(dd.el);
 			
 			
 			var pe = null;
@@ -466,7 +489,7 @@ MT.extend("core.Emitter")(
 				item.parent.removeChild(item);
 				
 				if(inFolder){
-					last.addChild(item);
+					last.addChild(item, -1);
 					if(!last.visible){
 						item.hide();
 					}
@@ -486,6 +509,7 @@ MT.extend("core.Emitter")(
 			};
 			
 			this.enableInput(ev);
+			var startDragPos = {x: 0, y: 0};
 			
 			ev.on("mousedown", function(e){
 				if(!e.target.parentNode){
@@ -498,10 +522,19 @@ MT.extend("core.Emitter")(
 				mdown = true;
 				scrollTop = that.tree.el.parentNode.scrollTop;
 				
+				
+				
 				var y = (item.calcOffsetY(that.tree.el));
 				dragHelper.y = y;
+				dragHelper.style.left = "0";
+				dragHelper.style.right = "0";
+				
 				my = y - ev.mouse.y;
+				startDragPos.x = ev.mouse.x;
+				startDragPos.y = ev.mouse.y;
 			});
+			
+			
 			
 			ev.on("mouseup", function(e){
 				
@@ -512,9 +545,8 @@ MT.extend("core.Emitter")(
 				if(!mdown){
 					return;
 				}
+				
 				mdown = false;
-				
-				
 				for(var i=0; i<that._onDrop.length; i++){
 					if(that._onDrop[i](e, item, last) === false){
 						return;
@@ -528,7 +560,7 @@ MT.extend("core.Emitter")(
 				dragged = false;
 				
 				
-				if(!last || last == item || last.parent == item){
+				if(!last || last == item || last.hasParent(item)){
 					last = null;
 					return;
 				}
@@ -540,7 +572,7 @@ MT.extend("core.Emitter")(
 						if(!it.hasClass("selected")){
 							continue;
 						}
-						if(item == it || last == it || last.parent == it){
+						if(item == it || last == it){
 							continue;
 						}
 						dropItem(it, last);
@@ -548,57 +580,131 @@ MT.extend("core.Emitter")(
 				}
 				that.updateFullPath(that.getData(), null, true);
 				
+				
 			});
 			
 			ev.on("mousemove", function(e){
-				if(!mdown){
+				if(!mdown || !item){
+					return;
+				}
+				if(Math.abs(startDragPos.x - ev.mouse.x) < 5 && Math.abs(startDragPos.y - ev.mouse.y) < 5 ){
 					return;
 				}
 				
-				var dy = my - ev.mouse.y;
-				var p1 = dragHelper.y + ev.mouse.my - (scrollTop - that.tree.el.parentNode.scrollTop);
-				
-				scrollTop = that.tree.el.parentNode.scrollTop;
-				var p2 = 0;
-				var activeItem = that.getOwnItem(e.target);
-				
-				dragHelper.y = p1;
-				
-				if(!activeItem || !item  || activeItem == item || activeItem.hasParent(item) ){
-					return;
-				}
-				
-				
-				dragHelper.style.display = "block";
-				dragHelper.head.el.innerHTML = item.data.name;
-				
-				p2 = activeItem.calcOffsetY(dd.parentNode);
-				
-				if(Math.abs(p1-p2) > dragHelper.el.offsetHeight){
-					return;
-				}
 				
 				dragged = true;
-				bottom = false;
-				inFolder = false;
+				
+				dragHelper.style.zIndex = 9999
+				dragHelper.style.display = "block";
+				dragHelper.head.el.innerHTML = "&nbsp;";
+				
+				var bounds = dragHelper.bounds;
+				var top = ev.mouse.y;
+				
+				dragHelper.y = top  - bounds.height*0.5 - that.tree.bounds.top;
+				dragHelper.style.height = "auto";
 				
 				
 				dd.style.display = "block";
-				dd.style.height = "4px";
+				dd.style.top = top - bounds.height*0.5 + "px";
 				
-				if(p2 < p1){
-					p2 += dragHelper.el.offsetHeight;
-					bottom = true;
+				dd.style.left = bounds.left + "px";
+				dd.style.width = bounds.width + "px";
+				dd.style.height = bounds.height + "px";
+				
+				bounds = dd.bounds;
+				
+				var currItem, head;
+				var maxHeight = 0;
+				
+				last = null;
+				
+				for(var it, i=0; i<that.items.length; i++){
+					currItem = that.items[i];
+					head = currItem.head;
+					
+					it = currItem.head.bounds;
+					
+					if(maxHeight < it.top + it.height){
+						maxHeight = it.top + it.height;
+					}
+					
+					if(top > it.top && top < it.top + it.height + 5){
+						last = currItem;
+						if(last == item){
+							return;
+						}
+						dragHelper.y = it.top - that.tree.bounds.top;
+						
+						inFolder = currItem.isFolder;
+						bottom = false;
+						
+						if(!inFolder){
+							// move over
+							if(top - it.top < it.top + it.height - top){
+								inFolder = false;
+								
+								dragHelper.y = it.top - that.tree.bounds.top;
+								dragHelper.style.height = dragHelper.height*0.5;
+								dragHelper.y -= dragHelper.height*0.5;
+								
+							}
+							
+							// move under
+							else{
+								inFolder = false;
+								bottom = true;
+								
+								dragHelper.y = it.top - that.tree.bounds.top + it.height;
+								dragHelper.style.height = dragHelper.height *0.5;
+								dragHelper.y -= dragHelper.height*0.5;
+								
+							}
+							return;
+						}
+						
+						
+						// move over
+						if(top - it.top < 10){
+							inFolder = false;
+							
+							dragHelper.y = it.top - that.tree.bounds.top;
+							dragHelper.style.height = dragHelper.height*0.5;
+							dragHelper.y -= dragHelper.height*0.5;
+						}
+						
+						// move under
+						if(it.top + it.height - top < 5 && last.data.isClosed === true){
+							inFolder = false;
+							bottom = true;
+							
+							dragHelper.y = it.top - that.tree.bounds.top + it.height;
+							dragHelper.style.height = dragHelper.height *0.5;
+							dragHelper.y -= dragHelper.height*0.5;
+						}
+						return;
+					}
 				}
 				
-				dd.style.top = (p2 - 2)+"px";
-				if(Math.abs(p2-p1) < 16 && activeItem.isFolder){
-					dd.style.height = dragHelper.el.offsetHeight+"px";
-					inFolder = true;
+				
+				var firstLevel = that.tree.children;
+				
+				if(that.items.length){
+					// most bottom
+					if(top > maxHeight){
+						dragHelper.y = maxHeight - that.tree.bounds.top + 5;
+						dragHelper.style.height = dragHelper.height *0.5;
+						bottom = true;
+						inFolder = false;
+						last = firstLevel[firstLevel.length - 1];
+					}
+					// most top
+					else if(top - that.tree.bounds.top < 20){
+						dragHelper.y = 0;
+						dragHelper.style.height = dragHelper.height *0.5;
+						last = firstLevel[0];
+					}
 				}
-				
-				last = activeItem;
-				
 			});
 			
 		},
@@ -618,7 +724,11 @@ MT.extend("core.Emitter")(
 				this.input.className = "ui-input";
 			}
 			
-			this.input.style.left = (el.head.calcOffsetX(document.body))+"px";
+			var left = (el.head.calcOffsetX(document.body));
+			if(el.img){
+				left += 20;
+			}
+			this.input.style.left = (left)+"px";
 			this.input.style.top = (el.calcOffsetY(document.body) - 2) + "px"; // check padding here instead of 2 :)
 			
 			this.input.value = el.data.name;

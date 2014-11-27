@@ -39,9 +39,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		this.id = Date.now();
 		
-		this.activeGroup = null;
+		this._activeGroup = null;
 	},
 	{
+		
+		set activeGroup(val){
+			this._activeGroup = val;
+		},
+		get activeGroup(){
+			return this._activeGroup;
+		},
+		
 		initUI: function(ui){
 			this.ui = ui;
 			this.panel = ui.createPanel("Objects");
@@ -121,12 +129,20 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			
+			this.on(MT.OBJECT_UPDATED, function(mo){
+				if(!mo.id){
+					return;
+				}
+				that.saveObject(mo.data);
+				that.update();
+			});
+			
+			
 		},
 		
 		
 		installUI: function(ui){
 			var that = this;
-			
 			var tools = this.project.plugins.tools;
 			
 			tools.on(MT.OBJECT_SELECTED, function(obj){
@@ -138,10 +154,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					}
 					el.addClass("selected.active");
 					that.selector.add(el);
+					
 				}
 			});
 			
 			tools.on(MT.OBJECT_UNSELECTED, function(obj){
+				that.activeGroup = null;
 				// deleted
 				if(!obj){
 					return;
@@ -156,12 +174,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 
-			ui.events.on(ui.events.MOUSEUP, function(e){
+			/*ui.events.on(ui.events.MOUSEUP, function(e){
 				that.sync();
+			});*/
+			
+			tools.on(MT.ASSET_FRAME_CHANGED, function(obj){
+				that.updateTree();
 			});
 			
 			this.tv.on("deleted", function(o){
 				that.selector.remove(o);
+				that.activeGroup = null;
 			});
 			
 		},
@@ -185,13 +208,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.update();
 		},
 		
+		getData: function(){
+			return this.tv.getData();
+		},
+		
 		initSocket: function(socket){
 			MT.core.BasicPlugin.initSocket.call(this, socket);
 		},
 		
 		//add object from asset
 		addObject: function( e, obj ){
-			if(obj.contents){
+			if(obj.type == MT.GROUP){
 				return;
 			}
 			var no = this.createObject(obj, e.offsetX, e.offsetY);
@@ -210,6 +237,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var arr = data;
 			if(this.activeGroup){
 				arr = this.activeGroup.contents;
+				obj.x -= this.activeGroup.x;
+				obj.y -= this.activeGroup.y;
 			}
 			
 			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, arr, 0);
@@ -218,17 +247,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			obj.index = -1;
 			
+			
 			if(!silent){
 				this.tv.rootPath = this.project.path
 				this.tv.merge(data);
 				this.update();
-				this.sync();
 				this.emit(MT.OBJECT_ADDED, obj);
+				this.sync();
 			}
 			
-			console.log(obj);
 			
 			return obj;
+		},
+		
+		updateTree: function(){
+			this.tv.merge(this.tv.getData());
+			
 		},
 		
 		createObject: function(asset, x, y){
@@ -258,7 +292,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				tmpName: name,
 				frame: 0,
 				isVisible: 1,
-				isLocked: 0
+				isLocked: 0,
+				contents: []
 			};
 		},
 		
@@ -313,6 +348,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				isVisible: 1,
 				isLocked: 0,
 				isFixedToCamera: 0,
+				scaleX: 1,
+				scaleY: 1,
 				alpha: 1
 			};
 			
@@ -548,13 +585,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.select(id);
 		},
 		
-		cleanSelection: function(){
-			
-		},
-		
 		mkid: function(){
 			this.id++;
-			
 			return this.id;
 		},
 		
@@ -578,13 +610,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		_syncTm: 0,
 		sync: function(silent){
-			
 			if(this._syncTm){
 				window.clearTimeout(this._syncTm);
 				this._syncTm = 0;
 			}
 			var that = this;
-			
 			
 			this._syncTm = window.setTimeout(function(){
 				var data = that.tv.getData();
@@ -601,6 +631,23 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				that.send("updateData", data);
 				that._syncTm = 0;
+				that.updateTree();
+			}, 100);
+		},
+		
+		_saveTm: 0,
+		saveObject: function(obj){
+			
+			if(this._saveTm){
+				window.clearTimeout(this._saveTm);
+				this._saveTm = 0;
+			}
+			var that = this;
+			this._saveTm = window.setTimeout(function(){
+				that.send("save", obj);
+				console.log("save");
+				that.emit(MT.OBJECTS_SYNC, that.tv.getData());
+				that.updateTree();
 			}, 100);
 		},
 		

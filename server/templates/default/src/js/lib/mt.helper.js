@@ -98,6 +98,19 @@
 			return objects[name];
 		},
 		
+		createPack: function(name, pack, parent){
+			pack = pack || {};
+			parent = parent || this.game.world;
+			
+			var group = this.getObjectGroupByName(name);
+			if(!group){
+				console.error("failed to find the group: ", name);
+				return;
+			}
+			this._add(group, pack, "", parent);
+			pack.movies = this.createMovies(pack);
+			return pack;
+		},
 		createGroup: function(name, parent){
 			console.warn('mt.createGroup is deprecated. Use mt.create("'+name+'") instead');
 			return mt.create(name, parent);
@@ -120,101 +133,207 @@
 		},
 		
 		// create movie
-		createMovies: function(object){
-			var out = {};
-			var data;
-			var o;
-			if(object.self){
-				o = object.self;
-			}
-			else{
-				o = object;
-			}
-			
-			data = o.getData();
-			
+		createMovies: function(pack){
 			var that = this;
-			var tween, tmp, kf, ctween = [], info, fps, totalTime;
+			
+			var movie, fps, out = {},
+				data = pack.data,
+				object = pack.self,
+				lf;
+			
 			for(var key in data.movies){
-				info = data.movies[key];
-				fps = info.info.fps;
+				movie = data.movies[key];
+				fps = movie.info.fps;
 				
-				ctween.length = 0;
-				tween = this.createMovie(o, data.movies[key], fps);
+				lf = this.getLastFrame(pack.data, key);
+				console.log("last frame:", lf);
 				
-				totalTime = 0;
-				
-				if(o.children){
-					for(var c=0; c<o.children.length; c++){
-						tmp = o.children[c].getData().movies[key];
-						ctween.push(this.createMovie(o.children[c], tmp, fps));
-						var lastFrame = tmp.frames[tmp.frames.length-1];
-						if(lastFrame.keyframe/fps > totalTime){
-							totalTime = lastFrame.keyframe/fps;
-						}
-						
-						
-						console.log("time",lastFrame.keyframe/fps);
-					}
-					
-					tween.onStart.add(function(){
-						console.log("starting sub tweens");
-						
-						for(var i=0; i<ctween.length; i++){
-							//ctween[i].stop();
-							ctween[i].start();
-						}
-					});
-				}
-				
-				out[key] = tween;
+				out[key] = this.createMovie(pack, key, fps, lf * 1000/fps);
+				out[key+"Flip"] = this.createMovie(pack, key, fps, lf * 1000/fps, true);
 			}
 			
 			return out;
 		},
- 
-		createMovie: function(object, info, fps){
+		
+		createMovie: function(pack, name, fps, length, flip){
+			fps = fps || movie.info.fps;
 			
-			var tmp = this.game.add.tween(object);
-			var kf, pkf = 0;
-			var prev, curr, diff, time;
-			var that = this;
+			var children = [];
 			
-			var firstFrame = info.frames[0];
+			var object = pack.self,
+				tween = this.game.add.tween(object),
+				child, children,
+				data = pack.data;
 			
-			
-			var atween = this.game.add.tween(object.anchor), 
-				stween = this.game.add.tween(object.scale);
-			
-			for(var i=1; i<info.frames.length; i++){
-				curr = info.frames[i];
-				kf = curr.keyframe;
-				prev = info.frames[i-1];
-				diff = this._mkDiff(prev, curr);
-				time = (kf - pkf)/fps*1000;
-				tmp = tmp.to(diff, time);
-				
-				stween.to(this._mk_scale(diff), time);
-				atween.to(this._mk_anchor(diff), time);
-				
-				pkf = kf;
+			if(data.contents){
+				for(var key in pack.children){
+					child = pack.children[key];
+					this.createChildMovies(child, name, fps, length, children, flip);
+				}
 			}
 			
-			tmp.onStart.add(function(){
-				that._updateCommonProperties(firstFrame, object);
-				atween.start();
-				stween.start();
+			
+			var movie = data.movies[name];
+			var frames = movie.frames;
+			var s = frames[0];
+			var e = frames[frames.length - 1];
+			var f = (flip ? -1 : 1);
+			
+			tween.onStart.add(function(){
+				console.log("start", data.name);
+				if(s){
+					object.x = s.x*f;
+					object.y = s.y;
+					object.angle = s.angle*f;
+					object.alpha = s.alpha;
+					if(s.scaleX){
+						object.scaleX = s.scaleX*f;
+					}
+					if(s.frame){
+						object.frame = s.frame;
+					}
+				}
+				if(!children){
+					return;
+				}
+				
+				var cs, co, ct;
+				for(var i=0; i<children.length; i++){
+					cs = children[i].startPos;
+					co = children[i].object;
+					ct = children[i].tween
+					co.x = cs.x*f;
+					co.y = cs.y;
+					co.angle = cs.angle*f;
+					co.alpha = cs.alpha;
+					
+					if(!cs.scaleX){
+						cs.scaleX = co.scale.x;
+					}
+					co.scaleX = cs.scaleX * f;
+					
+					
+					children[i].tween.pendingDelete = false;
+					children[i].tween.resume();
+					children[i].tween.start();
+				}
 			});
 			
-			if(!tmp._lastChild){
-				tmp._lastChild = tmp;
+			
+			tween.onComplete.add(function(){
+				if(!children){
+					return;
+				}
+				console.log("completed");
+				for(var i=0; i<children.length; i++){
+					//children[i].tween.stop();
+				}
+			});
+			
+			if(tween.onStop){
+				tween.onStop.add(function(){
+					console.log("stopped");
+					for(var i=0; i<children.length; i++){
+						children[i].tween = children[i].tween.stop();
+					}
+				});
 			}
+			
+			
+			var timeToGo = 0, kf, 
+				oneFrame = 1000/fps,
+				lastFrame = 0;
+			
+			var tmp = tween;
+			var lf = s;
+			for(var i=1; i<frames.length; i++){
+				kf = frames[i];
+				timeToGo = kf.keyframe*oneFrame;
+				tmp = tmp.to(this._mkDiff(lf, kf), timeToGo - lastFrame);
+				lf = kf;
+				lastFrame = timeToGo;
+			}
+			
+			if(timeToGo < length && e){
+				tmp.to({x: e.x}, length - timeToGo + oneFrame);
+			}
+			
+			
 			
 			return tmp;
 		},
+		
+		createChildMovies: function(pack, name, fps, length, children, flip){
+			fps = fps || movie.info.fps;
+			var object = pack.self,
+				tween = this.game.add.tween(object),
+				child, children,
+				data = pack.data;
+			
+			if(data.contents){
+				for(var key in pack.children){
+					child = pack.children[key];
+					this.createChildMovies(child, name, fps, length, children, flip);
+				}
+			}
+			
+			
+			var movie = data.movies[name];
+			var frames = movie.frames;
+			var s = frames[0];
+			var e = frames[frames.length - 1];
+			
+			var timeToGo = 0, kf, 
+				oneFrame = 1000/fps,
+				lastFrame = 0;
+			
+			var tmp = tween;
+			var lf = s;
+			
+			/*tmp = tween.from({
+				x: s.x,
+				y: s.y,
+				alpha: s.alpha,
+				angle: s.angle
+			});*/
+			
+			for(var i=1; i<frames.length; i++){
+				kf = frames[i];
+				timeToGo = kf.keyframe*oneFrame;
+				tmp = tmp.to(this._mkDiff(lf, kf, flip), timeToGo - lastFrame);
+				lf = kf;
+				lastFrame = timeToGo;
+			}
+			
+			tween.name = data.name;
+			
+			children.push({tween: tween, startPos: s, object: object});
+		},
  
-		_mkDiff: function(o1, o2){
+		getLastFrame: function(data, name, len){
+			len = len || 0;
+			
+			var t = 0;
+			var frames = data.movies[name].frames;
+			var lf = frames.length ? frames[frames.length - 1].keyframe : 0;
+			var tmp = 0;
+			
+			if(data.contents){
+				for(var i=0; i<data.contents.length; i++){
+					tmp = this.getLastFrame(data.contents[i], name);
+					if(tmp > lf){
+						lf = tmp;
+					}
+				}
+			}
+			
+			
+			return lf;
+		},
+ 
+		_mkDiff: function(o1, o2, flip){
 			var out = {};
+			var f = (flip ? -1 : 1);
 			for(var i in o1){
 				if(typeof o1[i] === "object"){
 					continue;
@@ -223,7 +342,12 @@
 					continue;
 				}
 				if(o1[i] != o2[i]){
-					out[i] = o2[i];
+					if(i == "x" || i == "angle" || i == "scaleX"){
+						out[i] = o2[i]*f;
+					}
+					else{
+						out[i] = o2[i];
+					}
 				}
 			}
 			for(var i in o2){
@@ -234,7 +358,12 @@
 					continue;
 				}
 				if(o1[i] != o2[i]){
-					out[i] = o2[i];
+					if(i == "x" || i == "angle" || i == "scaleX"){
+						out[i] = o2[i]*f;
+					}
+					else{
+						out[i] = o2[i];
+					}
 				}
 			}
 			return out;
@@ -548,8 +677,11 @@
 			group = group || this.game.world;
 			path = path !== "" ? "." + path : path;
 			
+			
+			
 			for(var i = data.length - 1; i > -1; i--){
-				this._add(data[i], container, path, group, data, keepVisibility);
+				container[data[i].name] = {};
+				this._add(data[i], container[data[i].name], path, group, data, keepVisibility);
 			}
 			return container;
 		},
@@ -557,27 +689,22 @@
 		_add: function(object, container, path, group, parent, keepVisibility){
 			var createdObject = null;
 			
-			if(object.contents){
+			if(object.type == this.GROUP){
 				createdObject = this._addGroup(object, container);
+				
 				if(object.physics && object.physics.enable){
 					createdObject.enableBody = true;
 				}
 				group.add(createdObject);
 				
-				if(!container[object.name]){
-					container[object.name] = {
-						get self(){
-							return createdObject;
-						},
-						get data(){
-							return object;
-						}
-					};
-				}
+				
+				container.self = createdObject;
+				container.children = {};
+				
 				
 				this._updateCommonProperties(object, createdObject, keepVisibility);
+				this._loadObjects(object.contents, container.children, path + object.name, createdObject);
 				
-				this._loadObjects(object.contents, container[object.name], path + object.name, createdObject);
 			}
 			else{
 				
@@ -596,11 +723,19 @@
 				}
 				
 				this._updateCommonProperties(object, createdObject, keepVisibility);
+				
+				if(object.contents){
+					container.self = createdObject;
+					container.children = {};
+					this._loadObjects(object.contents, container.children, path + object.name, createdObject);
+				}
 			}
 			
-			createdObject.getData = function(){
-				return object;
-			};
+			if(!container.hasOwnProperty("data")){
+				container.data = object;
+			}
+			
+			container.self = createdObject;
 		},
 		
 		addPhysics: function(tpl, sprite, parent){
@@ -655,8 +790,6 @@
 			group.y = object.y;
 			group.fixedToCamera = !!object.fixedToCamera;
 			
-			group.name = object.name;
-			
 			if(object.angle){
 				group.angle = object.angle;
 			}
@@ -671,20 +804,6 @@
 			group = group || this.game.world;
 			var t = this.game.add.text(object.x, object.y, object.text || object.name, object.style);
 			group.add(t);
-			
-			if(container.hasOwnProperty(object.name)){
-				console.warn("dublicate object name - ", object.name);
-			}
-			else{
-			
-				Object.defineProperty(container, object.name, {
-					get : function(){ 
-						return t;
-					},
-					enumerable: true
-				});
-			}
-			
 			return t;
 		},
 		
@@ -714,24 +833,9 @@
 			for(var y in tiles){
 				for(var x in tiles[y]){
 					tile = map.putTile(tiles[y][x], x, y, tl);
-					//tile.index = object.widthInTiles*y + x;
 				}
 			}
 			tl.fixedToCamera = object.isFixedToCamera;
-			
-			if(container.hasOwnProperty(object.name)){
-				console.warn("dublicate object name - ", object.name);
-			}
-			else{
-			
-				Object.defineProperty(container, object.name, {
-					get : function(){ 
-						return tl;
-					},
-					enumerable: true
-				});
-			}
-			
 			return tl;
 		},
 		
@@ -740,7 +844,16 @@
 			var sp = null;
 			group = group || this.game.world;
 			
-			sp = group.create(object.x, object.y, object.assetKey);
+			if(group.type == Phaser.GROUP){
+				sp = group.create(object.x, object.y, object.assetKey);
+			}
+			else{
+				sp = this.game.add.sprite(object.x, object.y, object.assetKey);
+				
+				this.game.world.removeChild(sp);
+				group.addChild(sp);
+			}
+			
 			
 			var frameData = this.game.cache.getFrameData(object.assetKey);
 			
@@ -752,19 +865,6 @@
 				sp.animations.add("default", arr, (object.fps !== void(0) ? object.fps : 10) , false);
 				sp.frame = object.frame;
 			}
-			
-			if(container.hasOwnProperty(object.name)){
-				console.warn("dublicate object name - ", object.name);
-			}
-			else{
-				Object.defineProperty(container, object.name, {
-					get : function(){ 
-						return sp;
-					},
-					enumerable: true
-				});
-			}
-			
 			return sp;
 		},
  
@@ -774,7 +874,7 @@
 				object.angle = template.angle;
 			}
 			
-			if(template.type !== mt.GROUP && template.contents === void(0) && object.type != Phaser.GROUP){
+			if(template.type !== mt.GROUP && object.type != Phaser.GROUP){
 				object.anchor.x = template.anchorX;
 				object.anchor.y = template.anchorY;
 				if(template.scaleX != void(0)){

@@ -95,9 +95,8 @@ MT.extend("core.Emitter")(
 			
 		});
 		
-		
-			
-		
+		this.builtSpans = [];
+		this.builtDivs = [];
 		
 		this.labels = [];
 	},
@@ -106,14 +105,11 @@ MT.extend("core.Emitter")(
 			this.clear();
 			
 			
-			var m = this.mm.getActiveMovie();
+			var m = this.mm.keyframes;
 			var len = m.getLastFrame();
 			var framesize = this.mm.frameSize;
 			
 			var drawOffset = Math.floor(this.mm.frameOffset + framesize*0.5);
-			
-			//this.el.style.marginLeft = Math.floor(this.mm.frameOffset + framesize*0.5) + "px";
-			//this.handle.style.marginLeft = -Math.floor(this.mm.frameOffset + framesize*0.5) + "px";
 			
 			var width = this.mm.rightPanel.width;
 			
@@ -134,12 +130,24 @@ MT.extend("core.Emitter")(
 			var k = 0;
 			var round = 5;
 			var info;
+			var ind = 0;
 			
 			for(var i=0; i<totFrames; i += inc){
-				el = document.createElement("span");
-				this.sepHolder.appendChild(el);
+				el = this.builtSpans[i];
+				if(!el){
+					el = document.createElement("span");
+					this.builtSpans.push(el);
+				}
+				else{
+					if(el.parentNode){
+						el.parentNode.removeChild(el);
+					}
+					el.removeAttribute("data-seconds");
+				}
 				el.className = "ui-frame-sep";
 				el.style.left = i*framesize + drawOffset;
+				
+				this.sepHolder.appendChild(el);
 				info = i + this.mm.startFrame;
 				
 				if((info+"").length > 2){
@@ -159,6 +167,7 @@ MT.extend("core.Emitter")(
 			var off = 0;
 			var rightBorder = 0;
 			for(var i=0; i<totTime + start+5; i++){
+				
 				if( (i) % 2){
 					off += framesize*fps ;
 					continue;
@@ -169,8 +178,14 @@ MT.extend("core.Emitter")(
 					off += framesize*fps ;
 					continue;
 				}
-				
-				el = document.createElement("div");
+				el = this.builtDivs[i];
+				if(!el){
+					el = document.createElement("div");
+					this.builtDivs.push(el);
+					if(el.parentNode){
+						el.parentNode.removeChild(el);
+					}
+				}
 				el.className = "ui-frame-seconds";
 				el.style.width = framesize*(fps) + "px";
 				el.style.left = -this.mm.startFrame*framesize + off + drawOffset + "px";

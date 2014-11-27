@@ -190,6 +190,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		// user get here without hash
 		newProject: function(){
+			
+			// enable Analytics
+			this.plugins.analytics.installUI(this.ui);
+			
+			
+			
 			var that = this;
 			var pop = new MT.ui.Popup("Welcome to MightyEditor", "");
 			pop.y = (window.innerHeight - 510)*0.45;

@@ -7,6 +7,7 @@ MT(
 		this.parent = parent;
 		this.map = map;
 		this.settings = this.map.project.plugins.settings;
+		this.manager = this.map.project.plugins.objectmanager;
 		
 		this.game = map.game;
 		this.isRemoved = false;
@@ -44,12 +45,20 @@ MT(
 		activeRadius: 5,
 		
 		create: function(){
+			// fix old groups
+			if(this.data.type == void(0)){
+				if(this.data.contents){
+					this.data.type = MT.objectTypes.GROUP;
+				}
+			}
 			
-			if(this.data.contents){
+			if(this.data.type == MT.objectTypes.GROUP){
 				this.createGroup();
 			}
 			if(this.data.type == MT.objectTypes.SPRITE){
 				this.createSprite();
+				this.width = this.object.width;
+				this.height= this.object.height;
 			}
 			if(this.data.type == MT.objectTypes.TEXT){
 				this.createText();
@@ -62,8 +71,7 @@ MT(
 		
 		createTileLayer: function(){
 			
-			
-			// hack for phaser
+			// hack for phaser - might be problematic if canvas exceeds max bitmap size
 			var gm = this.game.width;
 			var gh = this.game.height;
 			
@@ -94,14 +102,23 @@ MT(
    
 		createGroup: function(){
 			this.object = this.game.add.group();
-			this.parent.add(this.object);
+			this.appendToParent();
 		},
 		
 		createSprite: function(){
 			if(!PIXI.BaseTextureCache[this.data.assetId]){
 				this.data.assetId = "__missing";
 			}
-			this.object = this.parent.create(this.data.x, this.data.y, this.data.assetId);
+			if(this.parent.type == Phaser.GROUP){
+				this.object = this.parent.create(this.data.x, this.data.y, this.data.assetId);
+			}
+			else{
+				this.object = this.parent.game.add.sprite(this.data.x, this.data.y, this.data.assetId);
+				
+				this.game.world.removeChild(this.object);
+				this.appendToParent();
+				
+			}
 			
 			this.object.inputEnabled = true;
 			this.object.input.pixelPerfectOver = true;
@@ -113,7 +130,7 @@ MT(
    
 		createText: function(){
 			this.object = this.game.add.text(this.data.x, this.data.y, this.data.text, this.data.style);
-			this.parent.add(this.object);
+			this.appendToParent();
 			this.object.inputEnabled = true;
 			this.object.input.pixelPerfectOver = false;
 			
@@ -122,6 +139,16 @@ MT(
 			
 			this.update();
 		},
+		
+		appendToParent: function(){
+			if(this.parent.type == Phaser.GROUP){
+				this.parent.add(this.object);
+			}
+			else{
+				this.parent.addChild(this.object);
+			}
+		},
+   
 		updateText: function(){
 			this.object.text = this.data.text;
 			
@@ -241,9 +268,19 @@ MT(
 			}
 			
 			if(parent){
-				this.parent = parent;
-				this.parent.add(this.object);
+				// remove before
+				if(this.parent.type == Phaser.Sprite){
+					this.parent.removeChild(this.object);
+				}
 				
+				if(parent.type == Phaser.GROUP){
+					parent.add(this.object);
+				}
+				else{
+					parent.addChild(this.object);
+				}
+				
+				this.parent = parent;
 			}
 			
 			this.updateBox();
@@ -292,7 +329,7 @@ MT(
 		},
    
 		updateBox: function(){
-			if(this.data.contents || this.data.type == MT.objectTypes.TILE_LAYER){
+			if(this.data.type == MT.objectTypes.GROUP || this.data.type == MT.objectTypes.TILE_LAYER){
 				return;
 			}
 			
@@ -330,11 +367,11 @@ MT(
 			}
 			// sides
 			// left
-			if(this.activeHandle != 4){
+			//if(this.activeHandle != 4){
 				x = (mat.tx - obj.width * (obj.anchor.x) * this.map.scale.x) ;
 				y = (mat.ty - obj.height * (obj.anchor.y) * this.map.scale.x) + obj.height*0.5 * this.map.scale.x;
 				this.rp(angle, x, y, ax, ay, this.handles[4]);
-			}
+			//}
 			
 			// right
 			if(this.activeHandle != 6){
@@ -382,7 +419,7 @@ MT(
 			
 			ctx.strokeStyle = "#ffaa00";
 			
-			if(this.data.contents){
+			if(this.data.type == MT.objectTypes.GROUP){
 				var bounds = this.object.getBounds();
 				ctx.strokeRect(bounds.left, bounds.top, bounds.width, bounds.height);
 				this.drawGroupHandle(ctx, this.object);
@@ -609,7 +646,7 @@ MT(
 				}
 			}
 			this.activeHandle = -1;
-			
+			this.updateBox();
 		},
 		
 		moveObject: function(x, y, e){
@@ -687,10 +724,34 @@ MT(
 			
 			// move anchor
 			if(this.activeHandle == -2){
+				var dx = (x - mi.x);
+				var dy = (y - mi.y);
 				
-				this.moveAnchor((x - mi.x), (y - mi.y) );
+				var sx = this.anchorX;
+				var sy = this.anchorY;
+				
+				this.translateAnchor(dx, dy);
 				mi.x = x;
 				mi.y = y;
+				
+				
+				if(e.ctrlKey){
+					this.moveAnchor(Math.round(this.anchorX * 10) * 0.1, Math.round(this.anchorY * 10) * 0.1);
+						var angle = this.getOffsetAngle();
+					
+						console.log(this.width * (this.anchorX - sx));
+						
+						var ddx = this.width * (this.anchorX - sx) * this.map.scale.x;
+						var ddy = this.height * (this.anchorY - sy) * this.map.scale.y;
+						
+						var drx = this.rpx(angle, ddx, ddy, 0, 0); 
+						var dry = this.rpy(angle, ddx, ddy, 0, 0); 
+						
+						mi.x = x - dx + drx;
+						mi.y = y - dy + dry;
+					
+				}
+				this.update();
 				return;
 			}
 			
@@ -736,14 +797,14 @@ MT(
 					sigY *= -1;
 				}
 				
+				
 				this.width = nWidth;
+				this.scaleX = this.object.scale.x * sigX;
+				
+				this.scaleY = this.object.scale.y * sigY;
 				this.height = nHeight;
 				
 				this.updateBox();
-				
-				this.scaleX = this.object.scale.x * sigX;
-				this.scaleY = this.object.scale.y * sigY;
-				
 				if(e.ctrlKey){
 					this.scaleX = Math.round(this.scaleX/0.1)*0.1;
 					this.scaleY = Math.round(this.scaleY/0.1)*0.1;
@@ -752,11 +813,29 @@ MT(
 				if(e.shiftKey){
 					this.scaleX = this.scaleY;
 				}
-				
-				this.data.scaleX = this.object.scale.x;
-				this.data.scaleY = this.object.scale.y;
 			}
 			else{
+				// side handles
+				/*
+				 * 4 - left 
+				 * 5 - top
+				 * 6 - right
+				 * 7 - bottom
+				 */
+				if(this.activeHandle == 4 && this.anchorX == 0){
+					return;
+				}
+				if(this.activeHandle == 5 && this.anchorY == 0){
+					return;
+				}
+				if(this.activeHandle == 6 && this.anchorX == 1){
+					return;
+				}
+				if(this.activeHandle == 7 && this.anchorY == 1){
+					return;
+				}
+				
+				
 				if(this.activeHandle % 2 == 0){
 					if(this.activeHandle == 6){
 						sigX *= -1;
@@ -775,7 +854,7 @@ MT(
 					}
 					//this.height = sigY * Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / this.map.scale.y;
 					
-					this.scaleX = this.object.scaleX;
+					this.scaleX = this.object.scale.x;
 					//this.scaleY = this.object.scaleY;
 					
 					this.updateBox();
@@ -803,7 +882,7 @@ MT(
 					this.height = sigY * Math.sqrt(Math.pow(dh.x - h.x, 2) + Math.pow(dh.y - h.y, 2)) / (this.map.scale.y);
 					
 					//this.scaleX = this.object.scaleX;
-					this.scaleY = this.object.scaleY;
+					this.scaleY = this.object.scale.y;
 					
 					this.updateBox();
 					
@@ -813,7 +892,7 @@ MT(
 					}
 					
 					if(e.shiftKey){
-						this.scaleX = this.scaleY;
+						this.scaleX = this.object.scale.x;
 					}
 					
 					
@@ -830,8 +909,26 @@ MT(
 		bringToTop: function(){
 			this.parent.bringToTop(this.object);
 		},
+		
+		moveAnchor: function(ax, ay){
+			var sx = this.width * this.anchorX;
+			var sy = this.height * this.anchorY;
+			
+			var parrot = this.getOffsetAngle() - this.getParentAngle();
+			
+			this.anchorX = ax;
+			this.anchorY = ay;
+			
+			
+			var dx = this.width *ax - sx;
+			var dy = this.height *ay - sy;
+			
+			
+			this.x += this.rpx(parrot, dx, dy, 0, 0);
+			this.y += this.rpy(parrot, dx, dy, 0, 0);
+		},
    
-		moveAnchor: function(x, y){
+		translateAnchor: function(x, y){
 			
 			var angle = this.getOffsetAngle();
 			var rot = this.object.rotation;
@@ -948,107 +1045,152 @@ MT(
 		},
    
 		set x(x){
-			
-			if(x == void(0) || isNaN(x)){
-				//throw new Error("x = nan?");
-				return 0;
+			if(this.data.x == x){
+				return;
 			}
-			
 			this.object.x = x;
 			this.data.x = x;
 			this.updateBox();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
+			
 		},
 		get x(){
 			return this.data.x || 0;
 		},
 		
 		set y(y){
+			if(this.data.y == y){
+				return;
+			}
 			this.object.y = y;
 			this.data.y = y;
 			this.updateBox();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get y(){
 			return this.data.y;
 		},
    
 		set angle(val){
-			if(isNaN(val)){
-				val = 0;
+			if(this.data.angle == val){
+				return;
 			}
 			this.object.angle = val;
 			this.data.angle = val;
 			this.updateBox();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get angle(){
 			return this.data.angle;
 		},
    
 		set anchorX(val){
+			if(this.data.anchorX == val){
+				return;
+			}
 			this.object.anchor.x = val || 0;
 			this.data.anchorX = this.object.anchor.x;
 			this.data.width = this.object.width;
 			this.updateBox();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get anchorX(){
 			return this.data.anchorX || 0;
 		},
 		
 		set anchorY(val){
+			if(this.data.anchorY == val){
+				return;
+			}
 			this.object.anchor.y = val || 0;
 			this.data.anchorY = val;
 			this.data.height = this.object.height;
 			this.updateBox();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get anchorY(){
 			return this.data.anchorY || 0;
 		},
 		
 		set width(val){
+			val = parseFloat(val);
 			if(isNaN(val)){
 				return;
 			}
+			if(this.data.width == val){
+				return;
+			}
+			
 			this.object.width = val;
 			this.data.width = val;
 			this.data.scaleX = this.object.scale.x;
 			this.updateBox();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get width(){
 			return this.data.width;
 		},
 		set height(val){
+			val = parseFloat(val);
 			if(isNaN(val)){
 				return;
 			}
+			if(this.data.height == val){
+				return;
+			}
+			
 			this.object.height = val;
 			this.data.height = val;
 			this.data.scaleY = this.object.scale.y;
 			this.updateBox();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get height(){
 			return this.data.height;
 		},
 		
 		set scaleX(val){
+			val = parseFloat(val);
 			if(isNaN(val)){
+				return;
+			}
+			
+			if(this.data.scaleX == val){
 				return;
 			}
 			this.object.scale.x = val;
 			this.data.scaleX = val;
 			this.updateBox();
 			this.data.width = this.object.width;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get scaleX(){
 			return this.data.scaleX;
 		},
    
 		set scaleY(val){
+			val = parseFloat(val);
 			if(isNaN(val)){
+				return;
+			}
+			
+			if(this.data.scaleY == val){
 				return;
 			}
 			this.object.scale.y = val;
 			this.data.scaleY = val;
 			this.updateBox();
 			this.data.height = this.object.height;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get scaleY(){
 			return this.data.scaleY;
@@ -1059,33 +1201,53 @@ MT(
 		},
 		
 		set assetId(id){
+			if(this.data.assetId == id){
+				return;
+			}
 			this.data.assetId = id;
 			this.object.loadTexture(id);
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
    
 		set alpha(val){
+			if(this.data.alpha == val){
+				return;
+			}
 			if(isNaN(val)){
 				return;
 			}
 			this.object.alpha = val;
 			this.data.alpha = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get alpha(){
 			return this.data.alpha == void(0) ? 1 : this.data.alpha;
 		},
 		
 		set frame(val){
+			if(this.data.frame == val){
+				return;
+			}
 			this.data.frame = val;
 			this.object.frame = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get frame(){
 			return this.data.frame;
 		},
    
 		set isFixedToCamera(val){
+			if(this.data.isFixedToCamera == val){
+				return;
+			}
 			this.object.fixedToCamera = val;
 			this.data.isFixedToCamera = val;
 			this.updateBox();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get isFixedToCamera(){
 			return this.data.isFixedToCamera;
@@ -1093,17 +1255,27 @@ MT(
 		
 		/* text */
 		set wordWrapWidth(val){
+			if(this.data.wordWrapWidth == val){
+				return;
+			}
 			this.object.wordWrapWidth = val;
 			this.data.wordWrapWidth = val;
 			this.updateBox();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get wordWrapWidth(){
 			return this.data.wordWrapWidth || 100;
 		},
 		
 		set wordWrap(val){
+			if(this.data.wordWrap == val){
+				return;
+			}
 			this.data.wordWrap = val;
 			this.object.wordWrap = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get wordWrap(){
 			return this.data.wordWrap;
@@ -1114,14 +1286,21 @@ MT(
 			return;
 			this.data.style = val;
 			this.object.style = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get style(){
 			return this.data.style || {};
 		},
 		
 		set font(val){
+			if(this.data.style.font == this.object.font){
+				return;
+			}
 			this.object.font = val;
 			this.data.style.font = this.object.font;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
    
 		get font(){
@@ -1129,8 +1308,13 @@ MT(
 		},
    
 		set fontFamily(val){
+			if(this.data.style.fontFamily == val){
+				return;
+			}
 			this.object.font = val;
 			this.data.style.fontFamily = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get fontFamily(){
 			return this.data.style.fontFamily;
@@ -1138,13 +1322,23 @@ MT(
 		},
    
 		set fontWeight(val){
+			if(this.data.style.fontWeight == val){
+				return;
+			}
+			
 			this.object.fontWeight = val;
 			this.data.style.fontWeight = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get fontWeight(){
 			return this.data.style.fontWeight;
 		},
 		set fontSize(val){
+			if(this.data.style.fontSize == val){
+				return;
+			}
+			
 			var scaleX = this.object.scale.x;
 			var scaleY = this.object.scale.y;
 			
@@ -1154,6 +1348,7 @@ MT(
 			this.scaleX = scaleX;
 			this.scaleY = scaleY;
 			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get fontSize(){
 			if(!this.data.style.fontSize){
@@ -1163,8 +1358,13 @@ MT(
 		},
 		
 		set align(val){
+			if(this.data.align == val){
+				return;
+			}
 			this.data.align = val;
 			this.object.align = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
    
 		get align(){
@@ -1172,24 +1372,39 @@ MT(
 		},
 		
 		set fill(val){
+			if(this.data.fill == val){
+				return;
+			}
 			this.object.fill = val;
 			this.data.fill = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get fill(){
 			return this.data.fill || "#000000";
 		},
 		
 		set stroke(val){
+			if(this.data.stroke == val){
+				return;
+			}
 			this.object.stroke = val;
 			this.data.stroke = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get stroke(){
 			return this.data.stroke || "#000000";
 		},
 		
 		set strokeThickness(val){
+			if(this.data.strokeThickness == val){
+				return;
+			}
 			this.object.strokeThickness = val;
 			this.data.strokeThickness = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
    
 		get strokeThickness(){
@@ -1200,13 +1415,20 @@ MT(
 			if(!this.data.shadow){
 				this.data.shadow = {};
 			}
-			
+			else{
+				if(this.data.shadow.x == x && this.data.shadow.y == y && 
+					this.data.shadow.color == color && this.data.shadow.blur == blur){
+					return;
+				}
+			}
 			this.data.shadow.x = x;
 			this.data.shadow.y = y;
 			this.data.shadow.color = color;
 			this.data.shadow.blur = blur;
 			
 			this.object.setShadow(x, y, color, blur);
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		
 		get shadowColor(){
@@ -1224,8 +1446,13 @@ MT(
    
 		
 		set text(val){
+			if(this.object.text == val){
+				return;
+			}
 			this.object.text = val;
 			this.data.text = val;
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get text(){
 			return this.data.text;
@@ -1234,33 +1461,53 @@ MT(
 		/* tilelayer */
 		
 		set widthInTiles(val){
+			if(this.data.widthInTiles == val){
+				return;
+			}
 			this.data.widthInTiles = val;
 			this.removeLayer();
 			this.createTileLayer();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get widthInTiles(){
 			return this.data.widthInTiles;
 		},
 		set heightInTiles(val){
+			if(this.data.heightInTiles == val){
+				return;
+			}
 			this.data.heightInTiles = val;
 			this.removeLayer();
 			this.createTileLayer();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get heightInTiles(){
 			return this.data.heightInTiles;
 		},
 		set tileWidth(val){
+			if(this.data.tileWidth == val){
+				return;
+			}
 			this.data.tileWidth = val;
 			this.removeLayer();
 			this.createTileLayer();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get tileWidth(){
 			return this.data.tileWidth;
 		},
 		set tileHeight(val){
+			if(this.data.tileHeight == val){
+				return;
+			}
 			this.data.tileHeight = val;
 			this.removeLayer();
 			this.createTileLayer();
+			
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
 		get tileHeight(){
 			return this.data.tileHeight;
@@ -1272,6 +1519,7 @@ MT(
 			this.object.destroy();
 			var i = this.map.tileLayers.indexOf(this.object);
 			this.map.tileLayers.splice(i, 1);
+			this.manager.emit(MT.OBJECT_UPDATED, this);
 		},
    
 		get isVisible(){

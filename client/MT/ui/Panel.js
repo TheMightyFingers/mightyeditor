@@ -5,7 +5,6 @@ MT.require("ui.PanelHead");
 MT.extend("core.Emitter").extend("ui.DomElement")(
 	MT.ui.Panel = function(title, ui){
 		if(title == ""){
-			console.warn("panel without title");
 			title = "&nbsp;";
 		}
 		

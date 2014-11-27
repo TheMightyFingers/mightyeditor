@@ -18,8 +18,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				if(that.tools.activeTool != that){
 					return;
 				}
-				
-				that.tools.initTmpObject(that.tools.activeAsset);
+				that.init(asset);
 				that.tools.tmpObject.frame = frame;
 			});
 			
@@ -36,8 +35,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.tools.unselectObjects();
 			
 			asset = asset || this.tools.activeAsset;
-			
-			this.map.handleMouseMove = this.map._followMouse;
+			var that = this;
+			this.tools.map.handleMouseMove = function(e){
+				that.mouseMove(e);
+			}
 			
 			if(!asset || asset.contents){
 				return;
@@ -46,7 +47,18 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.tools.tmpObject.frame = this.tools.activeFrame;
 			
 		},
-		
+		mouseMove: function(e){
+			
+			if(e.target != this.tools.map.game.canvas){
+				return;
+			}
+			
+			if(!this.tools.tmpObject){
+				return;
+			}
+
+			this.tools.map._followMouse(e, false);
+		},
 		mouseDown: function(e){
 			
 			if(!this.tools.tmpObject){

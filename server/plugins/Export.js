@@ -87,7 +87,8 @@ MT.extend("core.BasicPlugin")(
 				that.fs.copy(this.project.path + this.sep + "src", this.dir);
 				
 				
-				that.fs.copy(tplPath + "mt.helper.js", libsPath + this.importFile);
+				that.fs.copy(tplPath + this.importFile, libsPath + this.importFile);
+				that.fs.copy(tplPath + this.hacksFile, libsPath + this.hacksFile);
 				//that.fs.copy(tplPath + this.phaserSrc, libsPath +  this.phaserSrc);
 				//that.fs.copy(tplPath + this.phaserMinSrc, libsPath + this.phaserMinSrc);
 				
@@ -255,8 +256,9 @@ MT.extend("core.BasicPlugin")(
 			for(var i=0; i<objects.length; i++){
 				object = objects[i];
 				if(object.contents){
-					this._cleanUp(object);
 					this.parseObjects(object.contents);
+					object.assetKey = this.idList[object.assetId];
+					this._cleanUp(object);
 					continue;
 				}
 				

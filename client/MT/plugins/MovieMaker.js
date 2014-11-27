@@ -2,21 +2,23 @@
 MT.require("plugins.MapEditor");
 MT.require("ui.Keyframes");
 MT.require("ui.FrameControl");
+//MT.require("ui.MainMovie");
 
-MT(
+MT.FRAME_SELECTED = "FRAME_SELECTED";
+
+MT.extend("core.Emitter")(
 	MT.plugins.MovieMaker = function(project){
 		this.project = project;
 		MT.core.BasicPlugin.call(this, "movie");
-		this.activeId = 0;
+	
 		this.activeFrame = 0;
-
 		this.startFrame = 0;
 		this.scale = 1;
 		
-		
-		this.movies = {};
 		this.keys = ["x", "y", "angle", "anchorX", "anchorY", "scaleX", "scaleY", "alpha"];
 		this.roundKeys = [];
+		this.inputs = {};
+		
 	},
 	{
 		_frameSize: 5,
@@ -29,10 +31,8 @@ MT(
 			this.panel.setFree();
 			this.panel.content.el.style.overflow = "hidden";
 			this.el = this.panel.content;
-			this.panel.on("click", function(e){
-				//console.log(e.target);
-			});
 			var that = this;
+			
 			this.panel.addOptions([
 				{
 					label: "Add movie",
@@ -45,6 +45,78 @@ MT(
 			]);
 			this.panel.options.list.width = 150;
 			this.panel.options.list.style.left = "auto";
+			
+			
+			this.settings = this.ui.createPanel("frameInfo");
+			this.settings.setFree();
+			
+			
+		},
+		
+		genEasings: function(eas, label, buffer){
+			buffer = buffer || [];
+			var lab = label;
+			for(var k in eas){
+				if(label != ""){
+					lab = label + ".";
+				}
+				
+				if(typeof eas[k] == "object"){
+					this.genEasings(eas[k], lab + k, buffer);
+					continue;
+				}
+				
+				
+				
+				buffer.push({
+					label: lab + k,
+					value: lab + k
+				});
+			}
+			
+			return buffer;
+			
+		},
+		
+		addInput: function(key, frame, options){
+			var el = this.settings.content.el;
+			if(this.inputs[key]){
+				this.inputs[key].setObject(frame.easings);
+				el.appendChild(this.inputs[key].el);
+				return;
+			}
+			
+			var input = new MT.ui.Input(this.ui, {
+				key: key,
+				options: options,
+				type: "select"
+			}, frame.easings);
+			
+			this.inputs[key] = input;
+			el.appendChild(input.el);
+		},
+		
+		showFrameSettings: function(frame){
+			if(!frame.easings){
+				frame.easings = {};
+			}
+			
+			var easings = this.genEasings(Phaser.Easing, "", [{label: "NONE", value: "none"}]);
+			
+			for(var k in frame){
+				if(k == "easings"){
+					continue;
+				}
+				
+				this.addInput(k, frame, easings);
+			}
+		},
+		hideFrameSettings: function(){
+			var el = this.settings.content.el;
+			while(el.firstChild){
+				el.removeChild(el.firstChild);
+			}
+			
 		},
 		
 		installUI: function(){
@@ -54,38 +126,34 @@ MT(
 			this.layers = [];
 			this.tools = this.project.plugins.tools;
 			
+			this.om = this.project.plugins.objectmanager;
+			this.map = this.project.plugins.mapeditor;
 			
 			this.tools.on(MT.OBJECT_SELECTED, function(obj){
 				that.selectObject(obj);
 			});
 			this.tools.on(MT.OBJECT_UNSELECTED, function(obj){
-				if(!that.activeMovie){
-					return;
-				}
 				if(!that.items || !that.items[obj.id]){
 					return;
 				}
 				
-				that.movies[that.activeId].show();
-				that.slider.show();
-				that.activeMovie.unselect(obj.id);
+				that.show(obj);
+				that.keyframes.unselect(obj.id);
 			});
 			
 			
 			this.tools.on(MT.OBJECTS_UPDATED, function(obj){
-				if(that.activeMovie){
-					that.saveActiveFrame();
-					that.collectItems();
-					that.activeMovie.updateTree();
-				}
-				else{
-					if(that.activeId){
-						that.setActive(that.activeId);
-					}
+				that.saveActiveFrame();
+			});
+			
+			
+			this.om.on(MT.OBJECT_UPDATED, function(obj){
+				if(obj.data.autoframe){
+					that.addFrame();
 				}
 			});
 			
-			ev.on(ev.KEYUP, function(e){
+			ev.on(ev.KEYDOWN, function(e){
 				if(e.which == MT.keys.ESC){
 					that.clear();
 					return;
@@ -116,18 +184,53 @@ MT(
 				if(that.scale < 0.1){
 					that.scale = 0.1;
 				}
-				console.log(that.scale );
-				that.redrawAll();
+				that.changeFrame();
 			});
 			
-			this.om = this.project.plugins.objectmanager;
-			this.map = this.project.plugins.mapeditor;
+			
 			
 			this.addPanels();
 			
 			this.slider = new MT.ui.DomElement("div");
 			this.slider.addClass("ui-movie-slider");
 			this.slider.setAbsolute();
+			
+			this.movieLength = new MT.ui.DomElement("div");
+			this.movieLength.addClass("ui-movie-slider ui-movie-length");
+			this.movieLength.setAbsolute();
+			
+			this.movieLengthTip = new MT.ui.DomElement("div");
+			this.movieLengthTip.addClass("ui-movie-slider ui-movie-length tip");
+			this.movieLengthTip.setAbsolute();
+			
+			var tipDown = false;
+			this.movieLengthTip.el.onmousedown = function(e){
+				tipDown = true;
+				that.tipH.reset(that.movieLength.x);
+				e.preventDefault();
+				e.stopPropagation();
+			};
+			
+			this.tipH = new MT.ui.SliderHelper(0, 0, Infinity);
+			
+			ev.on("mousemove", function(e){
+				if(!tipDown){
+					return;
+				}
+				that.tipH.change(ev.mouse.mx);
+				var info = that.keyframes.getMovie().info;
+				info.lastFrame = Math.floor(that.calcFrame(that.tipH));
+				if(info.lastFrame < 0){
+					info.lastFrame = 0;
+				}
+				that.changeFrame();
+			});
+			
+			ev.on("mouseup", function(e){
+				tipDown = false;
+			});
+			
+			
 			
 			this.sidebar = new MT.ui.DomElement("div");
 			this.sidebar.addClass("ui-movie-sidebar");
@@ -142,42 +245,78 @@ MT(
 			
 			this.buttons = {
 				saveKeyFrame: new MT.ui.Button("", "ui-movie-saveKeyFrame", null, function(e){
-					that.addFrame();
+					that.addFrame(true);
 					e.preventDefault();
 					e.stopPropagation();
 				})
 			};
 			this.buttons.saveKeyFrame.show(this.sidebar.el);
 			
+			this.keyframes = new MT.ui.Keyframes(this, 60);
+			this.keyframes.on("select", function(data){
+				that.project.plugins.objectmanager.emit(MT.OBJECT_SELECTED, data);
+			});
 			
 			this.clear();
+			
+			this.om = this.project.plugins.objectmanager;
+			
+			this.createMainMovie();
 		},
 		
 		redrawAll: function(){
-			if(!this.activeMovie){
-				return;
-			}
 			if(Object.keys(this.items).length == 0){
 				return;
 			}
-			var m = this.getActiveMovie();
-			m.updateFrames();
+			
+			this.keyframes.updateFrames();
 			this.frameControl.build();
-			this.changeFrame();
 		},
-		
-		hide: function(){
-			console.log("hide all");
-			var mov = this.getActiveMovie();
-			if(mov){
-				mov.hide();
+		show: function(obj){
+			
+			this.keyframes.show();
+			if(obj){
+				this.keyframes.setActiveObject(obj.id);
 			}
+			
+			this.showHelpers();
+			this.keyframes.showFrames();
+			
+		},
+		hide: function(){
+			this.keyframes.hide();
 			this.hideHelpers();
 			if(this.newMovieButton){
 				this.newMovieButton.hide();
 			}
+			this.createMainMovie();
 		},
-		
+   
+		showHelpers: function(){
+			this.slider.show(this.rightPanel.content.el);
+			this.movieLength.show(this.rightPanel.content.el);
+			this.movieLengthTip.show(this.rightPanel.content.el);
+			
+			
+			this.sidebar.show(this.rightPanel.content.el);
+			
+			this.sidebar.width = this.frameOffset;
+			
+			this.frameControl.build();
+			this.frameControl.el.show(this.rightPanel.content.el);
+			
+		},
+		hideHelpers: function(){
+			this.keyframes.hide();
+			this.slider.hide();
+			this.movieLength.hide();
+			this.movieLengthTip.hide();
+			
+			this.frameControl.hide();
+			
+			this.sidebar.hide();
+		},
+   
 		clear: function(){
 			this.items = {};
 			this.hide();
@@ -255,16 +394,13 @@ MT(
 				}
 				
 				if(e.ctrlKey){
-					console.log("CTRL+", e.which);
-					if(activeFrame){
-						if(e.which == MT.keys.C){
-							//copy frame;
-							that.copyFrame(activeFrame);
-						}
-						if(e.which == MT.keys.X){
-							//copy frame;
-							that.cutFrame(activeFrame);
-						}
+					if(e.which == MT.keys.C){
+						//copy frame;
+						that.copyFrame(activeFrame);
+					}
+					if(e.which == MT.keys.X){
+						//copy frame;
+						that.cutFrame(activeFrame);
 					}
 					if(e.which == MT.keys.V){
 						that.pasteFrame();
@@ -282,15 +418,20 @@ MT(
 					}
 				}
 			});
-			
+			/*
 			this.rightPanel._input.onfocus = function(){
 				console.log("focus");
 			};
-			
+			*/
 			var that = this;
 			var sl = this.sliderHelper = new MT.ui.SliderHelper(0, 0, Infinity);
 			
+			var width = that.leftPanel.width;
 			this.leftPanel.on("resize", function(w, h){
+				if(w < width){
+					that.leftPanel.width = width;
+					return;
+				}
 				that.rightPanel.style.left = w +"px";
 			});
 			
@@ -298,23 +439,34 @@ MT(
 			
 			this.rightPanel.content.el.onmousedown = function(e){
 				
+				if(e.target.autoframe){
+					e.target.autoframe.autoframe = !e.target.autoframe.autoframe;
+					if(e.target.autoframe.autoframe){
+						e.target.ctrl.addClass("active");
+					}
+					else{
+						e.target.ctrl.removeClass("active");
+					}
+					return;
+				}
+				
 				if(e.target.frameInfo){
-					console.log("Frame:",e.target.frameInfo);
 					target = e.target.parentNode;
 					activeFrame = e.target.frameInfo;
 					action = 1;
 					that.selectedFrame = activeFrame.frames[activeFrame.index];
+					that.showFrameSettings(that.selectedFrame);
 				}
 				else{
 					action = 0;
 					activeFrame = null;
 					target = e.target;
 					that.selectedFrame = null;
+					that.hideFrameSettings();
 				}
 				
 				if(target.data){
 					that.project.plugins.objectmanager.emit(MT.OBJECT_SELECTED, target.data);
-					//that.selectObject(target.data);
 				}
 				
 				var off = e.offsetX;
@@ -323,7 +475,7 @@ MT(
 				}
 				
 				sl.reset(off);
-				var f = (sl - that.frameOffset) / that.frameSize  + that.startFrame;
+				var f = that.calcFrame(sl);
 				if(f > -1){
 					down = true;
 					that.changeFrame(f);
@@ -343,7 +495,7 @@ MT(
 				sl.change(that.ui.events.mouse.mx);
 				that.changeFrame((sl - that.frameOffset) / that.frameSize + that.startFrame);
 				if(action == 1 && activeFrame){
-					that.moveFrame(activeFrame);
+					that.moveFrame(that.selectedFrame, activeFrame);
 				}
 				
 			});
@@ -352,18 +504,14 @@ MT(
 				down = false;
 			});
 			
-			
-			
 		},
-		
-   
+
 		showNewMovie: function(){
 			this.newMovieButton = new MT.ui.DomElement("div");
 			this.newMovieButton.addClass("ui-new-movie-wrapper");
 			
 			var that = this;
 			this.newMovieButton.button = new MT.ui.Button("New Movie", "ui-new-movie style2", null, function(){
-				console.log("clicked");
 				that.addMovie();
 			});
 			
@@ -374,28 +522,11 @@ MT(
 		},
    
 		selectObject: function(obj){
-			
-			
-			if(this.items && this.items[obj.id] && this.activeMovie){
-				
-					this.movies[this.activeId].show();
-					this.slider.show();
-					this.activeMovie.setActiveObject(obj.id);
-					this.activeMovie.updateTree(obj.data);
-					this.activeMovie.showFrames();
-					
-					return;
-				
+			if(this.items && this.items[obj.id]){
+				this.show(obj.data);
+				return;
 			}
-			this.setActive(obj.id);
-			
-			
-			
-			if(this.activeMovie){
-				this.activeMovie.setActiveObject(obj.id);
-				this.activeMovie.updateTree(obj.data);
-			}
-			
+			this.setActive(obj.data);
 		},
    
 		addMovie: function(item, name){
@@ -417,20 +548,16 @@ MT(
 				inc++;
 			}
 			
-			this._addMovie(name)
+			this._addMovie(name);
+			
+			this.om.sync();
 		},
 		_addMovie: function(name, data){
 			for(var i in this.items){
 				data = this.items[i];
 				this.__addMovie(data, name);
 			}
-			this.setActive(this.activeId);
-			var m = this.movies[this.activeId];
-			m.activeMovie = name;
-			if(m){
-				m.rebuildData();
-				m.markFirstFrame();
-			}
+			this.setActive(this.data);
 			this.showHelpers();
 		},
    
@@ -438,82 +565,48 @@ MT(
 			if(!item.movies){
 				item.movies = {};
 			}
-			
 			item.movies[name] = {
-				frames: [this.collect(item, 0)],
+				frames: [],
 				info: {
 					fps: 60
 				}
 			};
 		},
 		
-   
-		showHelpers: function(){
-			this.slider.show(this.rightPanel.content.el);
-			this.sidebar.show(this.rightPanel.content.el);
-			
-			this.sidebar.width = this.frameOffset;
-			
-			this.frameControl.build();
-			this.frameControl.el.show(this.rightPanel.content.el);
-			
-		},
-		hideHelpers: function(){
-			if(this.activeMovie){
-				this.activeMovie.hide();
-			}
-			this.slider.hide();
-			this.frameControl.hide();
-			
-			this.sidebar.hide();
-			console.log("hide");
-		},
-		
-		activeMovie: null,
 		items: null,
-		setActive: function(id){
+		setActive: function(obj){
 			if(this.newMovieButton){
 				this.newMovieButton.hide();
 			}
 			
 			this.items = {};
-			if(this.movies[this.activeId]){
-				this.movies[this.activeId].hide();
+			this.data = obj;
+			
+			// deleted?
+			if(!this.data){
+				this.keyframes.setData(null);
+				this.hideHelpers();
+				return;
 			}
 			
-			this.activeId = id;
-			
-			this.data = this.om.getById(id);
 			if(!this.data.movies){
 				this.data.movies = {};
 			}
 			
-			if(this.activeMovie){
-				this.hideHelpers();
-			}
-			
-			this.movies[id] = new MT.ui.Keyframes(this, 60);
-			
 			if(Object.keys(this.data.movies).length == 0){
-				
+				this.hide();
 				this.showNewMovie();
 				this.collectItems();
-				this.activeMovie = null;
 				return;
 			}
 			
 			var that = this;
-			this.movies[id].on("select", function(data){
-				that.project.plugins.objectmanager.emit(MT.OBJECT_SELECTED, data);
-			});
-			
-			
-			this.activeMovie = this.movies[id];
 			
 			this.collectItems();
+			this.keyframes.setData(this.data);
 			
-			this.activeMovie.markFirstFrame();
-			this.showHelpers();
+			
+			this.show(this.data);
 			
 			if(!this.activeFrame){
 				this.changeFrame(0);
@@ -538,6 +631,15 @@ MT(
 		},
 		
 		frameOffset: 40,
+		
+		calcFrame: function(px){
+			var ret = (px - this.frameOffset) / this.frameSize  + this.startFrame;
+			return ret;
+		},
+		calcFrameLoc: function(frame){
+			return frame * this.frameSize + (this.frameSize - this.slider.width)*0.5 + this.frameOffset - this.startFrame * this.frameSize;
+		},
+   
 		changeFrame: function(frameApprox){
 			if(frameApprox == void(0)){
 				frameApprox = this.activeFrame;
@@ -549,7 +651,7 @@ MT(
 				frame = 0;
 			}
 			
-			var x = frame * this.frameSize + (this.frameSize - this.slider.width)*0.5 + this.frameOffset - this.startFrame * this.frameSize;
+			var x = this.calcFrameLoc(frame);
 			
 			if(x < this.frameOffset){
 				this.slider.style.visibility = "hidden";
@@ -560,67 +662,112 @@ MT(
 			
 			this.slider.x = x;
 			
-			if(this.activeMovie){
-				this.activeMovie.changeFrame();
+			var mov = this.keyframes.getMovie();
+			if(!mov){
+				return;
 			}
+			
+			
+			if(mov.info.lastFrame == void(0)){
+				mov.info.lastFrame = 60;
+			}
+			this.movieLength.x = this.calcFrameLoc(mov.info.lastFrame);
+			this.movieLengthTip.x = this.movieLength.x;
+			
+			
+			
+			this.keyframes.changeFrame(frame);
 			
 			this.activeFrame = frame;
-			this.frameControl.adjustHandle();
-		},
-   
-		updateData: function(){
-			this.data = this.om.getById(this.activeId);
-			if(!this.data){
-				return;
-			}
-			if(!this.data.kf[this.activeFrame]){
-				return;
-			}
-			this.data.kf[this.activeFrame] = this.collect();
-			this.kf[this.activeId].markFrames(this.data.kf);
-		},
-		
-		addFrame: function(){
-			if(!this.activeMovie){
-				return;
-			}
-			this.activeMovie.saveActiveFrame();
-			
-		},
-		
-		moveFrame: function(fi){
-			var frame = fi.frames[fi.index];
-			frame.keyframe = this.activeFrame;
-			
-			this.sortFrames(fi.frames);
-			
 			this.redrawAll();
 		},
 		
+		addFrame: function(all){
+			this.keyframes.saveActiveFrame(null, all);
+		},
+		
+		moveFrame: function(selected, fi){
+			//var frame = fi.frames[fi.index];
+			selected.keyframe = this.activeFrame;
+			
+			this.sortFrames(fi.frames);
+			
+			this.changeFrame();
+		},
+		
 		frameBuffer: null,
-   
+		framesToCopy: null,
 		cutFrame: function(fi){
-			this.copyFrame(fi);
-			fi.frames.splice(fi.index, 1);
+			if(fi){
+				this.copyFrame(fi);
+				fi.frames.splice(fi.index, 1);
+				this.framesToCopy = null;
+			}
+			else{
+				this.collectFramesToCopy(true);
+			}
+			this.changeFrame();
 		},
 		copyFrame: function(fi){
-			this.frameBuffer = fi;
+			if(fi){
+				this.frameBuffer = fi;
+				this.framesToCopy = null;
+			}
+			else{
+				this.collectFramesToCopy();
+			}
+		},
+		
+		collectFramesToCopy: function(cut){
+			this.framesToCopy = [];
+			var frames, data;
+			for(var key in this.items){
+				data = this.items[key].movies[this.keyframes.activeMovie]
+				frames = data.frames;
+				for(var f=0; f<frames.length; f++){
+					if(frames[f].keyframe == this.activeFrame){
+						this.framesToCopy.push({
+							frame: frames[f],
+							data: data
+						});
+						if(cut){
+							frames.splice(f, 1);
+							f--;
+						}
+					}
+					
+				}
+			}
+			
 		},
 		pasteFrame: function(){
+			var frame, info;
+			if(this.framesToCopy){
+				for(var i=0; i<this.framesToCopy.length; i++){
+					info = this.framesToCopy[i];
+					frame = JSON.parse(JSON.stringify(info.frame));
+					frame.keyframe = this.activeFrame;
+					info.data.frames.push(frame);
+					this.sortFrames(info.data.frames);
+				}
+				this.changeFrame();
+				return;
+			}
+			
+			
 			if(!this.frameBuffer){
 				return;
 			}
 			var frames = this.frameBuffer.frames;
-			var frame = JSON.parse(JSON.stringify(frames[this.frameBuffer.index]));
+			frame = JSON.parse(JSON.stringify(frames[this.frameBuffer.index]));
 			
 			frame.keyframe = this.activeFrame;
 			frames.push( frame );
 			
 			this.sortFrames(frames);
 			
-			this.redrawAll();
 			
-			this.changeFrame(this.activeFrame);
+			this.changeFrame();
 		},
 		
 		sortFrames: function(frames){
@@ -635,17 +782,14 @@ MT(
 				return;
 			}
 			fi.frames.splice(fi.index, 1);
-			this.redrawAll();
+			
+			this.changeFrame();
+			
+			this.om.sync();
 		},
 		
 		saveActiveFrame: function(){
-			if(this.activeMovie){
-				this.activeMovie.saveActiveFrame(true);
-			}
-		},
-   
-		getActiveMovie: function(){
-			return this.movies[this.activeId];
+			this.keyframes.saveActiveFrame(true);
 		},
    
 		buildKeyFrames: function(obj){
@@ -682,9 +826,7 @@ MT(
 				this.interpolate();
 			}
 		},
-   
-   
-   
+		
 		loadState: function(id, data, frame){
 			frame = frame || 0;
 			
@@ -699,21 +841,15 @@ MT(
 		interpolate: function(id, start, end, frame){
 			var t = (frame - start.keyframe) / (end.keyframe - start.keyframe);
 			var mo = this.project.plugins.mapeditor.getById(id);
-			
 			// deleted?
 			if(!mo){
 				return;
 			}
+			
 			var med = this.buildTmpVals(t, start, end);
 			mo.update(med);
 		},
    
-		doInterpolate: function(t, d1, d2){
-			var med = this.buildTmpVals(t, d1, d2);
-			var mo = this.map.getById(this.activeId);
-			mo.update(med);
-		},
-		
 		buildTmpVals: function(t, d1, d2){
 			if(!d2){
 				return d1;
@@ -722,7 +858,7 @@ MT(
 			var k;
 			for(var i=0; i<this.keys.length; i++){
 				k = this.keys[i];
-				tmp[k] = this.getInt(t, d1[k], d2[k]);
+				tmp[k] = this.getInt(t, d1[k], d2[k], (d2.easings ? d2.easings[k] : null) );
 			}
 			
 			for(var i=0; i<this.roundKeys.length; i++){
@@ -732,21 +868,76 @@ MT(
 			return tmp;
 		},
    
-		getInt: function(t, a, b){
-			return (1 - t) * a + t * b;
-			
-		},
-   
-		updateObjects: function(cont){
-			var mo = this.map.getById(this.activeId);
-			var k;
-			for(var i=0; i<this.keys.length; i++){
-				k = this.keys[i]
-				mo[k] = cont[k];
+		getInt: function(t, a, b, easing){
+			var tfin = t;
+			if(easing){
+				tfin = this.resolve(easing, t);
 			}
 			
-			this.om.tv.update();
-		}
-   
+			
+			return (1 - tfin) * a + tfin * b;
+		},
+		
+		resolve: function(ea, t){
+			if(ea == "NONE"){
+				return 0;
+			}
+			var sp = ea.split(".");
+			var start = Phaser.Easing;
+			for(var i=0; i<sp.length && start; i++){
+				start = start[sp[i]];
+			}
+			
+			if(start){
+				return start(t);
+			}
+			return t;
+		},
+		
+		createMainMovie: function(){
+			var mainMovie = [];
+			var data = this.om.getData();
+			
+			console.log(data);
+			
+			var movies = [];
+			this.collectMovies(data, movies);
+			
+			console.log(movies);
+			
+			if(movies.length){
+				this.setActive({
+					movies: {
+						all: {
+							frames:movies,
+							info: {
+								fps: 60,
+							}
+						}
+					}
+				});
+			}
+			
+			
+		},
+		
+		collectMovies: function(data, buffer){
+			for(var i=0; i<data.length; i++){
+				if(data[i].movies){
+					for(var m in data[i].movies){
+						buffer.push({name: m, info: data[i]});
+					}
+					continue;
+				}
+				if(data[i].contents){
+					this.collectMovies(data[i].contents, buffer);
+				}
+			}
+		},
+		
+		
+		
+		
+		
 	}
 );

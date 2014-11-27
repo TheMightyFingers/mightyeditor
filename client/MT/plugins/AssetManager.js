@@ -158,8 +158,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				
 				if(shift){
-					that.selector.add(element);
-					element.addClass("selected");
+					if(that.selector.is(element)){
+						that.selector.remove(element);
+						element.removeClass("selected.active");
+					}
+					else{
+						that.selector.add(element);
+						element.addClass("selected");
+					}
+					that.emit(MT.ASSET_FRAME_CHANGED, null, null);
+					return;
 				}
 				else{
 					
@@ -224,14 +232,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				that.setPreviewAssets();
 			});
-			
-			
-			/*
-			moved to project globally
-			ui.events.on(ui.events.DROP, function(e){
-				that.handleDrop(e);
-			});
-			*/
 			
 			this.project.on(MT.DROP, function(e, data){
 				if(!MT.core.Helper.isImage(data.path)){
@@ -766,6 +766,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		installUI: function(ui){
 			
 			var that = this;
+			var tools = this.project.plugins.tools;
 			
 			var click = function(data, element){
 				
@@ -814,7 +815,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			};
 			
 			
-			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
+			tools.on(MT.OBJECT_SELECTED, function(obj){
 				if(obj){
 					that.pendingFrame = obj.frame;
 					that.selectAssetById(obj.data.assetId);
@@ -823,7 +824,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
-			this.project.plugins.tools.on(MT.OBJECT_UNSELECTED, function(obj){
+			tools.on(MT.OBJECT_UNSELECTED, function(obj){
 				
 				if(!obj){
 					that.unselectAll();
@@ -847,12 +848,25 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			this.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
+				if(tools.activeTool != tools.tools.select){
+					return;
+				}
+				
+				
 				that.project.map.selector.forEach(function(o){
-					o.data.assetId = asset.id;
-					o.data.__image = asset.__image;
-					o.frame = frame;
-					
-					that.activeFrame = frame;
+					if(asset){
+						o.data.assetId = asset.id;
+						o.data.__image = asset.__image;
+						o.frame = frame;
+						
+						that.activeFrame = frame;
+					}
+					else{
+						delete o.data.assetId;
+						delete o.data.__image;
+						o.frame = 0;
+						that.activeFrame = 0;
+					}
 					that.project.plugins.objectmanager.update();
 					that.project.plugins.objectmanager.sync();
 				});
@@ -1031,10 +1045,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panel.options.list.hide();
 		},
 		
-		
-		
-		
-		
 		handleEntry: function(entry){
 			var that = this;
 			
@@ -1053,12 +1063,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					}
 				});
 			}
-		},
-		
-		
-		
-		initSocket: function(socket){
-			MT.core.BasicPlugin.initSocket.call(this, socket);
 		},
 		
 		updateData: function(){

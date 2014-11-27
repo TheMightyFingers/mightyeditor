@@ -204,9 +204,10 @@ MT.extend("core.Emitter")(
 				
 				if(e.target.data.panel !== prevClicked){
 					prevClicked = e.target.data.panel;
+				}
+				if(!activePanel.isVisible){
 					activePanel.show(null);
 				}
-				
 				activePanel.isNeedUnjoin = true;
 			}
 			else{
@@ -215,8 +216,6 @@ MT.extend("core.Emitter")(
 			
 			activePanel.removeClass("animated");
 			that.updateZ(activePanel);
-			
-			window.x = activePanel;
 			window.setTimeout(function(){
 				activePanel.focus();
 			},0);

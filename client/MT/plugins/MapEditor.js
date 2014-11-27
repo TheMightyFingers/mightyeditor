@@ -595,7 +595,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var bounds = obj.getBounds();
 			var group = null;
 			
-			if(obj.data.contents){
+			if(obj.type == MT.objectTypes.GROUP){
 				group = obj;
 			}
 			else{
@@ -868,7 +868,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!obj.isVisible){
 				return;
 			}
-			if(obj.data.contents){
+			if(obj.type == MT.objectTypes.GROUP){
 				return;
 			}
 			
@@ -950,7 +950,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			ctx.fillStyle = "rgba(150, 70, 20, 0.3)";
 			for(var j=0; j<this.loadedObjects.length; j++){
 				o1 = this.loadedObjects[j];
-				if(!o1.isVisible || o1.data.contents){
+				if(!o1.isVisible || o1.type == MT.objectTypes.GROUP){
 					continue;
 				}
 				for(var i=j; i<this.loadedObjects.length; i++){
@@ -1280,7 +1280,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				tmp.update(objs[i], group);
 				tmp.object.z = 0;
 				
-				// handle group
+				// handle group and parents
 				if(objs[i].contents){
 					this._addObjects(objs[i].contents, tmp.object);
 					continue;
@@ -1638,7 +1638,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			// chek if we are picking already selected object
 			if(this.activeObject){
 				
-				if(this.activeObject.data.contents){
+				if(this.activeObject.type == MT.objectTypes.GROUP){
 					return this.checkBounds(this.activeObject, x, y);
 				}
 				
@@ -1670,7 +1670,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!obj.isVisible){
 				return null;;
 			}
-			if(obj.data.contents){
+			if(obj.type == MT.objectTypes.GROUP){
 				return null;;
 			}
 			if(obj.isLocked){
@@ -1719,15 +1719,17 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				var sprite = obj.object;
 				
+				if(obj.type == MT.objectTypes.GROUP){
+					continue;
+				}
+				
 				if(!obj.isVisible){
 					continue;
 				}
 				if(obj.isLocked){
 					continue;
 				}
-				if(obj.data.contents){
-					continue;
-				}
+				
 				
 				box = sprite.getBounds();
 				if(box.intersects(rect)){

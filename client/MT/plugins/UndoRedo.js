@@ -77,7 +77,14 @@ MT.extend("core.BasicPlugin")(
 		enable: function(){
 			this.ui.events.on(this.ui.events.KEYDOWN, this.onKeyDown);
 		},
-		
+		reset: function(){
+			this.buffer = [];
+			this.data = {};
+			this.step = 0;
+			this.currentOffset = 0;
+			localStorage.removeItem(this.name);
+			this.save();
+		},
 		installUI: function(){
 			var that = this;
 			
