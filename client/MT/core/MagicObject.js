@@ -350,7 +350,6 @@ MT(
 			
 			if(this.data.type == MT.objectTypes.GROUP){
 				if(this.activeHandle != -3){
-					console.log("update box");
 					this.rotator.x = this.rpx(this.object.rotation, rx, ry, ax, ay);
 					this.rotator.y = this.rpy(this.object.rotation, rx, ry, ax, ay);
 				}
@@ -782,18 +781,26 @@ MT(
 			if(this.activeHandle == -2){
 				
 				if(this.data.type == MT.objectTypes.GROUP){
-					this.move(this.x - dx, this.y -dy);
+					dx /= this.map.scale.x 
+					dy /= this.map.scale.x 
+					
+					var sx = this.x;
+					var sy = this.y;
+					
+					this.moveObject(x, y, e);
+					
+					dx = sx - this.x;
+					dy = sy - this.y;
+					
+					
 					var o;
-					var rx = this.rpx(-this.object.rotation, dx, dy, 0, 0);
+					var rx = this.rpx(-this.object.rotation, dx , dy, 0, 0);
 					var ry = this.rpy(-this.object.rotation, dx, dy, 0, 0);
 					
 					for(var i=0; i<this.object.children.length; i++){
 						o = this.object.children[i].magic;
 						o.move(o.x + rx, o.y + ry);
 					}
-					
-					mi.x = x;
-					mi.y = y;
 					return;
 				}
 				

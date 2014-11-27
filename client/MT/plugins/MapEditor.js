@@ -1683,6 +1683,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			
 			if(obj.object.input.checkPointerOver(this.game.input.activePointer)){
+				if(this.ui.events.mouse.lastEvent.ctrlKey){
+					this.activeObject = obj.parent.magic;
+					return this.activeObject
+				}
+				
 				this.activeObject = obj;
 				return obj;
 			}
