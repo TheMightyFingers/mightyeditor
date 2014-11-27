@@ -332,7 +332,7 @@ MT(
 		},
    
 		updateBox: function(){
-			if( this.data.type == MT.objectTypes.TILE_LAYER){
+			if( this.data.type == MT.objectTypes.TILE_LAYER || !this.map || !this.map.scale){
 				return;
 			}
 			var obj = this.object;
@@ -350,6 +350,7 @@ MT(
 			
 			if(this.data.type == MT.objectTypes.GROUP){
 				if(this.activeHandle != -3){
+					console.log("update box");
 					this.rotator.x = this.rpx(this.object.rotation, rx, ry, ax, ay);
 					this.rotator.y = this.rpy(this.object.rotation, rx, ry, ax, ay);
 				}
@@ -443,7 +444,7 @@ MT(
 				
 				if(this.map.activeObject == this){
 					ctx.strokeStyle = "#ffee22";
-				
+					
 					// rotate
 					ctx.beginPath();
 					if(this.activeHandle == -3){
@@ -581,20 +582,32 @@ MT(
 			var mat = obj.worldTransform;
 			var ax = mat.tx;
 			var ay = mat.ty;
+			
+			var dx = 0;
+			var dy = - this.radius*3;
+			
 			ctx.save();
 			ctx.translate(ax, ay);
 			ctx.rotate(obj.rotation);
 			
 			ctx.strokeStyle = "#ffffff";
+			ctx.lineWidth = 1.5;
 			
+			ctx.strokeRect(- this.radius + 0.5, - this.radius + 0.5, this.radius*2, this.radius * 2);
+			ctx.beginPath();
+			ctx.moveTo(0.5, 0.5);
+			ctx.lineTo(dx + 0.5, dy + 0.5);
+			ctx.stroke();
+			
+			ctx.strokeStyle = "#000000";
+			ctx.lineWidth = 1;
 			ctx.strokeRect(- this.radius, - this.radius, this.radius*2, this.radius * 2);
 			ctx.beginPath();
 			ctx.moveTo(0, 0);
-			
-			var dx = 0;
-			var dy = - this.radius*3;
 			ctx.lineTo(dx, dy);
 			ctx.stroke();
+			
+			
 			ctx.restore();
 		},
 		mouseDown: function(x, y, e){
@@ -739,10 +752,12 @@ MT(
 			var angle = this.getOffsetAngle();
 			
 			var h, dx, dy;
+			
+			dx = mi.x - x;
+			dy = mi.y - y;
 			// rotate
 			if(this.activeHandle == -3){
-				dx = mi.x - x;
-				dy = mi.y - y;
+				
 				this.rotator.x -= dx;
 				this.rotator.y -= dy;
 				
@@ -765,13 +780,28 @@ MT(
 			
 			// move anchor
 			if(this.activeHandle == -2){
-				var dx = (x - mi.x);
-				var dy = (y - mi.y);
+				
+				if(this.data.type == MT.objectTypes.GROUP){
+					this.move(this.x - dx, this.y -dy);
+					var o;
+					var rx = this.rpx(-this.object.rotation, dx, dy, 0, 0);
+					var ry = this.rpy(-this.object.rotation, dx, dy, 0, 0);
+					
+					for(var i=0; i<this.object.children.length; i++){
+						o = this.object.children[i].magic;
+						o.move(o.x + rx, o.y + ry);
+					}
+					
+					mi.x = x;
+					mi.y = y;
+					return;
+				}
+				
 				
 				var sx = this.anchorX;
 				var sy = this.anchorY;
 				
-				this.translateAnchor(dx, dy);
+				this.translateAnchor(-dx, -dy);
 				mi.x = x;
 				mi.y = y;
 				
@@ -788,8 +818,8 @@ MT(
 						var drx = this.rpx(angle, ddx, ddy, 0, 0); 
 						var dry = this.rpy(angle, ddx, ddy, 0, 0); 
 						
-						mi.x = x - dx + drx;
-						mi.y = y - dy + dry;
+						mi.x = x + dx + drx;
+						mi.y = y + dy + dry;
 					
 				}
 				this.update();

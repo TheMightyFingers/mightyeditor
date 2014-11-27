@@ -517,7 +517,7 @@ MT.extend("core.Emitter")(
 			
 			this.newMovieButton.button.show(this.newMovieButton.el);
 			
-			this.newMovieButton.show(this.panel.el);
+			this.newMovieButton.show(this.panel.content.el);
 			
 		},
    
