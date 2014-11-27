@@ -253,7 +253,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				
 				hideval = false;
 				input.value = that.object[that.key];
-				e.stopPropagation();
 				input.blur();
 			}
 			
@@ -263,16 +262,13 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 					that.setValue(that.selectedValue);
 				}
 				hideval = false;
-				e.stopPropagation();
 				input.blur();
 			}
 			else if(w == MT.keys.DOWN){
 				that.showNextOption();
-				e.stopPropagation();
 			}
 			else if(w == MT.keys.UP){
 				that.showPrevOption();
-				e.stopPropagation();
 			}
 			
 			if(that.object[that.key] != input.value){
@@ -286,6 +282,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			if(properties.options){
 				that.showOptions(true);
 			}
+			e.preventDefault();
+			e.stopPropagation();
 		};
 		
 		//this.keyup = events.on("keyup", 

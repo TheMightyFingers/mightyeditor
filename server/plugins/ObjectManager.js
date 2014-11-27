@@ -70,7 +70,7 @@ MT.extend("core.BasicPlugin")(
 		saveAndSync: function(){
 			this.project.db.save();
 			this.project.export.phaserDataOnly();
-			this.a_sendData();
+			//this.a_sendData();
 		},
 		
 		addIndices: function(data){

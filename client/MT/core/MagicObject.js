@@ -762,16 +762,34 @@ MT(
 				
 				
 				var rot = Math.atan2( mat.ty - this.rotator.y, mat.tx - this.rotator.x) - Math.PI * 0.5;
+				
+				var diff = rot - this.object.rotation;
+				
+				
+				
+				
 				mi.x = x;
 				mi.y = y;
 				
-				this.object.rotation = rot;
-				this.data.angle = this.object.angle;
+				if(diff > Math.PI){
+					diff = Math.PI*2 - diff;
+				}
+				if(diff < -Math.PI){
+					diff = Math.PI*2 + diff;
+				}
+				
+				//console.log(diff);
+				
+				this.object.rotation += diff;
+				this.data.angle += Phaser.Math.radToDeg(diff);
 				
 				if(e.ctrlKey){
-					this.object.angle = Math.round(this.object.angle / 15)*15;
-					this.data.angle = this.object.angle;
+					//this.object.angle = Math.round(this.object.angle / 15)*15;
+					this.data.angle = Math.round(this.data.angle / 15)*15;
+					this.object.angle = this.data.angle;
 				}
+				
+				
 				
 				this.update();
 				return;
