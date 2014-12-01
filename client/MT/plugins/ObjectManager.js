@@ -645,6 +645,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.emit(MT.OBJECTS_SYNC, data);
 				}
 				
+				console.log("sync");
 				that.send("updateData", data);
 				that._syncTm = 0;
 				that.updateTree();

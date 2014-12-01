@@ -35,7 +35,7 @@
 		game: null,
 	
 		data: data,
-		
+		mainMovie: "__main",
 		autoLoadFonts: true,
 		
 		init: function(game){
@@ -79,7 +79,28 @@
 		
 		// create full map
 		createAll: function(){
-			this._loadObjects(this.data.objects.contents, this.objects, "", null, true);
+			var all = this._loadObjects(this.data.objects.contents, this.objects, "", null, true);
+			
+			for(var i in all){
+				this.buildTweens(all[i], this.mainMovie);
+			}
+			
+			return all;
+		},
+		
+		buildTweens: function(obj, name){
+			var movie, movies, mdata;
+			obj.movies = {};
+			movies = obj.movies;
+			mdata = obj.data.movies;
+			if(name == void(0)){
+				for(var mov in mdata){
+					movies[mov] = new TweenCollection(mov, obj);
+				}
+			}
+			else{
+				movies[name] = new TweenCollection(name, obj);
+			}
 		},
 		
 		// create seperate group
@@ -95,7 +116,7 @@
 			
 			this._add(group, objects, "", parent);
 			
-			return objects[name];
+			return objects;
 		},
 		
 		createPack: function(name, pack, parent){
@@ -333,8 +354,10 @@
  
 		_mkDiff: function(o1, o2, flip){
 			var out = {};
-			var f = (flip ? -1 : 1);
 			for(var i in o1){
+				if(i == "keyframe"){
+					continue;
+				}
 				if(typeof o1[i] === "object"){
 					continue;
 				}
@@ -342,15 +365,13 @@
 					continue;
 				}
 				if(o1[i] != o2[i]){
-					if(i == "x" || i == "angle" || i == "scaleX"){
-						out[i] = o2[i]*f;
-					}
-					else{
-						out[i] = o2[i];
-					}
+					out[i] = o2[i];
 				}
 			}
 			for(var i in o2){
+				if(i == "keyframe"){
+					continue;
+				}
 				if(typeof o2[i] === "object"){
 					continue;
 				}
@@ -358,12 +379,7 @@
 					continue;
 				}
 				if(o1[i] != o2[i]){
-					if(i == "x" || i == "angle" || i == "scaleX"){
-						out[i] = o2[i]*f;
-					}
-					else{
-						out[i] = o2[i];
-					}
+					out[i] = o2[i];
 				}
 			}
 			return out;
@@ -613,14 +629,12 @@
 			for(var i=0; i<group.contents.length; i++){
 				object = group.contents[i];
 				if(object.contents){
-					this.collectAssets(object);
+					this._collectAssets(object, buffer);
 				}
-				else{
-					id = object.assetId;
-					asset = this.getAssetById(id);
-					if(asset){
-						buffer[id] = asset;
-					}
+				id = object.assetId;
+				asset = this.getAssetById(id);
+				if(asset){
+					buffer[id] = asset;
 				}
 			}
 		},
@@ -912,5 +926,182 @@
 		}
  
 	};
+	
+	
+	var TweenCollection = function(movieName, pack){
+		this.name = movieName;
+		
+		this.onComplete = new Phaser.Signal();
+		this._pack = pack;
+		this._tweens = [];
+		this._subtweens = [];
+		this._timers = {
+			start: [],
+			stop: []
+		};
+		this._startPos = [];
+		
+		this._buildTweens(this._pack, true);
+		
+		if(movieName != mt.mainMovie){
+			this._buildChildTweens(this._pack.children);
+		}
+		
+	};
+	
+	TweenCollection.prototype = {
+		isLooping: false,
+		_buildTweens: function(pack, isMain){
+			var movie = pack.data.movies[this.name];
+			if(!movie){
+				return;
+			}
+			
+			if(movie.frames.length === 0){
+				return;
+			}
 
+			var start, stop, tween;
+			for(var i=0; i<movie.frames.length-1; i++){
+				start = movie.frames[i];
+				stop = movie.frames[i+1];
+				tween = this._addTween(pack.self, start, stop, tween);
+			}
+			
+			if(isMain){
+				tween._lastChild.onComplete.add(this._complete, this);
+			}
+			
+			if(movie.subdata && movie.subdata.length > 0){
+				this._buildSubTweens(movie.subdata);
+			}
+		},
+		_buildChildTweens: function(children){
+			var child;
+			for(var key in children){
+				child = children[key];
+				if(!child.data.movies || !child.data.movies[this.name]){
+					continue;
+				}
+				this._buildTweens(child);
+				this._buildChildTweens(child.children);
+			}
+			
+		},
+		_buildSubTweens: function(sub){
+			var start, stop, tween, st, innerData;
+			
+			
+			for(var i=0; i<sub.length; i++){
+				innerData = sub[i].movies[this.name];
+				if(!innerData || !innerData.frames || innerData.frames.length === 0){
+					continue;
+				}
+				
+				st = new TweenCollection(sub[i].name, this._pack);
+				
+				for(var j=0; j<innerData.frames.length; j++){
+					start = innerData.frames[j];
+					tween = this._addSubTween(st, start, tween);
+				}
+			}
+			
+		},
+ 
+		_addTween: function(obj, start, stop, nextTween){
+			var tween;
+			var ss = mt._mkDiff(start, stop);
+			var st = start.keyframe * 1000/60;
+			var et = (stop.keyframe - start.keyframe)* 1000/60;
+			
+			if(!nextTween){
+				tween = mt.game.add.tween(obj);
+				this._tweens.push(tween);
+				this._startPos.push({obj: obj, start: start});
+			}
+			else{
+				tween = nextTween;
+			}
+			
+			return tween.to(ss, et);
+		},
+ 
+		_addSubTween: function(tween, start, nextTween){
+			this._subtweens.push({start: start, tween: tween});
+		},
+
+		start: function(){
+			var op, sub;
+			for(var i=0; i<this._startPos.length; i++){
+				op = this._startPos[i];
+				for(var k in op.start){
+					op.obj[k] = op.start[k];
+				}
+			}
+			for(var i=0; i<this._tweens.length; i++){
+				this._tweens[i].start();
+			}
+			for(var i=0; i<this._subtweens.length; i++){
+				this._startSubSequence(this._subtweens[i]);
+			}
+			return this;
+		},
+		_startSubSequence: function(sub){
+			var timer;
+			if(sub.start.keyframe * 1000/60 === 0){
+				sub.tween.start();
+			}
+			else{
+				timer = mt.game.time.events.add(sub.start.keyframe * 1000/60, function(){
+					sub.tween.start();
+				});
+				this._timers.start.push(timer);
+			}
+			
+			timer = mt.game.time.events.add((sub.start.keyframe + sub.start.length)* 1000/60, function(){
+				sub.tween.stop();
+			});
+			this._timers.stop.push(timer);
+		},
+		stop: function(name){
+			for(var i=0; i<this._tweens.length; i++){
+				this._tweens[i].stop();
+			}
+			
+			for(var i=0; i<this._timers.start.length; i++){
+				mt.game.time.events.remove(this._timers.start[i]);
+			}
+			
+			for(var i=0; i<this._timers.stop.length; i++){
+				this._timers.stop[i].callback();
+				mt.game.time.events.remove(this._timers.stop[i]);
+			}
+			this.onComplete.remove(this.start);
+			this.isLooping = false;
+			return this;
+		},
+		pause: function(name){
+			return this;
+		},
+		resume: function(name){
+			return this;
+		},
+		delay: function(ms){
+			return this;
+		},
+		loop: function(){
+			if(this.isLooping){
+				return;
+			}
+			this.isLooping = true;
+			this.onComplete.add(this.start, this);
+			return this;
+		},
+		_complete: function(){
+			this.onComplete.dispatch(this);
+		}
+		
+	};
+	
+	global.mt.TweenCollection = TweenCollection;
 })(typeof window == "undefined" ? global : window);

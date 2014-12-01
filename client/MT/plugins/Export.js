@@ -82,12 +82,14 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		openLink: function(name){
 			var w = window.open("about::blank",name || Date.now());
+			w.focus();
 			//w.opener = null;
 			
 			var path = this.project.path;
 			this.export("phaser", function(data){
 				if(w.location){
 					w.location.href = path + "/phaser/index.html";
+					w.focus();
 				}
 			});
 			

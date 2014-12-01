@@ -68,6 +68,11 @@ MT.extend("ui.Keyframes")(
 				o = this.data.contents[i];
 				mo = this.mm.map.getById(o.objectId);
 				if(!mo){
+					var that = this;
+					window.setTimeout(function(){
+						that.changeFrame(frame);
+					}, 100);
+					return;
 					continue;
 				}
 				mo.changeMovieFrame(this.activeMovie, frame, true);
@@ -127,6 +132,7 @@ MT.extend("ui.Keyframes")(
 			
 			this.mm.sortFrames(frames);
 			this.mm.redrawAll();
+			this.mm.om.sync();
 		}
 	}
 );

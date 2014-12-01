@@ -140,6 +140,9 @@ MT.extend("core.Emitter")(
 					el.show();
 				}
 			}
+			else{
+				el.show();
+			}
 			
 			
 			if(type == "folder"){

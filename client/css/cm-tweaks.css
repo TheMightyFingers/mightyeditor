@@ -22,7 +22,7 @@ div.CodeMirror span.CodeMirror-matchingbracket {
 	height: auto;
 }
 .CodeMirror-scroll {
-margin-right: -40px;
+margin-right: 0px;
 margin-bottom: 0;
 padding-bottom: 0;
 background: inherit;

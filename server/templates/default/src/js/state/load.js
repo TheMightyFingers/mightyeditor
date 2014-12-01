@@ -30,7 +30,7 @@ window["%namespace%"].state.load = {
 	},
 	
 	create: function(){
-		// loading has finished - proceed to menu state (screen)
-		this.game.state.start("menu");
+		// loading has finished - proceed to demo state
+		this.game.state.start("demo");
 	}
 };

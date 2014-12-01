@@ -113,8 +113,6 @@ MT.extend("core.Emitter")(
 			return this.data.movies[this.activeMovie];
 		},
 		get panels(){
-			console.log("working with", this.data.name);
-			
 			if(!this.panelCollections[this.data.id]){
 				this.panelCollections[this.data.id] = {};
 			}

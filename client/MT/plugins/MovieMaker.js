@@ -1094,8 +1094,6 @@ MT.extend("core.Emitter")(
 					this.__addMovie(data[i], mainName);
 				}
 				
-				var tmp1 = JSON.parse(JSON.stringify(data[i]));
-				
 				tmp = {};
 				tmp.id = ++id;
 				tmp.objectId = data[i].id;
@@ -1108,11 +1106,28 @@ MT.extend("core.Emitter")(
 				if(!mainMovie.subdata){
 					mainMovie.subdata = [];
 				}
+				movieContents = mainMovie.subdata;
+				tmp.contents = movieContents;
 				
 				console.log("main",mainMovie.subdata);
 				
-				movieContents = mainMovie.subdata;
-				tmp.contents = movieContents;
+				
+				// clean deleted movies
+				clean:
+				for(var j=0; j<movieContents.length; j++){
+					for(var key in movies){
+						if(movieContents[i].name == key){
+							continue clean;
+						}
+					}
+					console.log("delete:",movieContents[i].name);
+					movieContents.splice(j, 1);
+				}
+				
+				
+				
+				
+				
 				scan:
 				for(var key in movies){
 					if(key == mainName){

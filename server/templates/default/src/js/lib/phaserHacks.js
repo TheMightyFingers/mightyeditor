@@ -127,9 +127,6 @@
 		
 		Object.defineProperty(Phaser.Sprite.prototype, "scaleX", {
 			set: function(val){
-				if(!val){
-					debugger;
-				}
 				this.scale.x = val;
 			},
 			get: function(){
@@ -161,6 +158,24 @@
 			},
 			get: function(){
 				return this.anchor.y;
+			}
+		});
+		
+		Object.defineProperty(Phaser.Group.prototype, "scaleX", {
+			set: function(val){
+				this.scale.x = val;
+			},
+			get: function(){
+				return this.scale.x;
+			}
+		});
+		
+		Object.defineProperty(Phaser.Group.prototype, "scaleY", {
+			set: function(val){
+				this.scale.y = val;
+			},
+			get: function(){
+				return this.scale.y;
 			}
 		});
 		
