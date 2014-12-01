@@ -1,3 +1,12 @@
+"use strict";
+(function(){
+	var overriddenStop =  Event.prototype.stopPropagation;
+	Event.prototype.stopPropagation = function(){
+		this.isPropagationStopped = true;
+		overriddenStop.call(this);
+	};
+})();
+
 MT(
 	MT.ui.Events = function(){
 		if(window.MT.events){
@@ -29,8 +38,8 @@ MT(
 			mx: 0,
 			my: 0,
 			down: false,
-			lastEvent: null,
-			lastClick: null
+			lastEvent: {x:0, y:0},
+			lastClick: {x:0, y:0}
 		};
 	},
 	{
@@ -57,7 +66,7 @@ MT(
 				document.body.removeEventListener(this._cbs[i].type, this._cbs[i]);
 			}
 		},
-		on: function(type, cb){
+		on: function(type, cb, shift){
 			if(!this.events[type]){
 				console.warn("new Event:", type);
 				this.events[type] = [];
@@ -65,7 +74,12 @@ MT(
 			}
 			var that = this;
 			window.setTimeout(function(){
-				that.events[type].push(cb);
+				if(shift){
+					that.events[type].unshift(cb);
+				}
+				else{
+					that.events[type].push(cb);
+				}
 			}, 0);
 			return cb;
 		},
@@ -111,15 +125,16 @@ MT(
 		},
 		
 		emit: function(type, data){
-			
-			
 			if(!this.events[type]){
 				console.warn("unknown event", type);
 			}
 			var ev = this.events[type];
-			
 			for(var i=0; i<ev.length; i++){
-
+				if(data instanceof Event){
+					if(data.isPropagationStopped){
+						break;
+					}
+				}
 				ev[i](data);
 			}
 		},

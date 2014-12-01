@@ -23,6 +23,7 @@ MT.OBJECT_SELECTED = "OBJECT_SELECTED";
 MT.OBJECT_UNSELECTED = "OBJECT_UNSELECTED";
 MT.OBJECT_DELETED = "OBJECT_DELETED";
 MT.OBJECT_UPDATED = "OBJECT_UPDATED";
+MT.OBJECT_UPDATED_LOCAL = "OBJECT_UPDATED_LOCAL";
 MT.OBJECTS_RECEIVED = "OBJECTS_RECEIVED";
 
 MT.OBJECTS_UPDATED = "OBJECTS_UPDATED";
@@ -128,16 +129,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.emit(MT.OBJECT_SELECTED, data);
 			});
 			
-			
-			this.on(MT.OBJECT_UPDATED, function(mo){
+			var timeouts = {};
+			this.on(MT.OBJECT_UPDATED_LOCAL, function(mo){
 				if(!mo.id){
 					return;
 				}
+				
+				if(timeouts[mo.id]){
+					window.clearTimeout(timeouts[mo.id]);
+				}
+				timeouts[mo.id] = window.setTimeout(function(){
+					that.emit(MT.OBJECT_UPDATED, mo);
+				}, 500);
+			});
+			
+			this.on(MT.OBJECT_UPDATED, function(mo){
 				that.saveObject(mo.data);
 				that.update();
 			});
-			
-			
 		},
 		
 		
@@ -149,7 +158,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				var el = that.tv.getById(obj.id);
 				
 				if(el){
-					if(el.isFolder){
+					if(el.isFolder && el.data.type == MT.objectTypes.GROUP){
 						that.activeGroup = el.data;
 					}
 					el.addClass("selected.active");
@@ -226,20 +235,23 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		
-		insertObject: function(obj, silent, data){
+		insertObject: function(obj, silent, data, affectParent){
 			data = data || this.tv.getData();
+			var arr = data;
 			
+			
+			if(affectParent){
+				arr = this.activeGroup.contents;
+				obj.x -= this.activeGroup.x;
+				obj.y -= this.activeGroup.y;
+			}
 			
 			obj.id = "tmp"+this.mkid();
 			
 			obj.tmpName = obj.tmpName || obj.name;
 			
-			var arr = data;
-			if(this.activeGroup){
-				arr = this.activeGroup.contents;
-				obj.x -= this.activeGroup.x;
-				obj.y -= this.activeGroup.y;
-			}
+			
+			
 			
 			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, arr, 0);
 			
@@ -466,11 +478,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var name, obj, clone;
 			var out = [];
 			
+			var insertIntoGroup = false;
 			for(var i=0; i<arr.length; i++){
 				obj = arr[i];
 				name = obj.name + this.getNewNameId(obj.name, data);
 				clone = JSON.parse(JSON.stringify(obj));
 				clone.name = name;
+				
+				insertIntoGroup = (this.activeGroup ? this.activeGroup.id != clone.id : false);
+				
 				this.cleanUpClone(clone);
 				
 				if(cb){
@@ -478,7 +494,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				
 				out.push(clone);
-				this.insertObject(clone, true, data);
+				this.insertObject(clone, true, data, insertIntoGroup);
 			}
 			
 			this.tv.rootPath = this.project.path
@@ -648,7 +664,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				console.log("save");
 				that.emit(MT.OBJECTS_SYNC, that.tv.getData());
 				that.updateTree();
-			}, 100);
+			}, 1000);
 		},
 		
 		getById: function(id){

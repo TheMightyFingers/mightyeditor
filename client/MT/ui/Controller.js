@@ -172,7 +172,6 @@ MT.extend("core.Emitter")(
 			}
 			
 			activePanel.startRename();
-			
 		});
 		
 		var prevClicked = null;

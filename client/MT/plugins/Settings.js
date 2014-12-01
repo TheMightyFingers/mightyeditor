@@ -461,6 +461,7 @@ MT(
 			this.scene.gridX = this.addInput( {key: "gridX", min: 2}, obj, true, cb);
 			this.scene.gridY = this.addInput( {key: "gridY", min: 2}, obj, true, cb);
 			this.scene.showGrid = this.addInput( {key: "showGrid", min: 0, max: 1}, obj, true, cb);
+			this.scene.gridOpacity = this.addInput( {key: "gridOpacity", min: 0, max: 1, step: 0.1}, obj, true, cb);
 			this.scene.backgroundColor = this.addInput( {key: "backgroundColor", type: "color" }, obj, true, cb);
 			
 		},

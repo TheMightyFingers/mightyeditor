@@ -21,6 +21,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		this.type = "number";
 		
+		this.properties = properties;
 		if(typeof properties === "string"){
 			this.key = properties;
 		}
@@ -290,15 +291,18 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		if(this.type == "number"){
 		
-			this.onwheel = events.on("wheel", function(e){
+			this.wheel = input.onwheel = events.on("wheel", function(e){
 				if(e.target !== that.value.el){
 					return;
 				}
 				e.preventDefault();
+				e.stopPropagation();
+				
+				console.log(e.isPropagationStopped, e);
 				var d = ( (e.wheelDelta || -e.deltaY) > 0 ? 1 : -1);
 				var val = that.object[that.key] + d*that.step;
 				that.setValue(val);
-			});
+			}, true);
 			
 			this.mouseup = events.on("mouseup",function(){
 				down = false;
@@ -467,14 +471,10 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				val = this.max;
 			}
 			
-			
-			
-			
-			
 			this.object[this.key] = val;
 			
 			if(typeof val == "number"){
-				this.value.el.innerHTML = parseFloat(val.toFixed(8));
+				this.value.el.innerHTML = parseFloat(val.toFixed(4));
 			}
 			else{
 				this.value.el.innerHTML = val;
@@ -499,7 +499,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				ret = val;
 			}
 			
-			
+			if(this.properties.step){
+				ret = Math.round(val/this.properties.step)*this.properties.step;
+			}
 			return ret;
 		},
 		

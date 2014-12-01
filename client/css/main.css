@@ -1360,10 +1360,41 @@ border-bottom: solid 1px rgba(0,0,0,0.5);
 .ui-kf-frames span {
 display: inline-block;
 width: 7px;
-height: 100%;
 background-color: rgba(255,255,255,0.3);
 border: 1px solid #222;
 position: absolute;
+top: 2px;
+bottom: 2px;
+overflow: hidden;
+}
+span.ui-kf-frame.ui-kf-frame-main {
+	background-color: rgba(61, 134, 161, 0.32);
+	border-color: rgba(34, 195, 255, 0.19);
+	border-radius: 4px;
+	margin: 2px 0px 0px 4px;
+}
+
+span.ui-kf-frame.ui-kf-frame-main:before, span.ui-kf-frame.ui-kf-frame-main:after{
+	content: "";
+	position: absolute;
+	top: 5px;
+	bottom: 5px;
+	border-left: solid 1px rgba(34, 195, 255, 0.3);
+	border-right: solid 1px rgba(34, 195, 255, 0.3);
+	width: 3px;
+}
+
+span.ui-kf-frame.ui-kf-frame-main:before{
+	left: 4px;
+}
+
+span.ui-kf-frame.ui-kf-frame-main:after{
+	right: 4px;
+}
+
+span.ui-kf-frame.active.ui-kf-frame-main {
+background-color: rgba(130, 207, 236, 0.4);
+border-color: rgba(34, 195, 255, 0.3);
 }
 
 .ui-kf-frames span.active {
@@ -1389,7 +1420,10 @@ text-indent: 1px;
 .ui-keyframes-controls {
 position: relative;
 z-index: 2;
-margin-right: 4px;
+margin-right: 0px;
+height: 37px;
+border-bottom: 1px solid rgba(0,0,0,0.7);
+padding-right: 4px;
 }
 
 .ui-keyframes-controls > div, .ui-button.style2 {
@@ -1485,15 +1519,18 @@ left: 0;
 right: 0;
 top: 0;
 bottom: 0;
+box-shadow: inset 0px 10px 10px -6px rgba(0,0,0,0.5);
 }
 
 .ui-frameHolderWrapper {
-	overflow: hidden;
-	position: absolute;
-	top: 36;
-	bottom: 0;
-	left: 0;
-	right: 0;
+overflow: hidden;
+position: absolute;
+top: 36;
+bottom: 0;
+left: 0;
+right: 0;
+background-color: rgba(0,0,0,0.2);
+box-shadow: inset 0px 10px 10px -6px rgba(0,0,0,0.5);
 }
 
 .ui-keyframes-tree > .ui-treeview-folder:first-child{
@@ -1541,33 +1578,34 @@ right: 0;
 top: 0;
 height: 37px;
 border-bottom: solid 1px rgba(0,0,0,0.5);
-overflow: hidden;
 }
 
 .ui-frame-sep-holder > *{
 	pointer-events: none;
 }
 .ui-frame-sep{
-	height: 10px;
-	width: 1px;
-	background-color: #3e3e3e;
-	position: absolute;
-	bottom: 0;
+height: 1900px;
+width: 1px;
+background-color: #3e3e3e;
+position: absolute;
+bottom: -1890px;
 }
 .ui-frame-sep.ui-frame-sep-long {  
-  height: 15px;
+	height: 1905px;
 }
 
 .ui-frame-sep:after{
 content: attr(data-seconds);
 position: absolute;
-top: -10px;
 font-size: 8px;
-left: -6px;
-width: 14px;
-text-align: center;
+left: -14px;
 display: inline-block;
 color: #777;
+baseline-shift: baseline;
+bottom: 14px;
+text-align: center;
+width: 30px;
+top: -10px;
 }
 .ui-frame-handle {
 position: absolute;
@@ -1675,6 +1713,7 @@ line-height: 25px;
 	top: 5px;
 	left: 7px;
 	position: absolute;
+	z-index: 1;
 }
 .ui-kf-frames > span.ui-autoFrame.ui-button.style2:after {
 background-image: url("../img/icons/timeline/set.png");
@@ -1738,7 +1777,18 @@ min-width: 250px;
 	color: #222;
 }
 
-
+.ui-movie-location {
+position: absolute;
+left: 0;
+top: 2px;
+border-right: solid 1px #000;
+font-size: 10px;
+padding: 1px 6px 2px;
+border-bottom: solid 1px #000;
+font-weight: bold;
+pointer-events: none;
+text-shadow: -1px 1px rgba(0,0,0,0.4);
+}
 
 
 

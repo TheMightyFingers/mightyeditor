@@ -1,7 +1,7 @@
 "use strict";
 
 MT.extend("core.Emitter")(
-	MT.ui.Keyframes = function(mm, count){
+	MT.ui.Keyframes = function(mm){
 		this.panelCollections = {};
 		
 		var ui = mm.ui;
@@ -13,6 +13,8 @@ MT.extend("core.Emitter")(
 		
 		this.frameHolderWrapper = document.createElement("div");
 		this.frameHolderWrapper.className = "ui-frameHolderWrapper";
+		
+		
 		
 		this.mm = mm;
 		this.om = this.mm.project.plugins.objectmanager;
@@ -91,8 +93,6 @@ MT.extend("core.Emitter")(
 		this.framesHolders = [];
 		
 		this.buildFrames();
-		
-		this.count = count;
 		this.frames = frames;
 		this.frameElements = [];
 		
@@ -127,7 +127,8 @@ MT.extend("core.Emitter")(
 			this.data = data;
 			this.activeMovie = "";
 			this.buildData();
-			this.tv.merge([data]);
+			
+			this.tv.merge(data.contents);
 			this.updateFrames();
 		},
 		
@@ -135,6 +136,9 @@ MT.extend("core.Emitter")(
 			var movies = this.data.movies;
 			var pp;
 			for(var key in movies){
+				if(key == this.mm.mainName){
+					continue;
+				}
 				if(this.activeMovie == ""){
 					this.activeMovie = key;
 				}
@@ -144,6 +148,9 @@ MT.extend("core.Emitter")(
 				else{
 					pp = this.createPanel(key, pp);
 				}
+			}
+			if(this.activeMovie == ""){
+				return;
 			}
 			this.fpsInput.setObject(this.data.movies[this.activeMovie].info);
 			console.log("fps updated");
@@ -183,6 +190,7 @@ MT.extend("core.Emitter")(
 				return p;
 			}
 			p = new MT.ui.Panel(name);
+			p.name = name;
 			this.panels[name] = p;
 			p.fitIn();
 			p.hide();
@@ -196,7 +204,7 @@ MT.extend("core.Emitter")(
 			p.el.style.height = "18px";
 			var that = this;
 			p.on("show", function(){
-				that.activeMovie = name;
+				that.activeMovie = p.name;
 				that.mm.changeFrame(0);
 				that.fpsInput.setObject(that.data.movies[that.activeMovie].info);
 				that.updateFrames();
@@ -218,6 +226,11 @@ MT.extend("core.Emitter")(
 				delete item.movies[oldName];
 				item.movies[newName] = movie;
 			}
+			
+			var p = this.panels[oldName];
+			delete this.panels[oldName];
+			this.panels[newName] = p;
+			p.name = newName;
 			
 			if(this.activeMovie == oldName){
 				this.activeMovie = newName;
@@ -306,12 +319,6 @@ MT.extend("core.Emitter")(
 			if(this.panels[this.activeMovie]){
 				this.panels[this.activeMovie].show();
 			}
-			/*
-			for(var key in this.panels){
-				this.panels[key].show();
-				break;
-			}
-			*/
 			this.mm.leftPanel.style.borderRightStyle = "solid";
 			this.mm.leftPanel.content.el.appendChild(this.controlsHolder);
 			this.showFrames();
@@ -345,6 +352,9 @@ MT.extend("core.Emitter")(
 				
 				b = it.bounds;
 				
+				if(data.unselectable){
+					f.addClass("unselectable");
+				}
 				
 				if(i==0){
 					f.addClass("top");
@@ -356,15 +366,6 @@ MT.extend("core.Emitter")(
 					f.style.height = b.height + "px";
 					 top = (b.top - db.top + this.d2.el.scrollTop +1 - wrap.offsetTop);
 				}
-				
-				/*
-				if(top < 0){
-					if(f.el.parentNode){
-						f.el.parentNode.removeChild(f.el);
-					}
-					continue;
-				}
-				*/
 				
 				f.style.top = top + "px";
 				f.el.data = data;
@@ -402,9 +403,7 @@ MT.extend("core.Emitter")(
 			var f;
 			for(var i=0; i<it.length; i++){
 				f = this.addFrameHolder();
-				
 				this.markFrames(it[i], f.el);
-				
 			}
 			
 			this.firstFrame = this.framesHolders[0];
@@ -452,39 +451,26 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			
-			var mo = this.mm.getById(item.data.id);
-			if(!mo){
-				return;
-			}
-			
+			var mo = item.data;
 			if(!mo.movies || !mo.movies[this.activeMovie]){
 				this.mm.addMovie(mo, this.activeMovie);
 			}
-			
 			var movie = mo.movies[this.activeMovie];
 			var frames = movie.frames;
 			if(!frames){
 				this.mm.addMovie(mo, this.activeMovie);
+				movie = mo.movies[this.activeMovie];
 				frames = movie.frames;
 			}
 			
 			this.addAutoFrame(item.data, movie, track);
-			
-			
-			var frame = 0;
-			
 			for(var i=0; i<frames.length; i++){
-				frame = frames[i].keyframe;
-				if(frame < this.mm.startFrame){
-					continue;
-				}
-				
-				this.addFrame(frames, i, track);
+				this.drawFrame(frames, i, track, movie, item.data);
 			}
 		},
 		
 		lastFrameAccessed: 0,
-		addFrame: function(frames, index, track){
+		getFrameElement: function(){
 			var el = this.createdFrames[this.lastFrameAccessed];
 			this.lastFrameAccessed++;
 			if(!el){
@@ -496,7 +482,15 @@ MT.extend("core.Emitter")(
 					el.parentNode.removeChild(el);
 				}
 			}
+			return el;
+		},
+		
+		drawFrame: function(frames, index, track, item){
+			if(frames[index].keyframe < this.mm.startFrame - 1){
+				return;
+			}
 			
+			var el = this.getFrameElement();
 			var item = frames[index];
 			var startFrame = this.mm.startFrame;
 			if(this.mm.selectedFrame == item){
@@ -517,15 +511,11 @@ MT.extend("core.Emitter")(
 				index: index
 			};
 		},
-		
-		moveFrame: function(frame, num){
-			frame.keyframe = num;
-			
-		},
-		
-		
 		autoAddInc: 0,
 		addAutoFrame: function(item, movie, track){
+			if(item.unselectable){
+				return;
+			}
 			var butt = this.autoAddButtons[this.autoAddInc];
 			this.autoAddInc++;
 			if(!butt){
@@ -745,6 +735,9 @@ MT.extend("core.Emitter")(
 			var needSave = false;
 			for(var i in this.mm.items){
 				item = this.mm.items[i];
+				if(this.parent == item){
+					//continue;
+				}
 				if(!all && this.active && this.active.data.id && this.active.data.id != item.id){
 					continue;
 				}
@@ -826,6 +819,10 @@ MT.extend("core.Emitter")(
 			
 			for(var i in this.mm.items){
 				item = this.mm.items[i];
+				if(!item.movies){
+					continue;
+				}
+				
 				movie = item.movies[this.activeMovie];
 				if(!movie){
 					continue;
@@ -840,13 +837,11 @@ MT.extend("core.Emitter")(
 						start = j;
 					}
 					
-					
 					if(frameData.keyframe  == frame){
 						found = true;
 						this.mm.loadState(i, frameData, frameData.keyframe );
 						break;
 					}
-					
 					
 					if(frameData.keyframe  > frame){
 						end = j;

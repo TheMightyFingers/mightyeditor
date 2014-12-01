@@ -60,6 +60,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			gridOffsetY: 0,
 			
 			showGrid: 1,
+			gridOpacity: 0.5,
 			backgroundColor: "#111111"
 		};
 		
@@ -468,7 +469,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		/* drawing fns */
 		drawGrid: function(ctx){
-			if(!this.settings.showGrid){
+			if(!this.settings.showGrid || this.settings.gridOpacity == 0){
 				return;
 			}
 			
@@ -477,6 +478,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var g = 0;
 			var game = this.game;
 			
+			
+			ctx.globalAlpha = this.settings.gridOpacity;
 			
 			ctx.save();
 			
@@ -511,7 +514,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			g = this.settings.gridX;
 			
 			ctx.lineWidth = 0.2;
-			ctx.globalAlpha = 1;
 			
 			ctx.shadowColor = '#000';
 			ctx.shadowBlur = 0;
@@ -544,11 +546,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			ctx.stroke();
 			
 			ctx.lineWidth = 0.5;
-			ctx.globalAlpha = 1;
-			
-			
-			// highlight x = 0; y = 0;
-			
 			ctx.beginPath();
 			
 			ctx.moveTo(0, -game.camera.y/this.scale.y);
@@ -559,12 +556,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			ctx.stroke();
-			
-			
-			
+			ctx.restore();
 			
 			ctx.globalAlpha = alpha;
-			ctx.restore();
 		},
 		
 		highlightObject: function(ctx, obj){
@@ -959,8 +953,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						continue;
 					}
 					if(o1.x == o2.x && o1.y == o2.y && o1.assetId == o2.assetId && o1.width == o2.width && o1.data.type == o2.data.type){
-						bounds = o1.object.getBounds();
-						ctx.fillRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
+						if(o1.parent == o2.parent){
+							bounds = o1.object.getBounds();
+							ctx.fillRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
+						}
 					}
 				}
 			}
@@ -1513,8 +1509,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		_objectMove: function(e, mo){
 			
-			
-			//console.log("move");
 			if(!mo){
 				var that = this;
 				this.selector.forEach(function(obj){

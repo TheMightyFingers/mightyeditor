@@ -68,25 +68,24 @@ MT.extend("core.Emitter")(
 			else{
 				impact = (that.slh - max) * 0.01;
 				console.log("impact:", impact);
-				var w = startWidth / impact;
+				/*var w = startWidth / impact;
 				if(w < 20){
 					w = 20;
-				}
-				if(w < startWidth){
+				}*/
+				/*if(w < startWidth){
 					that.slider.style.left = max + startWidth - w + "px";
-					that.slider.style.width = w + "px";
-				}
-				else{
+					//that.slider.style.width = w + "px";
+				}*/
+				//else{
 					w = startWidth;
-				}
+				//}
 			}
-			
-			
 			
 			that.emit("change", that.slh.value * (1 + impact), scale);
 			
 			var overflow = that.slider.offsetLeft + that.slider.offsetWidth;
 			
+			that.mm.changeFrame();
 		});
 		
 		ev.on(ev.MOUSEUP, function(){
@@ -121,7 +120,7 @@ MT.extend("core.Emitter")(
 			var start = Math.floor(this.mm.startFrame / fps);
 			
 			var el;
-			var inc = Math.floor(1/this.mm.scale);
+			var inc = Math.floor(1.5/this.mm.scale);
 			if(inc < 1){
 				inc = 1;
 			}
@@ -159,7 +158,21 @@ MT.extend("core.Emitter")(
 				
 				if( (k % round) == 0 ){
 					el.className = "ui-frame-sep ui-frame-sep-long";
-					el.setAttribute("data-seconds", i + this.mm.startFrame);
+					if(i + this.mm.startFrame > 180){
+						var sec = Math.round( 10 * (i + this.mm.startFrame) / fps ) / 10;
+						if(sec > 60){
+							var m = Math.round(sec / 60);
+							sec = m + "m " + Math.round( sec % 60 ) + "s";
+						}
+						else{
+							sec += "s";
+						}
+						
+						el.setAttribute("data-seconds", sec);
+					}
+					else{
+						el.setAttribute("data-seconds", i + this.mm.startFrame);
+					}
 				}
 				k++;
 			}
@@ -206,6 +219,9 @@ MT.extend("core.Emitter")(
 		
 		adjustHandle: function(){
 			this.handle.style.left = this.mm.slider.x  - this.handle.offsetWidth*0.5 + this.mm.slider.width*0.5 + "px";
+			if(this.mm.activeFrame > 180){
+				
+			}
 			this.handle.innerHTML = this.mm.activeFrame;
 		},
 		

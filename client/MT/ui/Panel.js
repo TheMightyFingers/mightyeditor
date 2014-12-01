@@ -108,7 +108,12 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				el.title.style.visibility = "visible";
 			};
 			
+			this.input.addEventListener("keydown",function(e){
+				e.stopPropagation();
+			});
+			
 			this.input.onkeyup = function(e){
+				e.stopPropagation();
 				if(e.which == MT.keys.ESC){
 					needSave = false;
 					this.blur();

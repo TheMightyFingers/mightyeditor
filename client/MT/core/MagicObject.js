@@ -37,6 +37,21 @@ MT(
 		
 		this.create();
 		
+		this.activeFrame = -1;
+		
+		this.activeMovie = "";
+		
+		this.tmpData = {
+			x: 0,
+			y: 0,
+			alpha: 1,
+			angle: 0,
+			scaleX: 1,
+			scaleY: 1,
+			anchorX: 0,
+			anchorY: 0
+		};
+		
 		// debug only - so we know what is missing
 		Object.seal(this);
 	},
@@ -44,6 +59,141 @@ MT(
 		radius: 3,
 		activeRadius: 5,
 		
+		
+		/* interpolation */
+		changeMovieFrame: function(movie, frame, skipChildren){
+			this.activeMovie = movie;
+			this.activeFrame = frame;
+			this.loadMovieFrame();
+			
+			if(skipChildren){
+				return;
+			}
+			this.changeChildrenMovieFrame(movie, frame);
+		},
+   
+		changeChildrenMovieFrame: function(movie, frame){
+			for(var i=0; i<this.object.children.length; i++){
+				this.object.children[i].magic.changeMovieFrame(movie, frame);
+			}
+		},
+   
+		loadMovieFrame: function(){
+			if(!this.data.movies){
+				return;
+			}
+			var movie = this.data.movies[this.activeMovie];
+			if(!movie){
+				return;
+			}
+			
+			var frameData = movie.frames;
+			if(!frameData || frameData.length === 0){
+				return;
+			}
+			
+			var frame;
+			var start = frameData[0], end;
+			end = frameData[frameData.length-1];
+			if(end.keyframe < this.activeFrame){
+				this.update(end);
+				return;
+			}
+			
+			for(var i=0; i<frameData.length; i++){
+				frame = frameData[i];
+				if(frame.keyframe < this.activeFrame){
+					start = frame;
+				}
+				if(frame.keyframe > this.activeFrame){
+					end = frame;
+					break;
+				}
+				if(frame.keyframe == this.activeFrame){
+					this.update(frame);
+					return;
+				}
+			}
+			if(start == end){
+				this.update(end);
+				return;
+			}
+			
+			this.prepareInterpolate(start, end);
+		},
+   
+		prepareInterpolate: function(start, end){
+			var t = (this.activeFrame - start.keyframe) / (end.keyframe - start.keyframe);
+			var med = this.buildTmpVals(t, start, end);
+			this.update(this.tmpData);
+		},
+   
+		buildTmpVals: function(t, start, end){
+			
+			var tmp = this.tmpData;
+			if(end.easings == void(0)){
+				tmp.x = this.getInt(t, start.x, end.x);
+				tmp.y = this.getInt(t, start.y, end.y);
+				
+				tmp.angle = this.getInt(t, start.angle, end.angle);
+				tmp.alpha = this.getInt(t, start.alpha, end.alpha);
+				
+				tmp.scaleX = this.getInt(t, start.scaleX, end.scaleX);
+				tmp.scaleY = this.getInt(t, start.scaleY, end.scaleY);
+				if(this.data.type != MT.objectTypes.GROUP){
+					tmp.anchorX = this.getInt(t, start.anchorX, end.anchorX);
+					tmp.anchorY = this.getInt(t, start.anchorY, end.anchorY);
+				}
+			}
+			else{
+				tmp.x = this.getInt(t, start.x, end.x, end.easings.x);
+				tmp.y = this.getInt(t, start.y, end.y, end.easings.y);
+				
+				tmp.angle = this.getInt(t, start.angle, end.angle, end.easings.angle);
+				tmp.alpha = this.getInt(t, start.alpha, end.alpha, end.easings.alpha);
+				
+				tmp.scaleX = this.getInt(t, start.scaleX, end.scaleX, end.easings.scaleX);
+				tmp.scaleY = this.getInt(t, start.scaleY, end.scaleY, end.easings.scaleY);
+				
+				if(this.data.type != MT.objectTypes.GROUP){
+					tmp.anchorX = this.getInt(t, start.anchorX, end.anchorX, end.easings.anchorX);
+					tmp.anchorY = this.getInt(t, start.anchorY, end.anchorY, end.easings.anchorY);
+				}
+			}
+			
+			
+		},
+   
+		getInt: function(t, a, b, easing){
+			var tfin = t;
+			if(easing){
+				tfin = this.resolve(easing, t);
+			}
+			
+			if(isNaN(a) || isNaN(b)){
+				throw("Error");
+			}
+			
+			return (1 - tfin) * a + tfin * b;
+		},
+		
+		resolve: function(ea, t){
+			if(ea == "NONE"){
+				return 0;
+			}
+			var sp = ea.split(".");
+			var start = Phaser.Easing;
+			for(var i=0; i<sp.length && start; i++){
+				start = start[sp[i]];
+			}
+			
+			if(start){
+				return start(t);
+			}
+			return t;
+		},
+		/* interpolation::end */
+   
 		create: function(){
 			// fix old groups
 			if(this.data.type == void(0)){
@@ -416,11 +566,6 @@ MT(
 			if(this.activeHandle != -3){
 				this.rotator.x = this.rpx(this.object.rotation, rx, ry, ax, ay);
 				this.rotator.y = this.rpy(this.object.rotation, rx, ry, ax, ay);
-				
-				for(var i=0; i<this.handles.length; i++){
-					
-				}
-				
 			}
 		},
 		
@@ -437,6 +582,14 @@ MT(
 			ctx.strokeStyle = "#ffaa00";
 			
 			if(this.data.type == MT.objectTypes.GROUP){
+				if(this.activeHandle != -3){
+					var rx = ax;
+					var ry = ay - 60;
+					
+					this.rotator.x = this.rpx(this.object.rotation, rx, ry, ax, ay);
+					this.rotator.y = this.rpy(this.object.rotation, rx, ry, ax, ay);
+				}
+				
 				var bounds = this.object.getBounds();
 				ctx.strokeRect(bounds.left, bounds.top, bounds.width, bounds.height);
 				this.drawGroupHandle(ctx, this.object);
@@ -774,16 +927,13 @@ MT(
 				while(diff < -Math.PI){
 					diff = Math.PI*2 + diff;
 				}
-				
-				
-				//this.object.rotation += diff;
 				this.angle += Phaser.Math.radToDeg(diff);
 				
 				console.log(Math.round(Phaser.Math.radToDeg(diff)));
 				
 				
 				if(e.ctrlKey){
-					this.angle = Math.round(this.data.angle / 15)*15;
+					this.data.angle = Math.round(this.data.angle / 15)*15;
 				}
 				
 				this.update();
@@ -1143,7 +1293,7 @@ MT(
 			this.data.x = x;
 			this.updateBox();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 			
 		},
 		get x(){
@@ -1158,7 +1308,7 @@ MT(
 			this.data.y = y;
 			this.updateBox();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get y(){
 			return this.data.y;
@@ -1172,7 +1322,7 @@ MT(
 			this.data.angle = val;
 			this.updateBox();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get angle(){
 			return this.data.angle;
@@ -1187,7 +1337,7 @@ MT(
 			this.data.width = this.object.width;
 			this.updateBox();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get anchorX(){
 			return this.data.anchorX || 0;
@@ -1202,7 +1352,7 @@ MT(
 			this.data.height = this.object.height;
 			this.updateBox();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get anchorY(){
 			return this.data.anchorY || 0;
@@ -1222,7 +1372,7 @@ MT(
 			this.data.scaleX = this.object.scale.x;
 			this.updateBox();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get width(){
 			return this.data.width;
@@ -1241,7 +1391,7 @@ MT(
 			this.data.scaleY = this.object.scale.y;
 			this.updateBox();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get height(){
 			return this.data.height;
@@ -1261,7 +1411,7 @@ MT(
 			this.updateBox();
 			this.data.width = this.object.width;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get scaleX(){
 			return this.data.scaleX;
@@ -1281,7 +1431,7 @@ MT(
 			this.updateBox();
 			this.data.height = this.object.height;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get scaleY(){
 			return this.data.scaleY;
@@ -1298,7 +1448,7 @@ MT(
 			this.data.assetId = id;
 			this.object.loadTexture(id);
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
    
 		set alpha(val){
@@ -1311,7 +1461,7 @@ MT(
 			this.object.alpha = val;
 			this.data.alpha = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get alpha(){
 			return this.data.alpha == void(0) ? 1 : this.data.alpha;
@@ -1324,7 +1474,7 @@ MT(
 			this.data.frame = val;
 			this.object.frame = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get frame(){
 			return this.data.frame;
@@ -1338,7 +1488,7 @@ MT(
 			this.data.isFixedToCamera = val;
 			this.updateBox();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get isFixedToCamera(){
 			return this.data.isFixedToCamera;
@@ -1353,7 +1503,7 @@ MT(
 			this.data.wordWrapWidth = val;
 			this.updateBox();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get wordWrapWidth(){
 			return this.data.wordWrapWidth || 100;
@@ -1366,7 +1516,7 @@ MT(
 			this.data.wordWrap = val;
 			this.object.wordWrap = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get wordWrap(){
 			return this.data.wordWrap;
@@ -1378,7 +1528,7 @@ MT(
 			this.data.style = val;
 			this.object.style = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get style(){
 			return this.data.style || {};
@@ -1391,7 +1541,7 @@ MT(
 			this.object.font = val;
 			this.data.style.font = this.object.font;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
    
 		get font(){
@@ -1405,7 +1555,7 @@ MT(
 			this.object.font = val;
 			this.data.style.fontFamily = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get fontFamily(){
 			return this.data.style.fontFamily;
@@ -1420,7 +1570,7 @@ MT(
 			this.object.fontWeight = val;
 			this.data.style.fontWeight = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get fontWeight(){
 			return this.data.style.fontWeight;
@@ -1439,7 +1589,7 @@ MT(
 			this.scaleX = scaleX;
 			this.scaleY = scaleY;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get fontSize(){
 			if(!this.data.style.fontSize){
@@ -1455,7 +1605,7 @@ MT(
 			this.data.align = val;
 			this.object.align = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
    
 		get align(){
@@ -1469,7 +1619,7 @@ MT(
 			this.object.fill = val;
 			this.data.fill = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get fill(){
 			return this.data.fill || "#000000";
@@ -1482,7 +1632,7 @@ MT(
 			this.object.stroke = val;
 			this.data.stroke = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get stroke(){
 			return this.data.stroke || "#000000";
@@ -1495,7 +1645,7 @@ MT(
 			this.object.strokeThickness = val;
 			this.data.strokeThickness = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
    
 		get strokeThickness(){
@@ -1519,7 +1669,7 @@ MT(
 			
 			this.object.setShadow(x, y, color, blur);
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		
 		get shadowColor(){
@@ -1543,7 +1693,7 @@ MT(
 			this.object.text = val;
 			this.data.text = val;
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get text(){
 			return this.data.text;
@@ -1559,7 +1709,7 @@ MT(
 			this.removeLayer();
 			this.createTileLayer();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get widthInTiles(){
 			return this.data.widthInTiles;
@@ -1572,7 +1722,7 @@ MT(
 			this.removeLayer();
 			this.createTileLayer();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get heightInTiles(){
 			return this.data.heightInTiles;
@@ -1585,7 +1735,7 @@ MT(
 			this.removeLayer();
 			this.createTileLayer();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get tileWidth(){
 			return this.data.tileWidth;
@@ -1598,7 +1748,7 @@ MT(
 			this.removeLayer();
 			this.createTileLayer();
 			
-			this.manager.emit(MT.OBJECT_UPDATED, this);
+			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get tileHeight(){
 			return this.data.tileHeight;

@@ -135,14 +135,16 @@ MT.extend("core.Emitter")(
 			}
 			
 			parent.addChild(el, el.index);
-			if(!parent.data || !parent.data.isClosed){
-				el.show();
+			if(parent.data){
+				if(parent.data.isClosed === false){
+					el.show();
+				}
 			}
 			
 			
 			if(type == "folder"){
 				head.addClass("ui-treeview-folder-head");
-				if(data.isClosed){
+				if(data.isClosed || data.isClosed === void(0)){
 					el.addClass("close");
 					el.visible = false;
 				}
