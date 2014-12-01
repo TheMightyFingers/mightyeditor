@@ -87,7 +87,7 @@ MT.extend("ui.Keyframes")(
 					childFrame = frame;
 					for(var f=0; f<frames.length; f++){
 						sframe = frames[f];
-						if(sframe.keyframe < frame && sframe.keyframe + sframe.length > frame){
+						if(sframe.keyframe <= frame && sframe.keyframe + sframe.length > frame){
 							childFrame = frame - sframe.keyframe;
 							//if(childFrame > 0){
 								mo.changeChildrenMovieFrame(sinfo.name, childFrame);

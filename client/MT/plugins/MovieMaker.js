@@ -294,6 +294,11 @@ MT.extend("core.Emitter")(
 			
 			this.om = this.project.plugins.objectmanager;
 			
+			this.map.on("update", function(){
+				if(that.keyframes == that.keyframesMain){
+					that.createMainMovie();
+				}
+			});
 			
 		},
 		ignoreSelect: false,
@@ -654,6 +659,9 @@ MT.extend("core.Emitter")(
 		__addMovie: function(item, name){
 			if(!item.movies){
 				item.movies = {};
+			}
+			if(item.movies[name]){
+				return;
 			}
 			item.movies[name] = {
 				frames: [],
@@ -1044,22 +1052,20 @@ MT.extend("core.Emitter")(
 		createMainMovie: function(){
 			this.location.el.innerHTML = "Main Timeline";
 			
-			//if(!this.mainMovie){
-				this.mainMovie = {
-					name: this.mainName,
-					id: 0,
-					contents: [],
-					movies: {}
-				};
-				this.mainMovie.movies[this.mainName] = {
-					frames: [],
-					info: {
-						fps: 60,
-						lastFrame: 60,
-						childInfo: this.mainMovie.contents
-					}
-				};
-			//}
+			this.mainMovie = {
+				name: this.mainName,
+				id: 0,
+				contents: [],
+				movies: {}
+			};
+			
+			var info = this.map.settings.movieInfo;
+			
+			this.mainMovie.movies[this.mainName] = {
+				frames: [],
+				info: info
+			};
+			
 			var data = this.om.getData();
 			this.collectMovies(data, this.mainMovie.contents, 0);
 			
@@ -1096,6 +1102,7 @@ MT.extend("core.Emitter")(
 				
 				tmp.movies = data[i].movies;
 				tmp.name = data[i].name;
+				tmp.isClosed = true;
 				
 				var mainMovie = tmp.movies[mainName];
 				if(!mainMovie.subdata){
@@ -1104,18 +1111,14 @@ MT.extend("core.Emitter")(
 				
 				console.log("main",mainMovie.subdata);
 				
-				movieContents = mainMovie.subdata;//[tmp.objectId];
+				movieContents = mainMovie.subdata;
 				tmp.contents = movieContents;
-				
-				//var store = tmp.movies[this.mainMovie].subdata;
-				
-				var needPush = false;
 				scan:
 				for(var key in movies){
 					if(key == mainName){
 						continue;
 					}
-					
+					tmp.isClosed = false;
 					for(var j = 0; j<movieContents.length; j++){
 						if(movieContents[j].name == key){
 							mdata = movieContents[j];
@@ -1138,18 +1141,11 @@ MT.extend("core.Emitter")(
 						movies: mdata,
 						submovie: true
 					});
-					
-					needPush = true;
 				}
 				contents.push(tmp);
 			}
 			
 			this.keyframes.show();
-		},
-		
-		
-		
-		
-		
+		}
 	}
 );

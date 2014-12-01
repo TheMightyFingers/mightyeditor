@@ -61,7 +61,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			showGrid: 1,
 			gridOpacity: 0.5,
-			backgroundColor: "#111111"
+			backgroundColor: "#111111",
+			
+			movieInfo: {
+				fps: 60,
+				lastFrame: 60
+			}
 		};
 		
 		
@@ -1617,6 +1622,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			this.received = true;
 			this.updateSettings(obj);
+			this.emit("update");
 		},
 		
 		createActiveObject: function(obj){

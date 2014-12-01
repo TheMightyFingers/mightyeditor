@@ -128,7 +128,7 @@ MT.extend("core.Emitter")(
 			this.activeMovie = "";
 			this.buildData();
 			
-			this.tv.merge(data.contents);
+			this.tv.merge([data]);//.contents);
 			this.updateFrames();
 		},
 		
