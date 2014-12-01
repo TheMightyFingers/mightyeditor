@@ -620,7 +620,9 @@ MT.extend("core.Emitter")(
 			
 			this.location.el.innerHTML = obj.name;
 			var p = this.keyframes.panels[this.keyframes.activeMovie];
-			p.x = this.location.width;
+			if(p){
+				p.x = this.location.width;
+			}
 		},
    
 		addMovie: function(item, name){
