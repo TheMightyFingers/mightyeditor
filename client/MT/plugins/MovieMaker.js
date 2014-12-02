@@ -71,8 +71,6 @@ MT.extend("core.Emitter")(
 					continue;
 				}
 				
-				
-				
 				buffer.push({
 					label: lab + k,
 					value: lab + k
@@ -298,6 +296,11 @@ MT.extend("core.Emitter")(
 				if(that.keyframes == that.keyframesMain){
 					that.createMainMovie();
 				}
+			});
+			
+			this.ui.on(ev.RESIZE,function(){
+				console.log("resize");
+				that.redrawAll();
 			});
 			
 		},
