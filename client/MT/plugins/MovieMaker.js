@@ -1121,7 +1121,7 @@ MT.extend("core.Emitter")(
 				clean:
 				for(var j=0; j<movieContents.length; j++){
 					for(var key in movies){
-						if(movieContents[i].name == key){
+						if(movieContents[j].name == key){
 							continue clean;
 						}
 					}
