@@ -732,7 +732,9 @@
 				tween = this._addTween(pack.self, start, stop, easings, tween);
 			}
 			if(isMain){
-				tween._lastChild.onComplete.add(this._complete, this);
+				if(tween){
+					tween._lastChild.onComplete.add(this._complete, this);
+				}
 				if(movie.subdata && movie.subdata.length > 0){
 					this._buildSubTweens(movie.subdata);
 				}
