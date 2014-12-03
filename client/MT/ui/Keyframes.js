@@ -219,6 +219,9 @@ MT.extend("core.Emitter")(
 			var item, movie;
 			
 			for(var i in this.mm.items){
+				if(item.movies[newName]){
+					continue;
+				}
 				item = this.mm.items[i];
 				movie = item.movies[oldName];
 				delete item.movies[oldName];

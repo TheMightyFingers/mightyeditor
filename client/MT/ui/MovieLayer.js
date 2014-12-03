@@ -94,13 +94,9 @@ MT.extend("ui.Keyframes")(
 						sframe = frames[f];
 						if(sframe.keyframe <= frame && sframe.keyframe + sframe.length > frame){
 							childFrame = frame - sframe.keyframe;
-							//if(childFrame > 0){
-								mo.changeChildrenMovieFrame(sinfo.name, childFrame);
-								console.log("childframe", childFrame);
-								break;
-							//}
+							mo.changeChildrenMovieFrame(sinfo.name, childFrame);
+							break;
 						}
-						
 					}
 				}
 			}

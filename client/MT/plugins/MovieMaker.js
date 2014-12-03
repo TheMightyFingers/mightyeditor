@@ -49,7 +49,7 @@ MT.extend("core.Emitter")(
 			this.panel.options.list.style.left = "auto";
 			
 			
-			this.settings = this.ui.createPanel("frameInfo");
+			this.settings = this.ui.createPanel("Easing");
 			this.settings.setFree();
 			
 			
@@ -388,6 +388,7 @@ MT.extend("core.Emitter")(
    
 		clear: function(){
 			this.keyframes = this.keyframesSub;
+			this.keyframes.tv.merge([]);
 			this.items = {};
 			this.hide();
 		},
@@ -607,7 +608,7 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			if(this.items && this.items[obj.id]){
-				if(Object.keys(this.data.movies).length == 0){
+				if( !this.hasMovies() ){
 					this.hide();
 					this.showNewMovie();
 				}
@@ -696,20 +697,15 @@ MT.extend("core.Emitter")(
 				this.data.movies = {};
 			}
 			
-			var total = Object.keys(this.data.movies).length ;
-			if( (total == 0 && this.state != 1) || (total == 1 && this.data.movies[this.mainName] != void(0) && this.keyframes != this.keyframesMain) ){
+			if( !this.hasMovies() ){
 				this.hide();
 				this.showNewMovie();
 				this.collectItems();
 				return;
 			}
 			
-			
-			var that = this;
-			
 			this.collectItems();
 			this.keyframes.setData(this.data);
-			
 			
 			this.show(this.data);
 			
@@ -719,6 +715,11 @@ MT.extend("core.Emitter")(
 			else{
 				this.changeFrame(this.activeFrame);
 			}
+		},
+		
+		hasMovies: function(){
+			var total = Object.keys(this.data.movies).length;
+			return !( (total == 0 && this.state != 1) || (total == 1 && this.data.movies[this.mainName] != void(0) && this.keyframes != this.keyframesMain) );
 		},
 		
 		collectItems: function(){
@@ -1055,6 +1056,9 @@ MT.extend("core.Emitter")(
 		mainMovie: null,
 		mainName: "__main",
 		createMainMovie: function(){
+			this.keyframes.hide();
+			this.keyframes = this.keyframesMain;
+			
 			this.location.el.innerHTML = "Main Timeline";
 			
 			this.mainMovie = {
@@ -1079,9 +1083,6 @@ MT.extend("core.Emitter")(
 		
 		collectMovies: function(data, contents, id){
 			console.log("COLLECT",data);
-			
-			this.keyframes.hide();
-			this.keyframes = this.keyframesMain;
 			var movies, currMovie, tmp, movieContents, frames;
 			
 			var mainName = this.mainName;
@@ -1114,9 +1115,6 @@ MT.extend("core.Emitter")(
 				movieContents = mainMovie.subdata;
 				tmp.contents = movieContents;
 				
-				console.log("main",mainMovie.subdata);
-				
-				
 				// clean deleted movies
 				clean:
 				for(var j=0; j<movieContents.length; j++){
@@ -1125,13 +1123,8 @@ MT.extend("core.Emitter")(
 							continue clean;
 						}
 					}
-					console.log("delete:",movieContents[i].name);
 					movieContents.splice(j, 1);
 				}
-				
-				
-				
-				
 				
 				scan:
 				for(var key in movies){
@@ -1153,7 +1146,6 @@ MT.extend("core.Emitter")(
 						info: movies[key].info
 					};
 					
-					
 					movieContents.push({
 						id: Math.random(),
 						objectId: data[i].id,
@@ -1164,8 +1156,6 @@ MT.extend("core.Emitter")(
 				}
 				contents.push(tmp);
 			}
-			
-			this.keyframes.show();
 		}
 	}
 );

@@ -50,6 +50,7 @@
 		MT.requireFile(cmPath+"/selection/active-line.js");
 		
 		MT.requireFile("js/jshint.js");
+		MT.requireFile("js/esprima.js");
 		
 		addCss("css/codemirror.css");
 		addCss(cmPath+"/hint/show-hint.css");
@@ -57,8 +58,37 @@
 		addCss(cmPath+"/dialog/dialog.css");
 		addCss("css/cm-tweaks.css");
 		
+		
+		var WORD = /[\w$]+/, RANGE = 500;
+		CodeMirror.registerHelper("hint", "javascript", function(editor, options) {
+			var word = options && options.word || WORD;
+			var range = options && options.range || RANGE;
+			var cur = editor.getCursor(), curLine = editor.getLine(cur.line);
+			var start = cur.ch, end = start;
+			while (end < curLine.length && word.test(curLine.charAt(end))) ++end;
+			while (start && word.test(curLine.charAt(start - 1))) --start;
+			var curWord = start != end && curLine.slice(start, end);
+			var list = [], seen = {};
+			var re = new RegExp(word.source, "g");
+			for (var dir = -1; dir <= 1; dir += 2) {
+				var line = cur.line, endLine = Math.min(Math.max(line + dir * range, editor.firstLine()), editor.lastLine()) + dir;
+				for (; line != endLine; line += dir) {
+					var text = editor.getLine(line), m;
+					while (m = re.exec(text)) {
+						if (line == cur.line && m[0] === curWord) continue;
+						if ((!curWord || m[0].lastIndexOf(curWord, 0) == 0) && !Object.prototype.hasOwnProperty.call(seen, m[0])) {
+							seen[m[0]] = true;
+							list.push(m[0]);
+						}
+					}
+				}
+			}
+			return {list: list, from: CodeMirror.Pos(cur.line, start), to: CodeMirror.Pos(cur.line, end)};
+		});
+		
 	});
 })();
+
 
 MT.extend("core.BasicPlugin")(
 	MT.plugins.SourceEditor = function(project){
@@ -85,6 +115,7 @@ MT.extend("core.BasicPlugin")(
 			
 			var that = this;
 			var ampv = that.project.plugins.assetmanager.preview;
+			var timeline = that.project.plugins.moviemaker.panel;
 			var tools = that.project.plugins.tools;
 			var zoombox = this.project.plugins.mapmanager.panel;
 			var undoredo = this.project.plugins.undoredo;
@@ -123,29 +154,24 @@ MT.extend("core.BasicPlugin")(
 				tools.panel.content.hide();
 				zoombox.hide();
 				ampv.hide();
+				timeline.hide();
 				undoredo.disable();
 				MT.events.simulateKey(MT.keys.ESC);
 				
 				that.addButtons(tools.panel);
 				
 				that.leftPanel.width = parseInt(that.leftPanel.style.width);
-				
-				//window.setTimeout(function(){
-					
-				//}, 1);
-				
 			});
 			this.panel.on("unselect", function(){
 				tools.panel.content.show();
 				zoombox.show();
 				ampv.show();
+				timeline.show();
 				undoredo.enable();
 				window.getSelection().removeAllRanges();
 				
 				that.removeButtons();
-				//window.setTimeout(function(){
-					that.ui.loadLayout(null, 0);
-				//}, 1);
+				that.ui.loadLayout(null, 0);
 			});
 			
 			this.project.on(MT.DROP, function(e, data){
@@ -320,7 +346,6 @@ MT.extend("core.BasicPlugin")(
 				panel.isCloseable = true;
 			}
 			
-			
 			//
 			panel.fitIn();
 			panel.addClass("borderless");
@@ -380,12 +405,10 @@ MT.extend("core.BasicPlugin")(
 			}, 300);
 			
 			this.updateHints();
-			
 		},
 		
 		addButtons: function(el){
 			this.buttonPanel.show(el.el);
-			
 		},
 		
 		removeButtons: function(){
@@ -560,10 +583,18 @@ MT.extend("core.BasicPlugin")(
 					"Ctrl-S": function(cm) {
 						that.save();
 					},
+					"Cmd-S": function(cm) {
+						that.save();
+					},
 					
 					"Ctrl-/": "toggleComment",
+					"Cmd-/": "toggleComment",
 					
-					"Ctrl-Space": "autocomplete",
+					"Ctrl-Space": function(){
+						that.showHints();
+						
+					},
+					"Cmd-Space": "autocomplete",
 					
 					"Alt-Up": function(ed, e){
 						that.moveLine(ed, -1);
@@ -578,6 +609,15 @@ MT.extend("core.BasicPlugin")(
 						that.copyLine(ed, 1);
 					},
 					"Ctrl-+": function(ed){
+						alert();
+					},
+					"Cmd-Alt-Up": function(ed){
+						that.copyLine(ed, 0);
+					},
+					"Cmd-Alt-Down": function(ed){
+						that.copyLine(ed, 1);
+					},
+					"Cmd-+": function(ed){
 						alert();
 					}
 				},
@@ -621,12 +661,6 @@ MT.extend("core.BasicPlugin")(
 				if(e.altKey && (e.which == MT.keys.UP || e.which == MT.keys.DOWN) ){
 					var line = ed.state.activeLines[0];
 					var c = ed.getCursor();
-					if(e.ctrlKey){
-						
-					}
-					
-					
-					
 					e.preventDefault();
 					return false;
 				}
@@ -638,6 +672,28 @@ MT.extend("core.BasicPlugin")(
 				e.preventDefault();
 				e.stopPropagation();
 			});*/
+		},
+		
+		showHints: function(){
+			
+			var src;
+			
+			try{
+				src = esprima.parse(this.editor.getValue());
+			}
+			catch(e){};
+			console.log(src);
+			
+			this.editor.execCommand("autocomplete");
+			
+			
+			
+			if(src){
+				this.editor.showHints
+			}
+			else{
+				
+			}
 		},
 		
 		updateHints: function(){
@@ -658,20 +714,6 @@ MT.extend("core.BasicPlugin")(
 					},
 					laxcomma: false
 				};
-				
-				
-				
-				/*for(var i in Import){
-					conf.predef[i] = false;
-				}*/
-				
-				/*var globalScope = that.sourceEditor.content.plugins.Map.map;
-				if(globalScope){
-					for(var i in globalScope){
-						conf.predef[i] = false;
-					}
-				}*/
-				
 				JSHINT(that.editor.getValue(), conf);
 				
 				for (var i = 0; i < JSHINT.errors.length; ++i) {
@@ -680,11 +722,6 @@ MT.extend("core.BasicPlugin")(
 					
 					var msg = document.createElement("a");
 					msg.errorTxt = err.reason;
-					
-					/*msg.addEventListener("click",function(){
-						copyToClipboard(this.errorTxt);
-					});*/
-					
 					var icon = msg.appendChild(document.createElement("span"));
 					
 					icon.innerHTML = "!";
@@ -716,8 +753,6 @@ MT.extend("core.BasicPlugin")(
 			else{
 				this.activePanel.mainTab.title.innerHTML = data.data.name;
 			}
-			
-			
 		},
 		
 		
@@ -788,8 +823,6 @@ MT.extend("core.BasicPlugin")(
 						MT.requireFile("js/cm/mode/" + mode.name + "/" + mode.name + ".js", cb);
 					}
 				};
-				
-				
 				if(mode.hint){
 					MT.requireFile("js/cm/addon/hint/" + mode.hint + "-hint.js", loadMode);
 				}

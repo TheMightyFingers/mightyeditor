@@ -742,19 +742,20 @@
 				return;
 			}
 
-			var start, stop, tween;
+			var start, stop, tween, easings;
+			
 			for(var i=0; i<movie.frames.length-1; i++){
 				start = movie.frames[i];
 				stop = movie.frames[i+1];
-				tween = this._addTween(pack.self, start, stop, tween);
+				easings = stop.easings;
+				tween = this._addTween(pack.self, start, stop, easings, tween);
 			}
 			
 			if(isMain){
 				tween._lastChild.onComplete.add(this._complete, this);
-			}
-			
-			if(movie.subdata && movie.subdata.length > 0){
-				this._buildSubTweens(movie.subdata);
+				if(movie.subdata && movie.subdata.length > 0){
+					this._buildSubTweens(movie.subdata);
+				}
 			}
 		},
 		_buildChildTweens: function(children){
@@ -779,17 +780,22 @@
 					continue;
 				}
 				
-				st = new TweenCollection(sub[i].name, this._pack);
-				
-				for(var j=0; j<innerData.frames.length; j++){
-					start = innerData.frames[j];
-					tween = this._addSubTween(st, start, tween);
+				for(var c in this._pack.children){
+					st = new TweenCollection(sub[i].name, this._pack.children[c]);
+					for(var j=0; j<innerData.frames.length; j++){
+						start = innerData.frames[j];
+						tween = this._addSubTween(st, start, tween);
+					}
 				}
 			}
 			
 		},
  
-		_addTween: function(obj, start, stop, nextTween){
+ 
+		/*
+		 * TODO: make easings work
+		 */
+		_addTween: function(obj, start, stop, easings, nextTween){
 			var tween;
 			var ss = mt._mkDiff(start, stop);
 			var st = start.keyframe * 1000/60;
@@ -803,7 +809,6 @@
 			else{
 				tween = nextTween;
 			}
-			
 			return tween.to(ss, et);
 		},
  

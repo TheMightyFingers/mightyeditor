@@ -332,8 +332,6 @@ MT.extend("core.Emitter")(
 						}
 					}
 					
-					
-					
 					if(item.options.lock){
 						if(!data.isLocked){
 							item.options.lock.addClass("locked");
@@ -355,6 +353,8 @@ MT.extend("core.Emitter")(
 						this.removeImage(item);
 						
 					}
+					
+					item.head.label.el.innerHTML = data.name;
 					
 					return item;
 				}

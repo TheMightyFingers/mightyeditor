@@ -29,6 +29,7 @@
   }
 
   function scriptHint(editor, keywords, getToken, options) {
+	  
     // Find the token at the cursor
     var cur = editor.getCursor(), token = getToken(editor, cur), tprop = token;
     if (/\b(?:string|comment)\b/.test(token.type)) return;
@@ -47,7 +48,7 @@
       if (!context) var context = [];
       context.push(tprop);
     }
-    return {list: getCompletions(token, context, keywords, options),
+    return {list: getCompletions(token, context, keywords, options, editor),
             from: Pos(cur.line, token.start),
             to: Pos(cur.line, token.end)};
   }
@@ -87,14 +88,14 @@
   var arrayProps = ("length concat join splice push pop shift unshift slice reverse sort indexOf " +
                     "lastIndexOf every some filter forEach map reduce reduceRight ").split(" ");
   var funcProps = "prototype apply call bind".split(" ");
-  var javascriptKeywords = ("break case catch continue debugger default delete do else false finally for function " +
+  var javascriptKeywords = ("this break case catch continue debugger default delete do else false finally for function " +
                   "if in instanceof new null return switch throw true try typeof var void while with").split(" ");
   var coffeescriptKeywords = ("and break catch class continue delete do else extends false finally for " +
                   "if in instanceof isnt new no not null of off on or return switch then throw true try typeof until void while with yes").split(" ");
 
-  function getCompletions(token, context, keywords, options) {
+  function getCompletions(token, context, keywords, options, editor) {
     var found = [], start = token.string;
-    function maybeAdd(str) {
+	function maybeAdd(str) {
       if (str.lastIndexOf(start, 0) == 0 && !arrayContains(found, str)) found.push(str);
     }
     function gatherCompletions(obj) {
@@ -103,7 +104,7 @@
       else if (obj instanceof Function) forEach(funcProps, maybeAdd);
       for (var name in obj) maybeAdd(name);
     }
-
+	
     if (context && context.length) {
       // If this is a property, see if it belongs to some object we can
       // find in the current environment.
@@ -136,6 +137,10 @@
         gatherCompletions(window);
       forEach(keywords, maybeAdd);
     }
+    
+    
+    
+    
     return found;
   }
 });
