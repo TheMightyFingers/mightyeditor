@@ -702,10 +702,11 @@
 		};
 		this._startPos = [];
 		
-		this._buildTweens(this._pack, true);
+		var tween = this._buildTweens(this._pack, true);
 		
+		var main = !tween;
 		if(movieName != mt.mainMovie){
-			this._buildChildTweens(this._pack.children);
+			this._buildChildTweens(this._pack.children, main);
 		}
 		
 	};
@@ -715,11 +716,11 @@
 		_buildTweens: function(pack, isMain){
 			var movie = pack.data.movies[this.name];
 			if(!movie){
-				return;
+				return null;
 			}
 			
 			if(movie.frames.length === 0){
-				return;
+				return null;
 			}
 
 			var start, stop, tween, easings;
@@ -730,23 +731,24 @@
 				easings = stop.easings;
 				tween = this._addTween(pack.self, start, stop, easings, tween);
 			}
-			
 			if(isMain){
 				tween._lastChild.onComplete.add(this._complete, this);
 				if(movie.subdata && movie.subdata.length > 0){
 					this._buildSubTweens(movie.subdata);
 				}
 			}
+			return tween;
 		},
-		_buildChildTweens: function(children){
+		_buildChildTweens: function(children, main){
 			var child;
 			for(var key in children){
 				child = children[key];
-				if(!child.data.movies || !child.data.movies[this.name]){
+				if(!child.mt || !child.mt.data.movies || !child.mt.data.movies[this.name]){
 					continue;
 				}
-				this._buildTweens(child);
-				this._buildChildTweens(child.children);
+				this._buildTweens(child.mt, main);
+				main = false;
+				this._buildChildTweens(child.mt.children);
 			}
 			
 		},
@@ -789,7 +791,8 @@
 			else{
 				tween = nextTween;
 			}
-			return tween.to(ss, et);
+			tween.to(ss, et);
+			return tween;
 		},
  
 		_addSubTween: function(tween, start, nextTween){
@@ -842,7 +845,7 @@
 				this._timers.stop[i].callback();
 				mt.game.time.events.remove(this._timers.stop[i]);
 			}
-			this.onComplete.remove(this.start);
+			//this.onComplete.remove(this.start);
 			this.isLooping = false;
 			return this;
 		},

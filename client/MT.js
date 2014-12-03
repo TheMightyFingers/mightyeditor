@@ -15594,7 +15594,6 @@ MT.extend("core.Emitter")(
 			});
 			
 			this.ui.on(ev.RESIZE,function(){
-				console.log("resize");
 				that.redrawAll();
 			});
 			
@@ -15604,7 +15603,6 @@ MT.extend("core.Emitter")(
 			/*if(data.unselectable){
 				return;
 			}*/
-			console.log(data);
 			if(data.objectId){
 				this.selectObject(data);
 				this.ignoreSelect = true;
@@ -16377,7 +16375,6 @@ MT.extend("core.Emitter")(
 		},
 		
 		collectMovies: function(data, contents, id){
-			console.log("COLLECT",data);
 			var movies, currMovie, tmp, movieContents, frames;
 			
 			var mainName = this.mainName;
