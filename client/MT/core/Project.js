@@ -237,7 +237,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var tmp = null;
 			for(var i=0; i<localStorage.length; i++){
 				key = localStorage.key(i);
-				if(key.substring(0, 2) !== "ui" && key != "UndoRedo"){
+				if(key.substring(0, this.ui.keyPrefix.length) !== this.ui.keyPrefix && key != "UndoRedo"){
 					tmp = JSON.parse(localStorage.getItem(key));
 					if(tmp.id){
 						items.push(tmp);

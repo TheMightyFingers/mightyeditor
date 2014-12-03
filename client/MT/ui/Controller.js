@@ -64,6 +64,12 @@ MT.extend("core.Emitter")(
 		this.events = new MT.ui.Events();
 		this.panels = [];
 		
+		
+		this.oldPrefix = "ui-";
+		this.keyPrefix = "uin-";
+		
+		this.resetOldLayout();
+		
 		this._centerPanels = [];
 		
 		
@@ -266,6 +272,15 @@ MT.extend("core.Emitter")(
 		this.colorPicker.hide();
 	},
 	{
+		resetOldLayout: function(){
+			var key;
+			for(var i=0; i<localStorage.length; i++){
+				key = localStorage.key(i);
+				if(key.substring(0, this.oldPrefix.length) == this.oldPrefix){
+					localStorage.removeItem(key);
+				}
+			}
+		},
 		saveSlot: 0,
 		toResize: {
 			TOP: false,
@@ -1345,7 +1360,7 @@ MT.extend("core.Emitter")(
 			var def = this.resetLayout(this.saveSlot, true);
 			this._loadLayout(def, true);
 			
-			layout = layout || JSON.parse(localStorage.getItem("ui-"+this.saveSlot));
+			layout = layout || JSON.parse(localStorage.getItem(this.keyPrefix+this.saveSlot));
 			if(!layout){
 				this.resetLayout(this.saveSlot);
 				return;
@@ -1479,13 +1494,13 @@ MT.extend("core.Emitter")(
 			
 			var str = JSON.stringify(toLoad);
 			if(slot != void(0)){
-				localStorage.setItem("ui-"+slot, str);
+				localStorage.setItem(this.keyPrefix+slot, str);
 			}
 			else{
 				var key;
 				for(var i=0; i<localStorage.length; i++){
 					key = localStorage.key(i);
-					if(key.substring(0, 3) == "ui-"){
+					if(key.substring(0, this.keyPrefix.length) == this.keyPrefix){
 						localStorage.setItem(key, str);
 					}
 				}
@@ -1539,11 +1554,11 @@ MT.extend("core.Emitter")(
 			}
 			
 			var str = JSON.stringify(toSave);
-			localStorage.setItem("ui-"+this.saveSlot, str);
+			localStorage.setItem(this.keyPrefix+this.saveSlot, str);
 		},
 		
 		getSavedLayout: function(){
-			console.log("toLoad = ", localStorage.getItem("ui-"+this.saveSlot) );
+			console.log("toLoad = ", localStorage.getItem(this.keyPrefix+this.saveSlot) );
 		},
 		
 		oldScreenSize: {

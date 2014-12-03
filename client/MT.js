@@ -20811,12 +20811,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		if(window.location.host == hostInInterest){
 			if(window.location.hash == "" || window.location.hash.substring(1, 2) == "u"){
 				var cb =  function(obj, req){
-					if(req.status != 202){
+					if(req.status != 202 && req.status != 200){
 						load();
 						return;
 					}
 					var parsed = JSON.parse(obj);
-					if(parsed.continent_code == "NA" || parsed.ip == "212.93.114.227"){
+					if(parsed.continent_code == "NA"){
 						window.location.host = "us."+window.location.host;
 					}
 					else{

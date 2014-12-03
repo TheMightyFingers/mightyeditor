@@ -720,6 +720,9 @@ MT.extend("core.Emitter")(
 		},
 		
 		hasMovies: function(){
+			if(!this.data){
+				return false;
+			}
 			var total = Object.keys(this.data.movies).length;
 			return !( (total == 0 && this.state != 1) || (total == 1 && this.data.movies[this.mainName] != void(0) && this.keyframes != this.keyframesMain) );
 		},
