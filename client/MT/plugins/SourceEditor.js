@@ -50,7 +50,7 @@
 		MT.requireFile(cmPath+"/selection/active-line.js");
 		
 		MT.requireFile("js/jshint.js");
-		MT.requireFile("js/esprima.js");
+		//MT.requireFile("js/esprima.js");
 		
 		addCss("css/codemirror.css");
 		addCss(cmPath+"/hint/show-hint.css");
@@ -675,25 +675,7 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		showHints: function(){
-			
-			var src;
-			
-			try{
-				src = esprima.parse(this.editor.getValue());
-			}
-			catch(e){};
-			console.log(src);
-			
 			this.editor.execCommand("autocomplete");
-			
-			
-			
-			if(src){
-				this.editor.showHints
-			}
-			else{
-				
-			}
 		},
 		
 		updateHints: function(){
