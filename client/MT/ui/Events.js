@@ -1,5 +1,8 @@
 "use strict";
 (function(){
+	if(typeof Event === "undefined"){
+		return;
+	}
 	var overriddenStop =  Event.prototype.stopPropagation;
 	Event.prototype.stopPropagation = function(){
 		this.isPropagationStopped = true;

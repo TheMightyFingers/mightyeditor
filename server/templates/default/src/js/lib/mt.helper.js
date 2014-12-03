@@ -495,7 +495,8 @@
 				}
 				else{
 					createdObject = this._addObject(data, parent);
-					this.addPhysics(data, createdObject, parent.mt.data);
+					
+					this.addPhysics(data, createdObject, (parent.mt ? parent.mt.data : null));
 				}
 				
 				this._updateCommonProperties(data, createdObject, keepVisibility);
