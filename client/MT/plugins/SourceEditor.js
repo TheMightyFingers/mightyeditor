@@ -723,11 +723,21 @@ MT.extend("core.BasicPlugin")(
 			});
 		},
 		
+		
+		delay: 0,
 		checkChanges: function(){
 			if(!this.activePanel){
 				return;
 			}
-			this.updateHints();
+			if(!this.delay){
+				var that = this;
+				this.delay = window.setTimeout(function(){
+					that.updateHints();
+					that.delay = 0;
+				}, 5000);
+			}
+			
+			
 			var data = this.activePanel.data;
 			if(data.src != data.doc.getValue()){
 				this.activePanel.mainTab.title.innerHTML = data.data.name + "*";

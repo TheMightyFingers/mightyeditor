@@ -152,7 +152,12 @@
 					continue;
 				}
 				if(o1[i] != o2[i]){
-					out[i] = o2[i];
+					if(i == "angle"){
+						out[i] = o2[i] - o1[i] + "";
+					}
+					else{
+						out[i] = o2[i];
+					}
 				}
 			}
 			for(var i in o2){
@@ -166,7 +171,12 @@
 					continue;
 				}
 				if(o1[i] != o2[i]){
-					out[i] = o2[i];
+					if(i == "angle"){
+						out[i] = o2[i] - o1[i] + "";
+					}
+					else{
+						out[i] = o2[i];
+					}
 				}
 			}
 			return out;
@@ -272,7 +282,7 @@
 		isKnownFontFamily: function(font){
 			for(var i=0; i<this.knownFonts.length; i++){
 				if(this.knownFonts[i] == font){
-					return true
+					return true;
 				}
 			}
 			return false;
@@ -535,7 +545,7 @@
 				
 				sprite.body.immovable = p.immovable;
 				
-				sprite.body.bounce = p.bounce
+				sprite.body.bounce = p.bounce;
 				
 				sprite.body.maxAngular = p.rotation.maxAngular;
 				sprite.body.allowRotation = p.rotation.allowRotation;
@@ -735,6 +745,7 @@
 				if(tween){
 					tween._lastChild.onComplete.add(this._complete, this);
 				}
+				
 				if(movie.subdata && movie.subdata.length > 0){
 					this._buildSubTweens(movie.subdata);
 				}
