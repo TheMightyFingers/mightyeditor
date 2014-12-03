@@ -79,7 +79,8 @@
 		
 		// create full map
 		createAll: function(){
-			var all = this._loadObjects(this.data.objects.contents, this.objects, "", null, true);
+			var all = {};
+			this._loadObjects(this.data.objects.contents, this.game.world, "", all, true);
 			
 			for(var i in all){
 				this.buildTweens(all[i], this.mainMovie);
@@ -88,8 +89,9 @@
 			return all;
 		},
 		
-		buildTweens: function(obj, name){
+		buildTweens: function(phaserObject, name){
 			var movie, movies, mdata;
+			var obj = phaserObject.mt;
 			obj.movies = {};
 			movies = obj.movies;
 			mdata = obj.data.movies;
@@ -106,32 +108,15 @@
 		// create seperate group
 		create: function(name, parent){
 			parent = parent || this.game.world;
-			var group = this.getObjectGroupByName(name);
-			if(!group){
-				console.error("failed to find the group: ", name);
+			var data = this.getObjectGroupByName(name);
+			if(!data){
+				console.error("failed to find the object: ", name);
 				return;
 			}
 			
-			var objects = {};
-			
-			this._add(group, objects, "", parent);
-			
-			return objects;
+			return this._add(data, parent, "");
 		},
 		
-		createPack: function(name, pack, parent){
-			pack = pack || {};
-			parent = parent || this.game.world;
-			
-			var group = this.getObjectGroupByName(name);
-			if(!group){
-				console.error("failed to find the group: ", name);
-				return;
-			}
-			this._add(group, pack, "", parent);
-			pack.movies = this.createMovies(pack);
-			return pack;
-		},
 		createGroup: function(name, parent){
 			console.warn('mt.createGroup is deprecated. Use mt.create("'+name+'") instead');
 			return mt.create(name, parent);
@@ -443,6 +428,7 @@
 			if(!asset.key){
 				return;
 			}
+			
 			// is already loaded ?
 			if(container[asset.name]){
 				return;
@@ -468,74 +454,71 @@
 			
 		},
 		
-		_loadObjects: function(data, container, path, group, keepVisibility){
-			group = group || this.game.world;
+		_loadObjects: function(children, parent, path, ref, keepVisibility){
+			parent = parent || this.game.world;
 			path = path !== "" ? "." + path : path;
 			
-			
-			
-			for(var i = data.length - 1; i > -1; i--){
-				container[data[i].name] = {};
-				this._add(data[i], container[data[i].name], path, group, data, keepVisibility);
+			for(var i = children.length - 1; i > -1; i--){
+				ref[children[i].name] = this._add(children[i], parent, path, keepVisibility);
 			}
-			return container;
 		},
 		
-		_add: function(object, container, path, group, parent, keepVisibility){
+		_add: function(data, parent, path, keepVisibility){
 			var createdObject = null;
 			
-			if(object.type == this.GROUP){
-				createdObject = this._addGroup(object, container);
+			if(data.type == this.GROUP){
+				createdObject = this._addGroup(data);
 				
-				if(object.physics && object.physics.enable){
+				if(data.physics && data.physics.enable){
 					createdObject.enableBody = true;
 				}
-				group.add(createdObject);
+				parent.add(createdObject);
 				
+				createdObject.mt = {
+					self: createdObject,
+					data: data,
+					children: {}
+				};
 				
-				container.self = createdObject;
-				container.children = {};
-				
-				
-				this._updateCommonProperties(object, createdObject, keepVisibility);
-				this._loadObjects(object.contents, container.children, path + object.name, createdObject);
-				
+				this._updateCommonProperties(data, createdObject, keepVisibility);
+				this._loadObjects(data.contents, createdObject, path + data.name, createdObject.mt.children, keepVisibility);
 			}
 			else{
-				
-				if(object.type == this.TEXT){
-					createdObject = this._addText(object, container, group);
+				if(data.type == this.TEXT){
+					createdObject = this._addText(data, parent);
 				}
-				else if(object.type == this.TILE_LAYER){
-					createdObject = this._addTileLayer(object, container, group);
-					if(object.physics && object.physics.enable){
+				else if(data.type == this.TILE_LAYER){
+					createdObject = this._addTileLayer(data, parent);
+					if(data.physics && data.physics.enable){
 						createdObject.map.setCollisionByExclusion([-1]);
 					}
 				}
 				else{
-					createdObject = this._addObject(object, container, group);
-					this.addPhysics(object, createdObject, container.data);
+					createdObject = this._addObject(data, parent);
+					this.addPhysics(data, createdObject, parent.mt.data);
 				}
 				
-				this._updateCommonProperties(object, createdObject, keepVisibility);
+				this._updateCommonProperties(data, createdObject, keepVisibility);
 				
-				if(object.contents){
-					container.self = createdObject;
-					container.children = {};
-					this._loadObjects(object.contents, container.children, path + object.name, createdObject);
+				createdObject.mt = {
+					self: createdObject,
+					data: data,
+					children: {}
+				};
+				
+				if(data.contents){
+					this._loadObjects(data.contents, createdObject, path + data.name, createdObject.mt.children, keepVisibility);
 				}
 			}
 			
-			if(!container.hasOwnProperty("data")){
-				container.data = object;
-			}
-			
-			container.self = createdObject;
+			createdObject.self = createdObject;
+			createdObject.getData = function(){
+				return this.mt.data;
+			};
+			return createdObject;
 		},
 		
 		addPhysics: function(tpl, sprite, parent){
-			
-			
 			var p = tpl.physics;
 			if(!p || !p.enable){
 				if(parent && parent.physics && parent.physics.enable){
@@ -561,8 +544,6 @@
 				sprite.body.mass = p.mass;
 				sprite.body.collideWorldBounds = p.collideWorldBounds;
 				
-				
-				
 				var w = sprite.width;
 				var h = sprite.height;
 				if(p.size.width > 0){
@@ -574,8 +555,6 @@
 				
 				sprite.body.setSize(w, h, p.size.offsetX, p.size.offsetY);
 			}
-			
-			
 		},
  
 		_addGroup: function(object){
@@ -593,7 +572,7 @@
 			return group;
 		},
 		
-		_addText: function(object, container, group){
+		_addText: function(object, group){
 			this.getFontFamily(object.style.font);
 			
 			group = group || this.game.world;
@@ -602,7 +581,7 @@
 			return t;
 		},
 		
-		_addTileLayer: function(object, container, group){
+		_addTileLayer: function(object, group){
 			group = group || this.game.world;
 			var map = this.game.add.tilemap(null, object.tileWidth, object.tileHeight, object.widthInTiles, object.heightInTiles);
 			
@@ -634,7 +613,7 @@
 			return tl;
 		},
 		
-		_addObject: function(object, container, group){
+		_addObject: function(object, group){
 			
 			var sp = null;
 			group = group || this.game.world;
@@ -781,7 +760,7 @@
 				}
 				
 				for(var c in this._pack.children){
-					st = new TweenCollection(sub[i].name, this._pack.children[c]);
+					st = new TweenCollection(sub[i].name, this._pack.children[c].mt);
 					for(var j=0; j<innerData.frames.length; j++){
 						start = innerData.frames[j];
 						tween = this._addSubTween(st, start, tween);

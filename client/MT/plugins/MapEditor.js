@@ -53,14 +53,14 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			viewportWidth: 800,
 			viewportHeight: 480,
 			
-			gridX: 64,
-			gridY: 64,
+			gridX: 32,
+			gridY: 32,
 			
 			gridOffsetX: 0,
 			gridOffsetY: 0,
 			
 			showGrid: 1,
-			gridOpacity: 0.5,
+			gridOpacity: 0.3,
 			backgroundColor: "#111111",
 			
 			movieInfo: {
@@ -1656,7 +1656,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			for(var i=this.loadedObjects.length-1; i>-1; i--){
 				obj = this.loadedObjects[i];
-				var ret = this._pick(obj, x, y);
+				var ret = this._pick(obj, x, y, true);
 				if(ret){
 					return ret;
 				}
@@ -1665,7 +1665,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			return null;
 		},
 		
-		_pick: function(obj, x, y){
+		_pick: function(obj, x, y, checkGroup){
 			var bounds;
 			if(!obj.isVisible){
 				return null;;
@@ -1682,8 +1682,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return this.checkBounds(obj, x, y);
 			}
 			
-			if(obj.object.input.checkPointerOver(this.game.input.activePointer)){
-				if(this.ui.events.mouse.lastEvent.ctrlKey){
+			if( obj.object.input.checkPointerOver(this.game.input.activePointer)){
+				if(this.ui.events.mouse.lastEvent.ctrlKey && !this.activeObject && checkGroup){
 					this.activeObject = obj.parent.magic;
 					return this.activeObject
 				}
