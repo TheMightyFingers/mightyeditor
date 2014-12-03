@@ -48,6 +48,10 @@ MT.extend("core.Emitter")(
 			this.panel.options.list.width = 150;
 			this.panel.options.list.style.left = "auto";
 			
+			this.panel.on("show", function(){
+				that.hide();
+				that.setActive(that.data);
+			});
 			
 			this.settings = this.ui.createPanel("Easing");
 			this.settings.setFree();
@@ -329,7 +333,7 @@ MT.extend("core.Emitter")(
 			this.om.emit(MT.OBJECT_SELECTED, obj);
 		},
 		redrawAll: function(){
-			if(Object.keys(this.items).length == 0){
+			if(!this.hasMovies()){
 				return;
 			}
 			

@@ -1342,6 +1342,8 @@ MT.extend("core.Emitter")(
 				this.saveSlot = slot;
 			}
 			console.log("loading from slot", this.saveSlot);
+			var def = this.resetLayout(this.saveSlot, true);
+			this._loadLayout(def, true);
 			
 			layout = layout || JSON.parse(localStorage.getItem("ui-"+this.saveSlot));
 			if(!layout){
@@ -1468,8 +1470,12 @@ MT.extend("core.Emitter")(
 		},
 		
 		
-		resetLayout: function(slot){
+		resetLayout: function(slot, dontSave){
 			var toLoad = {"__box":{"x":40,"y":29,"width":804,"height":382,"name":"__box"},"__oldScreenSize":{"width":1075,"height":674},"SourceEditor":{"x":40,"y":29,"width":764,"height":353,"dockPosition":5,"isVisible":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"isDocked":true},"physics":{"x":804,"y":451.125,"width":271,"height":222.875,"dockPosition":2,"isVisible":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"isDocked":true},"Assets":{"x":804,"y":29,"width":271,"height":186.25,"dockPosition":2,"isVisible":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"isDocked":true,"joints":["Assets"],"top":null,"bottom":"Objects"},"Map editor":{"x":40,"y":29,"width":764,"height":353,"dockPosition":5,"isVisible":true,"savedBox":{"x":0,"y":0,"width":0,"height":0},"isDocked":true,"joints":["Map editor","SourceEditor"],"top":null,"bottom":null},"toolbox":{"x":0,"y":29,"width":40,"height":645,"dockPosition":1,"isVisible":true,"savedBox":{"x":0,"y":0,"width":40,"height":400},"isDocked":true,"joints":["toolbox"],"top":null,"bottom":null},"Project":{"x":0,"y":0,"width":1075,"height":29,"dockPosition":3,"isVisible":true,"savedBox":{"x":0,"y":0,"width":250,"height":29},"isDocked":true,"joints":["Project"],"top":null,"bottom":null},"userData":{"x":804,"y":451.125,"width":271,"height":222.875,"dockPosition":2,"isVisible":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"isDocked":true},"timeline":{"x":40,"y":382,"width":764,"height":266,"dockPosition":4,"isVisible":false,"savedBox":{"x":0,"y":0,"width":250,"height":400},"isDocked":true},"Easing":{"x":804,"y":451.125,"width":271,"height":222.875,"dockPosition":2,"isVisible":false,"savedBox":{"x":0,"y":0,"width":0,"height":0},"isDocked":true},"Map Manager":{"x":40,"y":648,"width":764,"height":26,"dockPosition":4,"isVisible":true,"savedBox":{"x":0,"y":0,"width":250,"height":26},"isDocked":true,"joints":["Map Manager"],"top":null,"bottom":null},"Objects":{"x":804,"y":215.25,"width":271,"height":235.875,"dockPosition":2,"isVisible":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"isDocked":true,"joints":["Objects"],"top":"Assets","bottom":"Settings"},"Settings":{"x":804,"y":451.125,"width":271,"height":222.875,"dockPosition":2,"isVisible":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"isDocked":true,"joints":["Settings","physics","userData","Easing"],"top":"Objects","bottom":null},"assetPreview":{"x":40,"y":382,"width":764,"height":266,"dockPosition":4,"isVisible":true,"savedBox":{"x":0,"y":0,"width":250,"height":400},"isDocked":true,"joints":["assetPreview","timeline"],"top":null,"bottom":null},"color":{"x":656,"y":411,"width":305,"height":200,"dockPosition":0,"isVisible":false,"savedBox":{"x":0,"y":0,"width":305,"height":200},"isDocked":false},"Text":{"x":40,"y":29,"width":764,"height":30,"dockPosition":0,"isVisible":false,"savedBox":{"x":0,"y":0,"width":944,"height":30},"isDocked":false}};
+			
+			if(dontSave == true){
+				return toLoad;
+			}
 			
 			var str = JSON.stringify(toLoad);
 			if(slot != void(0)){
@@ -1486,6 +1492,7 @@ MT.extend("core.Emitter")(
 			}
 			
 			this.loadLayout(toLoad);
+			return toLoad;
 		},
 		
 		saveLayout: function(slot){
