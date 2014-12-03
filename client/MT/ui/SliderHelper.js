@@ -18,6 +18,10 @@ MT(
 				this.value = this.min;
 			}
 		},
+   
+		changeTo: function(val){
+			this.change(val - this._value);
+		},
 		
 		valueOf: function(){
 			return this.value;

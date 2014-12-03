@@ -4,6 +4,10 @@ MT.require("ui.Button");
 MT.require("ui.PanelHead");
 MT.extend("core.Emitter").extend("ui.DomElement")(
 	MT.ui.Panel = function(title, ui){
+		if(title == ""){
+			title = "&nbsp;";
+		}
+		
 		MT.ui.DomElement.call(this);
 		this.setAbsolute();
 		
@@ -57,6 +61,89 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		acceptsPanels: false,
 		isPickable: true,
 		isCloaseable: false,
+		isRenamable: false,
+		
+		startRename: function(){
+			var el = this.mainTab;
+			var that = this;
+			this.emit("renameStart");
+			
+			if(!this.input){
+				this.input = document.createElement("input");
+				this.input.className = "ui-input ui-panel-rename";
+			}
+			
+			this.input.style.left = (el.calcOffsetX(document.body))+"px";
+			this.input.style.top = (el.calcOffsetY(document.body) - 2) + "px"; // check padding here instead of 2 :)
+			this.input.style.width = el.width - 10;
+
+
+			this.input.value = this.title;
+			var lastValue = this.title;
+			
+			this.input.type = "text";
+			
+			el.title.style.visibility = "hidden";
+			
+			document.body.appendChild(this.input);
+			
+			var needSave = true;
+			this.input.onblur = function(){
+				try{
+					if(this.parentNode){
+						this.parentNode.removeChild(this);
+					}
+				}
+				catch(e){}
+				
+				var o = lastValue;
+				var n = this.value;
+				if(needSave && this.value != ""){
+					if(o !== n){
+						el.title.innerHTML = n;
+						that.title = n;
+						that.emit("rename", n, o);
+					}
+				}
+				el.title.style.visibility = "visible";
+			};
+			
+			this.input.addEventListener("keydown",function(e){
+				e.stopPropagation();
+			});
+			
+			this.input.onkeyup = function(e){
+				e.stopPropagation();
+				if(e.which == MT.keys.ESC){
+					needSave = false;
+					this.blur();
+				}
+				if(e.which == MT.keys.ENTER){
+					this.blur();
+				}
+			};
+			
+			
+			
+			
+			this.input.focus();
+			
+			var tmp = this.title.split(".");
+			var len = 0;
+			if(tmp.length == 1){
+				len = tmp[0].length;
+			}
+			else{
+				len = -1;
+			}
+			for(var i=0; i<tmp.length-1; i++){
+				len += tmp[i].length+1;
+			}
+			
+			this.input.setSelectionRange(0, len);
+			
+			this.inputEnabled = true;
+		},
 		
 		setFree: function(){
 			this.isMovable = true;
@@ -107,7 +194,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		removeBorder: function(){
 			this.addClass("borderless");
 		},
-		
+		showBorder: function(){
+			this.removeClass("borderless");
+		},
 		activate: function(){
 			this.show();
 		},

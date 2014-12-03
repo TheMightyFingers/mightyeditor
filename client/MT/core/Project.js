@@ -12,7 +12,7 @@ MT.require("plugins.Physics");
 MT.require("plugins.UserData");
 MT.require("plugins.TooltipManager");
 MT.require("plugins.Notification");
-//MT.require("plugins.MovieMaker");
+MT.require("plugins.MovieMaker");
 
 MT.DROP = "drop";
 
@@ -51,8 +51,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"Physics",
 			"UserData",
 			"TooltipManager",
-			"Notification"
-			//"MovieMaker"
+			"Notification",
+			"MovieMaker"
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
@@ -190,6 +190,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		// user get here without hash
 		newProject: function(){
+			
+			// enable Analytics
+			this.plugins.analytics.installUI(this.ui);
+			
+			
+			
 			var that = this;
 			var pop = new MT.ui.Popup("Welcome to MightyEditor", "");
 			pop.y = (window.innerHeight - 510)*0.45;

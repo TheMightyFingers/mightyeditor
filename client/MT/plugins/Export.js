@@ -43,7 +43,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			});
 			
 			this.openGame = this.project.panel.addButton("Open Game", null, function(e){
-				that.openLink();
+				that.openLink("_open_game");
 			});
 			
 			//this.list.removeHeader();
@@ -80,14 +80,16 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			window.open(this.project.path + "/" + data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
 		},
 		
-		openLink: function(){
-			var w = window.open("about:blank",Date.now());
-			w.opener = null;
+		openLink: function(name){
+			var w = window.open("about::blank",name || Date.now());
+			w.focus();
+			//w.opener = null;
 			
 			var path = this.project.path;
 			this.export("phaser", function(data){
 				if(w.location){
 					w.location.href = path + "/phaser/index.html";
+					w.focus();
 				}
 			});
 			

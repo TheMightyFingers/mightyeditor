@@ -3,10 +3,10 @@ window["%namespace%"].state.load = {
 	preload: function(){
 		// we have preloaded assets required for Loading group objects in the Boot state
 		var loading = mt.create("Loading");
-		var loadingGroup = window.loading = loading.self;
+		var loadingGroup = loading;
 		
 		// get preload sprite
-		var preload = loading.preload;
+		var preload = loading.mt.children.preload;
 		
 		// check if we have preload object at all
 		if(preload){
@@ -24,13 +24,12 @@ window["%namespace%"].state.load = {
 			loadingGroup.y = this.game.camera.screenView.centerY - (bounds.height) - bounds.y;
 		}
 		
-		
 		// load all assets
 		mt.preload();
 	},
 	
 	create: function(){
-		// loading has finished - proceed to menu state (screen)
-		this.game.state.start("menu");
+		// loading has finished - proceed to demo state
+		this.game.state.start("demo");
 	}
 };

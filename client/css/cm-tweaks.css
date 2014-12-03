@@ -22,11 +22,10 @@ div.CodeMirror span.CodeMirror-matchingbracket {
 	height: auto;
 }
 .CodeMirror-scroll {
-	margin-right: 0;
-	margin-bottom: 0;
-	padding-bottom: 0;
-	background: inherit;
-	overflow: hidden;
+margin-right: 0px;
+margin-bottom: 0;
+padding-bottom: 0;
+background: inherit;
 }
 .CodeMirror-sizer {
 	border-right: 0;

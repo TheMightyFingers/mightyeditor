@@ -11,42 +11,46 @@ MT.extend("core.BasicPlugin")(
 			})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 			
 			ga('create', 'UA-23132569-11');
-			document.title += " - " + this.project.id;
+			if(this.project.id){
+				document.title += " - " + this.project.id;
+			}
+			
 			ga('send', 'pageview');
 			
-			var lastUpdate = Date.now();
+			this.lastUpdate = Date.now();
+			
+			
 			var that = this;
-			this.project.plugins.tools.on("select", function(tool){
-				lastUpdate = Date.now();
-				ga('send', 'event', 'tool-selected', tool);
+			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(tool){
+				that.send('tool-selected', tool);
 			});
 			
-			this.project.plugins.assetmanager.on("added", function(image){
-				lastUpdate = Date.now();
-				ga('send', 'event', 'image-added', image);
+			this.project.plugins.assetmanager.on(MT.ASSET_ADDED, function(image){
+				that.send('image-added', image);
 			});
 			
-			this.project.plugins.objectmanager.on("added", function(obj){
-				lastUpdate = Date.now();
-				ga('send', 'event', 'object-added', obj);
+			this.project.plugins.objectmanager.on(MT.OBJECT_ADDED, function(obj){
+				that.send('object-added', obj);
 			});
 			
-			this.project.plugins.objectmanager.on("changed", function(obj){
+			this.project.plugins.objectmanager.on(MT.OBJECTS_SYNC, function(){
 				lastUpdate = Date.now();
-				ga('send', 'event', 'object-changed', obj);
+				that.send('working-with-map', "sync");
 			});
 			
-			this.project.plugins.objectmanager.on("beforeSync", function(){
-				lastUpdate = Date.now();
-				ga('send', 'event', 'working-with-map', "sync");
-			});
-			
-			var minute = 1000*60;
+			this.minute = 1000*60;
 			window.setInterval(function(){
-				if(lastUpdate < Date.now() - minute){
-					ga('send', 'event', 'idle', that.project.id);
-				}
-			}, minute);
+				that.send('idle', that.project.id);
+			}, this.minute);
+		},
+		
+		send: function(name, data){
+			if(this.lastUpdate > Date.now() - this.minute){
+				return;
+			}
+			
+			this.lastUpdate = Date.now();
+			window.ga('send', 'event', name, data);
 		}
 	}
 );

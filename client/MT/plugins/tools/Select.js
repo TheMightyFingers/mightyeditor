@@ -126,9 +126,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				sprite = this.map.getById(data[i].id);
 				sprite.object.updateTransform();
 				
-				bounds = sprite.object.getBounds();
-				data[i].x = bounds.x + cx;
-				data[i].y = bounds.y + cy;
+				//bounds = sprite.object.getBounds();
+				////data[i].x = bounds.x + cx;
+				//data[i].y = bounds.y + cy;
 				
 				sel.add(sprite);
 			}

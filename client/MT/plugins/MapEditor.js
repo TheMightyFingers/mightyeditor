@@ -53,14 +53,20 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			viewportWidth: 800,
 			viewportHeight: 480,
 			
-			gridX: 64,
-			gridY: 64,
+			gridX: 32,
+			gridY: 32,
 			
 			gridOffsetX: 0,
 			gridOffsetY: 0,
 			
 			showGrid: 1,
-			backgroundColor: "#111111"
+			gridOpacity: 0.3,
+			backgroundColor: "#111111",
+			
+			movieInfo: {
+				fps: 60,
+				lastFrame: 60
+			}
 		};
 		
 		
@@ -468,7 +474,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		/* drawing fns */
 		drawGrid: function(ctx){
-			if(!this.settings.showGrid){
+			if(!this.settings.showGrid || this.settings.gridOpacity == 0){
 				return;
 			}
 			
@@ -477,6 +483,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var g = 0;
 			var game = this.game;
 			
+			
+			ctx.globalAlpha = this.settings.gridOpacity;
 			
 			ctx.save();
 			
@@ -511,7 +519,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			g = this.settings.gridX;
 			
 			ctx.lineWidth = 0.2;
-			ctx.globalAlpha = 1;
 			
 			ctx.shadowColor = '#000';
 			ctx.shadowBlur = 0;
@@ -544,11 +551,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			ctx.stroke();
 			
 			ctx.lineWidth = 0.5;
-			ctx.globalAlpha = 1;
-			
-			
-			// highlight x = 0; y = 0;
-			
 			ctx.beginPath();
 			
 			ctx.moveTo(0, -game.camera.y/this.scale.y);
@@ -559,12 +561,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			ctx.stroke();
-			
-			
-			
+			ctx.restore();
 			
 			ctx.globalAlpha = alpha;
-			ctx.restore();
 		},
 		
 		highlightObject: function(ctx, obj){
@@ -595,7 +594,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var bounds = obj.getBounds();
 			var group = null;
 			
-			if(obj.data.contents){
+			if(obj.type == MT.objectTypes.GROUP){
 				group = obj;
 			}
 			else{
@@ -868,7 +867,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!obj.isVisible){
 				return;
 			}
-			if(obj.data.contents){
+			if(obj.type == MT.objectTypes.GROUP){
 				return;
 			}
 			
@@ -950,7 +949,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			ctx.fillStyle = "rgba(150, 70, 20, 0.3)";
 			for(var j=0; j<this.loadedObjects.length; j++){
 				o1 = this.loadedObjects[j];
-				if(!o1.isVisible || o1.data.contents){
+				if(!o1.isVisible || o1.type == MT.objectTypes.GROUP){
 					continue;
 				}
 				for(var i=j; i<this.loadedObjects.length; i++){
@@ -959,8 +958,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						continue;
 					}
 					if(o1.x == o2.x && o1.y == o2.y && o1.assetId == o2.assetId && o1.width == o2.width && o1.data.type == o2.data.type){
-						bounds = o1.object.getBounds();
-						ctx.fillRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
+						if(o1.parent == o2.parent){
+							bounds = o1.object.getBounds();
+							ctx.fillRect(bounds.x | 0, bounds.y | 0, bounds.width | 0, bounds.height | 0);
+						}
 					}
 				}
 			}
@@ -1272,8 +1273,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		_addObjects: function(objs, group){
 			
-			var tmp;
-			var k = 0;
+			var tmp, k=0;
 			for(var i=objs.length-1; i>-1; i--){
 				tmp = this.getById(objs[i].id);
 				
@@ -1281,24 +1281,35 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					tmp = new MT.core.MagicObject(objs[i], group, this);
 					this.loadedObjects.push(tmp);
 				}
-				tmp.bringToTop();
 				tmp.isRemoved = false;
 				tmp.update(objs[i], group);
+				tmp.object.z = 0;
 				
-				// handle group
+				// handle group and parents
 				if(objs[i].contents){
 					this._addObjects(objs[i].contents, tmp.object);
 					continue;
 				}
+				
+			}
+			
+			
+			for(var i=objs.length-1; i>-1; i--){
+				tmp = this.getById(objs[i].id);
+				tmp.bringToTop();
+			}
+			if(this.tools.tmpObject){
+				this.tools.tmpObject.bringToTop();
 			}
 		},
 		
 		resort: function(){
 			var tmp;
-			for(var i=0; i<this.loadedObjects.length; i++){
+			/*for(var i=0; i<this.loadedObjects.length; i++){
 				tmp = this.loadedObjects[i];
 				tmp.bringToTop();
-			}
+			}*/
+			
 			if(this.tools.tmpObject){
 				this.tools.tmpObject.bringToTop();
 			}
@@ -1507,8 +1518,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		_objectMove: function(e, mo){
 			
-			
-			//console.log("move");
 			if(!mo){
 				var that = this;
 				this.selector.forEach(function(obj){
@@ -1617,6 +1626,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			}
 			this.received = true;
 			this.updateSettings(obj);
+			this.emit("update");
 		},
 		
 		createActiveObject: function(obj){
@@ -1632,7 +1642,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			// chek if we are picking already selected object
 			if(this.activeObject){
 				
-				if(this.activeObject.data.contents){
+				if(this.activeObject.type == MT.objectTypes.GROUP){
 					return this.checkBounds(this.activeObject, x, y);
 				}
 				
@@ -1650,7 +1660,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			for(var i=this.loadedObjects.length-1; i>-1; i--){
 				obj = this.loadedObjects[i];
-				var ret = this._pick(obj, x, y);
+				var ret = this._pick(obj, x, y, true);
 				if(ret){
 					return ret;
 				}
@@ -1659,12 +1669,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			return null;
 		},
 		
-		_pick: function(obj, x, y){
+		_pick: function(obj, x, y, checkGroup){
 			var bounds;
 			if(!obj.isVisible){
 				return null;;
 			}
-			if(obj.data.contents){
+			if(obj.type == MT.objectTypes.GROUP){
 				return null;;
 			}
 			if(obj.isLocked){
@@ -1676,7 +1686,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return this.checkBounds(obj, x, y);
 			}
 			
-			if(obj.object.input.checkPointerOver(this.game.input.activePointer)){
+			if( obj.object.input.checkPointerOver(this.game.input.activePointer)){
+				if(this.ui.events.mouse.lastEvent.ctrlKey && !this.activeObject && checkGroup){
+					this.activeObject = obj.parent.magic;
+					return this.activeObject
+				}
+				
 				this.activeObject = obj;
 				return obj;
 			}
@@ -1713,15 +1728,17 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				var sprite = obj.object;
 				
+				if(obj.type == MT.objectTypes.GROUP){
+					continue;
+				}
+				
 				if(!obj.isVisible){
 					continue;
 				}
 				if(obj.isLocked){
 					continue;
 				}
-				if(obj.data.contents){
-					continue;
-				}
+				
 				
 				box = sprite.getBounds();
 				if(box.intersects(rect)){
@@ -1765,86 +1782,20 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			sp = group.create(obj.x, obj.y, obj.assetId);
-			
-			this.inheritSprite(sp, obj);
-			
-			
-			var frameData = game.cache.getFrameData(obj.assetId);
-			
-			if(frameData){
-				//sp.animations.add("default");
-			}
-			
 			return sp;
 		},
-		
-		inheritSprite: function(sp, obj){
-			console.log("removed");
-			return;
-			sp.xxx = obj;
-			
-			sp.anchor.x = obj.anchorX;
-			sp.anchor.y = obj.anchorY;
-			
-			sp.x = obj.x;
-			sp.y = obj.y;
-			
-			sp.angle = obj.angle;
-			if(obj.alpha == void(0)){
-				sp.alpha = 1;
-			}
-			
-			obj._framesCount = 0;
-			
-			
-			if(obj.frame){
-				sp.frame = obj.frame;
-			}
-			
-			/*if(obj.width && obj.height && sp.scale.x == obj.scaleX && sp.scale.y == obj.scaleY){
-				if(obj.width != sp.width || obj.height != sp.height){
-					sp.width = obj.width;
-					sp.height = obj.height;
-					
-					obj.scaleX = sp.scale.x;
-					obj.scaleY = sp.scale.y;
-				}
-			}*/
-			
-			if(obj.scaleX != void(0)){
-				if(sp.scale.x != obj.scaleX || sp.scale.y != obj.scaleY){
-					sp.scale.x = obj.scaleX;
-					sp.scale.y = obj.scaleY;
-					//obj.width = sp.width;
-					//obj.height = sp.height;
-				}
-			}
-			
-			
-			
-			sp.visible = !!obj.isVisible;
-			
-		},
-		
 		
 		isGroupSelected: function(group){
 			return false;
 		},
 		
-		updateSelected: function(){
-			console.log("removed");
-			
-			
-			return;
-			if(!this.activeObject){
-				return;
-			}
-			this.activeObject = this.getById(this.activeObject.id);
-		},
-		
 		/* TODO: refactor so all can use MagicObject */
 		getById: function(id){
 			for(var i=0; i<this.loadedObjects.length; i++){
+				if(!this.loadedObjects[i].data){
+					console.warn("smth wrong");
+					continue;
+				}
 				if(this.loadedObjects[i].data.id == id){
 					return this.loadedObjects[i];
 				}

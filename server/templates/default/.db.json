@@ -131,11 +131,16 @@
 					"worldHeight": 480,
 					"viewportWidth": 800,
 					"viewportHeight": 480,
-					"gridX": 64,
-					"gridY": 64,
+					"gridX": 32,
+					"gridY": 32,
 					"gridOffsetX": 0,
 					"gridOffsetY": 0,
 					"showGrid": 1,
+					"gridOpacity": 0.3,
+					"movieInfo": {
+						"fps": 60,
+						"lastFrame": 60
+					},
 					"backgroundColor": "#222222"
 				}
 			],
