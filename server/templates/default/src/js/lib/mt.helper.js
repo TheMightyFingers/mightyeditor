@@ -5,7 +5,7 @@
 (function(global){
 	"use strict";
 	var data = null;
-	
+	var global = window;
 	if(global.mt && global.mt.data){
 		data = global.mt.data;
 	}
@@ -83,20 +83,24 @@
 			this._loadObjects(this.data.objects.contents, this.game.world, "", all, true);
 			
 			for(var i in all){
-				this.buildTweens(all[i], this.mainMovie);
+				this.createTweens(all[i], this.mainMovie);
 			}
 			
 			return all;
 		},
 		
-		buildTweens: function(phaserObject, name){
+		createTweens: function(phaserObject, name){
 			var movie, movies, mdata;
 			var obj = phaserObject.mt;
 			obj.movies = {};
+			
 			movies = obj.movies;
 			mdata = obj.data.movies;
 			if(name == void(0)){
 				for(var mov in mdata){
+					if(mov == this.mainMovie){
+						continue;
+					}
 					movies[mov] = new TweenCollection(mov, obj);
 				}
 			}
@@ -699,19 +703,17 @@
 	};
 	
 	
-	var TweenCollection = function(movieName, pack, fps){
+	var TweenCollection = function(movieName, pack, fps, length){
 		this.name = movieName;
 		
 		this.onComplete = new Phaser.Signal();
 		this._pack = pack;
 		this._tweens = [];
 		this._subtweens = [];
-		this._timers = {
-			start: [],
-			stop: []
-		};
-		this._mainTween = null;
+		this._mainTimer = null;
 		this._startPos = [];
+		
+		this._delay = mt.game.time.create(false);
 		
 		if(fps){
 			this._fps = fps;
@@ -720,9 +722,8 @@
 		
 		var tween = this._buildTweens(this._pack, true);
 		
-		var main = !tween;
 		if(movieName != mt.mainMovie){
-			this._buildChildTweens(this._pack.children, main);
+			this._buildChildTweens(this._pack.children);
 		}
 		
 	};
@@ -730,37 +731,45 @@
 	TweenCollection.prototype = {
 		isLooping: false,
 		_fps: -1,
+		_lastFrame: 60,
 		_buildTweens: function(pack, isMain){
+			var start, stop, tween, easings;
+			
 			var movie = pack.data.movies[this.name];
 			if(!movie){
 				return null;
 			}
 			if(isMain){
 				if(this._fps == -1){
-					this._fps = movie.info.fps;
+					if(movie.subdata){
+						this._fps = mt.data.map.movieInfo.fps;
+					}
+					else{
+						this._fps = movie.info.fps || mt.data.map.movieInfo.fps;
+					}
 					this._ifps = 1000/this._fps;
+					
 				}
-				this._mainTween = mt.game.add.tween();
-				this._mainTween.delay(this.fps * movie.info.lastFrame);
-				this._mainTween.onComplete.add(this._complete, this);
+				this._lastFrame =  mt.data.map.movieInfo.lastFrame;
+				this._mainTimer = mt.game.time.create(false);
+				
+				if(movie.subdata && movie.subdata.length > 0){
+					this._buildSubTweens(movie.subdata);
+				}
 			}
 			
 			if(movie.frames.length === 0){
 				return null;
 			}
-
-			var start, stop, tween, easings;
 			
 			for(var i=0; i<movie.frames.length-1; i++){
 				start = movie.frames[i];
 				stop = movie.frames[i+1];
+				if(start.keyframe > this._lastFrame){
+					break;
+				}
 				easings = stop.easings;
 				tween = this._addTween(pack.self, start, stop, easings, tween);
-			}
-			if(isMain){
-				if(movie.subdata && movie.subdata.length > 0){
-					this._buildSubTweens(movie.subdata);
-				}
 			}
 			return tween;
 		},
@@ -778,7 +787,7 @@
 		},
 		
 		_buildSubTweens: function(sub){
-			var start, stop, tween, st, innerData;
+			var st, innerData;
 			
 			
 			for(var i=0; i<sub.length; i++){
@@ -788,14 +797,10 @@
 				}
 				
 				for(var c in this._pack.children){
-					st = new TweenCollection(sub[i].name, this._pack.children[c].mt, this.fps);
-					for(var j=0; j<innerData.frames.length; j++){
-						start = innerData.frames[j];
-						tween = this._addSubTween(st, start, tween);
-					}
+					st = new TweenCollection(sub[i].name, this._pack.children[c].mt, this._fps);
+					this._addSubTween(st);
 				}
 			}
-			
 		},
  
  
@@ -816,15 +821,59 @@
 			else{
 				tween = nextTween;
 			}
-			tween.to(ss, et);
+			tween = tween.to(ss, et);
 			return tween;
 		},
  
-		_addSubTween: function(tween, start, nextTween){
-			this._subtweens.push({start: start, tween: tween});
+		_addSubTween: function(tween){
+			this._subtweens.push(tween);
 		},
-
+		_stop: function(reset){
+			var i, j;
+			this._mainTimer.stop();
+			
+			for(i=0; i<this._subtweens.length; i++){
+				this._subtweens[i].stop(reset);
+			}
+			
+			for(i=0; i<this._tweens.length; i++){
+				this._tweens[i].stop();
+			}
+			
+			if(reset){
+				this.reset();
+			}
+		},
 		start: function(){
+			var i, j;
+			
+			this._mainTimer.removeAll();
+			
+			this._mainTimer.add(this._ifps * this._lastFrame, this._complete, this);
+			this._mainTimer.start();
+			this.reset();
+			
+			for(i=0; i<this._subtweens.length; i++){
+				this._subtweens[i].start();
+			}
+			
+			for(i=0; i<this._tweens.length; i++){
+				this._tweens[i].start();
+			}
+			
+			
+			return this;
+		},
+		stop: function(reset){
+			
+			this._stop(reset);
+			
+			this.isLooping = false;
+			
+			return this;
+		},
+		
+		reset: function(){
 			var op, sub;
 			for(var i=0; i<this._startPos.length; i++){
 				op = this._startPos[i];
@@ -832,69 +881,68 @@
 					op.obj[k] = op.start[k];
 				}
 			}
-			this._mainTween.start();
-			for(var i=0; i<this._tweens.length; i++){
-				this._tweens[i].start();
-			}
-			for(var i=0; i<this._subtweens.length; i++){
-				this._startSubSequence(this._subtweens[i]);
-			}
-			return this;
-		},
-		_startSubSequence: function(sub){
-			var timer;
-			if(sub.start.keyframe * this._ifps === 0){
-				sub.tween.start();
-			}
-			else{
-				timer = mt.game.time.events.add(sub.start.keyframe * this._ifps, function(){
-					sub.tween.start();
-				});
-				this._timers.start.push(timer);
-			}
-			
-			timer = mt.game.time.events.add((sub.start.keyframe + sub.start.length)* this._ifps, function(){
-				sub.tween.stop();
-			});
-			this._timers.stop.push(timer);
-		},
-		stop: function(name){
-			this._mainTween.stop();
-			for(var i=0; i<this._tweens.length; i++){
-				this._tweens[i].stop();
-			}
-			
-			for(var i=0; i<this._timers.start.length; i++){
-				mt.game.time.events.remove(this._timers.start[i]);
-			}
-			
-			for(var i=0; i<this._timers.stop.length; i++){
-				this._timers.stop[i].callback();
-				mt.game.time.events.remove(this._timers.stop[i]);
-			}
-			//this.onComplete.remove(this.start);
-			this.isLooping = false;
-			return this;
 		},
 		pause: function(name){
+			var i, j, tween;
+			this._mainTimer.pause();
+			for(i=0; i<this._tweens.length; i++){
+				tween = this._tweens[i];
+				tween.pause();
+				for(j=0; j<tween._chainedTweens.length; j++){
+					tween = tween._chainedTweens[j];
+					tween.pause();
+				}
+				
+			}
+			for(i=0; i<this._subtweens.length; i++){
+				this._subtweens[i].pause();
+			}
+			
 			return this;
 		},
 		resume: function(name){
+			var i, j, tween;
+			this._mainTimer.resume();
+			for(i=0; i<this._tweens.length; i++){
+				tween = this._tweens[i];
+				tween.resume();
+				for(j=0; j<tween._chainedTweens.length; j++){
+					tween = tween._chainedTweens[j];
+					tween.resume();
+				}
+				
+				
+			}
+			for(i=0; i<this._subtweens.length; i++){
+				this._subtweens[i].resume();
+			}
+			
 			return this;
 		},
+		
 		delay: function(ms){
+			this.delay.removeAll();
+			this._delay.add(ms, this.start, this);
 			return this;
 		},
+		
 		loop: function(){
 			if(this.isLooping){
 				return;
 			}
 			this.isLooping = true;
-			this.onComplete.add(this.start, this);
+			for(var i=0; i<this._subtweens.length; i++){
+				this._subtweens[i].loop();
+			}
 			return this;
 		},
+		
 		_complete: function(){
 			this.onComplete.dispatch(this);
+			this._stop();
+			if(this.isLooping){
+				this.start();
+			}
 		}
 		
 	};
