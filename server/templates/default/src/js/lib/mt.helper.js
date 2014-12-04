@@ -699,7 +699,7 @@
 	};
 	
 	
-	var TweenCollection = function(movieName, pack){
+	var TweenCollection = function(movieName, pack, fps){
 		this.name = movieName;
 		
 		this.onComplete = new Phaser.Signal();
@@ -710,7 +710,13 @@
 			start: [],
 			stop: []
 		};
+		this._mainTween = null;
 		this._startPos = [];
+		
+		if(fps){
+			this._fps = fps;
+			this._ifps = 1000/this._fps;
+		}
 		
 		var tween = this._buildTweens(this._pack, true);
 		
@@ -723,10 +729,20 @@
 	
 	TweenCollection.prototype = {
 		isLooping: false,
+		_fps: -1,
 		_buildTweens: function(pack, isMain){
 			var movie = pack.data.movies[this.name];
 			if(!movie){
 				return null;
+			}
+			if(isMain){
+				if(this._fps == -1){
+					this._fps = movie.info.fps;
+					this._ifps = 1000/this._fps;
+				}
+				this._mainTween = mt.game.add.tween();
+				this._mainTween.delay(this.fps * movie.info.lastFrame);
+				this._mainTween.onComplete.add(this._complete, this);
 			}
 			
 			if(movie.frames.length === 0){
@@ -742,29 +758,25 @@
 				tween = this._addTween(pack.self, start, stop, easings, tween);
 			}
 			if(isMain){
-				if(tween){
-					tween._lastChild.onComplete.add(this._complete, this);
-				}
-				
 				if(movie.subdata && movie.subdata.length > 0){
 					this._buildSubTweens(movie.subdata);
 				}
 			}
 			return tween;
 		},
-		_buildChildTweens: function(children, main){
+		
+		_buildChildTweens: function(children){
 			var child;
 			for(var key in children){
 				child = children[key];
 				if(!child.mt || !child.mt.data.movies || !child.mt.data.movies[this.name]){
 					continue;
 				}
-				this._buildTweens(child.mt, main);
-				main = false;
+				this._buildTweens(child.mt);
 				this._buildChildTweens(child.mt.children);
 			}
-			
 		},
+		
 		_buildSubTweens: function(sub){
 			var start, stop, tween, st, innerData;
 			
@@ -776,7 +788,7 @@
 				}
 				
 				for(var c in this._pack.children){
-					st = new TweenCollection(sub[i].name, this._pack.children[c].mt);
+					st = new TweenCollection(sub[i].name, this._pack.children[c].mt, this.fps);
 					for(var j=0; j<innerData.frames.length; j++){
 						start = innerData.frames[j];
 						tween = this._addSubTween(st, start, tween);
@@ -793,8 +805,8 @@
 		_addTween: function(obj, start, stop, easings, nextTween){
 			var tween;
 			var ss = mt._mkDiff(start, stop);
-			var st = start.keyframe * 1000/60;
-			var et = (stop.keyframe - start.keyframe)* 1000/60;
+			var st = start.keyframe * this._ifps;
+			var et = (stop.keyframe - start.keyframe)* this._ifps;
 			
 			if(!nextTween){
 				tween = mt.game.add.tween(obj);
@@ -820,6 +832,7 @@
 					op.obj[k] = op.start[k];
 				}
 			}
+			this._mainTween.start();
 			for(var i=0; i<this._tweens.length; i++){
 				this._tweens[i].start();
 			}
@@ -830,22 +843,23 @@
 		},
 		_startSubSequence: function(sub){
 			var timer;
-			if(sub.start.keyframe * 1000/60 === 0){
+			if(sub.start.keyframe * this._ifps === 0){
 				sub.tween.start();
 			}
 			else{
-				timer = mt.game.time.events.add(sub.start.keyframe * 1000/60, function(){
+				timer = mt.game.time.events.add(sub.start.keyframe * this._ifps, function(){
 					sub.tween.start();
 				});
 				this._timers.start.push(timer);
 			}
 			
-			timer = mt.game.time.events.add((sub.start.keyframe + sub.start.length)* 1000/60, function(){
+			timer = mt.game.time.events.add((sub.start.keyframe + sub.start.length)* this._ifps, function(){
 				sub.tween.stop();
 			});
 			this._timers.stop.push(timer);
 		},
 		stop: function(name){
+			this._mainTween.stop();
 			for(var i=0; i<this._tweens.length; i++){
 				this._tweens[i].stop();
 			}
