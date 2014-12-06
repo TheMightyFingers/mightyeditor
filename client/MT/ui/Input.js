@@ -499,9 +499,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				ret = val;
 			}
 			
-			if(this.properties.step){
+			/*if(this.properties.step){
 				ret = Math.round(val/this.properties.step)*this.properties.step;
-			}
+			}*/
 			return ret;
 		},
 		
