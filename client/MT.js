@@ -5239,6 +5239,9 @@ MT(
 			if(this.data.angle == val){
 				return;
 			}
+			if(isNaN(val)){
+				return;
+			}
 			this.object.angle = val;
 			this.data.angle = val;
 			this.updateBox();
