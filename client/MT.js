@@ -4778,15 +4778,27 @@ MT(
 		
 		moveObject: function(x, y, e){
 			
+			console.log("move");
+			
 			var mi = this.mouseInfo;
 			var dx = (mi.x - x) / this.map.scale.x;
 			var dy = (mi.y - y) / this.map.scale.y;
 			var angle = this.getParentAngle();
 			
+			var invX = this.offsetScaleX();
 			
+			if(invX < 0){
+				dx *= -1;
+			}
+			
+			if(this.offsetScaleY() < 0){
+				dy *= -1;
+			}
 			
 			var dxt = this.rpx(-angle, dx, dy, 0, 0);
 			var dyt = this.rpy(-angle, dx, dy, 0, 0);
+			
+			
 			
 			this.x -= dxt;
 			mi.x = x;
@@ -4801,8 +4813,12 @@ MT(
 				var tx = Math.round(this.x / gx) * gx;
 				var ty = Math.round(this.y / gy) * gy;
 				
-				
-				mi.x += (tx - this.x) * this.map.scale.x;
+				if(invX > 0){
+					mi.x += (tx - this.x) * this.map.scale.x;
+				}
+				else{
+					mi.x -= (tx - this.x) * this.map.scale.x;
+				}
 				mi.y += (ty - this.y) * this.map.scale.x;
 				
 				this.x = tx;
@@ -5171,7 +5187,25 @@ MT(
 		getOffsetAngle: function(){
 			return this.object.rotation + this.getParentAngle();
 		},
-		
+   
+		offsetScaleX: function(){
+			var par = this.object.parent;
+			var scale = 1;
+			while(par){
+				scale *= par.scale.x;
+				par = par.parent;
+			}
+			return scale;
+		},
+		offsetScaleY: function(){
+			var par = this.object.parent;
+			var scale = 1;
+			while(par){
+				scale *= par.scale.y;
+				par = par.parent;
+			}
+			return scale;
+		},
 		getParentAngle: function(){
 			var par = this.object.parent;
 			var angle = 0;
@@ -15315,7 +15349,7 @@ MT.extend("core.Emitter")(
 		this.startFrame = 0;
 		this.scale = 1;
 		
-		this.keys = ["x", "y", "angle", "anchorX", "anchorY", "scaleX", "scaleY", "alpha"];
+		this.keys = ["x", "y", "angle", "anchorX", "anchorY", "scaleX", "scaleY", "alpha", "frame", "assetId"];
 		this.roundKeys = [];
 		this.inputs = {};
 		
