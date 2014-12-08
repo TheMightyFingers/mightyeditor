@@ -13,8 +13,8 @@ window["%namespace%"].state.demo = {
 		
 		// start __main movie for all objects
 		for(var i in all){
-			if(all[i].movies && all[i].movies.__main){
-				all[i].movies.__main.start().loop();
+			if(all[i].mt.movies && all[i].mt.movies.__main){
+				all[i].mt.movies.__main.start().loop();
 			}
 		}
 	}

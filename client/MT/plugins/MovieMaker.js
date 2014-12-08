@@ -16,7 +16,7 @@ MT.extend("core.Emitter")(
 		this.startFrame = 0;
 		this.scale = 1;
 		
-		this.keys = ["x", "y", "angle", "anchorX", "anchorY", "scaleX", "scaleY", "alpha"];
+		this.keys = ["x", "y", "angle", "anchorX", "anchorY", "scaleX", "scaleY", "alpha", "frame", "assetId"];
 		this.roundKeys = [];
 		this.inputs = {};
 		
