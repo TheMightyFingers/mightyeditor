@@ -5453,6 +5453,10 @@ MT(
 		},
 		
 		set assetId(id){
+			if(isNaN(this.data.assetId)){
+				throw new Error("Err");
+			}
+			
 			if(this.data.assetId == id){
 				return;
 			}
@@ -16441,6 +16445,10 @@ MT.extend("core.Emitter")(
 			var k;
 			for(var i=0; i<this.keys.length; i++){
 				k = this.keys[i];
+				if(k == "frame" || k == "assetId"){
+					tmp[k] = d1[k];
+					continue;
+				}
 				tmp[k] = this.getInt(t, d1[k], d2[k], (d2.easings ? d2.easings[k] : null) );
 			}
 			
@@ -16452,6 +16460,12 @@ MT.extend("core.Emitter")(
 		},
    
 		getInt: function(t, a, b, easing){
+			if(isNaN(a)){
+				return b;
+			}
+			if(isNaN(b)){
+				return a;
+			}
 			var tfin = t;
 			if(easing){
 				tfin = this.resolve(easing, t);
