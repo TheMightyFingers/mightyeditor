@@ -1321,6 +1321,9 @@ MT(
 		},
    
 		set x(x){
+			if(isNaN(x)){
+				return;
+			}
 			if(this.data.x == x){
 				return;
 			}
@@ -1336,6 +1339,9 @@ MT(
 		},
 		
 		set y(y){
+			if(isNaN(y)){
+				return;
+			}
 			if(this.data.y == y){
 				return;
 			}
