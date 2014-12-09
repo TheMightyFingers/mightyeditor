@@ -1762,6 +1762,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			var that = this;
 			var activeLayer = this.active;
+			if(!activeLayer.isVisible){
+				return;
+			}
+			
 			var map = this.active.tilemap;
 			
 			var scale = this.tools.map.game.camera.scale.x;
@@ -1818,7 +1822,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 			layer.data.tiles[y][x] = id;
 			layer.putTile(id, x, y);
-			//layer.tilemap.putTile(id, x, y, layer.object);
+			
+			if(this.active){
+				this.active.data.lastImage = this.activePanel.data.id;
+			}
+			
+			this.tools.project.plugins.objectmanager.sync();
 		},
 		
 		oldSettings: {},
@@ -1908,10 +1917,27 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.update();
 		},
 		
+		activeImage: null,
 		update: function(){
 			var images = this.tools.project.plugins.assetmanager.list;
 			if(this.active){
 				this.createPanels(images);
+				if(!this.active.data.lastImage){
+					if(this.active.data.images.length){
+						this.active.data.lastImage = this.active.data.images[0];
+					}
+				}
+				
+				if(this.active.data.lastImage){
+					if(this.active.data.images.length){
+						var p = this.panels[this.active.data.lastImage];
+						if(p){
+							this.activePanel = p;
+							this.activePanel.show();
+						}
+					}
+					//console.log(this.active.data.images);
+				}
 			}
 			if(this.activePanel){
 				this.drawImage(this.activePanel);
@@ -2778,6 +2804,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				that.tools.tmpObject.frame = that.tools.activeFrame;
 				
 			});
+			
+			this.tools.on(MT.OBJECT_SELECTED, function(){
+				if(that.tools.activeTool != that){
+					return;
+				}
+				if(!that.tools.tmpObject){
+					return;
+				}
+				that.tools.initTmpObject();
+			});
 		},
 		
 		lastX: 0,
@@ -2907,6 +2943,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				if(that.tools.activeTool != that){
 					return;
 				}
+			});
+			
+			this.tools.on(MT.OBJECT_SELECTED, function(){
+				if(that.tools.activeTool != that){
+					return;
+				}
+				if(!that.tools.tmpObject){
+					return;
+				}
+				that.tools.initTmpObject();
 			});
 		},
 		
@@ -4491,7 +4537,7 @@ MT(
 		},
 		
 		highlight: function(ctx){
-			if(this.isRemoved){
+			if(this.isRemoved || !this.isVisible){
 				return;
 			}
 			var mat = this.object.worldTransform;
@@ -4701,6 +4747,10 @@ MT(
 		mouseMove: function(x, y, e){
 			var mi = this.mouseInfo;
 			
+			if(!this.isVisible){
+				return;
+			}
+			
 			if(this.type == MT.objectTypes.TILE_LAYER){
 				var tools = this.map.project.plugins.tools;
 				if(tools.activeTool == tools.tools.tiletool){
@@ -4777,9 +4827,6 @@ MT(
 		},
 		
 		moveObject: function(x, y, e){
-			
-			console.log("move");
-			
 			var mi = this.mouseInfo;
 			var dx = (mi.x - x) / this.map.scale.x;
 			var dy = (mi.y - y) / this.map.scale.y;
@@ -5857,8 +5904,8 @@ MT(
 
 	},
 	{
-		isImage: function(imgPath){
-			var ext = imgPath.split(".").pop();
+		isImage: function(path){
+			var ext = this.getExt(path);
 			return (ext == "png" || ext == "jpg" || ext == "gif" || ext == "jpeg");
 		},
 		
@@ -5868,6 +5915,24 @@ MT(
    
 		htmlEntities: function(str) {
 			return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+		},
+   
+		isAudio: function(path){
+			var ext = this.getExt(path);
+			return (ext == "mp3" || ext == "wav" || ext == "ogg" || ext == "aac");
+		},
+   
+		getExt: function(path){
+			return path.split(".").pop().toLowerCase();
+		},
+
+		strToBuff: function(str) {
+			var buf = new ArrayBuffer(str.length * 2);
+			var bufView = new Uint16Array(buf);
+			for (var i = 0; i < str.length; i++) {
+				bufView[i] = str.charCodeAt(i);
+			}
+			return buf;
 		}
 	}
 );
@@ -6661,6 +6726,8 @@ MT.extend("core.Emitter")(
 				if(e.which == MT.keys.ENTER){
 					this.blur();
 				}
+				e.preventDefault();
+				e.stopPropagation();
 			};
 			
 			
@@ -7935,7 +8002,6 @@ MT.extend("core.Emitter")(
 		}
 		
 		this.tv.on("click", function(data, el){
-			console.log("selected", arguments);
 			select(data, el);
 		});
 		
@@ -8026,7 +8092,6 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			this.fpsInput.setObject(this.data.movies[this.activeMovie].info);
-			console.log("fps updated");
 		},
 		
 		rebuildData: function(){
@@ -8046,8 +8111,6 @@ MT.extend("core.Emitter")(
 		},
 		
 		updateTree: function(data){
-			console.log("UPDATE TREE");
-			
 			this.data = data;
 			this.buildData();
 			this.tv.merge(this.data);
@@ -8146,7 +8209,6 @@ MT.extend("core.Emitter")(
 			
 			var k = Object.keys(this.data.movies);
 			if(!k.length){
-				console.log("NO more movies");
 				this.mm.clear();
 				this.activeMovie = null;
 				this.mm.activeMovie = null;
@@ -8418,8 +8480,6 @@ MT.extend("core.Emitter")(
 		
 		controlsHolder: null,
 		addControls: function(){
-			console.log("addControls");
-			
 			this.controlsHolder = document.createElement("div");
 			this.controlsHolder.className = "ui-keyframes-controls";
 			var c = {};
@@ -8480,7 +8540,6 @@ MT.extend("core.Emitter")(
 				var tm = 1000/that.getFps() - (Date.now() - start);
 				while(tm < 0){
 					tm += 1000/that.getFps();
-					console.log("too slow");
 					that.mm.activeFrame++;
 				}
 				window.setTimeout(loop, tm);
@@ -8576,9 +8635,6 @@ MT.extend("core.Emitter")(
 		
 		markFirstFrame: function(){
 			this.mm.changeFrame(0);
-			
-			console.log("mark frames for movie", this.activeMovie);
-			console.log(this.mm.items);
 			var item, frameData;
 			for(var i in this.mm.items){
 				item = this.mm.items[i];
@@ -8593,7 +8649,6 @@ MT.extend("core.Emitter")(
 						frameData.keyframe = 0;
 					}
 					this.mm.loadState(i, frameData, 0);
-					console.log("Frame added");
 				}
 				else{
 					frameData = this.mm.collect(item);
@@ -8635,7 +8690,6 @@ MT.extend("core.Emitter")(
 					if(frameData.keyframe == this.mm.activeFrame){
 						movie.frames[j] = this.mm.collect(item, this.mm.activeFrame, movie.frames[j]);
 						needSave = true;
-						console.log("frame updated", this.mm.activeFrame);
 						found = true;
 						break;
 					}
@@ -12493,13 +12547,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		insertObject: function(obj, silent, data, affectParent){
 			data = data || this.tv.getData();
-			var arr = data;
+			var data = this.tv.getData();
+			var map = this.project.plugins.mapeditor;
+			
+			var active, cont;
+			if(this.activeGroup){
+				cont = this.activeGroup.contents;
+				active = this.activeGroup;
+			}
+			else{
+				cont = data;
+			}
 			
 			
-			if(affectParent){
-				arr = this.activeGroup.contents;
-				obj.x -= this.activeGroup.x;
-				obj.y -= this.activeGroup.y;
+			if(active){
+				obj.x -= active.x;
+				obj.y -= active.y;
 			}
 			
 			obj.id = "tmp"+this.mkid();
@@ -12509,9 +12572,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			
-			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, arr, 0);
+			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, cont, 0);
 			
-			arr.splice(0, -1, obj);
+			cont.unshift(obj);
 			
 			obj.index = -1;
 			
@@ -12595,12 +12658,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		createGroup: function(silent){
+			var cont;
 			var data = this.tv.getData();
+			var map = this.project.plugins.mapeditor;
+			if(map.activeObject && map.activeObject.type == MT.objectTypes.GROUP){
+				cont = map.activeObject.data.contents;
+			}
+			else{
+				cont = data;
+			}
+			
+			
 			
 			var tmpName= "Group";
 			var name = tmpName;
-			for(var i=0; i<data.length; i++){
-				if(data[i].name == name){
+			for(var i=0; i<cont.length; i++){
+				if(cont[i].name == name){
 					name = tmpName+" "+i;
 				}
 			}
@@ -12621,7 +12694,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				alpha: 1
 			};
 			
-			data.unshift(group);
+			cont.unshift(group);
 			
 			this.tv.merge(data);
 			
@@ -14115,7 +14188,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			img.onload = function(){
 				
 				var data = {
-					data: src,
+					data: Array.apply(null, new Uint8Array(src)),
 					name: name,
 					path: path,
 					fullPath: path,
@@ -14159,7 +14232,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		toPng: function(src){
-			return "data:image/png;base64,"+btoa(src);
+			var str = "";// = String.fromCharCode.apply(null, src);
+			
+			var buff = new Uint8Array(src);
+			for(var i=0; i<buff.length; i++){
+				str += String.fromCharCode(buff[i]);
+			}
+			
+			
+			return "data:image/png;base64,"+btoa(str);
 		},
 		
 		guessFrameWidth: function(data){
@@ -14184,7 +14265,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 	}
 );
-
 //MT/ui/Panel.js
 MT.namespace('ui');
 "use strict";
@@ -17380,6 +17460,8 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		uploadFile: function(data){
+			var tmp = data.src;
+			data.src = Array.apply(null, new Uint8Array(data.src));
 			this.send("uploadFile", data);
 		},
 		
@@ -17534,7 +17616,27 @@ MT.extend("core.BasicPlugin")(
 			
 			panel.show();
 			
-			this.send("getContent", data);
+			if(!MT.core.Helper.isAudio(data.name)){
+				this.send("getContent", data);
+			}
+			else{
+				if(panel.audio){
+					return;
+				}
+				var audio = document.createElement("audio");
+				var src = document.createElement("source");
+				src.setAttribute("src", that.project.path + "/src" + data.fullPath);
+				src.setAttribute("type", "audio/"+MT.core.Helper.getExt(data.fullPath));
+				audio.appendChild(src);
+				audio.setAttribute("controls", "controls");
+				panel.content.el.appendChild(audio);
+				panel.audio = audio;
+				audio.onended = function(){
+					audio.load();
+				};
+				
+			}
+			
 			return panel;
 		},
 		
@@ -17628,10 +17730,8 @@ MT.extend("core.BasicPlugin")(
 			});
 			this.tv.tree.show(this.leftPanel.content.el);
 			
-			
 			var that = this;
 			var select =  function(data, element){
-				
 				if(that.activeTreeItem){
 					that.activeTreeItem.removeClass("selected");
 				}
@@ -18447,7 +18547,8 @@ for(var i=65; i<91; i++){
 
 MT.const = {
 	IMAGES: "image/*",
-	DATA: "application/json|application/xml"
+	DATA: "application/json|application/xml",
+	AUDIO: "mp3, ogg, wav"
 };
 //MT/plugins/list.js
 MT.namespace('plugins');
@@ -18465,8 +18566,73 @@ MT.require("plugins.Analytics");
 
 //MT/Socket.js
 MT.namespace('');
+/* UTF-8 array to DOMString and vice versa */
+
+function UTF8ArrToStr (buff) {
+  return String.fromCharCode.apply(null, new Uint8Array(buff));
+}
+
+function strToUTF8Arr (sDOMStr) {
+
+  var aBytes, nChr, nStrLen = sDOMStr.length, nArrLen = 0;
+
+  /* mapping... */
+
+  for (var nMapIdx = 0; nMapIdx < nStrLen; nMapIdx++) {
+    nChr = sDOMStr.charCodeAt(nMapIdx);
+    nArrLen += nChr < 0x80 ? 1 : nChr < 0x800 ? 2 : nChr < 0x10000 ? 3 : nChr < 0x200000 ? 4 : nChr < 0x4000000 ? 5 : 6;
+  }
+
+  aBytes = new Uint8Array(nArrLen);
+
+  /* transcription... */
+
+  for (var nIdx = 0, nChrIdx = 0; nIdx < nArrLen; nChrIdx++) {
+    nChr = sDOMStr.charCodeAt(nChrIdx);
+    if (nChr < 128) {
+      /* one byte */
+      aBytes[nIdx++] = nChr;
+    } else if (nChr < 0x800) {
+      /* two bytes */
+      aBytes[nIdx++] = 192 + (nChr >>> 6);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    } else if (nChr < 0x10000) {
+      /* three bytes */
+      aBytes[nIdx++] = 224 + (nChr >>> 12);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    } else if (nChr < 0x200000) {
+      /* four bytes */
+      aBytes[nIdx++] = 240 + (nChr >>> 18);
+      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    } else if (nChr < 0x4000000) {
+      /* five bytes */
+      aBytes[nIdx++] = 248 + (nChr >>> 24);
+      aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    } else /* if (nChr <= 0x7fffffff) */ {
+      /* six bytes */
+      aBytes[nIdx++] = 252 + (nChr >>> 30);
+      aBytes[nIdx++] = 128 + (nChr >>> 24 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    }
+  }
+
+  return aBytes;
+
+}
+
+
 MT.extend("core.Emitter")(
 	MT.Socket = function(url, autoconnect){
+		this.binary = true;
 		if(url){
 			this.url = url;
 		}
@@ -18501,13 +18667,22 @@ MT.extend("core.Emitter")(
 			
 			this.ws = new WebSocket(this.url);
 			console.log("connecting....");
+			this.ws.binaryType = "arraybuffer";
+			
 			this.ws.onopen = function(e){
 				console.log("connected");
 				that.emit("core","open");
 			};
 			
 			this.ws.onmessage = function (event) {
-				var data = JSON.parse(event.data);
+				var str;
+				if( that.binary){
+					str = UTF8ArrToStr(event.data);
+				}
+				else{
+					str = event.data;
+				}
+				var data = JSON.parse(str);
 				that.emit(data.channel, data.action, data.data);
 			};
 			
@@ -18531,7 +18706,15 @@ MT.extend("core.Emitter")(
 				this.sendObject.channel = channel;
 				this.sendObject.action = action;
 				this.sendObject.data = data;
-				this.ws.send(JSON.stringify(this.sendObject));
+				
+				var str = JSON.stringify(this.sendObject);
+				
+				if(this.binary){
+					this.ws.send(strToUTF8Arr(str));
+				}
+				else{
+					this.ws.send(str);
+				}
 				return;
 			}
 			
@@ -20098,9 +20281,6 @@ MT.extend("core.Emitter")(
 			if(slot != void(0)){
 				this.saveSlot = slot;
 			}
-			
-			console.log("saving in slot", this.saveSlot);
-			
 			if(!this.isSaveAllowed){
 				return;
 			}
@@ -20842,7 +21022,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					path: path
 				});
 			};
-			fr.readAsBinaryString(file);
+			fr.readAsArrayBuffer(file);
 		},
 		
 		initSocket: function(socket){
