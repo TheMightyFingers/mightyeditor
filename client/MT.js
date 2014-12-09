@@ -18024,6 +18024,9 @@ MT.extend("core.BasicPlugin")(
 		
 		checkChangesAndAskSave: function(panel){
 			var data = panel.data;
+			if(!data.doc){
+				return;
+			}
 			if(data.src === data.doc.getValue()){
 				return;
 			}
