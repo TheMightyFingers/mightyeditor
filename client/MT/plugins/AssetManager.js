@@ -1174,7 +1174,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			img.onload = function(){
 				
 				var data = {
-					data: src,
+					data: Array.apply(null, new Uint8Array(src)),
 					name: name,
 					path: path,
 					fullPath: path,
@@ -1218,7 +1218,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		toPng: function(src){
-			return "data:image/png;base64,"+btoa(src);
+			var str = "";// = String.fromCharCode.apply(null, src);
+			
+			var buff = new Uint8Array(src);
+			for(var i=0; i<buff.length; i++){
+				str += String.fromCharCode(buff[i]);
+			}
+			
+			
+			return "data:image/png;base64,"+btoa(str);
 		},
 		
 		guessFrameWidth: function(data){

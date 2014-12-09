@@ -570,7 +570,7 @@ MT(
 		},
 		
 		highlight: function(ctx){
-			if(this.isRemoved){
+			if(this.isRemoved || !this.isVisible){
 				return;
 			}
 			var mat = this.object.worldTransform;
@@ -780,6 +780,10 @@ MT(
 		mouseMove: function(x, y, e){
 			var mi = this.mouseInfo;
 			
+			if(!this.isVisible){
+				return;
+			}
+			
 			if(this.type == MT.objectTypes.TILE_LAYER){
 				var tools = this.map.project.plugins.tools;
 				if(tools.activeTool == tools.tools.tiletool){
@@ -856,9 +860,6 @@ MT(
 		},
 		
 		moveObject: function(x, y, e){
-			
-			console.log("move");
-			
 			var mi = this.mouseInfo;
 			var dx = (mi.x - x) / this.map.scale.x;
 			var dy = (mi.y - y) / this.map.scale.y;

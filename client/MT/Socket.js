@@ -1,5 +1,70 @@
+/* UTF-8 array to DOMString and vice versa */
+
+function UTF8ArrToStr (buff) {
+  return String.fromCharCode.apply(null, new Uint8Array(buff));
+}
+
+function strToUTF8Arr (sDOMStr) {
+
+  var aBytes, nChr, nStrLen = sDOMStr.length, nArrLen = 0;
+
+  /* mapping... */
+
+  for (var nMapIdx = 0; nMapIdx < nStrLen; nMapIdx++) {
+    nChr = sDOMStr.charCodeAt(nMapIdx);
+    nArrLen += nChr < 0x80 ? 1 : nChr < 0x800 ? 2 : nChr < 0x10000 ? 3 : nChr < 0x200000 ? 4 : nChr < 0x4000000 ? 5 : 6;
+  }
+
+  aBytes = new Uint8Array(nArrLen);
+
+  /* transcription... */
+
+  for (var nIdx = 0, nChrIdx = 0; nIdx < nArrLen; nChrIdx++) {
+    nChr = sDOMStr.charCodeAt(nChrIdx);
+    if (nChr < 128) {
+      /* one byte */
+      aBytes[nIdx++] = nChr;
+    } else if (nChr < 0x800) {
+      /* two bytes */
+      aBytes[nIdx++] = 192 + (nChr >>> 6);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    } else if (nChr < 0x10000) {
+      /* three bytes */
+      aBytes[nIdx++] = 224 + (nChr >>> 12);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    } else if (nChr < 0x200000) {
+      /* four bytes */
+      aBytes[nIdx++] = 240 + (nChr >>> 18);
+      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    } else if (nChr < 0x4000000) {
+      /* five bytes */
+      aBytes[nIdx++] = 248 + (nChr >>> 24);
+      aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    } else /* if (nChr <= 0x7fffffff) */ {
+      /* six bytes */
+      aBytes[nIdx++] = 252 + (nChr >>> 30);
+      aBytes[nIdx++] = 128 + (nChr >>> 24 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    }
+  }
+
+  return aBytes;
+
+}
+
+
 MT.extend("core.Emitter")(
 	MT.Socket = function(url, autoconnect){
+		this.binary = true;
 		if(url){
 			this.url = url;
 		}
@@ -34,13 +99,22 @@ MT.extend("core.Emitter")(
 			
 			this.ws = new WebSocket(this.url);
 			console.log("connecting....");
+			this.ws.binaryType = "arraybuffer";
+			
 			this.ws.onopen = function(e){
 				console.log("connected");
 				that.emit("core","open");
 			};
 			
 			this.ws.onmessage = function (event) {
-				var data = JSON.parse(event.data);
+				var str;
+				if( that.binary){
+					str = UTF8ArrToStr(event.data);
+				}
+				else{
+					str = event.data;
+				}
+				var data = JSON.parse(str);
 				that.emit(data.channel, data.action, data.data);
 			};
 			
@@ -64,7 +138,15 @@ MT.extend("core.Emitter")(
 				this.sendObject.channel = channel;
 				this.sendObject.action = action;
 				this.sendObject.data = data;
-				this.ws.send(JSON.stringify(this.sendObject));
+				
+				var str = JSON.stringify(this.sendObject);
+				
+				if(this.binary){
+					this.ws.send(strToUTF8Arr(str));
+				}
+				else{
+					this.ws.send(str);
+				}
 				return;
 			}
 			

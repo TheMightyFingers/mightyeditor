@@ -206,6 +206,8 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		uploadFile: function(data){
+			var tmp = data.src;
+			data.src = Array.apply(null, new Uint8Array(data.src));
 			this.send("uploadFile", data);
 		},
 		
@@ -360,7 +362,27 @@ MT.extend("core.BasicPlugin")(
 			
 			panel.show();
 			
-			this.send("getContent", data);
+			if(!MT.core.Helper.isAudio(data.name)){
+				this.send("getContent", data);
+			}
+			else{
+				if(panel.audio){
+					return;
+				}
+				var audio = document.createElement("audio");
+				var src = document.createElement("source");
+				src.setAttribute("src", that.project.path + "/src" + data.fullPath);
+				src.setAttribute("type", "audio/"+MT.core.Helper.getExt(data.fullPath));
+				audio.appendChild(src);
+				audio.setAttribute("controls", "controls");
+				panel.content.el.appendChild(audio);
+				panel.audio = audio;
+				audio.onended = function(){
+					audio.load();
+				};
+				
+			}
+			
 			return panel;
 		},
 		
@@ -454,10 +476,8 @@ MT.extend("core.BasicPlugin")(
 			});
 			this.tv.tree.show(this.leftPanel.content.el);
 			
-			
 			var that = this;
 			var select =  function(data, element){
-				
 				if(that.activeTreeItem){
 					that.activeTreeItem.removeClass("selected");
 				}

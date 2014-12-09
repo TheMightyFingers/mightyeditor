@@ -24,6 +24,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				that.tools.tmpObject.frame = that.tools.activeFrame;
 				
 			});
+			
+			this.tools.on(MT.OBJECT_SELECTED, function(){
+				if(that.tools.activeTool != that){
+					return;
+				}
+				if(!that.tools.tmpObject){
+					return;
+				}
+				that.tools.initTmpObject();
+			});
 		},
 		
 		lastX: 0,

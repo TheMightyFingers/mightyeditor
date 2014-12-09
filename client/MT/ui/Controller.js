@@ -1515,9 +1515,6 @@ MT.extend("core.Emitter")(
 			if(slot != void(0)){
 				this.saveSlot = slot;
 			}
-			
-			console.log("saving in slot", this.saveSlot);
-			
 			if(!this.isSaveAllowed){
 				return;
 			}

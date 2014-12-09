@@ -237,13 +237,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		insertObject: function(obj, silent, data, affectParent){
 			data = data || this.tv.getData();
-			var arr = data;
+			var data = this.tv.getData();
+			var map = this.project.plugins.mapeditor;
+			
+			var active, cont;
+			if(this.activeGroup){
+				cont = this.activeGroup.contents;
+				active = this.activeGroup;
+			}
+			else{
+				cont = data;
+			}
 			
 			
-			if(affectParent){
-				arr = this.activeGroup.contents;
-				obj.x -= this.activeGroup.x;
-				obj.y -= this.activeGroup.y;
+			if(active){
+				obj.x -= active.x;
+				obj.y -= active.y;
 			}
 			
 			obj.id = "tmp"+this.mkid();
@@ -253,9 +262,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			
-			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, arr, 0);
+			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, cont, 0);
 			
-			arr.splice(0, -1, obj);
+			cont.unshift(obj);
 			
 			obj.index = -1;
 			
@@ -339,12 +348,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		createGroup: function(silent){
+			var cont;
 			var data = this.tv.getData();
+			var map = this.project.plugins.mapeditor;
+			if(map.activeObject && map.activeObject.type == MT.objectTypes.GROUP){
+				cont = map.activeObject.data.contents;
+			}
+			else{
+				cont = data;
+			}
+			
+			
 			
 			var tmpName= "Group";
 			var name = tmpName;
-			for(var i=0; i<data.length; i++){
-				if(data[i].name == name){
+			for(var i=0; i<cont.length; i++){
+				if(cont[i].name == name){
 					name = tmpName+" "+i;
 				}
 			}
@@ -365,7 +384,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				alpha: 1
 			};
 			
-			data.unshift(group);
+			cont.unshift(group);
 			
 			this.tv.merge(data);
 			

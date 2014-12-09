@@ -60,7 +60,6 @@ MT.extend("core.Emitter")(
 		}
 		
 		this.tv.on("click", function(data, el){
-			console.log("selected", arguments);
 			select(data, el);
 		});
 		
@@ -151,7 +150,6 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			this.fpsInput.setObject(this.data.movies[this.activeMovie].info);
-			console.log("fps updated");
 		},
 		
 		rebuildData: function(){
@@ -171,8 +169,6 @@ MT.extend("core.Emitter")(
 		},
 		
 		updateTree: function(data){
-			console.log("UPDATE TREE");
-			
 			this.data = data;
 			this.buildData();
 			this.tv.merge(this.data);
@@ -271,7 +267,6 @@ MT.extend("core.Emitter")(
 			
 			var k = Object.keys(this.data.movies);
 			if(!k.length){
-				console.log("NO more movies");
 				this.mm.clear();
 				this.activeMovie = null;
 				this.mm.activeMovie = null;
@@ -543,8 +538,6 @@ MT.extend("core.Emitter")(
 		
 		controlsHolder: null,
 		addControls: function(){
-			console.log("addControls");
-			
 			this.controlsHolder = document.createElement("div");
 			this.controlsHolder.className = "ui-keyframes-controls";
 			var c = {};
@@ -605,7 +598,6 @@ MT.extend("core.Emitter")(
 				var tm = 1000/that.getFps() - (Date.now() - start);
 				while(tm < 0){
 					tm += 1000/that.getFps();
-					console.log("too slow");
 					that.mm.activeFrame++;
 				}
 				window.setTimeout(loop, tm);
@@ -701,9 +693,6 @@ MT.extend("core.Emitter")(
 		
 		markFirstFrame: function(){
 			this.mm.changeFrame(0);
-			
-			console.log("mark frames for movie", this.activeMovie);
-			console.log(this.mm.items);
 			var item, frameData;
 			for(var i in this.mm.items){
 				item = this.mm.items[i];
@@ -718,7 +707,6 @@ MT.extend("core.Emitter")(
 						frameData.keyframe = 0;
 					}
 					this.mm.loadState(i, frameData, 0);
-					console.log("Frame added");
 				}
 				else{
 					frameData = this.mm.collect(item);
@@ -760,7 +748,6 @@ MT.extend("core.Emitter")(
 					if(frameData.keyframe == this.mm.activeFrame){
 						movie.frames[j] = this.mm.collect(item, this.mm.activeFrame, movie.frames[j]);
 						needSave = true;
-						console.log("frame updated", this.mm.activeFrame);
 						found = true;
 						break;
 					}

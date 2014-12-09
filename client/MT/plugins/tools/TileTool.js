@@ -342,6 +342,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			var that = this;
 			var activeLayer = this.active;
+			if(!activeLayer.isVisible){
+				return;
+			}
+			
 			var map = this.active.tilemap;
 			
 			var scale = this.tools.map.game.camera.scale.x;
@@ -398,7 +402,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 			layer.data.tiles[y][x] = id;
 			layer.putTile(id, x, y);
-			//layer.tilemap.putTile(id, x, y, layer.object);
+			
+			if(this.active){
+				this.active.data.lastImage = this.activePanel.data.id;
+			}
+			
+			this.tools.project.plugins.objectmanager.sync();
 		},
 		
 		oldSettings: {},
@@ -488,10 +497,27 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.update();
 		},
 		
+		activeImage: null,
 		update: function(){
 			var images = this.tools.project.plugins.assetmanager.list;
 			if(this.active){
 				this.createPanels(images);
+				if(!this.active.data.lastImage){
+					if(this.active.data.images.length){
+						this.active.data.lastImage = this.active.data.images[0];
+					}
+				}
+				
+				if(this.active.data.lastImage){
+					if(this.active.data.images.length){
+						var p = this.panels[this.active.data.lastImage];
+						if(p){
+							this.activePanel = p;
+							this.activePanel.show();
+						}
+					}
+					//console.log(this.active.data.images);
+				}
 			}
 			if(this.activePanel){
 				this.drawImage(this.activePanel);

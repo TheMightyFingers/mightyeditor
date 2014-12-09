@@ -35,10 +35,7 @@ var server = new MT.http.Httpd(config, function(req, res, httpd){
 		var projectId = req.url.substring(8);
 		var projectPath = config.projectsPath+"/"+projectId;
 		var src = process.cwd() + "/" + projectPath;
-		console.log("exporting", projectId);
-		
 		var targetFile = projectId+".zip";
-		
 		var t = process.cwd() + "/../client/" + targetFile;
 		var cmd = "zip -9 -r " + t + " ./";
 

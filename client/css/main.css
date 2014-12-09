@@ -59,6 +59,10 @@ table th{
 br{
 	clear: both;
 }
+audio {
+	width: 100%;
+}
+
 .loadingImage{
 	margin: 0 auto;
 	top: 50%;

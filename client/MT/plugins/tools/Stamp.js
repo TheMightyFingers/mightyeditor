@@ -27,6 +27,16 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					return;
 				}
 			});
+			
+			this.tools.on(MT.OBJECT_SELECTED, function(){
+				if(that.tools.activeTool != that){
+					return;
+				}
+				if(!that.tools.tmpObject){
+					return;
+				}
+				that.tools.initTmpObject();
+			});
 		},
 		
 		init: function(asset){

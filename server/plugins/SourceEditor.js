@@ -73,7 +73,7 @@ MT.extend("core.BasicPlugin")(
 			this.newFile(name);
 			
 			var that = this;
-			this.fs.writeFile(this.path + path, src, function(){
+			this.fs.writeFile(this.path + path, new Buffer(src), function(){
 				that.rename("/" + name, path, function(){
 					that.project.db.save();
 					// tell client about uploaded file
@@ -81,6 +81,7 @@ MT.extend("core.BasicPlugin")(
 				});
 			});
 			
+			//this.fs.writeFile(this.path + path+"raw", JSON.stringify(src));
 		},
 		
 		a_newFolder: function(){

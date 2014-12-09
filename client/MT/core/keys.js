@@ -17,5 +17,6 @@ for(var i=65; i<91; i++){
 
 MT.const = {
 	IMAGES: "image/*",
-	DATA: "application/json|application/xml"
+	DATA: "application/json|application/xml",
+	AUDIO: "mp3, ogg, wav"
 };

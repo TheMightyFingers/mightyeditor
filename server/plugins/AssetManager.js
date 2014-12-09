@@ -125,7 +125,6 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		a_newImage: function(data){
-			console.log("new Image", data.name);
 			var path = data.path.split("/");
 			if(data.path != "/"){
 				this.a_newFolder(this.fs.path.dirname(data.path));
@@ -144,7 +143,7 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			var that = this;
-			this.fs.writeFile(p, new Buffer(data.data, "binary"), function(e){
+			this.fs.writeFile(p, new Buffer(data.data), function(e){
 				that.createImageObject(data, path, ext, im);
 			});
 			

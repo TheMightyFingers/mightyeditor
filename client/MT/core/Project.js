@@ -630,7 +630,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					path: path
 				});
 			};
-			fr.readAsBinaryString(file);
+			fr.readAsArrayBuffer(file);
 		},
 		
 		initSocket: function(socket){

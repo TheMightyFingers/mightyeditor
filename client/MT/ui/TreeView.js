@@ -786,6 +786,8 @@ MT.extend("core.Emitter")(
 				if(e.which == MT.keys.ENTER){
 					this.blur();
 				}
+				e.preventDefault();
+				e.stopPropagation();
 			};
 			
 			
