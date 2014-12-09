@@ -91,37 +91,6 @@
 		this.updateTexture();
 	};
 	
-	
-	// fix phaser tweens
-	(function(){
-		
-		var tween = Phaser.Tween;
-		var proto = Phaser.Tween.prototype;
-		Phaser.Tween = function (object, game, manager) {
-			tween.call(this, object, game, manager);
-			this.onStop = new Phaser.Signal();
-		};
-		
-		Phaser.Tween.prototype = proto;
-		
-		var start = Phaser.Tween.prototype.start;
-		Phaser.Tween.prototype.start = function(){
-			var ret = start.call(this);
-			this.pendingDelete = false;
-			return ret;
-		};
-		
-		var stop = Phaser.Tween.prototype.stop;
-		Phaser.Tween.prototype.stop = function(){
-			var ret = stop.call(this);
-			for(var i=0; i<this._chainedTweens.length; i++){
-				this._chainedTweens[i].stop();
-			}
-			this.onStop.dispatch(this._object);
-			return ret;
-		};
-	})();
-	
 	// add scaleX/Y and anchorX/Y - so we can skip extra tweens
 	(function(){
 		

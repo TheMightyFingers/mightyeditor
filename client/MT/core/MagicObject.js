@@ -1486,6 +1486,10 @@ MT(
 		},
 		
 		set assetId(id){
+			if(isNaN(this.data.assetId)){
+				throw new Error("Err");
+			}
+			
 			if(this.data.assetId == id){
 				return;
 			}
