@@ -19,12 +19,14 @@ MT.extend("core.BasicPlugin")(
 				else{
 					that.addEmptyInput();
 				}
+				om.sync();
 			});
 			
-			
+			var om = this.project.plugins.objectmanager;
 			var cb = function(val){
 				that.change(val);
 				that.buildPropTree();
+				om.sync();
 			};
 			
 			var tmp = {};
@@ -313,6 +315,7 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			var map = this.project.plugins.mapeditor;
 			
+			
 			var updateData = function(obj){
 				map.updateScene(map.settings);
 				if(obj){
@@ -343,7 +346,6 @@ MT.extend("core.BasicPlugin")(
 					that.clear();
 				}
 			});
-			
 			
 			map.on("select", function(obj){
 				updateData(map.settings);

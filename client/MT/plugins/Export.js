@@ -41,8 +41,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var b = this.button= this.project.panel.addButton("Export", null, function(e){
 				that.showList();
 			});
+			var om = this.project.plugins.objectmanager;
 			
 			this.openGame = this.project.panel.addButton("Open Game", null, function(e){
+				om.sync();
 				that.openLink("_open_game");
 			});
 			

@@ -297,8 +297,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				}
 				e.preventDefault();
 				e.stopPropagation();
-				
-				console.log(e.isPropagationStopped, e);
 				var d = ( (e.wheelDelta || -e.deltaY) > 0 ? 1 : -1);
 				var val = that.object[that.key] + d*that.step;
 				that.setValue(val);
