@@ -22,7 +22,7 @@
 							"scaleY": 1,
 							"angle": 0,
 							"alpha": 1,
-							"tmpName": "loading",
+							"tmpName": "preload",
 							"frame": 0,
 							"isVisible": 1,
 							"isLocked": 0,
@@ -30,8 +30,8 @@
 							"width": 190,
 							"height": 9,
 							"id": "tmp1406818026617",
-							"name": "loading",
-							"fullPath": "/Loading/loading"
+							"name": "preload",
+							"fullPath": "/Loading/preload"
 						},
 						{
 							"assetId": 1,
@@ -45,7 +45,7 @@
 							"scaleY": 1,
 							"angle": 0,
 							"alpha": 1,
-							"tmpName": "preload",
+							"tmpName": "loading",
 							"frame": 0,
 							"isVisible": 1,
 							"isLocked": 0,
@@ -53,8 +53,8 @@
 							"width": 190,
 							"height": 9,
 							"id": "tmp1406818026616",
-							"name": "preload",
-							"fullPath": "/Loading/preload"
+							"name": "loading",
+							"fullPath": "/Loading/loading"
 						}
 					],
 					"isVisible": false,
