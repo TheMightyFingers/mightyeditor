@@ -14112,6 +14112,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				a: a,
 				b: b
 			});
+			this.updateData();
 		},
 		
 		newFolder: function(){
