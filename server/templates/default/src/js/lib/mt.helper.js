@@ -734,7 +734,9 @@
 		_lastFrame: 60,
 		_buildTweens: function(pack, isMain){
 			var start, stop, tween, easings;
-			
+			if(!pack.data.movies){
+				return;
+			}
 			var movie = pack.data.movies[this.name];
 			if(!movie){
 				return null;
