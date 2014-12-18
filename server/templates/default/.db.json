@@ -73,26 +73,6 @@
 					"name": "Loading",
 					"contents": [
 						{
-							"__image": "1.png",
-							"id": 1,
-							"name": "preload.png",
-							"path": "/loading.png",
-							"fullPath": "/Loading/preload.png",
-							"key": "/loading.png",
-							"width": 190,
-							"height": 9,
-							"frameWidth": 190,
-							"frameHeight": 9,
-							"frameMax": -1,
-							"margin": 0,
-							"spacing": 0,
-							"anchorX": 0,
-							"anchorY": 0,
-							"fps": 10,
-							"updated": 1406817915033,
-							"atlas": ""
-						},
-						{
 							"__image": "2.png",
 							"id": 2,
 							"name": "loading.png",
@@ -110,6 +90,26 @@
 							"anchorY": 0,
 							"fps": 10,
 							"updated": 1406817917030,
+							"atlas": ""
+						},
+						{
+							"__image": "1.png",
+							"id": 1,
+							"name": "preload.png",
+							"path": "/loading.png",
+							"fullPath": "/Loading/preload.png",
+							"key": "/loading.png",
+							"width": 190,
+							"height": 9,
+							"frameWidth": 190,
+							"frameHeight": 9,
+							"frameMax": -1,
+							"margin": 0,
+							"spacing": 0,
+							"anchorX": 0,
+							"anchorY": 0,
+							"fps": 10,
+							"updated": 1406817915033,
 							"atlas": ""
 						}
 					],
