@@ -1171,10 +1171,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var name = path.split("/").pop();
 			var img = new Image();
 			var that = this;
+			var imgData = Array.prototype.slice.call(new Uint8Array(src));
+			
 			img.onload = function(){
-				
 				var data = {
-					data: Array.apply(null, new Uint8Array(src)),
+					data: imgData,
 					name: name,
 					path: path,
 					fullPath: path,
