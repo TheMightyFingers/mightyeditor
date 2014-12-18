@@ -3737,8 +3737,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				}
 				e.preventDefault();
 				e.stopPropagation();
-				
-				console.log(e.isPropagationStopped, e);
 				var d = ( (e.wheelDelta || -e.deltaY) > 0 ? 1 : -1);
 				var val = that.object[that.key] + d*that.step;
 				that.setValue(val);
@@ -11774,8 +11772,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var b = this.button= this.project.panel.addButton("Export", null, function(e){
 				that.showList();
 			});
+			var om = this.project.plugins.objectmanager;
 			
 			this.openGame = this.project.panel.addButton("Open Game", null, function(e){
+				om.sync();
 				that.openLink("_open_game");
 			});
 			
@@ -16862,12 +16862,14 @@ MT.extend("core.BasicPlugin")(
 				else{
 					that.addEmptyInput();
 				}
+				om.sync();
 			});
 			
-			
+			var om = this.project.plugins.objectmanager;
 			var cb = function(val){
 				that.change(val);
 				that.buildPropTree();
+				om.sync();
 			};
 			
 			var tmp = {};
@@ -17156,6 +17158,7 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			var map = this.project.plugins.mapeditor;
 			
+			
 			var updateData = function(obj){
 				map.updateScene(map.settings);
 				if(obj){
@@ -17186,7 +17189,6 @@ MT.extend("core.BasicPlugin")(
 					that.clear();
 				}
 			});
-			
 			
 			map.on("select", function(obj){
 				updateData(map.settings);
