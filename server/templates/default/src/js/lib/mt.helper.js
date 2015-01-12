@@ -856,7 +856,7 @@
 			this._mainTimer.add(this._ifps * this._lastFrame, this._complete, this);
 			this._mainTimer.start();
 			this.reset();
-			
+			this.resume();
 			for(i=0; i<this._subtweens.length; i++){
 				this._subtweens[i].start();
 			}
@@ -870,8 +870,10 @@
 		},
 		stop: function(reset){
 			
-			this._stop(reset);
-			
+			this.pause();
+			if(reset){
+				this.reset();
+			}
 			this.isLooping = false;
 			
 			return this;
@@ -886,7 +888,7 @@
 				}
 			}
 		},
-		pause: function(name){
+		pause: function(){
 			var i, j, tween;
 			this._mainTimer.pause();
 			for(i=0; i<this._tweens.length; i++){
@@ -896,7 +898,6 @@
 					tween = tween._chainedTweens[j];
 					tween.pause();
 				}
-				
 			}
 			for(i=0; i<this._subtweens.length; i++){
 				this._subtweens[i].pause();
@@ -904,7 +905,7 @@
 			
 			return this;
 		},
-		resume: function(name){
+		resume: function(){
 			var i, j, tween;
 			this._mainTimer.resume();
 			for(i=0; i<this._tweens.length; i++){

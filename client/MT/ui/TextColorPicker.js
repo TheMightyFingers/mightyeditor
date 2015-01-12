@@ -18,7 +18,7 @@ MT.extend("core.Emitter").extend("ui.Panel")(
 		MT.ui.Panel.call(this, "", ui.events);
 		this.ui = ui;
 		
-		
+		this.removeHeader();
 		
 		
 		

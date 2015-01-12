@@ -190,7 +190,10 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			origTab = that.value.el.getAttribute("tabindex");
 			that.value.el.setAttribute("tabindex", -1);
 			
-			that.node.nodeValue = "";
+			
+			that.value.style.visibility = "hidden";
+			
+			//that.node.nodeValue = "";
 			
 			that.value.el.offsetParent.appendChild(input);
 			input.focus();
@@ -210,11 +213,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.value.el.setAttribute("draggable", "false");
 		
 		//this.value.el.onfocus = enableInput;
-		this.value.el.onmouseup = function(){
-			if(that.needEnalbe){
-				enableInput();
-			}
-		}
 		this.enableInput = function(){
 			enableInput();
 		};
@@ -222,9 +220,18 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.value.el.onmousedown = function(e){
 			that.needEnalbe = true;
 			down = true;
-			//e.preventDefault();
+			e.preventDefault();
 			e.stopPropagation();
 		};
+		this.on("change", function(){
+			that.needEnalbe = false;
+		});
+		this.value.el.onmouseup = function(e){
+			if(that.needEnalbe == true){
+				enableInput();
+			}
+		};
+		
 		
 		this.value.el.onfocus = function(){
 			enableInput();
@@ -298,7 +305,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				var val = that.evalValue(input.value);
 				that.setValue(val, true);
 				if(hideval){
-					that.node.nodeValue = "";
+					that.value.style.visibility = "hidden";
+					//that.node.nodeValue = "";
 				}
 			}
 			
@@ -481,6 +489,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 			
 			
+			
 			this.needEnalbe = false;
 			var oldValue = this.object[this.key];
 			
@@ -512,9 +521,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			else{
 				this.node.nodeValue = val;
 			}
-			
+			this.value.style.visibility = "visible";
 			if(!silent){
-				this.emit("change", val, oldValue);
+				if(oldValue != val){
+					this.emit("change", val, oldValue);
+				}
 			}
 		},
 		
