@@ -99,6 +99,7 @@ MT(
 			if(!this.hasClass(cls)){
 				this.el.className = (this.el.className + " " + cls).trim();
 			}
+			return this;
 		},
 		
 		removeClass: function(cls){
@@ -125,6 +126,8 @@ MT(
 				}
 			}
 			this.el.className = c.join(" ");
+			
+			return this;
 		},
 		
 		hasClass: function(cls){

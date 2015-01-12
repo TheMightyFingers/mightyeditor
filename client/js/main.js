@@ -5,7 +5,24 @@
 	if(window.release){
 		hostInInterest = "mightyeditor.mightyfingers.com";
 	}
-	
+		// hack for miniser
+	if(typeof document != "undefined"){
+		var loading = document.createElement("div");
+		loading.className = "loading";
+		
+		window.showLoading = function(){
+			document.body.className = "login";
+			document.body.appendChild(loading);
+		};
+		
+		window.hideLoading = function(){
+			document.body.className = "";
+			if(loading.parentNode){
+				loading.parentNode.removeChild(loading);
+			}
+		};
+	}
+
 	if(window && window.location){
 		// -copy etc
 		if(window.location.hash.indexOf("-") > 0){
@@ -50,17 +67,13 @@
 		var socket = new MT.Socket();
 		var hasClosed = false;
 		var loaded = false;
-		
 		socket.on("core", function(type){
 			if(type == "open"){
 				if(hasClosed){
 					window.location.reload();
 					return;
 				}
-				if(img.parentNode){
-					img.parentNode.removeChild(img);
-				}
-				
+				window.hideLoading();
 				new MT.core.Project(new MT.ui.Controller(), socket);
 			}
 			if(type == "close"){
@@ -74,21 +87,11 @@
 		MT.require("core.Project");
 		MT.require("ui.Controller");
 		MT.require("Socket");
-
 		MT.onReady(main);
-		
-		var loaded = false;
-		// hack for minimiser
-		if(typeof document !== "undefined"){
-			img = new Image();
-			img.onload = function(){
-				if(!loaded){
-					document.body.appendChild(img);
-				}
-			};
-			img.src = "img/icons/loadingbar.gif";
-			img.className = "loadingImage";
+		if(window.showLoading){
+			window.showLoading();
 		}
 	};
+	
 	
 })(window);

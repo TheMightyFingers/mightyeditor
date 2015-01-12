@@ -55,6 +55,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.ui = ui;
 			this.panel = ui.createPanel("Objects");
 			this.panel.setFree();
+			this.panel.content.style.overflow = "initial";
 			
 			var that = this;
 			
@@ -640,7 +641,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}, this);
 			
 			this.tv.merge(data);
-			this.send("updateData", data);
+			this.update();
+			this.sync();
 		},
 		
 		_syncTm: 0,

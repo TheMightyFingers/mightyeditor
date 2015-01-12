@@ -24,7 +24,7 @@
 		return;
 	}
 	
-	MT.requireFile(cmPath+"/lib/codemirror.js",function(){
+	MT.requireFile(cmPath+"/lib/codemirror.js", function(){
 		cmPath += "/addon";
 		MT.requireFile(cmPath+"/comment/comment.js");
 		
@@ -207,7 +207,7 @@ MT.extend("core.BasicPlugin")(
 		
 		uploadFile: function(data){
 			var tmp = data.src;
-			data.src = Array.apply(null, new Uint8Array(data.src));
+			data.src = Array.prototype.slice.call(new Uint8Array(data.src));
 			this.send("uploadFile", data);
 		},
 		

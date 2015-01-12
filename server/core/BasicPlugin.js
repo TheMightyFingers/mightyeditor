@@ -5,9 +5,9 @@ MT(
 		this.channel = this.name = channel;
 
 		var that = this;
-		this._cb = function(action, data){
+		this._cb = function(action, data, cb){
 			if(typeof that["a_"+action] == "function"){
-				that["a_"+action](data);
+				that["a_"+action](data, cb);
 			}
 			else{
 				MT.log("unknown function", channel, action);

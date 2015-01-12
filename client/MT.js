@@ -3443,7 +3443,7 @@ MT.namespace('ui');
  */
 
 "use strict";
-
+MT.require("core.keys");
 MT.require("ui.ColorPicker");
 MT.extend("ui.DomElement").extend("core.Emitter")(
 	MT.ui.Input = function(ui, properties, obj){
@@ -3493,6 +3493,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		
 		this.label = new MT.ui.DomElement();
+		this.label.addClass("ui-input-label");
 		//this.label.setAbsolute();
 		
 		this.addChild(this.label).show();
@@ -3507,6 +3508,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.value.style.left = "initial";
 		this.value.style.right = 0;
 		this.value.addClass("ui-input-value");
+		
+		this.node = document.createTextNode("");
+		this.value.el.appendChild(this.node);
 		
 		if(this.type == "select"){
 			
@@ -3535,8 +3539,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 		}
 		
+		var input = this.input = this.inputBox = document.createElement("input");
 		
-		this.input = document.createElement("input");
 		
 		var that = this;
 		if(this.type == "upload"){
@@ -3567,6 +3571,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.value.style.left = "initial";
 		this.value.style.right = 0;
 		this.value.addClass("ui-input-value");
+		
 		if(this.type == "color"){
 			this.value.style.float = "right";
 			this.value.style.position = "relative";
@@ -3591,18 +3596,27 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.events = events;
 		
 		
-		var input = this.inputBox = document.createElement("input");
 		//input.style.position = "absolute";
 		input.type = "text";
+		if(this.type == "password"){
+			input.setAttribute("type", "password");
+		}
 		input.className = "ui-input";
 		input.isVisible = false;
 		input.style.textAlign = "right";
 		input.style.paddingRight = "10px";
 		
-		input.setAttribute("tabindex", parseInt(this.value.el.getAttribute("tabindex")) +1);
+		//input.setAttribute("tabindex", parseInt(this.value.el.getAttribute("tabindex")));
 		//input.setAttribute("tabstop", "false");
 		
+		var origTab = 0;
+		
 		var enableInput = function(){
+			if(!that.value.el.offsetParent){
+				return;
+			}
+			
+			
 			var w = that.value.el.parentNode.parentNode.offsetWidth*0.5;
 			input.style.width = w + "px";
 			
@@ -3613,8 +3627,10 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			input.isVisible = true;
 			input.width = that.value.offsetWidth + "px";
 			
+			origTab = that.value.el.getAttribute("tabindex");
+			that.value.el.setAttribute("tabindex", -1);
 			
-			that.value.el.innerHTML = "";
+			that.node.nodeValue = "";
 			
 			that.value.el.offsetParent.appendChild(input);
 			input.focus();
@@ -3643,11 +3659,16 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			enableInput();
 		};
 		var down = false;
-		this.value.el.onmousedown = function(){
+		this.value.el.onmousedown = function(e){
 			that.needEnalbe = true;
 			down = true;
+			//e.preventDefault();
+			e.stopPropagation();
 		};
 		
+		this.value.el.onfocus = function(){
+			enableInput();
+		};
 		
 		var startVal;
 		input.onfocus = function(){
@@ -3668,6 +3689,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			if(properties.options){
 				that.hideOptions();
 			}
+			that.value.el.setAttribute("tabindex", origTab);
+			//that.setTabIndex()
 		};
 		
 		input.onkeydown = function(e){
@@ -3691,7 +3714,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			var hideval = true;
 			
 			if(w == MT.keys.ESC){
-				
 				hideval = false;
 				input.value = that.object[that.key];
 				input.blur();
@@ -3716,7 +3738,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				var val = that.evalValue(input.value);
 				that.setValue(val, true);
 				if(hideval){
-					that.value.el.innerHTML = "";
+					that.node.nodeValue = "";
 				}
 			}
 			
@@ -3727,6 +3749,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			e.stopPropagation();
 		};
 		
+		input.onmousedown = function(e){
+			e.stopPropagation();
+		};
 		//this.keyup = events.on("keyup", 
 		
 		if(this.type == "number"){
@@ -3793,7 +3818,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			if(bounds.bottom > window.innerHeight){
 				this.selectInput.style.top = rect.top - bounds.height;
-				
 			}
 			
 			
@@ -3888,6 +3912,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 		},
 		
+		getValue: function(){
+			return this.object[this.key];
+		},
 		setValue: function(val, silent){
 			if(this.type == "upload"){
 				return;
@@ -3897,10 +3924,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			this.needEnalbe = false;
 			var oldValue = this.object[this.key];
 			
-			if(val == oldValue && !silent){
-				this.value.el.innerHTML = val;
-				return;
-			}
 			if(val < this.min){
 				val = this.min;
 			}
@@ -3912,14 +3935,24 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			this.object[this.key] = val;
 			
 			if(typeof val == "number"){
-				this.value.el.innerHTML = parseFloat(val.toFixed(4));
+				this.node.nodeValue = parseFloat(val.toFixed(4));
+			}
+			else if(this.type == "password"){
+				var stars = "";
+				for(var i=0; i<val.length; i++){
+					stars += "&#9679;";
+				}
+				
+				this.value.el.innerHTML = stars;
+			}
+			else if(this.type == "color"){
+				this.span.style.backgroundColor = val;
+				this.node.nodeValue = val;
 			}
 			else{
-				this.value.el.innerHTML = val;
+				this.node.nodeValue = val;
 			}
-			if(this.type == "color"){
-				this.span.style.backgroundColor = val;
-			}
+			
 			if(!silent){
 				this.emit("change", val, oldValue);
 			}
@@ -3943,9 +3976,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			return ret;
 		},
 		
-		setTabIndex: function(){
-			MT.ui.Input.tabindex += 1;
+		setTabIndex: function(val){
+			val = val || 1;
+			MT.ui.Input.tabindex += val;
 			this.value.el.setAttribute("tabindex", MT.ui.Input.tabindex);
+			this.input.setAttribute("tabindex", MT.ui.Input.tabindex);
 			this.value.el.setAttribute("href", "javascript:;");
 			//this.value.el.setAttribute("tabstop", "true");
 		}
@@ -4125,8 +4160,6 @@ MT(
 					tmp.anchorY = this.getInt(t, start.anchorY, end.anchorY, end.easings.anchorY);
 				}
 			}
-			
-			
 		},
    
 		getInt: function(t, a, b, easing){
@@ -4136,7 +4169,7 @@ MT(
 			}
 			
 			if(isNaN(a) || isNaN(b)){
-				throw("Error");
+				return;
 			}
 			
 			return (1 - tfin) * a + tfin * b;
@@ -5816,6 +5849,7 @@ MT(
 		
 	}
 );
+
 //MT/core/Selector.js
 MT.namespace('core');
 MT.extend("core.Emitter")(
@@ -5907,6 +5941,9 @@ MT.extend("core.Emitter")(
 );
 //MT/core/Helper.js
 MT.namespace('core');
+/* small useful functions collected over the net */
+"use strict";
+MT.namespace("core");
 MT(
 	MT.core.Helper = function(){
 
@@ -5941,9 +5978,109 @@ MT(
 				bufView[i] = str.charCodeAt(i);
 			}
 			return buf;
+		},
+		select: function(el) {
+			var range = document.createRange();
+			range.selectNodeContents(el);
+			var sel = window.getSelection();
+			sel.removeAllRanges();
+			sel.addRange(range);
+		},
+		clearSelection: function(){
+			window.getSelection().removeAllRanges();
+		},
+		uuid: function(){
+			var d = new Date().getTime();
+			var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+				var r = (d + Math.random()*16)%16 | 0;
+				d = Math.floor(d/16);
+				return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+			});
+			return uuid;
+		},
+		setCookie: function(cname, cvalue, exdays){
+			var expires = "";
+			if(exdays){
+				var d = new Date();
+				d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+				var expires = "expires="+d.toUTCString();
+			}
+			
+			document.cookie = cname + "=" + cvalue + "; " + expires;
+		},
+		getCookie: function(cname){
+			var name = cname + "=";
+			var ca = document.cookie.split(';');
+			for(var i=0; i<ca.length; i++) {
+				var c = ca[i];
+				while (c.charAt(0)==' ') c = c.substring(1);
+				if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+			}
+			return "";
 		}
 	}
 );
+(function(){
+/* A JavaScript implementation of the Secure Hash Algorithm, SHA-256
+ * Version 0.3 Copyright Angel Marin 2003-2004 - http://anmar.eu.org/
+ * Distributed under the BSD License
+ * Some bits taken from Paul Johnston's SHA-1 implementation
+ */
+var chrsz = 16; /* bits per input character. 8 - ASCII; 16 - Unicode */
+function safe_add (x, y) {
+	var lsw = (x & 0xFFFF) + (y & 0xFFFF);
+	var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+	return (msw << 16) | (lsw & 0xFFFF);
+}
+function S (X, n) {return ( X >>> n ) | (X << (32 - n));}
+function R (X, n) {return ( X >>> n );}
+function Ch(x, y, z) {return ((x & y) ^ ((~x) & z));}
+function Maj(x, y, z) {return ((x & y) ^ (x & z) ^ (y & z));}
+function Sigma0256(x) {return (S(x, 2) ^ S(x, 13) ^ S(x, 22));}
+function Sigma1256(x) {return (S(x, 6) ^ S(x, 11) ^ S(x, 25));}
+function Gamma0256(x) {return (S(x, 7) ^ S(x, 18) ^ R(x, 3));}
+function Gamma1256(x) {return (S(x, 17) ^ S(x, 19) ^ R(x, 10));}
+function core_sha256 (m, l) {
+		var K = new Array(0x428A2F98,0x71374491,0xB5C0FBCF,0xE9B5DBA5,0x3956C25B,0x59F111F1,0x923F82A4,0xAB1C5ED5,0xD807AA98,0x12835B01,0x243185BE,0x550C7DC3,0x72BE5D74,0x80DEB1FE,0x9BDC06A7,0xC19BF174,0xE49B69C1,0xEFBE4786,0xFC19DC6,0x240CA1CC,0x2DE92C6F,0x4A7484AA,0x5CB0A9DC,0x76F988DA,0x983E5152,0xA831C66D,0xB00327C8,0xBF597FC7,0xC6E00BF3,0xD5A79147,0x6CA6351,0x14292967,0x27B70A85,0x2E1B2138,0x4D2C6DFC,0x53380D13,0x650A7354,0x766A0ABB,0x81C2C92E,0x92722C85,0xA2BFE8A1,0xA81A664B,0xC24B8B70,0xC76C51A3,0xD192E819,0xD6990624,0xF40E3585,0x106AA070,0x19A4C116,0x1E376C08,0x2748774C,0x34B0BCB5,0x391C0CB3,0x4ED8AA4A,0x5B9CCA4F,0x682E6FF3,0x748F82EE,0x78A5636F,0x84C87814,0x8CC70208,0x90BEFFFA,0xA4506CEB,0xBEF9A3F7,0xC67178F2);
+		var HASH = new Array(0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A, 0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19);
+		var W = new Array(64);
+		var a, b, c, d, e, f, g, h, i, j;
+		var T1, T2;
+		/* append padding */
+		m[l >> 5] |= 0x80 << (24 - l % 32);
+		m[((l + 64 >> 9) << 4) + 15] = l;
+		for ( var i = 0; i<m.length; i+=16 ) {
+				a = HASH[0]; b = HASH[1]; c = HASH[2]; d = HASH[3]; e = HASH[4]; f = HASH[5]; g = HASH[6]; h = HASH[7];
+				for ( var j = 0; j<64; j++) {
+						if (j < 16) W[j] = m[j + i];
+						else W[j] = safe_add(safe_add(safe_add(Gamma1256(W[j - 2]), W[j - 7]), Gamma0256(W[j - 15])), W[j - 16]);
+						T1 = safe_add(safe_add(safe_add(safe_add(h, Sigma1256(e)), Ch(e, f, g)), K[j]), W[j]);
+						T2 = safe_add(Sigma0256(a), Maj(a, b, c));
+						h = g; g = f; f = e; e = safe_add(d, T1); d = c; c = b; b = a; a = safe_add(T1, T2);
+				}
+				HASH[0] = safe_add(a, HASH[0]); HASH[1] = safe_add(b, HASH[1]); HASH[2] = safe_add(c, HASH[2]); HASH[3] = safe_add(d, HASH[3]); HASH[4] = safe_add(e, HASH[4]); HASH[5] = safe_add(f, HASH[5]); HASH[6] = safe_add(g, HASH[6]); HASH[7] = safe_add(h, HASH[7]);
+		}
+		return HASH;
+}
+function str2binb (str) {
+	var bin = Array();
+	var mask = (1 << chrsz) - 1;
+	for(var i = 0; i < str.length * chrsz; i += chrsz)
+		bin[i>>5] |= (str.charCodeAt(i / chrsz) & mask) << (24 - i%32);
+	return bin;
+}
+function binb2hex (binarray) {
+	var hexcase = 0; /* hex output format. 0 - lowercase; 1 - uppercase */
+	var hex_tab = hexcase ? "0123456789ABCDEF" : "0123456789abcdef";
+	var str = "";
+	for (var i = 0; i < binarray.length * 4; i++) {
+		str += hex_tab.charAt((binarray[i>>2] >> ((3 - i%4)*8+4)) & 0xF) + hex_tab.charAt((binarray[i>>2] >> ((3 - i%4)*8)) & 0xF);
+	}
+	return str;
+}
+function hex_sha256(s){return binb2hex(core_sha256(str2binb(s),s.length * chrsz));}
+MT.core.Helper.sha256 = hex_sha256;
+})();
 //MT/ui/TreeView.js
 MT.namespace('ui');
 "use strict";
@@ -6396,7 +6533,7 @@ MT.extend("core.Emitter")(
 			dragHelper.style.pointerEvents = "none";
 			dragHelper.style.bottom = "auto";
 			dragHelper.style.opacity = 0.8;
-			dragHelper.style.border = "solid 1px #000";
+			dragHelper.style.border = "solid 2px #000";
 			dragHelper.style.zindex = 9999;
 			dragHelper.style.backgroundColor = "#f00";
 			
@@ -6443,9 +6580,9 @@ MT.extend("core.Emitter")(
 				
 				if(inFolder){
 					last.addChild(item, -1);
-					if(!last.visible){
-						item.hide();
-					}
+					//last.show();//){
+					//	item.hide();
+					//}
 				}
 				else{
 					if(bottom){
@@ -6473,7 +6610,7 @@ MT.extend("core.Emitter")(
 					return;
 				}
 				mdown = true;
-				scrollTop = that.tree.el.parentNode.scrollTop;
+				scrollTop = that.tree.el.scrollTop;
 				
 				
 				
@@ -6554,9 +6691,9 @@ MT.extend("core.Emitter")(
 				var bounds = dragHelper.bounds;
 				var top = ev.mouse.y;
 				
-				dragHelper.y = top  - bounds.height*0.5 - that.tree.bounds.top;
+				dragHelper.y = top  - bounds.height*0.5 - that.tree.bounds.top  + that.tree.el.scrollTop;
 				dragHelper.style.height = "auto";
-				
+				//dd.style.backgroundColor = "#f00";
 				
 				dd.style.display = "block";
 				dd.style.top = top - bounds.height*0.5 + "px";
@@ -6587,7 +6724,7 @@ MT.extend("core.Emitter")(
 						if(last == item){
 							return;
 						}
-						dragHelper.y = it.top - that.tree.bounds.top;
+						dragHelper.y = it.top - that.tree.bounds.top  + that.tree.el.scrollTop;
 						
 						inFolder = currItem.isFolder;
 						bottom = false;
@@ -6597,7 +6734,7 @@ MT.extend("core.Emitter")(
 							if(top - it.top < it.top + it.height - top){
 								inFolder = false;
 								
-								dragHelper.y = it.top - that.tree.bounds.top;
+								dragHelper.y = it.top - that.tree.bounds.top  + that.tree.el.scrollTop;
 								dragHelper.style.height = dragHelper.height*0.5;
 								dragHelper.y -= dragHelper.height*0.5;
 								
@@ -6608,7 +6745,7 @@ MT.extend("core.Emitter")(
 								inFolder = false;
 								bottom = true;
 								
-								dragHelper.y = it.top - that.tree.bounds.top + it.height;
+								dragHelper.y = it.top - that.tree.bounds.top + it.height  + that.tree.el.scrollTop;
 								dragHelper.style.height = dragHelper.height *0.5;
 								dragHelper.y -= dragHelper.height*0.5;
 								
@@ -6621,7 +6758,7 @@ MT.extend("core.Emitter")(
 						if(top - it.top < 10){
 							inFolder = false;
 							
-							dragHelper.y = it.top - that.tree.bounds.top;
+							dragHelper.y = it.top - that.tree.bounds.top  + that.tree.el.scrollTop;
 							dragHelper.style.height = dragHelper.height*0.5;
 							dragHelper.y -= dragHelper.height*0.5;
 						}
@@ -6631,7 +6768,7 @@ MT.extend("core.Emitter")(
 							inFolder = false;
 							bottom = true;
 							
-							dragHelper.y = it.top - that.tree.bounds.top + it.height;
+							dragHelper.y = it.top - that.tree.bounds.top + it.height  + that.tree.el.scrollTop;
 							dragHelper.style.height = dragHelper.height *0.5;
 							dragHelper.y -= dragHelper.height*0.5;
 						}
@@ -6645,7 +6782,7 @@ MT.extend("core.Emitter")(
 				if(that.items.length){
 					// most bottom
 					if(top > maxHeight){
-						dragHelper.y = maxHeight - that.tree.bounds.top + 5;
+						dragHelper.y = maxHeight - that.tree.bounds.top + 5  + that.tree.el.scrollTop;
 						dragHelper.style.height = dragHelper.height *0.5;
 						bottom = true;
 						inFolder = false;
@@ -6653,7 +6790,7 @@ MT.extend("core.Emitter")(
 					}
 					// most top
 					else if(top - that.tree.bounds.top < 20){
-						dragHelper.y = 0;
+						dragHelper.y = - dragHelper.height * 0.25;
 						dragHelper.style.height = dragHelper.height *0.5;
 						last = firstLevel[0];
 					}
@@ -6767,6 +6904,7 @@ MT.extend("core.Emitter")(
 		
 		merge: function(data, oldData){
 			this.data = data;
+			var scroll = this.tree.el.scrollTop;
 			this.tree.hide();
 			
 			var p = this.tree.el.parentNode;
@@ -6791,7 +6929,7 @@ MT.extend("core.Emitter")(
 			if(data.length !== 0){
 				this.tree.show();
 			}
-			
+			this.tree.el.scrollTop = scroll;
 		},
    
 		getOwnItem: function(it){
@@ -6972,6 +7110,7 @@ MT(
 			if(!this.hasClass(cls)){
 				this.el.className = (this.el.className + " " + cls).trim();
 			}
+			return this;
 		},
 		
 		removeClass: function(cls){
@@ -6998,6 +7137,8 @@ MT(
 				}
 			}
 			this.el.className = c.join(" ");
+			
+			return this;
 		},
 		
 		hasClass: function(cls){
@@ -7388,17 +7529,7 @@ MT.extend("ui.DomElement")(
 		}
 		
 		if(cb){
-			//if(events == null){
-				this.el.onclick = cb;
-			//}
-			/*else{
-				var that = this;
-				events.on("click", function(e){
-					if(e.target === that.el){
-						cb(e);
-					}
-				});
-			}*/
+			this.el.onclick = cb;
 		}
 		
 	},
@@ -7415,6 +7546,86 @@ MT.extend("ui.DomElement")(
 	}
 );
 
+//MT/core/BasicPlugin.js
+MT.namespace('core');
+MT(
+	MT.core.BasicPlugin = function(channel){
+		this.channel = channel;
+		this.dealys = {};
+	},
+	{
+		
+		initUI: function(ui){
+			this.ui = ui;
+		},
+		
+		initSocket: function(socket){
+			if(this.channel == void(0)){
+				return;
+			}
+			
+			if(this.socket == socket){
+				return;
+			}
+			
+			var that = this;
+			this.socket = socket;
+			
+			this.socket.on(this.channel, function(action, data){
+				var act = "a_"+action;
+				if(that[act]){
+					that[act](data);
+				}
+				else{
+					console.warn("unknown action", that.channel + "["+act+"]", data);
+				}
+			});
+		},
+		send: function(action, data, cb){
+			this.socket.send(this.channel, action, data, cb);
+		},
+		sendDelayed: function(action, data, timeout){
+			var that = this;
+			if(this.dealys[action]){
+				window.clearTimeout(this.dealys[action]);
+			}
+			
+			this.dealys[action] = window.setTimeout(function(){
+				that.send(action, data);
+				that.dealys[action] = 0;
+			}, timeout);
+			
+		}
+	}
+);
+
+//MT/ui/InputCollection.js
+MT.namespace('ui');
+MT(
+	MT.ui.InputCollection = function(ui, props, object){
+		this.object = object || {};
+		this.inputs = {};
+		for(var i in props){
+			if(!props[i].key){
+				props[i].key = i;
+			}
+			this.inputs[i] = new MT.ui.Input(ui, props[i], this.object);
+		}
+		
+	},
+	{
+		show: function(par){
+			for(var i in this.inputs){
+				this.inputs[i].show(par);
+			}
+		},
+		hide: function(){
+			for(var i in this.inputs){
+				this.inputs[i].hide();
+			}
+		}
+	}
+);
 //MT/core/Emitter.js
 MT.namespace('core');
 MT(
@@ -10975,57 +11186,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 
 	}
 );
-//MT/core/BasicPlugin.js
-MT.namespace('core');
-MT(
-	MT.core.BasicPlugin = function(channel){
-		this.channel = channel;
-		this.dealys = {};
-	},
-	{
-		
-		initUI: function(ui){
-			this.ui = ui;
-		},
-		
-		initSocket: function(socket){
-			if(this.channel == void(0)){
-				return;
-			}
-			
-			var that = this;
-			this.socket = socket;
-			
-			this.socket.on(this.channel, function(action, data){
-				var act = "a_"+action;
-				if(that[act]){
-					that[act](data);
-				}
-				else{
-					console.warn("unknown action", that.channel + "["+act+"]", data);
-				}
-			});
-		},
-   
-		send: function(action, data){
-			this.socket.send(this.channel, action, data);
-		},
-   
-		sendDelayed: function(action, data, timeout){
-			var that = this;
-			if(this.dealys[action]){
-				window.clearTimeout(this.dealys[action]);
-			}
-			
-			this.dealys[action] = window.setTimeout(function(){
-				that.send(action, data);
-				that.dealys[action] = 0;
-			}, timeout);
-			
-		}
-	}
-);
-
 //MT/plugins/Analytics.js
 MT.namespace('plugins');
 MT.extend("core.BasicPlugin")(
@@ -11528,7 +11688,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						}
 					}
 				}
-				else{
+				else if(e.target.tagName != "INPUT" && e.target.tagName != "TEXTAREA") {
 					var tools = Object.keys(that.tools);
 					if(e.which == "1".charCodeAt(0)){
 						that.setTool(that.tools[tools[0]]);
@@ -11956,7 +12116,7 @@ MT(
 			
 			this.clear();
 			
-			this.panel.title = obj.name;
+			//this.panel.title = obj.name;
 			
 			var that = this;
 			var cb = function(){
@@ -12074,7 +12234,7 @@ MT(
 			this.lastObj = obj;
 			
 			this.clear();
-			this.panel.title = obj.name;
+			//this.panel.title = obj.data.name;
 			var that = this;
 			var cb = function(){
 				that.project.om.update();
@@ -12375,6 +12535,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.ui = ui;
 			this.panel = ui.createPanel("Objects");
 			this.panel.setFree();
+			this.panel.content.style.overflow = "initial";
 			
 			var that = this;
 			
@@ -12960,7 +13121,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}, this);
 			
 			this.tv.merge(data);
-			this.send("updateData", data);
+			this.update();
+			this.sync();
 		},
 		
 		_syncTm: 0,
@@ -13261,10 +13423,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(!MT.core.Helper.isImage(data.path)){
 					return;
 				}
+				
+				if(!e){
+					that.createImage(data);
+					return;
+				}
+				
 				var item = that.tv.getOwnItem(e.target);
 				if(item && item.data.contents){
 					data.path = item.data.fullPath + data.path;
 				}
+				
 				that.createImage(data);
 			});
 			
@@ -13923,20 +14092,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.project.plugins.mapeditor.cleanImage(asset.id);
 			
 			var img = new Image();
-		
+			
+			
 			this.readFile(e.target.files[0], function(fr){
-				
+				var data = Array.prototype.slice.call(new Uint8Array(fr.result));
 				img.onload = function(){
-					asset.frameWidth = img.width;
-					asset.frameHeight= img.height;
+					//asset.frameWidth = img.width;
+					//asset.frameHeight= img.height;
 					asset.width = img.width;
 					asset.height = img.height;
-					
 					asset.updated = Date.now();
 					
 					that.guessFrameWidth(asset);
-				 
-					that.send("updateImage", {asset: asset, data: fr.result});
+					that.emit(MT.ASSET_FRAME_CHANGED, asset, that.activeFrame);
+					that.active.data = asset;
+					that.send("updateImage", {asset: asset, data: data});
 				};
 				img.src = that.toPng(fr.result);
 			});
@@ -14171,7 +14341,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			fr.onload = function(){
 				cb(fr);
 			};
-			fr.readAsBinaryString(file);
+			fr.readAsArrayBuffer(file);
 		},
 		
 		
@@ -14180,6 +14350,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				path = "/" + path;
 			}
 			var that = this;
+			this.project.readFile(file, path);
+			return;
 			this.readFile(file, function(fr){
 				that.createImage({
 					src: fr.result,
@@ -14201,6 +14373,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			img.onload = function(){
 				var data = {
 					data: imgData,
+					id: MT.core.Helper.uuid(),
 					name: name,
 					path: path,
 					fullPath: path,
@@ -14277,6 +14450,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 	}
 );
+
 //MT/ui/Panel.js
 MT.namespace('ui');
 "use strict";
@@ -14343,6 +14517,14 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		isPickable: true,
 		isCloaseable: false,
 		isRenamable: false,
+		
+		set title(val){
+			this.mainTab.title.innerHTML = val;
+		},
+		
+		get title(){
+			return this.mainTab.title.innerHTML;
+		},
 		
 		startRename: function(){
 			var el = this.mainTab;
@@ -14618,7 +14800,17 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			
 			this.content.fitIn();
-			this.content.y = this.header.el.offsetHeight;
+			var that = this;
+			var align = function(){
+				if(!that.header.el.offsetHeight){
+					window.setTimeout(align, 50);
+					return;
+				}
+				that.content.y = that.header.el.offsetHeight;
+			};
+			
+			align();
+			
 			return this;
 		},
 		
@@ -15271,6 +15463,12 @@ MT(
 			}, 0);
 			return cb;
 		},
+		once: function(type, cb, shift){
+			var that = this;
+			var fn;
+			fn =  function(e){cb(e);that.off(type, fn);};
+			this.on(type, fn, shift);
+		},
    
 		addEvent: function(i){
 			var cb = this._mk_cb(i);
@@ -15420,6 +15618,1171 @@ MT(
 	   
 	}
 );
+
+//MT/plugins/Auth.js
+MT.namespace('plugins');
+"use strict";
+MT.requireFile("MT/misc/validation.js");
+MT.require("ui.InputCollection");
+MT.extend("core.BasicPlugin")(
+	MT.plugins.Auth = function(project){
+		MT.core.BasicPlugin.call(this, "Auth");
+		this.project = project;
+		this.sessionCookie = "MightyEditor";
+		this.currency = "$";
+	},
+	{
+		_isLogged: false,
+		set isLogged(val){
+			this._isLogged = val;
+		},
+		
+		get isLogged(){
+			return this._isLogged;
+		},
+		
+		initSocket: function(socket, cb){
+			if(this.socket){
+				return;
+			}
+			MT.core.BasicPlugin.initSocket.call(this, socket);
+			this.onstart = cb;
+			this.checkSession();
+		},
+		
+		signOut: function(){
+			MT.core.Helper.setCookie(this.sessionCookie, "");
+			this.send("logout");
+			window.location = window.location.toString().split("#")[0];
+		},
+		
+		// server requests login to open a project
+		a_login: function(cmd){
+			this.showLogin(true);
+			var that = this;
+			this.onlogin = function(){
+				that.execCmd(cmd);
+			}
+		},
+		execCmd: function(cmd){
+			console.log("exec", cmd);
+			this.hideLoading();
+			this.hideLogin();
+			
+			if(typeof cmd == "function"){
+				cmd();
+				return;
+			}
+			
+			if(this[cmd.domain]){
+				this[cmd.domain][cmd.action].apply(this[cmd.domain], cmd.arguments);
+			}
+		},
+		a_permissionChanged: function(){
+			console.log("project permissions has changed");
+		},
+		standAlone: false,
+		showLogin: function(standAlone){
+			if(standAlone){
+				this.standAlone = true;
+				document.body.appendChild(this.loginContainer);
+				MT.ui.addClass(this.loginContainer, "standAlone");
+				MT.ui.addClass(document.body, "login");
+				
+				this.showLogo();
+				return;
+			}
+			else{
+				this.hideLogo();
+				MT.ui.removeClass(this.loginContainer, "standAlone");
+				MT.ui.removeClass(document.body, "login");
+			}
+			
+			if(this.loginContainer.parentNode == document.body){
+				document.body.removeChild(this.loginContainer);
+				if(this.mainButton){
+					this.mainButton.removeClass("active");
+				}
+				MT.core.Helper.clearSelection();
+				return;
+			}
+			document.body.appendChild(this.loginContainer);
+			
+			var that = this;
+			
+			this.ui.events.once("click", function(){
+				that.hideLogin();
+			});
+			
+			this.mainButton.addClass("active");
+			return;
+		},
+		hideLogin: function(){
+			if(this.loginContainer.parentNode){
+				this.loginContainer.parentNode.removeChild(this.loginContainer);
+				if(this.mainbutton){
+					this.mainButton.removeClass("active");
+				}
+				MT.core.Helper.clearSelection();
+			}
+		},
+		
+		showLogo: function(){
+			this.hideLogo();
+			this.loginContainer.firstChild.insertBefore(this.logo, this.loginContainer.firstChild.firstChild);
+		},
+		hideLogo: function(){
+			if(this.logo.parentNode){
+				this.logo.parentNode.removeChild(this.logo);
+			}
+		},
+		showProperties: function(){
+			console.log("show properties");
+			if(!this.propContainer){
+				this.buildPropContainer();
+			}
+			
+			if(this.propContainer.parentNode == document.body){
+				document.body.removeChild(this.propContainer);
+				this.mainButton.removeClass("active");
+				MT.core.Helper.clearSelection();
+				return;
+			}
+			var that = this;
+			this.mainButton.addClass("active");
+			this.ui.events.once("click", function(){
+				if(that.propContainer.parentNode){
+					that.propContainer.parentNode.removeChild(that.propContainer);
+					that.mainButton.removeClass("active");
+					MT.core.Helper.clearSelection();
+				}
+			});
+			
+			document.body.appendChild(this.propContainer);
+			if(this.logoutButton.el.parentNode){
+				this.logoutButton.el.parentNode.removeChild(this.logoutButton.el);
+			}
+			this.propContainer.appendChild(this.logoutButton.el);
+			
+		},
+		initUI: function(ui){
+			this.ui = ui;
+			var that = this;
+			var title = "My Mighty";
+			if(!this.isLogged){
+				title = "Sign In";
+			}
+			
+			this.mainButton = this.project.panel.addButton(title, "ui-login", function(e){
+				if(!that.isLogged){
+					that.showLogin();
+				}
+				else{
+					that.showProperties();
+				}
+			});
+		},
+		
+		buildPropContainer: function(){
+			var that = this;
+			this.propContainer = document.createElement("div");
+			this.propContainer.panel = this.panel;
+			this.propContainer.onclick = function(e){
+				e.stopPropagation();
+			};
+			
+			this.propContainer.className = "ui-mysettings";
+			// create panels
+			
+			this.propPanels = {};
+			
+			this.propPanels.share = this.ui.createPanel("Share Project");
+			this.propPanels.share.hide();
+			this.propPanels.share.fitIn();
+			
+			this.buildShareOptions(this.propPanels.share.content.el);
+			
+			this.propPanels.projects = this.ui.createPanel("My Projects");
+			this.propPanels.projects.fitIn();
+			
+			var list = this.project.makeProjectList(this.projects, function(id, cb){
+				that.deleteProject(id, cb);
+			});
+			
+			this.propPanels.projects.content.el.appendChild(list);
+			
+			this.propPanels.share.addJoint(this.propPanels.projects);
+			this.propPanels.share.show(this.propContainer);
+		},
+		
+		buildShareOptions: function(el){
+			var that = this;
+			this.send("getShareOptions", null, function(options){
+				console.log("share options", options);
+				if(options == void(0)){
+					that.buildCopyToAccessPermissions(el);
+					return;
+				}
+				
+				
+				that.userId = options.userId;
+				if(!options){
+					console.log("cannot get options", options);
+					return;
+				}
+				
+				
+				if(options.action == "goPro"){
+					that.buildGoPro(el);
+					return;
+				}
+				
+				if(options.action == "pending"){
+					that.buildPending(el);
+					return;
+				}
+				
+				that.shareOptions = options;
+				that.buildShareEmailOptions(el, that.shareOptions.emails);
+				that.buildAllowCopy(el);
+				that.buildProjectLink(el);
+			});
+		},
+		
+		
+		buildProjectLink: function(el){
+			var f = document.createElement("fieldset");
+			
+			var leg = document.createElement("legend");
+			leg.innerHTML = "Share by link";
+			f.appendChild(leg);
+			
+			var link = document.createElement("span");
+			link.appendChild(document.createTextNode(window.location));
+			link.className = "selectable";
+			
+			link.onclick = function(e){
+				MT.core.Helper.select(link);
+				e.stopPropagation();
+			};
+			var help = document.createElement("div");
+			help.className = "help-text";
+			help.appendChild(document.createTextNode("This option grants access to the project for everyone with the link"));
+			f.appendChild(help);
+			
+			var checkbox = document.createElement("input");
+			checkbox.setAttribute("type", "checkbox");
+			checkbox.className = "project-link";
+			f.appendChild(checkbox);
+			
+			if(this.shareOptions.shareWithLink){
+				checkbox.setAttribute("checked","checked");
+				f.appendChild(link);
+			}
+			var that = this;
+			checkbox.onchange = function(){
+				console.log(this, this.checked);
+				if(this.checked){
+					f.appendChild(link);
+					MT.core.Helper.select(link);
+				}
+				else if(link.parentNode){
+					f.removeChild(link);
+				}
+				that.shareOptions.shareWithLink = this.checked ? 1 : 0;
+				that.saveProjectShareOptions();
+			};
+			
+			el.appendChild(f);
+		},
+		
+		buildAllowCopy: function(el){
+			var f = document.createElement("fieldset");
+			
+			var leg = document.createElement("legend");
+			leg.innerHTML = "Allow copy";
+			f.appendChild(leg);
+			
+			var link = document.createElement("span");
+			link.appendChild(document.createTextNode(window.location.toString()+"-copy"));
+			
+			link.className = "selectable";
+			
+			link.onclick = function(e){
+				MT.core.Helper.select(link);
+				e.stopPropagation();
+			};
+			
+			var help = document.createElement("div");
+			help.className = "help-text";
+			help.appendChild(document.createTextNode("This option allows to make a copy of your project without affecting your project. e.g. if you are creating tutorial"));
+			f.appendChild(help);
+			
+			var checkbox = document.createElement("input");
+			checkbox.setAttribute("type", "checkbox");
+			
+			checkbox.className = "project-link";
+			f.appendChild(checkbox);
+			
+			if(this.shareOptions.allowCopy){
+				checkbox.setAttribute("checked","checked");
+				f.appendChild(link);
+			}
+			var that = this;
+			checkbox.onchange = function(){
+				console.log(this, this.checked);
+				if(this.checked){
+					f.appendChild(link);
+					MT.core.Helper.select(link);
+				}
+				else if(link.parentNode){
+					f.removeChild(link);
+				}
+				
+				that.shareOptions.allowCopy = this.checked ? 1 : 0;
+				that.saveProjectShareOptions();
+			};
+			
+			el.appendChild(f);
+		},
+		
+		buildShareEmailOptions: function(el, emails){
+			
+			var f = document.createElement("fieldset");
+			f.onclick = function(e){
+				e.preventDefault();
+				e.stopPropagation();
+				input.focus();
+			};
+			var leg = document.createElement("legend");
+			leg.innerHTML = "Share by email";
+			f.appendChild(leg);
+			
+			var help = document.createElement("div");
+			help.className = "help-text";
+			help.appendChild(document.createTextNode("Enter list of email addresses - to allow access to your project"));
+			f.appendChild(help);
+			
+			var list = document.createElement("span");
+			this.buildEmailList(list, emails);
+			f.appendChild(list);
+			
+			var input = document.createElement("input");
+			input.className = "share-email-input";
+			input.onmousedown = function(e){
+				e.stopPropagation();
+			};
+			var that = this;
+			input.onkeydown = function(e){
+				if(e.which == MT.keys.ENTER || e.which == MT.keys.TAB){
+					if(!input.value){
+						return;
+					}
+					that.addEmail(list, input.value);
+					input.value = "";
+					e.preventDefault();
+				}
+				else if(e.which == MT.keys.ESC){
+					input.value = "";
+				}
+			};
+			f.appendChild(input);
+			
+			/*
+			var button = new MT.ui.Button("Invite", "small", null, function(){
+				console.log("send Invitation");
+			});
+			f.appendChild(button.el);
+			*/
+			el.appendChild(f);
+		},
+		addEmail: function(list, email){
+			if(this.shareOptions.emails.indexOf(email) > -1){
+				return;
+			}
+			
+			list.appendChild(this.buildEmail(email));
+			this.shareOptions.emails.push(email);
+			this.saveProjectShareOptions();
+		},
+		removeEmail: function(el, email){
+			if(el.parentNode){
+				el.parentNode.removeChild(el);
+			}
+			var index = this.shareOptions.emails.indexOf(email);
+			this.shareOptions.emails.splice(index, 1);
+			this.saveProjectShareOptions();
+		},
+		saveProjectShareOptions: function(){
+			this.send("saveProjectShareOptions", this.shareOptions);
+		},
+		
+		buildEmailList: function(list, emails){
+			while(list.firstChild){
+				list.removeChild(list.firstChild);
+			}
+			for(var i=0; i<emails.length; i++){
+				list.appendChild(this.buildEmail(emails[i]));
+			}
+		},
+		
+		buildEmail: function(value){
+			var h = document.createElement("span");
+			var em = document.createElement("span");
+			var rem = document.createElement("span");
+			var that = this;
+			
+			h.appendChild(em);h.appendChild(rem);
+			h.className = "email-entered";
+			rem.className = "remove-button fa";
+			em.appendChild(document.createTextNode(value));
+			rem.innerHTML = "&#xf00d;";
+			rem.onclick = function(){
+				that.removeEmail(h, value);
+			};
+			var isValid = MT.misc.validation;
+			if(!isValid.email(value)){
+				h.className += " error"
+			}
+			
+			return h;
+		},
+		
+		
+		buildPending: function(el){
+			var pro = document.createElement("div");
+			pro.className = "goPro";
+			var top = document.createElement("div");
+			top.className = "top";
+			var title = document.createElement("div");
+			title.className = "title";
+			title.appendChild(document.createTextNode("Pending approval"));
+			
+			var desc = document.createElement("div");
+			desc.className = "description";
+			desc.appendChild(document.createTextNode("We haven't received payment approval from paypal. Please wait."));
+			
+			
+			top.appendChild(title);
+			top.appendChild(desc);
+			
+			pro.appendChild(top);
+			el.appendChild(pro);
+		},
+		
+		buildCopyToAccessPermissions: function(el){
+			var pro = document.createElement("div");
+			pro.className = "goPro";
+			var top = document.createElement("div");
+			top.className = "top";
+			var title = document.createElement("div");
+			title.className = "title";
+			title.appendChild(document.createTextNode("This is not your project"));
+			
+			var desc = document.createElement("div");
+			desc.className = "description";
+			desc.innerHTML = 'This project belongs to another user - or has been created by an annonymous user. '+
+														'You can <a href="'+window.location.origin+'/#'+this.project.id+'-copy" />clone</a> this project to make your own copy of this project.';
+			
+			
+			top.appendChild(title);
+			top.appendChild(desc);
+			
+			pro.appendChild(top);
+			el.appendChild(pro);
+		},
+		
+		buildGoPro: function(el){
+			var pro = document.createElement("div");
+			pro.className = "goPro";
+			
+			var top = document.createElement("div");
+			top.className = "top";
+			
+			var title = document.createElement("div");
+			title.className = "title";
+			title.appendChild(document.createTextNode("Get pro account"));
+			
+			
+			var desc = document.createElement("div");
+			desc.className = "description";
+			desc.appendChild(document.createTextNode("To share projects privately and to change other project properties you should get a subscription. "+
+													"If you choose to subscribe you will get all kinds of awesome goodies."));
+			
+			var middle = document.createElement("div");
+			middle.className = "middle";
+			
+			var basic = this.buildSide("Basic", ["Game Hosting", "Advanced Sharing", "Never Expiring Projects"], 5, "basic");
+			var advanced = this.buildSide("Advanced", ["All of the Basic", "Support", "Feature Request Priority"], 20, "advanced");
+			
+			top.appendChild(title);
+			top.appendChild(desc);
+			
+			middle.appendChild(basic);
+			middle.appendChild(advanced);
+			
+			
+			pro.appendChild(top);
+			pro.appendChild(middle);
+			el.appendChild(pro);
+		},
+		
+		buildSide: function(title, parts, price, extra){
+			var cont = document.createElement("div");
+			cont.className = "side "+extra;
+			var label = document.createElement("div");
+			label.className = "label";
+			label.appendChild(document.createTextNode(title));
+			cont.appendChild(label);
+			
+			
+			
+			var p;
+			for(var i=0; i<parts.length; i++){
+				p = document.createElement("div");
+				p.appendChild(document.createTextNode(parts[i]));
+				cont.appendChild(p);
+			}
+			
+			var pr = document.createElement("div");
+			pr.className = "price";
+			pr.appendChild(document.createTextNode(price+this.currency));
+			cont.appendChild(pr);
+			
+			var that = this;
+			/*var button = new MT.ui.Button("Subscribe", "subscribe "+extra, null, function(){
+				that.subscribe(price);
+			});*/
+			
+			//5$ - Y4PZXZMZFA8NQ
+			//test - WULA9EQ248NKS
+			var ppbutton = document.createElement("div");
+			ppbutton.className = "subscribe "+extra;
+			if(price == 5){
+				ppbutton.innerHTML = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">'+
+										'<input type="hidden" name="cmd" value="_s-xclick">'+
+										'<input type="hidden" name="hosted_button_id" value="Y4PZXZMZFA8NQ">'+
+										'<input type="hidden" name="custom" value="'+this.userId+'">'+
+										'<input type="hidden" name="notify_url" value="'+document.location.origin+'/paypal">'+
+										'<input type="hidden" name="return" value="'+document.location.origin + '/return/paypal/'+this.userId+'/'+this.project.id+'">'+
+										'<input type="hidden" name="invoice_id" value="'+Date.now()+'">'+
+										'<input type="hidden" name="charset" value="utf-8">'+
+										'<input type="image" src="http://mightyfingers.com/wp-content/uploads/2014/12/button_paypal.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">'+
+									'</form>';
+			}
+			else{
+				ppbutton.innerHTML = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">'+
+										'<input type="hidden" name="cmd" value="_s-xclick">'+
+										'<input type="hidden" name="hosted_button_id" value="Y433GXUFDCNNE">'+
+										'<input type="hidden" name="custom" value="'+this.userId+'">'+
+										'<input type="hidden" name="notify_url" value="'+document.location.origin+'/paypal">'+
+										'<input type="hidden" name="return" value="'+document.location.origin + '/return/paypal/'+this.userId+'/'+this.project.id+'">'+
+										'<input type="hidden" name="invoice_id" value="'+Date.now()+'">'+
+										'<input type="hidden" name="charset" value="utf-8">'+
+										'<input type="image" src="http://mightyfingers.com/wp-content/uploads/2014/12/button_paypal_2.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">'+
+									'</form>';
+			}
+			
+			cont.appendChild(ppbutton);
+			
+			//cont.appendChild(button.el);
+			
+			return cont;
+		},
+		
+		
+		deleteProject: function(id, cb){
+			var that = this;
+			var pop = new MT.ui.Popup("Delete Project?", "Do you really want to delete project?");
+			
+			pop.addButton("no", function(){
+				pop.hide();
+				cb(false);
+			});
+			
+			pop.addButton("yes", function(){
+				that.send("deleteProject", id);
+				pop.hide();
+				cb(true);
+			});
+			
+			pop.showClose();
+		},
+		
+		installUI: function(ui, pop){
+			if(this.panel){
+				return;
+			}
+			
+			this.ui = ui;
+			this.loginContainer = document.createElement("div");
+			this.logo = document.createElement("div");
+			this.logo.className = "login logo";
+			
+			this.loginContainer.onclick = function(e){
+				e.stopPropagation();
+			};
+			
+			this.loginContainer.className = "ui-mysettings";
+			var that = this;
+			
+			var loginPanel = this.panel = this.ui.createPanel("Sign in");
+			this.loginContainer.panel = this.panel;
+			
+			loginPanel.fitIn();
+			loginPanel.removeBorder();
+			loginPanel.hide();
+			loginPanel.content.style.overflow = "hidden";
+			loginPanel.content.style.perspective = "1000";
+			
+			
+			this.signUpEl = new MT.ui.DomElement("div");
+			this.signUpEl.addClass("signup");
+			loginPanel.content.el.appendChild(this.loginContainer);
+			this.loginContainer.appendChild(this.signUpEl.el);
+			
+			var form = document.createElement("form");
+			form.onsubmit = function(e){
+				e.preventDefault();
+				e.stopPropagation();
+				return false;
+			};
+
+			var prop = {
+				email: "email",
+				password: "password",
+				passwordR: "password"
+			};
+			
+			this.signUpEl.el.appendChild(form);
+			
+			var input = {};
+			input.email = new MT.ui.Input(this.ui, {key: "email", type: "text"}, prop);
+			input.email.show(form);
+			input.email.input.id = "email";
+			input.email.input.name = "email";
+			
+			input.password = new MT.ui.Input(this.ui, {key: "password", type: "password"}, prop);
+			input.password.show(form);
+			
+			input.password.value.el.innerHTML = "Password";
+			
+			
+			input.passwordR = new MT.ui.Input(this.ui, {key: "passwordR", type: "password"}, prop);
+			input.passwordR.value.el.innerHTML = "Repeat Password";
+			
+			loginPanel.on("show", function(){
+				input.email.enableInput();
+			});
+			
+			var isRegProcess = false;
+			var isResetInProgress = false;
+			
+			var submit = function(){
+				if(isResetInProgress){
+					that.resetPassword(input);
+					return;
+				}
+				that.signIn(input, isRegProcess);
+			};
+			
+			
+			this.loginButton = new MT.ui.Button("Sign in", "login.mainbutton", null, submit);
+			this.loginButton.show(form);
+			
+			input.password.input.onkeydown = input.passwordR.input.onkeydown = function(e){
+				if(e.which == MT.keys.ENTER){
+					submit();
+				}
+			};
+			
+			
+			var flipped = false;
+			
+			this.flipBack = function(e, forceSignIn){
+				that.signUpEl.removeClass("flipBack").addClass("flip");
+				window.setTimeout(function(){
+					that.signUpEl.removeClass("flip").addClass("flipBack");
+					
+					if(forceSignIn && !isResetInProgress){
+						return;
+					}
+					
+					
+					if(isResetInProgress){
+						that.loginButton.text = "Sign in";
+						that.registerButton.text = "Need an account?";
+						
+						input.email.el.parentNode.insertBefore(input.password.el, input.email.el.nextSibling);
+						isResetInProgress = false;
+						isRegProcess = false;
+					}
+					else{
+						
+						
+						if(!isRegProcess){
+							input.password.el.parentNode.insertBefore(input.passwordR.el, input.password.el.nextSibling);
+							//input.passwordR.e(that.signUpEl.el);
+							that.registerButton.text = "Back";
+							that.loginButton.text = "Register";
+							
+							isRegProcess = true;
+						}
+						else{
+							input.passwordR.hide();
+							that.registerButton.text = "Need an account?";
+							that.loginButton.text = "Sign in";
+							
+							isRegProcess = false;
+						}
+					}
+					
+					window.setTimeout(function(){
+						that.signUpEl.removeClass("flipBack");
+					}, 500);
+					
+				}, 250);
+				
+				input.email.value.removeClass("error");
+				input.password.value.removeClass("error");
+			};
+			
+			this.registerButton = new MT.ui.Button("Need an account?", "register", null, this.flipBack);
+			this.registerButton.show(form);
+			
+			
+			this.forgotPassButton = new MT.ui.Button("Forgot password?", "resetPassword", null, function(){
+				that.signUpEl.removeClass("flipBack").addClass("flip");
+				window.setTimeout(function(){
+					that.signUpEl.removeClass("flip").addClass("flipBack");
+					
+					if(!isResetInProgress){
+						input.password.hide();
+						input.passwordR.hide();
+						
+						that.registerButton.text = "Back";
+						that.loginButton.text = "Reset";
+						
+						isResetInProgress = true;
+					}
+					else{
+						input.email.el.parentNode.insertBefore(input.password.el, input.email.el.nextSibling);
+						that.loginButton.text = "Sign in";
+						isResetInProgress = false;
+					}
+					
+					window.setTimeout(function(){
+						that.signUpEl.removeClass("flipBack");
+					}, 500);
+					
+				}, 250);
+				
+				input.email.value.removeClass("error");
+				input.password.value.removeClass("error");
+			});
+			
+			this.forgotPassButton.show(form);
+			
+			
+			
+			this.logoutButton = new MT.ui.Button("Sign out", "login.mainbutton.logout", null, function(){
+				that.signOut(input);
+			});
+			
+			this.errorMessage = document.createElement("div");
+			this.errorMessage.className = "errorMessage";
+			this.signUpEl.el.appendChild(this.errorMessage);
+			
+			
+			this.social = new MT.ui.DomElement("div");
+			this.social.addClass("social");
+			
+			var that = this;
+			
+			this.send("getSocialConfig", null, function(config){
+				that.config = config;
+				for(var i in config){
+					that[i+"Button"] = that.addSocialButton(config[i], that.social.el);
+				}
+			});
+			
+			this.fPass = ForgotPassword(this.signUpEl.el);
+			
+			this.loginContainer.appendChild(this.social.el);
+		},
+		setError: function(msg){
+			if(!this.errorMessage){
+				return;
+			}
+			this.error(msg);
+		},
+		addSocialButton: function(config, parent){
+			
+			var url = this.buildUrl(config);
+			var that = this;
+			var b = new MT.ui.Button(config.label, "login."+config.name, null, function(){
+				var conf = config;
+				var w = conf.width;
+				var h = conf.height;
+				var l = (window.innerWidth - w)*0.5;
+				var t = (window.innerHeight - h)*0.5;
+				window.auth = function(data){
+					that.send("checkSession", data);
+					window.auth = null;
+					that.showLoading();
+				};
+				var win = window.open(url, "signIn", "width=" + w + ", height=" + h + ", left=" + l + ", top=" + t);
+				win.focus();
+			});
+			parent.appendChild(b.el);
+			return b;
+		},
+		
+		buildUrl: function(conf){
+			var url = conf.url + "?";
+			for(var i in conf.params){
+				url += i + "=" + conf.params[i]+"&";
+			}
+			url = url.substring(0, url.length - 1);
+			return url;
+		},
+		
+		hideContainer: function(){
+			
+			if( this.loginContainer && this.loginContainer.parentNode){
+				this.loginContainer.parentNode.removeChild(this.loginContainer);
+			}
+		},
+		
+		showLoading: function(){
+			window.showLoading();
+		},
+		hideLoading: function(){
+			window.hideLoading();
+		},
+		
+		show: function(panel, show){
+			panel.addJoint(this.panel);
+			if(show){
+				loginPanel.show();
+			}
+		},
+		
+		showMainScreen: function(){
+			// is visible?
+			if(this.loginContainer.parentNode){
+				return;
+			}
+			if(this.standAlone){
+				document.body.appendChild(this.loginContainer);
+			}
+			else{
+				this.panel.content.el.appendChild(this.loginContainer);
+			}
+		},
+		
+		error: function(msg){
+			var par = this.errorMessage.parentNode;
+			this.errorMessage.setAttribute("data-msg", msg);
+			this.errorMessage.className = "errorMessage";
+			
+			par.removeChild(this.errorMessage);
+			par.appendChild(this.errorMessage);
+			
+			var that = this;
+			window.setTimeout(function(){
+				that.errorMessage.className += " active";
+			}, 1000);
+		},
+		
+		signIn: function(input, signUp){
+			var email = input.email.getValue();
+			var pass = input.password.getValue();
+			var passR = input.passwordR.getValue();
+			
+			input.email.value.removeClass("error");
+			input.password.value.removeClass("error");
+			
+			var isValid = MT.misc.validation;
+			
+			var errors = false;
+			if(!isValid.email(email)){
+				input.email.value.addClass("error");
+				input.email.value.el.setAttribute("data-error", "check email");
+				errors = true;
+				
+				if(!input.email.validateFirstTime){
+					input.email.validateFirstTime = true;
+					input.email.on("change", function(val){
+						if(isValid.email(val)){
+							input.email.value.removeClass("error");
+						}
+						else{
+							input.email.value.addClass("error");
+						}
+					});
+				}
+			}
+			
+			if(!isValid.password(pass)){
+				input.password.value.addClass("error");
+				input.password.value.el.setAttribute("data-error", "at least one number and at least six characters");
+				errors = true;
+				if(!input.password.validateFirstTime){
+					input.password.validateFirstTime = true;
+					input.password.on("change", function(val){
+						if(isValid.password(val)){
+							input.password.value.removeClass("error");
+						}
+						else{
+							input.password.value.addClass("error");
+						}
+					});
+				}
+			}
+			
+			if(signUp){
+				if(pass !== passR){
+					input.passwordR.value.addClass("error");
+					input.passwordR.value.el.setAttribute("data-error", "passwords don't match");
+					errors = true;
+				}
+			}
+			
+			if(errors){
+				return;
+			}
+			this.errorMessage.className = "errorMessage";
+			this.showLoading();
+			
+			// no ssl - better than nothing
+			pass = MT.core.Helper.sha256(pass);
+			
+			var that = this;
+			this.send("register", {email: email, password: pass, signup: signUp}, function(isOK){
+				that.hideLoading();
+				if(!isOK){
+					that.showMainScreen();
+					that.error("Sign in failed!");
+				}
+				console.log(isOK ? "register success" : "register failed");
+			});
+			
+		},
+		
+		resetPassword: function(input){
+			var that = this;
+			
+			var email = input.email.getValue();
+			var isValid = MT.misc.validation;
+			
+			if(!isValid.email(email)){
+				input.email.value.addClass("error");
+				input.email.value.el.setAttribute("data-error", "check email");
+				
+				if(!input.email.validateFirstTime){
+					input.email.validateFirstTime = true;
+					input.email.on("change", function(val){
+						if(isValid.email(val)){
+							input.email.value.removeClass("error");
+						}
+						else{
+							input.email.value.addClass("error");
+						}
+					});
+				}
+				return;
+			}
+			
+			this.send("resetPassword", email, function(err){
+				that.hideLoading();
+				if(err){
+					that.showMainScreen();
+					that.error("Unknown email address");
+				}
+				else{
+					that.error("Instructions has sent to the provided email!");
+					window.setTimeout(function(){
+						that.flipBack(null, true);
+					}, 2000);
+				}
+				
+			});
+			
+		},
+		
+		checkSession: function(){
+			var sessionId = MT.core.Helper.getCookie(this.sessionCookie);
+			if(sessionId){
+				this.send("checkSession", sessionId);
+				return;
+			}
+			else{
+				if(this.onstart){
+					this.onstart();
+					this.onstart = null;
+				}
+				this.send("checkSession", sessionId);
+			}
+		},
+		
+		a_sessionId: function(id){
+			console.log("received session ID", id);
+			
+			MT.core.Helper.setCookie(this.sessionCookie, id);
+			
+			if(this.onlogin){
+				this.onlogin();
+				this.onlogin = null;
+			}
+		},
+		
+		a_needLogin: function(msg){
+			if(this.isLogged){
+				this.project.a_goToHome();
+			}
+			if(this.onstart){
+				this.onstart();
+				this.onstart = null;
+			}
+			else{
+				this.showLogin(true);
+				if(msg){
+					this.setError(msg);
+				}
+			}
+		},
+		
+		a_loggedIn: function(data){
+			var projects = this.projects = data.projects;
+			this.userLevel = data.level;
+			this.userId = data.userId;
+			this.isLogged = true;
+			
+			if(!this.project.isReady){
+				if(this.onstart){
+					this.onstart();
+					this.onstart = null;
+				}
+				this.standAlone = false;
+				return;
+			}
+			console.log("LoggedIn: projects", projects);
+			// first login call
+			if(this.onstart){
+				this.onstart();
+				this.onstart = null;
+			}
+			
+			if(!this.panel){
+				return;
+			}
+			
+			
+			this.hideLoading();
+			this.hideContainer();
+			this.panel.title = "My Projects";
+			this.panel.show();
+			
+			if(projects && projects.length > 0){
+				var that = this;
+				var list = this.project.makeProjectList(projects, function(id, cb){
+					that.deleteProject(id, cb);
+				});
+				
+				list.className += " myprojects";
+				
+				this.panel.content.el.appendChild(list);
+				if(!this.project.id){
+					this.panel.show();
+				}
+			}
+			
+			if(this.isLogged && this.userLevel == 0){
+				this.subscribe = this.ui.createPanel("Go Pro");
+				this.subscribe.mainTab.addClass("goprotab");
+				this.subscribe.mainTab
+				this.subscribe.hide();
+				this.subscribe.fitIn();
+				this.subscribe.removeBorder();
+				this.panel.addJoint(this.subscribe);
+				this.subscribe.show();
+				this.buildGoPro(this.subscribe.content.el);
+			}
+			this.panel.content.el.appendChild(this.logoutButton.el);
+		}
+	}
+);
+
+
+var ForgotPassword = function(parent){
+	
+	
+};
+ForgotPassword.prototype = {
+	
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //MT/plugins/MovieMaker.js
 MT.namespace('plugins');
@@ -17302,7 +18665,7 @@ MT.namespace('plugins');
 		return;
 	}
 	
-	MT.requireFile(cmPath+"/lib/codemirror.js",function(){
+	MT.requireFile(cmPath+"/lib/codemirror.js", function(){
 		cmPath += "/addon";
 		MT.requireFile(cmPath+"/comment/comment.js");
 		
@@ -18517,7 +19880,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			var button = this.buttons[title] = document.createElement("div");
 			button.className = "ui-popup-button";
 			button.innerHTML = title;
-			button.onclick = cb;
+			button.onclick = function(e){
+				cb(e);
+				e.stopPropagation();
+			};
 			
 			this.buttonBar.appendChild(button);
 			
@@ -18593,73 +19959,10 @@ MT.require("plugins.Analytics");
 
 //MT/Socket.js
 MT.namespace('');
-/* UTF-8 array to DOMString and vice versa */
-
-function UTF8ArrToStr (buff) {
-  return String.fromCharCode.apply(null, new Uint8Array(buff));
-}
-
-function strToUTF8Arr (sDOMStr) {
-
-  var aBytes, nChr, nStrLen = sDOMStr.length, nArrLen = 0;
-
-  /* mapping... */
-
-  for (var nMapIdx = 0; nMapIdx < nStrLen; nMapIdx++) {
-    nChr = sDOMStr.charCodeAt(nMapIdx);
-    nArrLen += nChr < 0x80 ? 1 : nChr < 0x800 ? 2 : nChr < 0x10000 ? 3 : nChr < 0x200000 ? 4 : nChr < 0x4000000 ? 5 : 6;
-  }
-
-  aBytes = new Uint8Array(nArrLen);
-
-  /* transcription... */
-
-  for (var nIdx = 0, nChrIdx = 0; nIdx < nArrLen; nChrIdx++) {
-    nChr = sDOMStr.charCodeAt(nChrIdx);
-    if (nChr < 128) {
-      /* one byte */
-      aBytes[nIdx++] = nChr;
-    } else if (nChr < 0x800) {
-      /* two bytes */
-      aBytes[nIdx++] = 192 + (nChr >>> 6);
-      aBytes[nIdx++] = 128 + (nChr & 63);
-    } else if (nChr < 0x10000) {
-      /* three bytes */
-      aBytes[nIdx++] = 224 + (nChr >>> 12);
-      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
-      aBytes[nIdx++] = 128 + (nChr & 63);
-    } else if (nChr < 0x200000) {
-      /* four bytes */
-      aBytes[nIdx++] = 240 + (nChr >>> 18);
-      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
-      aBytes[nIdx++] = 128 + (nChr & 63);
-    } else if (nChr < 0x4000000) {
-      /* five bytes */
-      aBytes[nIdx++] = 248 + (nChr >>> 24);
-      aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
-      aBytes[nIdx++] = 128 + (nChr & 63);
-    } else /* if (nChr <= 0x7fffffff) */ {
-      /* six bytes */
-      aBytes[nIdx++] = 252 + (nChr >>> 30);
-      aBytes[nIdx++] = 128 + (nChr >>> 24 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
-      aBytes[nIdx++] = 128 + (nChr & 63);
-    }
-  }
-
-  return aBytes;
-
-}
-
-
+"use strict";
 MT.extend("core.Emitter")(
 	MT.Socket = function(url, autoconnect){
-		this.binary = true;
+		this.binary = false;
 		if(url){
 			this.url = url;
 		}
@@ -18672,14 +19975,13 @@ MT.extend("core.Emitter")(
 		}
 		
 		this.callbacks = {};
-
-		
 		this._toSend = [];
 		
 		this.sendObject = {
 			channel: "",
 			action: "",
-			data: null
+			data: null,
+			__cb: null
 		};
 	},
 	{
@@ -18710,6 +20012,11 @@ MT.extend("core.Emitter")(
 					str = event.data;
 				}
 				var data = JSON.parse(str);
+				if(data.action === "___"){
+					MT.Socket.__callbacks[data.__cb](data.data);
+					delete MT.Socket.__callbacks[data.__cb];
+					return;
+				}
 				that.emit(data.channel, data.action, data.data);
 			};
 			
@@ -18728,14 +20035,18 @@ MT.extend("core.Emitter")(
 			return;
 		},
 		
-		send: function(channel, action, data){
+		send: function(channel, action, data, cb){
 			if(this.ws.readyState == this.ws.OPEN){
 				this.sendObject.channel = channel;
 				this.sendObject.action = action;
 				this.sendObject.data = data;
+				this.sendObject.__cb = void(0);
+				
+				if(cb){
+					this.sendObject.__cb = MT.Socket.genCallback(cb);
+				}
 				
 				var str = JSON.stringify(this.sendObject);
-				
 				if(this.binary){
 					this.ws.send(strToUTF8Arr(str));
 				}
@@ -18778,8 +20089,14 @@ MT.extend("core.Emitter")(
 			for(var i=0; i<cbs.length; i++){
 				cbs[i](action, data);
 			}
+		},
+		//static
+		genCallback: function(cb){
+			var self = MT.Socket;
+			self.nextCB++;
+			self.__callbacks[self.nextCB] = cb;
+			return self.nextCB;
 		}
-		
 	}
 );
 
@@ -18789,6 +20106,75 @@ MT.Socket.TYPE = {
 	message: "message",
 	error: "error"
 };
+
+MT.Socket.__callbacks = {};
+MT.Socket.nextCB = 0;
+
+
+/* UTF-8 array to DOMString and vice versa */
+
+function UTF8ArrToStr (buff) {
+	return String.fromCharCode.apply(null, new Uint8Array(buff));
+}
+
+function strToUTF8Arr (sDOMStr) {
+
+	var aBytes, nChr, nStrLen = sDOMStr.length, nArrLen = 0;
+
+	/* mapping... */
+
+	for (var nMapIdx = 0; nMapIdx < nStrLen; nMapIdx++) {
+		nChr = sDOMStr.charCodeAt(nMapIdx);
+		nArrLen += nChr < 0x80 ? 1 : nChr < 0x800 ? 2 : nChr < 0x10000 ? 3 : nChr < 0x200000 ? 4 : nChr < 0x4000000 ? 5 : 6;
+	}
+
+	aBytes = new Uint8Array(nArrLen);
+
+	/* transcription... */
+
+	for (var nIdx = 0, nChrIdx = 0; nIdx < nArrLen; nChrIdx++) {
+		nChr = sDOMStr.charCodeAt(nChrIdx);
+		if (nChr < 128) {
+		/* one byte */
+		aBytes[nIdx++] = nChr;
+		} else if (nChr < 0x800) {
+		/* two bytes */
+		aBytes[nIdx++] = 192 + (nChr >>> 6);
+		aBytes[nIdx++] = 128 + (nChr & 63);
+		} else if (nChr < 0x10000) {
+		/* three bytes */
+		aBytes[nIdx++] = 224 + (nChr >>> 12);
+		aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+		aBytes[nIdx++] = 128 + (nChr & 63);
+		} else if (nChr < 0x200000) {
+		/* four bytes */
+		aBytes[nIdx++] = 240 + (nChr >>> 18);
+		aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+		aBytes[nIdx++] = 128 + (nChr & 63);
+		} else if (nChr < 0x4000000) {
+		/* five bytes */
+		aBytes[nIdx++] = 248 + (nChr >>> 24);
+		aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+		aBytes[nIdx++] = 128 + (nChr & 63);
+		} else /* if (nChr <= 0x7fffffff) */ {
+		/* six bytes */
+		aBytes[nIdx++] = 252 + (nChr >>> 30);
+		aBytes[nIdx++] = 128 + (nChr >>> 24 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+		aBytes[nIdx++] = 128 + (nChr & 63);
+		}
+	}
+
+	return aBytes;
+
+}
+
+
 //MT/ui/Controller.js
 MT.namespace('ui');
 /*
@@ -20432,6 +21818,7 @@ MT.require("plugins.UserData");
 MT.require("plugins.TooltipManager");
 MT.require("plugins.Notification");
 MT.require("plugins.MovieMaker");
+MT.require("plugins.Auth");
 
 MT.DROP = "drop";
 
@@ -20439,7 +21826,7 @@ MT.DROP = "drop";
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.core.Project = function(ui, socket){
 		MT.core.BasicPlugin.call(this, "Project");
-		
+		this.isReady = false;
 		this.data = {
 			backgroundColor: "#666666",
 			sourceEditor:{
@@ -20460,7 +21847,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"Export",
 			
 			"UndoRedo",
-			"DataLink",
+			//"DataLink",
 			"Analytics",
 			"HelpAndSupport",
 			"FontManager",
@@ -20471,7 +21858,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"UserData",
 			"TooltipManager",
 			"Notification",
-			"MovieMaker"
+			"MovieMaker",
+			"Auth",
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
@@ -20486,11 +21874,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.ui = ui;
 		
 		this.sub = "";
+		this.prefix = "p";
 		if(window.location.hostname.substring(0, 3) == "us."){
 			this.sub = "us";
+			this.prefix = "u";
 		}
-		this.initSocket(socket);
 		
+		this.initSocket(socket);
+		this.ui.events.on("hashchange", function(){
+			console.log("hash changed", "reload?");
+			window.location.reload();
+		});
 	},
 	{
 		a_maintenance: function(data){
@@ -20516,6 +21910,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}, 1000);
 		},
 		
+		a_purchaseComplete: function(){
+			var pop = new MT.ui.Popup("Payment received",
+									"Thank you for supporting MightyEditor!<br />Now you can change project access options.<br />"+
+									"If you don't own the current project (e.g. you have created it without being logged in) you have to make a copy of this project.<br /><br />"+
+									"Reload MightyEditor to make your subscription effective.");
+			pop.showClose();
+			pop.addButton("Reload Now", function(){
+				window.location.reload();
+			});
+			pop.addButton("Later", function(){
+				pop.hide(true);
+			});
+		},
+		
+		a_message: function(msg){
+			throw new Error(msg);
+		},
+		
 		a_selectProject: function(info){
 			this.id = info.id;
 			window.location.hash = info.id;
@@ -20538,7 +21950,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		setUpData: function(){
 			document.body.style.backgroundColor = this.data.backgroundColor;
-			
 			this.emit("updateData", this.data);
 		},
 		
@@ -20599,6 +22010,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.data[i] = data[i];
 			}
 		},
+		
+		a_goToHome: function(){
+			window.location = window.location.toString().split("#").shift();
+		},
+		
 		copyPopup: null,
 		a_copyInProgress: function(){
 			var content = "System is being maintained. Will be back in ";
@@ -20607,25 +22023,26 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			pop.showClose();
 			this.copyPopup = pop;
 		},
-		// user get here without hash
+		
+		reload: function(){
+			window.location.reload();
+		},
+		// user gets here without hash
 		newProject: function(){
-			
 			// enable Analytics
 			this.plugins.analytics.installUI(this.ui);
-			
 			
 			
 			var that = this;
 			var pop = new MT.ui.Popup("Welcome to MightyEditor", "");
 			pop.y = (window.innerHeight - 510)*0.45;
-			pop.showClose();
-			
+			//pop.showClose();
 			pop.bg.style.backgroundColor = "rgba(10,10,10,0.3)";
-			
 			pop.addClass("starting-popup");
+			
 			var logo = document.createElement("div");
-			pop.content.appendChild(logo);
 			logo.className = "logo";
+			pop.content.appendChild(logo);
 			
 			var that = this;
 			var newProject = new MT.ui.Button("Create New Project", "new-project", null, function(){
@@ -20640,23 +22057,50 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				w.opener=null; w.location.href="http://mightyfingers.com/editor-features/";
 			});
 			
+			
 			newProject.show(pop.content);
 			docs.show(pop.content)
 			
+			
+			var recentPanel = this.ui.createPanel("RecentProjects");
+			recentPanel.hide();
+			recentPanel.fitIn();
+			recentPanel.removeBorder();
+			
+			// enable Auth
+			this.plugins.auth.installUI(this.ui);
+			this.plugins.auth.show(recentPanel);
+			
+			//recentPanel.show(pop.content);
 			
 			var projects = document.createElement("div");
 			pop.content.appendChild(projects);
 			projects.innerHTML = '<span class="label">Recent Projects</span>';
 			projects.className = "project-list";
 			
+			recentPanel.show(projects);
 			
-			var list = document.createElement("div");
-			list.className = "list-content";
-			var items = [];
 			var tmp = null;
+			var items = this.getLocalProjects();
+			var list = this.makeProjectList(items);
+			
+			if(items.length == 0 && this.sub != ""){
+				list.innerHTML = '<p>If you can\'t see you recent projects - try to click <a href="http://mightyeditor.mightyfingers.com/#no-redirect">here</a></p>';
+			}
+			
+			
+			recentPanel.content.el.appendChild(list);
+			
+			pop.on("close", function(){
+				that.newProjectNext();
+			});
+		},
+		
+		getLocalProjects: function(){
+			var items = [];
 			for(var i=0; i<localStorage.length; i++){
 				key = localStorage.key(i);
-				if(key.substring(0, this.ui.keyPrefix.length) !== this.ui.keyPrefix && key != "UndoRedo"){
+				if(key.substring(0, this.prefix.length) == this.prefix){
 					tmp = JSON.parse(localStorage.getItem(key));
 					if(tmp.id){
 						items.push(tmp);
@@ -20669,6 +22113,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					}
 				}
 			}
+			return items;
+		},
+		
+		makeProjectList: function(items, ondelete, onclick){
+			var list = document.createElement("div");
+			list.className = "list-content";
 			
 			var p, del;
 			for(var i=0; i<items.length; i++){
@@ -20680,30 +22130,36 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				list.appendChild(p);
 			}
+			
+			var removeItem = function(e){
+				localStorage.removeItem(e.target.parentNode.project);
+				e.target.parentNode.parentNode.removeChild(e.target.parentNode);
+			};
+			
 			list.onclick = function(e){
 				if(e.target.className == "remove"){
-					localStorage.removeItem(e.target.parentNode.project);
-					e.target.parentNode.parentNode.removeChild(e.target.parentNode);
+					if(ondelete){
+						ondelete(e.target.parentNode.project, function(remove){
+							if(remove){
+								removeItem(e);
+							}
+						});
+					}
 					return;
 				}
 				if(e.target.project){
+					if(onclick){
+						onclick(e.target.parentNode.project, function(remove){
+							if(remove){
+								removeItem(e);
+							}
+						});
+					}
 					e.preventDefault();
 					window.location.hash = e.target.project;
-					window.location.reload();
 				}
 			};
-			
-			if(items.length == 0 && this.sub != ""){
-				list.innerHTML = '<p>If you can\'t see you recent projects - try to click <a href="http://mightyeditor.mightyfingers.com/#no-redirect">here</a></p>';
-				
-			}
-			
-			
-			projects.appendChild(list);
-			
-			pop.on("close", function(){
-				that.newProjectNext();
-			});
+			return list;
 		},
 		
 		newProjectNext: function(){
@@ -20792,14 +22248,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					label: "Clone (eu)",
 					className: "",
 					cb: function(){
-						that.clone(that.sub);
+						that.clone();
 					}
 				},
 				{
 					label: "Clone (us)",
 					className: "",
 					cb: function(){
-						that.clone(that.sub, true);
+						that.clone(true);
 					}
 				}
 			], ui, true);
@@ -20808,44 +22264,34 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				e.stopPropagation();
 				that.showList();
 			});
-			
-			this.ui.events.on("hashchange", function(){
-				console.log("hash changed", "reload?");
-				window.location.reload();
-			});
-			
 		},
 		
-		clone: function(sub, us){
-			if(sub == "" && !us){
+		clone: function(us){
+			if(this.sub == "" && !us){
 				window.location = window.location.toString()+"-copy";
-				window.location.reload();
 				return;
 			}
-			if(sub == "us" && us){
+			if(this.sub == "us" && us){
 				window.location = window.location.toString()+"-copy";
-				window.location.reload();
 				return;
 			}
 			
 			// alien server
-			if(sub == "" && us){
+			if(this.sub == "" && us){
 				
 				var loc = window.location.toString()+"-copy";
 				loc = loc.replace("://", "://us.");
 				
 				window.location = loc;
-				//window.location.reload();
 				return;
 			}
 			
-			if(sub == "us" && !us){
+			if(this.sub == "us" && !us){
 				
 				var loc = window.location.toString()+"-copy";
 				loc = loc.replace("://us.", "://");
 				
 				window.location = loc;
-				//window.location.reload();
 				return;
 			}
 		},
@@ -20882,9 +22328,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				ui: new MT.ui.Fieldset("UI"),
 				sourceEditor: new MT.ui.Fieldset("SourceEditor")
 			};
-			
-			
-			
 			
 			this.setPop.on("show", function(){
 				console.log("pop show");
@@ -20960,11 +22403,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			}
 			
-			
-			
-			
 			var that = this;
-			
 			var lastTarget = null;
 			var className = "ui-dragover";
 			
@@ -20993,12 +22432,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.ui.loadLayout();
 			this.ui.isSaveAllowed = true;
+			this.isReady = true;
 		},
 		
 		handleDrop: function(e){
 			var files = e.dataTransfer.files;
 			this.handleFiles(files, e.dataTransfer, e);
-			
 		},
 		
 		handleFiles: function(files, dataTransfer, e){
@@ -21052,19 +22491,57 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			fr.readAsArrayBuffer(file);
 		},
 		
+		
+		isAction: function(name){
+			if(name.indexOf("need-login") === 0){
+				if(!this.plugins.auth.isLogged){
+					var that = this;
+					window.setTimeout(function(){
+						//
+						that.plugins.auth.a_login(function(){
+							window.close();
+						});
+					}, 0);
+				}
+				else{
+					var redirect = name.substring(("need-login-").length);
+					if(redirect){
+						window.location.href = redirect;
+					}
+					else{
+						window.close();
+					}
+				}
+			}
+			
+		},
+		
 		initSocket: function(socket){
 			MT.core.BasicPlugin.initSocket.call(this, socket);
-			
+			var that = this;
 			var pid = window.location.hash.substring(1);
-			if(pid != "" && pid != "no-redirect"){
-				this.loadProject(pid);
+			var load = !(pid == "" || pid == "no-redirect");
+			
+			this.plugins.auth.initSocket(socket, function(loggedIn){
+				if(that.isAction(pid)){
+					return;
+				}
+				else if(load){
+					that.loadProject(pid);
+				}
+			});
+			
+			if(!load){
+				that.newProject();
+				this.isReady = true;
 			}
-			else{
-				this.newProject();
-			}
+			
+			this.plugins.auth.installUI(this.ui);
+			this.plugins.auth.standAlone = true;
 		}
 	}
 );
+
 (function(window){
 	"use strict";
 	window.MT = createClass("MT");
@@ -21072,7 +22549,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	if(window.release){
 		hostInInterest = "mightyeditor.mightyfingers.com";
 	}
-	
+		// hack for miniser
+	if(typeof document != "undefined"){
+		var loading = document.createElement("div");
+		loading.className = "loading";
+		
+		window.showLoading = function(){
+			document.body.className = "login";
+			document.body.appendChild(loading);
+		};
+		
+		window.hideLoading = function(){
+			document.body.className = "";
+			if(loading.parentNode){
+				loading.parentNode.removeChild(loading);
+			}
+		};
+	}
+
 	if(window && window.location){
 		// -copy etc
 		if(window.location.hash.indexOf("-") > 0){
@@ -21117,17 +22611,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		var socket = new MT.Socket();
 		var hasClosed = false;
 		var loaded = false;
-		
 		socket.on("core", function(type){
 			if(type == "open"){
 				if(hasClosed){
 					window.location.reload();
 					return;
 				}
-				if(img.parentNode){
-					img.parentNode.removeChild(img);
-				}
-				
+				window.hideLoading();
 				new MT.core.Project(new MT.ui.Controller(), socket);
 			}
 			if(type == "close"){
@@ -21141,21 +22631,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		MT.require("core.Project");
 		MT.require("ui.Controller");
 		MT.require("Socket");
-
 		MT.onReady(main);
-		
-		var loaded = false;
-		// hack for minimiser
-		if(typeof document !== "undefined"){
-			img = new Image();
-			img.onload = function(){
-				if(!loaded){
-					document.body.appendChild(img);
-				}
-			};
-			img.src = "img/icons/loadingbar.gif";
-			img.className = "loadingImage";
+		if(window.showLoading){
+			window.showLoading();
 		}
 	};
+	
 	
 })(window);

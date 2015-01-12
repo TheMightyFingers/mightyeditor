@@ -60,7 +60,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			var button = this.buttons[title] = document.createElement("div");
 			button.className = "ui-popup-button";
 			button.innerHTML = title;
-			button.onclick = cb;
+			button.onclick = function(e){
+				cb(e);
+				e.stopPropagation();
+			};
 			
 			this.buttonBar.appendChild(button);
 			

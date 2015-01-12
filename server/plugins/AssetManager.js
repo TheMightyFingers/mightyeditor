@@ -1,5 +1,5 @@
 MT.require("core.FS");
-
+MT.requireFile(process.cwd() + "/../client/MT/core/Helper.js");
 
 MT.extend("core.BasicPlugin")(
 	MT.plugins.AssetManager = function(project){
@@ -36,7 +36,7 @@ MT.extend("core.BasicPlugin")(
 			var iname = name.split("/").pop();
 			
 			item.name = iname;
-			item.id = this.db.count;
+			item.id = MT.core.Helper.uuid();
 			
 			this.project.db.save();
 			this.a_sendFiles();
@@ -134,12 +134,13 @@ MT.extend("core.BasicPlugin")(
 			var ext = name.split(".").pop();
 			
 			this.db.count++;
+			var id = MT.core.Helper.uuid();
 			var im = {
-				__image: this.db.count + "." + ext,
-				id: this.db.count
+				__image: id + "." + ext,
+				id: id
 			};
 			
-			var p = this.project.path  + "/" + this.db.count + "." + ext;
+			var p = this.project.path  + "/" + id+ "." + ext;
 			
 			
 			var that = this;

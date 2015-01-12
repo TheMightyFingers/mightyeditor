@@ -1,104 +1,43 @@
 "use strict";
 require("../client/js/eClass.js");
-createClass("MT", global, require("path").resolve(""));
+createClass("MT", global, process.cwd());
 
 MT.require("http.Httpd");
 MT.require("core.Socket");
 MT.require("core.Project");
 MT.require("core.Logger");
+MT.require("core.ShutdownManager");
+MT.require("core.GeoIP");
+MT.require("core.Exporter");
+MT.require("plugins.Auth");
+MT.require("plugins.Postman");
 
-var exec = require('child_process').exec;
 
 var config = (process.env.RELEASE ? require("./config.js").config : require("./config-dev.js").config);
 
-var maintenance = false;
+var sm = new MT.core.ShutdownManager(config),
+	server = new MT.http.Httpd(config),
+	auth = MT.plugins.Auth;
 
-var hostInIterest = "tools.mightyfingers.com:8080";
-hostInIterest = "mightyeditor.mightyfingers.com";
+auth.init(server, config);
 
-var geoip, Country, country;
-try{
-	// ipv4 address lookup
-	geoip = require('geoip');
-	Country = geoip.Country;
-	country = new Country('lib/GeoIP.dat');
-}
-catch(e){
-	// ignore ip check
-	console.warn("geoip checks will be skipped");
-}
-
-var server = new MT.http.Httpd(config, function(req, res, httpd){
-	
-	if(req.url.substring(0, 8) == "/export/"){
-		
-		var projectId = req.url.substring(8);
-		var projectPath = config.projectsPath+"/"+projectId;
-		var src = process.cwd() + "/" + projectPath;
-		var targetFile = projectId+".zip";
-		var t = process.cwd() + "/../client/" + targetFile;
-		var cmd = "zip -9 -r " + t + " ./";
-
-		exec(cmd, { cwd: src }, function(err){
-			if(err){
-				httpd.notFound(req, res);
-			}
-			httpd.redirect("/"+targetFile, req, res);
-		});
-		return false;
-	}
-	
-	if(!geoip || req.headers.host != hostInIterest || req.url != "/geoip"){
-		return true;
-	}
-	var address = req.connection.remoteAddress;
-	
-	// address = "198.100.30.134";
-	// Synchronous method(the recommended way):
-	var country_obj = country.lookupSync(address);
-	country_obj.ip = address;
-	res.writeHead(200);
-	res.end(JSON.stringify(country_obj));
-	return false;
-});
+MT.core.Project.started = Date.now();
 
 server.openSocket(function(socket){
 	var s = new MT.core.Socket(socket);
-	
-	if(maintenance){
+	if(sm.maintenance){
 		s.send("Project", "maintenance", {
-			seconds: tm + 1,
+			seconds: sm.tm + 1,
 			type: "new"
 		});
 		return;
 	}
 	
-	new MT.core.Project(s, config);
+	new MT.core.Project(s, config, server);
 });
 
-var tm = config.shutdownTimeout;
 
-function gracefulExit(){
-	maintenance = true;
-	MT.core.Socket.sendAll("Project", "maintenance", {
-		seconds: tm + 1,
-		type: "old"
-	});
-	setTimeout(function(){
-		process.exit();
-	}, tm*1000);
-	setInterval(function(){
-		tm--;
-	},1000);
-}
-
-function errorShutdown(error){
-	MT.debug(error, "SERVER SHUTDOWN");
-	gracefulExit();
-}
-
-
-process.on('SIGINT', gracefulExit).on('SIGTERM', gracefulExit); 
-process.on('uncaughtException', errorShutdown);
-
+// some good stuff
+new MT.core.Exporter(server, auth);
+new MT.core.GeoIP(server, "mightyeditor.mightyfingers.com");
 

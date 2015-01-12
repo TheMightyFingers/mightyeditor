@@ -86,14 +86,15 @@ MT(
 	MT.core.Socket = function(socket){
 		MT.core.sockets.push(this);
 		
-		this.binary = true;
+		this.binary = false;
 		
 		this.socket = socket;
 		
 		this.sendObject = {
 			channel: "",
 			action: "",
-			data: null
+			data: null,
+			__cb: null
 		};
 		
 		this.channels = {};
@@ -163,17 +164,38 @@ MT(
 		},
    
 		handleMessage: function(msg){
-			var data;
-			if(this.binary){
-				data = JSON.parse(UTF8ArrToStr(msg));
+			var data, cb;
+			var that = this;
+			// nasty ppl
+			try{
+				if(this.binary){
+					data = JSON.parse(UTF8ArrToStr(msg));
+				}
+				else{
+					data = JSON.parse(msg);
+				}
 			}
-			else{
-				data = JSON.parse(msg);
+			// not json? someone wants to chat with server :P
+			catch(e){
+				try{
+					MT.log("Hacking:", that.socket.upgradeReq.connection.remoteAddress);
+					that.send("Project","message", msg + "@" + that.socket.upgradeReq.connection.remoteAddress);
+				}
+				catch(e){}
+				return;
 			}
-			this.emit(data.channel, data.action, data.data);
+			if(data.__cb){
+				cb = this.__mkcb(data.channel, data.__cb);
+			}
+			this.emit(data.channel, data.action, data.data, cb);
 		},
-   
-		send: function(channel, action, data){
+		__mkcb: function(channel, cb){
+			var that = this;
+			return function(data){
+				that.send(channel, "___", data, cb); 
+			};
+		},
+		send: function(channel, action, data, cb){
 			if(this.socket.readyState != this.socket.OPEN){
 				MT.log("socket not ready", this.socket.readyState);
 				return;
@@ -181,6 +203,7 @@ MT(
 			this.sendObject.channel = channel;
 			this.sendObject.action = action;
 			this.sendObject.data = data;
+			this.sendObject.__cb = cb;
 			
 			var str = JSON.stringify(this.sendObject);
 			
@@ -222,8 +245,6 @@ MT(
 			}
 		},
    
-   
-		
 		on: function(channel, cb){
 			if(this.channels[channel] === void(0)){
 				this.channels[channel] = [];
@@ -243,14 +264,14 @@ MT(
 				}
 			}
 		},
-		emit: function(channel, action, data){
+		emit: function(channel, action, data, cb){
 			if(!this.channels[channel]){
 				MT.error("Socket::Unknown channel", channel);
 				return;
 			}
 			var chns = this.channels[channel];
 			for(var i=0; i<chns.length; i++){
-				chns[i](action, data);
+				chns[i](action, data, cb);
 			}
 			
 		}

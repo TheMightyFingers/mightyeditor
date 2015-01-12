@@ -3,7 +3,7 @@
  */
 
 "use strict";
-
+MT.require("core.keys");
 MT.require("ui.ColorPicker");
 MT.extend("ui.DomElement").extend("core.Emitter")(
 	MT.ui.Input = function(ui, properties, obj){
@@ -53,6 +53,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		
 		
 		this.label = new MT.ui.DomElement();
+		this.label.addClass("ui-input-label");
 		//this.label.setAbsolute();
 		
 		this.addChild(this.label).show();
@@ -67,6 +68,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.value.style.left = "initial";
 		this.value.style.right = 0;
 		this.value.addClass("ui-input-value");
+		
+		this.node = document.createTextNode("");
+		this.value.el.appendChild(this.node);
 		
 		if(this.type == "select"){
 			
@@ -95,8 +99,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 		}
 		
+		var input = this.input = this.inputBox = document.createElement("input");
 		
-		this.input = document.createElement("input");
 		
 		var that = this;
 		if(this.type == "upload"){
@@ -127,6 +131,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.value.style.left = "initial";
 		this.value.style.right = 0;
 		this.value.addClass("ui-input-value");
+		
 		if(this.type == "color"){
 			this.value.style.float = "right";
 			this.value.style.position = "relative";
@@ -151,18 +156,27 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.events = events;
 		
 		
-		var input = this.inputBox = document.createElement("input");
 		//input.style.position = "absolute";
 		input.type = "text";
+		if(this.type == "password"){
+			input.setAttribute("type", "password");
+		}
 		input.className = "ui-input";
 		input.isVisible = false;
 		input.style.textAlign = "right";
 		input.style.paddingRight = "10px";
 		
-		input.setAttribute("tabindex", parseInt(this.value.el.getAttribute("tabindex")) +1);
+		//input.setAttribute("tabindex", parseInt(this.value.el.getAttribute("tabindex")));
 		//input.setAttribute("tabstop", "false");
 		
+		var origTab = 0;
+		
 		var enableInput = function(){
+			if(!that.value.el.offsetParent){
+				return;
+			}
+			
+			
 			var w = that.value.el.parentNode.parentNode.offsetWidth*0.5;
 			input.style.width = w + "px";
 			
@@ -173,8 +187,10 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			input.isVisible = true;
 			input.width = that.value.offsetWidth + "px";
 			
+			origTab = that.value.el.getAttribute("tabindex");
+			that.value.el.setAttribute("tabindex", -1);
 			
-			that.value.el.innerHTML = "";
+			that.node.nodeValue = "";
 			
 			that.value.el.offsetParent.appendChild(input);
 			input.focus();
@@ -203,11 +219,16 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			enableInput();
 		};
 		var down = false;
-		this.value.el.onmousedown = function(){
+		this.value.el.onmousedown = function(e){
 			that.needEnalbe = true;
 			down = true;
+			//e.preventDefault();
+			e.stopPropagation();
 		};
 		
+		this.value.el.onfocus = function(){
+			enableInput();
+		};
 		
 		var startVal;
 		input.onfocus = function(){
@@ -228,6 +249,8 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			if(properties.options){
 				that.hideOptions();
 			}
+			that.value.el.setAttribute("tabindex", origTab);
+			//that.setTabIndex()
 		};
 		
 		input.onkeydown = function(e){
@@ -251,7 +274,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			var hideval = true;
 			
 			if(w == MT.keys.ESC){
-				
 				hideval = false;
 				input.value = that.object[that.key];
 				input.blur();
@@ -276,7 +298,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				var val = that.evalValue(input.value);
 				that.setValue(val, true);
 				if(hideval){
-					that.value.el.innerHTML = "";
+					that.node.nodeValue = "";
 				}
 			}
 			
@@ -287,6 +309,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			e.stopPropagation();
 		};
 		
+		input.onmousedown = function(e){
+			e.stopPropagation();
+		};
 		//this.keyup = events.on("keyup", 
 		
 		if(this.type == "number"){
@@ -353,7 +378,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			if(bounds.bottom > window.innerHeight){
 				this.selectInput.style.top = rect.top - bounds.height;
-				
 			}
 			
 			
@@ -448,6 +472,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 		},
 		
+		getValue: function(){
+			return this.object[this.key];
+		},
 		setValue: function(val, silent){
 			if(this.type == "upload"){
 				return;
@@ -457,10 +484,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			this.needEnalbe = false;
 			var oldValue = this.object[this.key];
 			
-			if(val == oldValue && !silent){
-				this.value.el.innerHTML = val;
-				return;
-			}
 			if(val < this.min){
 				val = this.min;
 			}
@@ -472,14 +495,24 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			this.object[this.key] = val;
 			
 			if(typeof val == "number"){
-				this.value.el.innerHTML = parseFloat(val.toFixed(4));
+				this.node.nodeValue = parseFloat(val.toFixed(4));
+			}
+			else if(this.type == "password"){
+				var stars = "";
+				for(var i=0; i<val.length; i++){
+					stars += "&#9679;";
+				}
+				
+				this.value.el.innerHTML = stars;
+			}
+			else if(this.type == "color"){
+				this.span.style.backgroundColor = val;
+				this.node.nodeValue = val;
 			}
 			else{
-				this.value.el.innerHTML = val;
+				this.node.nodeValue = val;
 			}
-			if(this.type == "color"){
-				this.span.style.backgroundColor = val;
-			}
+			
 			if(!silent){
 				this.emit("change", val, oldValue);
 			}
@@ -503,9 +536,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			return ret;
 		},
 		
-		setTabIndex: function(){
-			MT.ui.Input.tabindex += 1;
+		setTabIndex: function(val){
+			val = val || 1;
+			MT.ui.Input.tabindex += val;
 			this.value.el.setAttribute("tabindex", MT.ui.Input.tabindex);
+			this.input.setAttribute("tabindex", MT.ui.Input.tabindex);
 			this.value.el.setAttribute("href", "javascript:;");
 			//this.value.el.setAttribute("tabstop", "true");
 		}

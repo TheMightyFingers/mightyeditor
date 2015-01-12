@@ -86,6 +86,12 @@ MT(
 			}, 0);
 			return cb;
 		},
+		once: function(type, cb, shift){
+			var that = this;
+			var fn;
+			fn =  function(e){cb(e);that.off(type, fn);};
+			this.on(type, fn, shift);
+		},
    
 		addEvent: function(i){
 			var cb = this._mk_cb(i);

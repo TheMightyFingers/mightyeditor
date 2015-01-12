@@ -1,70 +1,7 @@
-/* UTF-8 array to DOMString and vice versa */
-
-function UTF8ArrToStr (buff) {
-  return String.fromCharCode.apply(null, new Uint8Array(buff));
-}
-
-function strToUTF8Arr (sDOMStr) {
-
-  var aBytes, nChr, nStrLen = sDOMStr.length, nArrLen = 0;
-
-  /* mapping... */
-
-  for (var nMapIdx = 0; nMapIdx < nStrLen; nMapIdx++) {
-    nChr = sDOMStr.charCodeAt(nMapIdx);
-    nArrLen += nChr < 0x80 ? 1 : nChr < 0x800 ? 2 : nChr < 0x10000 ? 3 : nChr < 0x200000 ? 4 : nChr < 0x4000000 ? 5 : 6;
-  }
-
-  aBytes = new Uint8Array(nArrLen);
-
-  /* transcription... */
-
-  for (var nIdx = 0, nChrIdx = 0; nIdx < nArrLen; nChrIdx++) {
-    nChr = sDOMStr.charCodeAt(nChrIdx);
-    if (nChr < 128) {
-      /* one byte */
-      aBytes[nIdx++] = nChr;
-    } else if (nChr < 0x800) {
-      /* two bytes */
-      aBytes[nIdx++] = 192 + (nChr >>> 6);
-      aBytes[nIdx++] = 128 + (nChr & 63);
-    } else if (nChr < 0x10000) {
-      /* three bytes */
-      aBytes[nIdx++] = 224 + (nChr >>> 12);
-      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
-      aBytes[nIdx++] = 128 + (nChr & 63);
-    } else if (nChr < 0x200000) {
-      /* four bytes */
-      aBytes[nIdx++] = 240 + (nChr >>> 18);
-      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
-      aBytes[nIdx++] = 128 + (nChr & 63);
-    } else if (nChr < 0x4000000) {
-      /* five bytes */
-      aBytes[nIdx++] = 248 + (nChr >>> 24);
-      aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
-      aBytes[nIdx++] = 128 + (nChr & 63);
-    } else /* if (nChr <= 0x7fffffff) */ {
-      /* six bytes */
-      aBytes[nIdx++] = 252 + (nChr >>> 30);
-      aBytes[nIdx++] = 128 + (nChr >>> 24 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
-      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
-      aBytes[nIdx++] = 128 + (nChr & 63);
-    }
-  }
-
-  return aBytes;
-
-}
-
-
+"use strict";
 MT.extend("core.Emitter")(
 	MT.Socket = function(url, autoconnect){
-		this.binary = true;
+		this.binary = false;
 		if(url){
 			this.url = url;
 		}
@@ -77,14 +14,13 @@ MT.extend("core.Emitter")(
 		}
 		
 		this.callbacks = {};
-
-		
 		this._toSend = [];
 		
 		this.sendObject = {
 			channel: "",
 			action: "",
-			data: null
+			data: null,
+			__cb: null
 		};
 	},
 	{
@@ -115,6 +51,11 @@ MT.extend("core.Emitter")(
 					str = event.data;
 				}
 				var data = JSON.parse(str);
+				if(data.action === "___"){
+					MT.Socket.__callbacks[data.__cb](data.data);
+					delete MT.Socket.__callbacks[data.__cb];
+					return;
+				}
 				that.emit(data.channel, data.action, data.data);
 			};
 			
@@ -133,14 +74,18 @@ MT.extend("core.Emitter")(
 			return;
 		},
 		
-		send: function(channel, action, data){
+		send: function(channel, action, data, cb){
 			if(this.ws.readyState == this.ws.OPEN){
 				this.sendObject.channel = channel;
 				this.sendObject.action = action;
 				this.sendObject.data = data;
+				this.sendObject.__cb = void(0);
+				
+				if(cb){
+					this.sendObject.__cb = MT.Socket.genCallback(cb);
+				}
 				
 				var str = JSON.stringify(this.sendObject);
-				
 				if(this.binary){
 					this.ws.send(strToUTF8Arr(str));
 				}
@@ -183,8 +128,14 @@ MT.extend("core.Emitter")(
 			for(var i=0; i<cbs.length; i++){
 				cbs[i](action, data);
 			}
+		},
+		//static
+		genCallback: function(cb){
+			var self = MT.Socket;
+			self.nextCB++;
+			self.__callbacks[self.nextCB] = cb;
+			return self.nextCB;
 		}
-		
 	}
 );
 
@@ -194,3 +145,71 @@ MT.Socket.TYPE = {
 	message: "message",
 	error: "error"
 };
+
+MT.Socket.__callbacks = {};
+MT.Socket.nextCB = 0;
+
+
+/* UTF-8 array to DOMString and vice versa */
+
+function UTF8ArrToStr (buff) {
+	return String.fromCharCode.apply(null, new Uint8Array(buff));
+}
+
+function strToUTF8Arr (sDOMStr) {
+
+	var aBytes, nChr, nStrLen = sDOMStr.length, nArrLen = 0;
+
+	/* mapping... */
+
+	for (var nMapIdx = 0; nMapIdx < nStrLen; nMapIdx++) {
+		nChr = sDOMStr.charCodeAt(nMapIdx);
+		nArrLen += nChr < 0x80 ? 1 : nChr < 0x800 ? 2 : nChr < 0x10000 ? 3 : nChr < 0x200000 ? 4 : nChr < 0x4000000 ? 5 : 6;
+	}
+
+	aBytes = new Uint8Array(nArrLen);
+
+	/* transcription... */
+
+	for (var nIdx = 0, nChrIdx = 0; nIdx < nArrLen; nChrIdx++) {
+		nChr = sDOMStr.charCodeAt(nChrIdx);
+		if (nChr < 128) {
+		/* one byte */
+		aBytes[nIdx++] = nChr;
+		} else if (nChr < 0x800) {
+		/* two bytes */
+		aBytes[nIdx++] = 192 + (nChr >>> 6);
+		aBytes[nIdx++] = 128 + (nChr & 63);
+		} else if (nChr < 0x10000) {
+		/* three bytes */
+		aBytes[nIdx++] = 224 + (nChr >>> 12);
+		aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+		aBytes[nIdx++] = 128 + (nChr & 63);
+		} else if (nChr < 0x200000) {
+		/* four bytes */
+		aBytes[nIdx++] = 240 + (nChr >>> 18);
+		aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+		aBytes[nIdx++] = 128 + (nChr & 63);
+		} else if (nChr < 0x4000000) {
+		/* five bytes */
+		aBytes[nIdx++] = 248 + (nChr >>> 24);
+		aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+		aBytes[nIdx++] = 128 + (nChr & 63);
+		} else /* if (nChr <= 0x7fffffff) */ {
+		/* six bytes */
+		aBytes[nIdx++] = 252 + (nChr >>> 30);
+		aBytes[nIdx++] = 128 + (nChr >>> 24 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+		aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+		aBytes[nIdx++] = 128 + (nChr & 63);
+		}
+	}
+
+	return aBytes;
+
+}
+

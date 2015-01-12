@@ -13,6 +13,7 @@ MT.require("plugins.UserData");
 MT.require("plugins.TooltipManager");
 MT.require("plugins.Notification");
 MT.require("plugins.MovieMaker");
+MT.require("plugins.Auth");
 
 MT.DROP = "drop";
 
@@ -20,7 +21,7 @@ MT.DROP = "drop";
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.core.Project = function(ui, socket){
 		MT.core.BasicPlugin.call(this, "Project");
-		
+		this.isReady = false;
 		this.data = {
 			backgroundColor: "#666666",
 			sourceEditor:{
@@ -41,7 +42,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"Export",
 			
 			"UndoRedo",
-			"DataLink",
+			//"DataLink",
 			"Analytics",
 			"HelpAndSupport",
 			"FontManager",
@@ -52,7 +53,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"UserData",
 			"TooltipManager",
 			"Notification",
-			"MovieMaker"
+			"MovieMaker",
+			"Auth",
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
@@ -67,11 +69,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.ui = ui;
 		
 		this.sub = "";
+		this.prefix = "p";
 		if(window.location.hostname.substring(0, 3) == "us."){
 			this.sub = "us";
+			this.prefix = "u";
 		}
-		this.initSocket(socket);
 		
+		this.initSocket(socket);
+		this.ui.events.on("hashchange", function(){
+			console.log("hash changed", "reload?");
+			window.location.reload();
+		});
 	},
 	{
 		a_maintenance: function(data){
@@ -97,6 +105,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}, 1000);
 		},
 		
+		a_purchaseComplete: function(){
+			var pop = new MT.ui.Popup("Payment received",
+									"Thank you for supporting MightyEditor!<br />Now you can change project access options.<br />"+
+									"If you don't own the current project (e.g. you have created it without being logged in) you have to make a copy of this project.<br /><br />"+
+									"Reload MightyEditor to make your subscription effective.");
+			pop.showClose();
+			pop.addButton("Reload Now", function(){
+				window.location.reload();
+			});
+			pop.addButton("Later", function(){
+				pop.hide(true);
+			});
+		},
+		
+		a_message: function(msg){
+			throw new Error(msg);
+		},
+		
 		a_selectProject: function(info){
 			this.id = info.id;
 			window.location.hash = info.id;
@@ -119,7 +145,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		setUpData: function(){
 			document.body.style.backgroundColor = this.data.backgroundColor;
-			
 			this.emit("updateData", this.data);
 		},
 		
@@ -180,6 +205,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.data[i] = data[i];
 			}
 		},
+		
+		a_goToHome: function(){
+			window.location = window.location.toString().split("#").shift();
+		},
+		
 		copyPopup: null,
 		a_copyInProgress: function(){
 			var content = "System is being maintained. Will be back in ";
@@ -188,25 +218,26 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			pop.showClose();
 			this.copyPopup = pop;
 		},
-		// user get here without hash
+		
+		reload: function(){
+			window.location.reload();
+		},
+		// user gets here without hash
 		newProject: function(){
-			
 			// enable Analytics
 			this.plugins.analytics.installUI(this.ui);
-			
 			
 			
 			var that = this;
 			var pop = new MT.ui.Popup("Welcome to MightyEditor", "");
 			pop.y = (window.innerHeight - 510)*0.45;
-			pop.showClose();
-			
+			//pop.showClose();
 			pop.bg.style.backgroundColor = "rgba(10,10,10,0.3)";
-			
 			pop.addClass("starting-popup");
+			
 			var logo = document.createElement("div");
-			pop.content.appendChild(logo);
 			logo.className = "logo";
+			pop.content.appendChild(logo);
 			
 			var that = this;
 			var newProject = new MT.ui.Button("Create New Project", "new-project", null, function(){
@@ -221,23 +252,50 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				w.opener=null; w.location.href="http://mightyfingers.com/editor-features/";
 			});
 			
+			
 			newProject.show(pop.content);
 			docs.show(pop.content)
 			
+			
+			var recentPanel = this.ui.createPanel("RecentProjects");
+			recentPanel.hide();
+			recentPanel.fitIn();
+			recentPanel.removeBorder();
+			
+			// enable Auth
+			this.plugins.auth.installUI(this.ui);
+			this.plugins.auth.show(recentPanel);
+			
+			//recentPanel.show(pop.content);
 			
 			var projects = document.createElement("div");
 			pop.content.appendChild(projects);
 			projects.innerHTML = '<span class="label">Recent Projects</span>';
 			projects.className = "project-list";
 			
+			recentPanel.show(projects);
 			
-			var list = document.createElement("div");
-			list.className = "list-content";
-			var items = [];
 			var tmp = null;
+			var items = this.getLocalProjects();
+			var list = this.makeProjectList(items);
+			
+			if(items.length == 0 && this.sub != ""){
+				list.innerHTML = '<p>If you can\'t see you recent projects - try to click <a href="http://mightyeditor.mightyfingers.com/#no-redirect">here</a></p>';
+			}
+			
+			
+			recentPanel.content.el.appendChild(list);
+			
+			pop.on("close", function(){
+				that.newProjectNext();
+			});
+		},
+		
+		getLocalProjects: function(){
+			var items = [];
 			for(var i=0; i<localStorage.length; i++){
 				key = localStorage.key(i);
-				if(key.substring(0, this.ui.keyPrefix.length) !== this.ui.keyPrefix && key != "UndoRedo"){
+				if(key.substring(0, this.prefix.length) == this.prefix){
 					tmp = JSON.parse(localStorage.getItem(key));
 					if(tmp.id){
 						items.push(tmp);
@@ -250,6 +308,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					}
 				}
 			}
+			return items;
+		},
+		
+		makeProjectList: function(items, ondelete, onclick){
+			var list = document.createElement("div");
+			list.className = "list-content";
 			
 			var p, del;
 			for(var i=0; i<items.length; i++){
@@ -261,30 +325,36 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				list.appendChild(p);
 			}
+			
+			var removeItem = function(e){
+				localStorage.removeItem(e.target.parentNode.project);
+				e.target.parentNode.parentNode.removeChild(e.target.parentNode);
+			};
+			
 			list.onclick = function(e){
 				if(e.target.className == "remove"){
-					localStorage.removeItem(e.target.parentNode.project);
-					e.target.parentNode.parentNode.removeChild(e.target.parentNode);
+					if(ondelete){
+						ondelete(e.target.parentNode.project, function(remove){
+							if(remove){
+								removeItem(e);
+							}
+						});
+					}
 					return;
 				}
 				if(e.target.project){
+					if(onclick){
+						onclick(e.target.parentNode.project, function(remove){
+							if(remove){
+								removeItem(e);
+							}
+						});
+					}
 					e.preventDefault();
 					window.location.hash = e.target.project;
-					window.location.reload();
 				}
 			};
-			
-			if(items.length == 0 && this.sub != ""){
-				list.innerHTML = '<p>If you can\'t see you recent projects - try to click <a href="http://mightyeditor.mightyfingers.com/#no-redirect">here</a></p>';
-				
-			}
-			
-			
-			projects.appendChild(list);
-			
-			pop.on("close", function(){
-				that.newProjectNext();
-			});
+			return list;
 		},
 		
 		newProjectNext: function(){
@@ -373,14 +443,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					label: "Clone (eu)",
 					className: "",
 					cb: function(){
-						that.clone(that.sub);
+						that.clone();
 					}
 				},
 				{
 					label: "Clone (us)",
 					className: "",
 					cb: function(){
-						that.clone(that.sub, true);
+						that.clone(true);
 					}
 				}
 			], ui, true);
@@ -389,44 +459,34 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				e.stopPropagation();
 				that.showList();
 			});
-			
-			this.ui.events.on("hashchange", function(){
-				console.log("hash changed", "reload?");
-				window.location.reload();
-			});
-			
 		},
 		
-		clone: function(sub, us){
-			if(sub == "" && !us){
+		clone: function(us){
+			if(this.sub == "" && !us){
 				window.location = window.location.toString()+"-copy";
-				window.location.reload();
 				return;
 			}
-			if(sub == "us" && us){
+			if(this.sub == "us" && us){
 				window.location = window.location.toString()+"-copy";
-				window.location.reload();
 				return;
 			}
 			
 			// alien server
-			if(sub == "" && us){
+			if(this.sub == "" && us){
 				
 				var loc = window.location.toString()+"-copy";
 				loc = loc.replace("://", "://us.");
 				
 				window.location = loc;
-				//window.location.reload();
 				return;
 			}
 			
-			if(sub == "us" && !us){
+			if(this.sub == "us" && !us){
 				
 				var loc = window.location.toString()+"-copy";
 				loc = loc.replace("://us.", "://");
 				
 				window.location = loc;
-				//window.location.reload();
 				return;
 			}
 		},
@@ -463,9 +523,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				ui: new MT.ui.Fieldset("UI"),
 				sourceEditor: new MT.ui.Fieldset("SourceEditor")
 			};
-			
-			
-			
 			
 			this.setPop.on("show", function(){
 				console.log("pop show");
@@ -541,11 +598,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			}
 			
-			
-			
-			
 			var that = this;
-			
 			var lastTarget = null;
 			var className = "ui-dragover";
 			
@@ -574,12 +627,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.ui.loadLayout();
 			this.ui.isSaveAllowed = true;
+			this.isReady = true;
 		},
 		
 		handleDrop: function(e){
 			var files = e.dataTransfer.files;
 			this.handleFiles(files, e.dataTransfer, e);
-			
 		},
 		
 		handleFiles: function(files, dataTransfer, e){
@@ -633,16 +686,53 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			fr.readAsArrayBuffer(file);
 		},
 		
+		
+		isAction: function(name){
+			if(name.indexOf("need-login") === 0){
+				if(!this.plugins.auth.isLogged){
+					var that = this;
+					window.setTimeout(function(){
+						//
+						that.plugins.auth.a_login(function(){
+							window.close();
+						});
+					}, 0);
+				}
+				else{
+					var redirect = name.substring(("need-login-").length);
+					if(redirect){
+						window.location.href = redirect;
+					}
+					else{
+						window.close();
+					}
+				}
+			}
+			
+		},
+		
 		initSocket: function(socket){
 			MT.core.BasicPlugin.initSocket.call(this, socket);
-			
+			var that = this;
 			var pid = window.location.hash.substring(1);
-			if(pid != "" && pid != "no-redirect"){
-				this.loadProject(pid);
+			var load = !(pid == "" || pid == "no-redirect");
+			
+			this.plugins.auth.initSocket(socket, function(loggedIn){
+				if(that.isAction(pid)){
+					return;
+				}
+				else if(load){
+					that.loadProject(pid);
+				}
+			});
+			
+			if(!load){
+				that.newProject();
+				this.isReady = true;
 			}
-			else{
-				this.newProject();
-			}
+			
+			this.plugins.auth.installUI(this.ui);
+			this.plugins.auth.standAlone = true;
 		}
 	}
 );

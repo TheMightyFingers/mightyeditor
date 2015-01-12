@@ -3,6 +3,7 @@ MT.require("plugins.ObjectManager");
 MT.require("plugins.Export");
 MT.require("plugins.MapEditor");
 MT.require("plugins.SourceEditor");
+MT.require("plugins.Auth");
 
 MT.require("core.JsonDB");
 MT.require("core.FS");
@@ -10,31 +11,40 @@ MT.require("core.FS");
 var exec = require('child_process').exec;
 
 MT.extend("core.BasicPlugin")(
-	MT.core.Project = function(socket, config){
+	MT.core.Project = function(socket, config, server){
 		this.socket = socket;
+		this.server = server;
 		
 		MT.core.BasicPlugin.call(this, this, "Project");
 		
+		this.auth = new MT.plugins.Auth(this, server);
 		
 		this.root = config.projectsPath;
 		this.fs = MT.core.FS;
 		this.dbObject  = null;
-		this.dbName = ".db.json";
+		this.dbName = config.dbName;
 		
 		this.config = config;
 		var that = this;
 		socket.onClose(function(){
+			MT.log("Socket closed", that.id);
+			var index = MT.core.Project.allProjects.indexOf(that);
+			if(index > -1){
+				MT.core.Project.allProjects.splice(index, 1);
+			}
 			if(that.db){
+				that.unload();
 				that.db.close();
 			}
 		});
 		
+		MT.core.Project.allProjects.push(this);
 	},
 	{
 		a_newProject: function(projectInfo){
 			var that = this;
-			this.getAllProjects(this.root, function(data){
-				that.knownProjects = data;
+			this.getLastId(function(lastId){
+				that.lastId = lastId;
 				that.createProject(projectInfo);
 			});
 		},
@@ -43,14 +53,59 @@ MT.extend("core.BasicPlugin")(
 			var idr = id.split("-");
 			var that = this;
 			if(idr.length == 1){
-				this.openProject(id, function(){
-					var info = that.getProjectInfo();
-					info.id = that.id;
-					that.send("selectProject", info);
-				});
+				this.checkAndOpenProject(id);
 				return;
 			}
 			this.loadCommand(idr[0], idr[1]);
+		},
+		
+		checkAndOpenProject: function(id){
+			var that = this;
+			// is own project?
+			var proj = this.auth.getProject(id);
+			
+			if(!proj){
+				// get project access
+				var access = this.auth.canUserAccessProject(id, function(yes, allowCopy){
+					if(yes){
+						that.openProject(id, function(){
+							var info = that.getProjectInfo();
+							info.id = that.id;
+							that.send("selectProject", info);
+						});
+					}
+					else{
+						if(that.auth.user){
+							that.send("goToHome");
+						}
+						else{
+							var d = {domain: "project", action: "loadProject", arguments:[id]};
+							console.log("Request Login", d);
+							that.auth.send("login", d);
+						}
+					}
+				});
+				return;
+			}
+			
+			console.log("opening own project: FULL ACCESS");
+			
+			this.openProject(id, function(){
+				var info = that.getProjectInfo();
+				info.id = that.id;
+				that.send("selectProject", info);
+			});
+			
+		},
+		
+		checkAccess: function(){
+			var that = this;
+			this.auth.canUserAccessProject(this.id, function(yes, allowCopy){
+				if(yes){
+					return;
+				}
+				that.send("goToHome");
+			});
 		},
 		
 		a_updateProject: function(info){
@@ -66,30 +121,42 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		loadCommand: function(projectId, command){
-			var that = this;
-			MT.debug("loading command", command);
+			MT.log("loading command", command);
+			
 			if(command == "copy"){
-				this.getAllProjects(this.root, function(data){
-					that.knownProjects = data;
-					that.send("copyInProgress");
-					if(projectId.substring(0,1) == that.config.prefix){
-						that.exec_copy(projectId);
-					}
-					else{
-						that.copyAlien(projectId);
-					}
-					
-				});
-				
+				this.exec_copy(projectId, projectId.substring(0,1) == this.config.prefix);
 				return;
 			}
 			
 			MT.log("unsupported command", command);
 		},
 		
-		exec_copy: function(projectId){
-			this.id = this.makeID(this.knownProjects.length);
+		exec_copy: function(projectId, local){
+			var that = this;
+			this.auth.canUserAccessProject(projectId, function(fullAccess, allowCopy){
+				if(!allowCopy){
+					MT.log("cannto access project", projectId);
+					that.send("goToHome");
+					return;
+				}
+				
+				that.getLastId(function(id){
+					that.send("copyInProgress");
+					if(local){
+						that.exec_copyR(projectId, that.makeID(id));
+					}
+					else{
+						that.copyAlien(projectId, that.makeID(id));
+					}
+				});
+				
+			});
 			
+			
+			
+		},
+		exec_copyR: function(projectId, newId){
+			this.id = newId;
 			var that = this;
 			this.fs.copy(this.root + "/" + projectId, this.root + "/" + this.id, function(err){
 				// copying unknown project?
@@ -99,13 +166,13 @@ MT.extend("core.BasicPlugin")(
 				that.openProject(that.id, function(){
 					var info = that.getProjectInfo();
 					info.id = that.id;
+					that.auth.addProject(info, that.id);
 					that.send("selectProject", info);
 				});
 			});
 			
 		},
-		
-		copyAlien: function(projectId){
+		copyAlien: function(projectId, newId){
 			var server = this.config.servers[projectId.substring(0,1)];
 			
 			if(!server){
@@ -119,11 +186,10 @@ MT.extend("core.BasicPlugin")(
 				if(err){
 					MT.log("Error getting alien project", projectId, err);
 				}
-				that.id = that.makeID(that.knownProjects.length);
-				
+				that.id = newId;
 				var newProjectPath = that.root + "/" + that.id;
-				that.fs.mkdir(newProjectPath, function(){
 				
+				that.fs.mkdir(newProjectPath, function(){
 					exec("unzip "+ process.cwd() + "/" + tmpName, {cwd: newProjectPath}, function(err){
 						that.openProject(that.id, function(){
 							var info = that.getProjectInfo();
@@ -131,10 +197,8 @@ MT.extend("core.BasicPlugin")(
 							that.send("selectProject", info);
 						});
 						that.fs.rm(tmpName);
-						
 					});
 				});
-				
 			});
 			//exec("zip -9 -r ../" + that.zipName + " ./", { cwd: that.dir }, cb);
 			
@@ -179,6 +243,8 @@ MT.extend("core.BasicPlugin")(
 		
 		openProject: function(pid, cb){
 			var that = this;
+			console.log("OPEN PROJECT!", pid);
+			
 			that.path = that.root + MT.core.FS.path.sep + pid;
 			this.fs.exists(this.path, function(yes){
 				if(!yes){
@@ -249,18 +315,18 @@ MT.extend("core.BasicPlugin")(
 		},
 		isNewProject: false,
 		createProject: function(info){
+			
 			this.isNewProject = true;
-			this.id = this.makeID(this.knownProjects.length);
+			this.id = this.makeID(this.lastId);
 			this.path = this.root + MT.core.FS.path.sep + this.id;
-			
 			this.checkNs(info);
-			
-			
+			var that = this;
 			
 			var atLast = function(){
 				that.addCommonFiles(info);
+				that.auth.addProject(info, that.id);
 			};
-			var that = this;
+			
 			this.fs.mkdir(this.path, function(){
 				that.fs.readdir("templates/default", true, function(data){
 					that.createSources(data, info, 0, atLast);
@@ -360,7 +426,6 @@ MT.extend("core.BasicPlugin")(
 				return;
 			}
 			
-			
 			this.fs.readFile(data.fullPath, function(err, contents){
 				var src = contents.toString("utf-8");
 				
@@ -399,13 +464,14 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		
-		getAllProjects: function(path, cb){
-			MT.core.FS.readdir(path, false, cb);
+		getLastId: function(cb){
+			this.auth.getLastProjectId(cb);
 		},
 		
 		makeID: function(num){
-			return this.config.prefix+(10000+num).toString(36);
+			return this.config.prefix + (100000 + num).toString(36);
 		}
 		
 	}
 );
+MT.core.Project.allProjects = [];

@@ -63,6 +63,14 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		isCloaseable: false,
 		isRenamable: false,
 		
+		set title(val){
+			this.mainTab.title.innerHTML = val;
+		},
+		
+		get title(){
+			return this.mainTab.title.innerHTML;
+		},
+		
 		startRename: function(){
 			var el = this.mainTab;
 			var that = this;
@@ -337,7 +345,17 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			
 			this.content.fitIn();
-			this.content.y = this.header.el.offsetHeight;
+			var that = this;
+			var align = function(){
+				if(!that.header.el.offsetHeight){
+					window.setTimeout(align, 50);
+					return;
+				}
+				that.content.y = that.header.el.offsetHeight;
+			};
+			
+			align();
+			
 			return this;
 		},
 		

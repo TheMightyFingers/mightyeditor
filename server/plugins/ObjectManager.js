@@ -11,9 +11,7 @@ MT.extend("core.BasicPlugin")(
 	},
 	{
 		readData: function(){
-			console.log("buildHash");
 			this.buildHasTable();
-			console.log(this.hashTable);
 			this.a_sendData();
 		},
 		buildHasTable: function(data){
@@ -54,17 +52,12 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		updateData: function(data){
-			console.log("update", data);
-			
 			for(var i=0; i<data.length; i++){
 				this.a_save(data[i]);
 				if(data[i].contents){
 					this.updateData(data[i].contents);
 				}
 			}
-			
-			console.log(this.data);
-			
 		},
 		
 		saveAndSync: function(){
@@ -79,9 +72,7 @@ MT.extend("core.BasicPlugin")(
 				if(data[i].id == void(0)){
 					this.data.count++;
 					data[i].id = this.data.count;
-					
 				}
-				
 				if(data[i].contents){
 					this.addIndices(data[i].contents);
 					continue;

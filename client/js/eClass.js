@@ -147,7 +147,18 @@
 				script.src = url;
 				document.head.appendChild(script);
 			},
-			
+			serialize: function(obj, prefix) {
+				var str = [];
+				for(var p in obj) {
+					if (obj.hasOwnProperty(p)) {
+					var k = prefix ? prefix + "[" + p + "]" : p, v = obj[p];
+					str.push(typeof v == "object" ?
+						this.serialize(v, k) :
+						encodeURIComponent(k) + "=" + encodeURIComponent(v));
+					}
+				}
+				return str.join("&");
+			},
 			get: function(url, cb){
 				var req = new XMLHttpRequest();
 				req.onreadystatechange = function() {
@@ -158,6 +169,17 @@
 				};
 				req.open("GET", url, true);
 				req.send(null);
+			},
+			post: function(url, data, cb){
+				var req = new XMLHttpRequest();
+				req.onreadystatechange = function() {
+					if (req.readyState !== 4){
+						return;
+					}
+					cb(req.response, req);
+				};
+				req.open("POST", url, true);
+				req.send(JSON.stringify(data));
 			},
 			onScriptsLoaded: function(){
 				if(this.loadings == 0){

@@ -237,10 +237,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(!MT.core.Helper.isImage(data.path)){
 					return;
 				}
+				
+				if(!e){
+					that.createImage(data);
+					return;
+				}
+				
 				var item = that.tv.getOwnItem(e.target);
 				if(item && item.data.contents){
 					data.path = item.data.fullPath + data.path;
 				}
+				
 				that.createImage(data);
 			});
 			
@@ -899,20 +906,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.project.plugins.mapeditor.cleanImage(asset.id);
 			
 			var img = new Image();
-		
+			
+			
 			this.readFile(e.target.files[0], function(fr){
-				
+				var data = Array.prototype.slice.call(new Uint8Array(fr.result));
 				img.onload = function(){
-					asset.frameWidth = img.width;
-					asset.frameHeight= img.height;
+					//asset.frameWidth = img.width;
+					//asset.frameHeight= img.height;
 					asset.width = img.width;
 					asset.height = img.height;
-					
 					asset.updated = Date.now();
 					
 					that.guessFrameWidth(asset);
-				 
-					that.send("updateImage", {asset: asset, data: fr.result});
+					that.emit(MT.ASSET_FRAME_CHANGED, asset, that.activeFrame);
+					that.active.data = asset;
+					that.send("updateImage", {asset: asset, data: data});
 				};
 				img.src = that.toPng(fr.result);
 			});
@@ -1147,7 +1155,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			fr.onload = function(){
 				cb(fr);
 			};
-			fr.readAsBinaryString(file);
+			fr.readAsArrayBuffer(file);
 		},
 		
 		
@@ -1156,6 +1164,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				path = "/" + path;
 			}
 			var that = this;
+			this.project.readFile(file, path);
+			return;
 			this.readFile(file, function(fr){
 				that.createImage({
 					src: fr.result,
@@ -1177,6 +1187,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			img.onload = function(){
 				var data = {
 					data: imgData,
+					id: MT.core.Helper.uuid(),
 					name: name,
 					path: path,
 					fullPath: path,

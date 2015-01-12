@@ -14,6 +14,10 @@ MT(
 				return;
 			}
 			
+			if(this.socket == socket){
+				return;
+			}
+			
 			var that = this;
 			this.socket = socket;
 			
@@ -27,11 +31,9 @@ MT(
 				}
 			});
 		},
-   
-		send: function(action, data){
-			this.socket.send(this.channel, action, data);
+		send: function(action, data, cb){
+			this.socket.send(this.channel, action, data, cb);
 		},
-   
 		sendDelayed: function(action, data, timeout){
 			var that = this;
 			if(this.dealys[action]){

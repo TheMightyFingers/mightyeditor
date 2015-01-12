@@ -1,12 +1,13 @@
 "use strict";
 MT.require("core.Logger");
 MT(
-	MT.http.Httpd = function(config, cb){
+	MT.http.Httpd = function(config){
 		MT.log("Starting server", config);
 		
 		this.http = require("http");
 		this.path = require("path");
 		this.fs = require("fs");
+		this.querystring = require('querystring');
 		
 		this.root = config.root.replace(/\//gi, this.path.sep);
 		
@@ -16,6 +17,8 @@ MT(
 		this.cors = this.config.cors;
 		
 		this.cache = {};
+		this.routes = [];
+		this.callbacks = [];
 		
 		this.server = this.http.createServer();
 		
@@ -29,12 +32,18 @@ MT(
 		
 		this.req = null;
 		this.res = null;
+		
+		var route;
 		this.server.on("request", function(req, res) {
 			that.req = req;
 			that.res = res;
-			
-			if(cb && cb(req, res, that) === false){
-				return;
+			for(var i=0; i<that.routes.length; i++){
+				route = that.routes[i];
+				if(req.url.indexOf(route) === 0){
+					if(that.callbacks[i](req, res, that) === false){
+						return;
+					}
+				}
 			}
 			
 			if(req.method != "GET"){
@@ -43,15 +52,13 @@ MT(
 			}
 			
 			if(req.headers.connection == "keep-alive"){
-				res.setHeader("connection","keep-alive");
+				res.setHeader("connection", "keep-alive");
 			}
 			
 			that.request.parts = req.url.split("?");
 			
 			req.url = that.request.parts.shift();
 			req.url = decodeURI(that.path.normalize(that.root + req.url));
-			
-			
 			
 			if(req.url.indexOf(that.root)  !== 0){
 				MT.log("bad request:", req.url, that.root);
@@ -65,6 +72,43 @@ MT(
 		this.listen(config.port, config.host);
 	},
 	{
+		addRoute: function(path, cb){
+			this.routes.push(path);
+			this.callbacks.push(cb);
+		},
+		removeRoute: function(pathOrCb){
+			var search = this.routes;
+			if(typeof pathOrCb === "function"){
+				search = this.callbacks;
+			}
+			for(var i=0; i<search.length; i++){
+				if(search[i] === pathOrCb){
+					this.routes.splice(i, 1);
+					this.callbacks.splice(i, 1);
+					return true;
+				}
+			}
+			return false;
+		},
+		parseUrl: function(url){
+			var out = {};
+			var tmp = url.split("?").pop();
+			var keyVal = tmp.split("&");
+			var key, val;
+			for(var i=0; i<keyVal.length; i++){
+				tmp = keyVal[i].split("=");
+				key = tmp[0];
+				val = tmp[1];
+				out[key] = val;
+			}
+			return out;
+		},
+		parse: function(str){
+			this.querystring.parse(str);
+		},
+		stringify: function(str){
+			this.querystring.stringify(str);
+		},
 		openSocket: function(handler){
 			var WebSocketServer = require("ws").Server;
 			var that = this;
@@ -75,7 +119,25 @@ MT(
 			});
 			
 		},
-		
+		cookies: function(request) {
+			var list = {};
+			var rc = request.headers.cookie;
+
+			if(rc){
+				rc.split(';').forEach(function( cookie ) {
+					var parts = cookie.split('=');
+					list[parts.shift().trim()] = decodeURI(parts.join('='));
+				});
+			}
+
+			return list;
+		},
+		getIp: function(req){
+			return req.headers['x-forwarded-for'] || 
+					req.connection.remoteAddress || 
+					req.socket.remoteAddress ||
+					req.connection.socket.remoteAddress;
+		},
 		removeSocket: function(ws){
 			for(var i=0; i<this.sockets.length; i++){
 				if(this.sockets[i] == ws){
@@ -113,12 +175,13 @@ MT(
 		},
 		
 		sendAway: function(req, res){
+			MT.log("send away: " + this.getIp(req) +" "+ req.url);
 			res.writeHead(401);
 			res.end('goodbye: '+"\n" + req.url);
 		},
 		
 		notFound: function(req, res, err){
-			MT.log("not found: " + req.url);
+			MT.log("not found: " + this.getIp(req) +" "+ req.url);
 			res.writeHead(404);
 			res.end('not found: ' + "\n" + req.url);
 		},
@@ -153,9 +216,6 @@ MT(
 		/*small files */
 		sendFile: function(req, res, stats){
 			var that = this;
-
-			
-			
 			this.fs.readFile(req.url, function(err, content){
 				res.setHeader("content-length", stats.size);
 				res.setHeader("xxx", "xxx");
@@ -193,6 +253,27 @@ MT(
 			res.end();
 		},
 		
+		getBody: function(req, cb){
+			if(cb == void(0)){
+				return;
+			}
+			var body = "";
+			req.on('data', function (data) {
+				// 1e6 === 1 * Math.pow(10, 6) === 1 * 1000000 ~~~ 1MB
+				if (body.length > 1e6) { 
+					// FLOOD ATTACK OR FAULTY CLIENT, NUKE REQUEST
+					MT.log("FLOOD ATTACK OR FAULTY CLIENT, NUKE REQUEST");
+					req.connection.destroy();
+				}
+				body += data;
+			});
+			
+			
+			req.on('end', function(){
+				cb(body);
+			});
+		}
+   
 	}
 );
 

@@ -118,7 +118,7 @@ MT(
 			
 			this.clear();
 			
-			this.panel.title = obj.name;
+			//this.panel.title = obj.name;
 			
 			var that = this;
 			var cb = function(){
@@ -236,7 +236,7 @@ MT(
 			this.lastObj = obj;
 			
 			this.clear();
-			this.panel.title = obj.name;
+			//this.panel.title = obj.data.name;
 			var that = this;
 			var cb = function(){
 				that.project.om.update();

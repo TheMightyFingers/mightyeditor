@@ -194,7 +194,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						}
 					}
 				}
-				else{
+				else if(e.target.tagName != "INPUT" && e.target.tagName != "TEXTAREA") {
 					var tools = Object.keys(that.tools);
 					if(e.which == "1".charCodeAt(0)){
 						that.setTool(that.tools[tools[0]]);

@@ -448,7 +448,7 @@ MT.extend("core.Emitter")(
 			dragHelper.style.pointerEvents = "none";
 			dragHelper.style.bottom = "auto";
 			dragHelper.style.opacity = 0.8;
-			dragHelper.style.border = "solid 1px #000";
+			dragHelper.style.border = "solid 2px #000";
 			dragHelper.style.zindex = 9999;
 			dragHelper.style.backgroundColor = "#f00";
 			
@@ -495,9 +495,9 @@ MT.extend("core.Emitter")(
 				
 				if(inFolder){
 					last.addChild(item, -1);
-					if(!last.visible){
-						item.hide();
-					}
+					//last.show();//){
+					//	item.hide();
+					//}
 				}
 				else{
 					if(bottom){
@@ -525,7 +525,7 @@ MT.extend("core.Emitter")(
 					return;
 				}
 				mdown = true;
-				scrollTop = that.tree.el.parentNode.scrollTop;
+				scrollTop = that.tree.el.scrollTop;
 				
 				
 				
@@ -606,9 +606,9 @@ MT.extend("core.Emitter")(
 				var bounds = dragHelper.bounds;
 				var top = ev.mouse.y;
 				
-				dragHelper.y = top  - bounds.height*0.5 - that.tree.bounds.top;
+				dragHelper.y = top  - bounds.height*0.5 - that.tree.bounds.top  + that.tree.el.scrollTop;
 				dragHelper.style.height = "auto";
-				
+				//dd.style.backgroundColor = "#f00";
 				
 				dd.style.display = "block";
 				dd.style.top = top - bounds.height*0.5 + "px";
@@ -639,7 +639,7 @@ MT.extend("core.Emitter")(
 						if(last == item){
 							return;
 						}
-						dragHelper.y = it.top - that.tree.bounds.top;
+						dragHelper.y = it.top - that.tree.bounds.top  + that.tree.el.scrollTop;
 						
 						inFolder = currItem.isFolder;
 						bottom = false;
@@ -649,7 +649,7 @@ MT.extend("core.Emitter")(
 							if(top - it.top < it.top + it.height - top){
 								inFolder = false;
 								
-								dragHelper.y = it.top - that.tree.bounds.top;
+								dragHelper.y = it.top - that.tree.bounds.top  + that.tree.el.scrollTop;
 								dragHelper.style.height = dragHelper.height*0.5;
 								dragHelper.y -= dragHelper.height*0.5;
 								
@@ -660,7 +660,7 @@ MT.extend("core.Emitter")(
 								inFolder = false;
 								bottom = true;
 								
-								dragHelper.y = it.top - that.tree.bounds.top + it.height;
+								dragHelper.y = it.top - that.tree.bounds.top + it.height  + that.tree.el.scrollTop;
 								dragHelper.style.height = dragHelper.height *0.5;
 								dragHelper.y -= dragHelper.height*0.5;
 								
@@ -673,7 +673,7 @@ MT.extend("core.Emitter")(
 						if(top - it.top < 10){
 							inFolder = false;
 							
-							dragHelper.y = it.top - that.tree.bounds.top;
+							dragHelper.y = it.top - that.tree.bounds.top  + that.tree.el.scrollTop;
 							dragHelper.style.height = dragHelper.height*0.5;
 							dragHelper.y -= dragHelper.height*0.5;
 						}
@@ -683,7 +683,7 @@ MT.extend("core.Emitter")(
 							inFolder = false;
 							bottom = true;
 							
-							dragHelper.y = it.top - that.tree.bounds.top + it.height;
+							dragHelper.y = it.top - that.tree.bounds.top + it.height  + that.tree.el.scrollTop;
 							dragHelper.style.height = dragHelper.height *0.5;
 							dragHelper.y -= dragHelper.height*0.5;
 						}
@@ -697,7 +697,7 @@ MT.extend("core.Emitter")(
 				if(that.items.length){
 					// most bottom
 					if(top > maxHeight){
-						dragHelper.y = maxHeight - that.tree.bounds.top + 5;
+						dragHelper.y = maxHeight - that.tree.bounds.top + 5  + that.tree.el.scrollTop;
 						dragHelper.style.height = dragHelper.height *0.5;
 						bottom = true;
 						inFolder = false;
@@ -705,7 +705,7 @@ MT.extend("core.Emitter")(
 					}
 					// most top
 					else if(top - that.tree.bounds.top < 20){
-						dragHelper.y = 0;
+						dragHelper.y = - dragHelper.height * 0.25;
 						dragHelper.style.height = dragHelper.height *0.5;
 						last = firstLevel[0];
 					}
@@ -819,6 +819,7 @@ MT.extend("core.Emitter")(
 		
 		merge: function(data, oldData){
 			this.data = data;
+			var scroll = this.tree.el.scrollTop;
 			this.tree.hide();
 			
 			var p = this.tree.el.parentNode;
@@ -843,7 +844,7 @@ MT.extend("core.Emitter")(
 			if(data.length !== 0){
 				this.tree.show();
 			}
-			
+			this.tree.el.scrollTop = scroll;
 		},
    
 		getOwnItem: function(it){

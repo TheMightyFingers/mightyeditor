@@ -160,8 +160,6 @@ MT(
 					tmp.anchorY = this.getInt(t, start.anchorY, end.anchorY, end.easings.anchorY);
 				}
 			}
-			
-			
 		},
    
 		getInt: function(t, a, b, easing){
@@ -171,7 +169,7 @@ MT(
 			}
 			
 			if(isNaN(a) || isNaN(b)){
-				throw("Error");
+				return;
 			}
 			
 			return (1 - tfin) * a + tfin * b;

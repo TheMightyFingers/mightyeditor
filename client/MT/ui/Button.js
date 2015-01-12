@@ -15,17 +15,7 @@ MT.extend("ui.DomElement")(
 		}
 		
 		if(cb){
-			//if(events == null){
-				this.el.onclick = cb;
-			//}
-			/*else{
-				var that = this;
-				events.on("click", function(e){
-					if(e.target === that.el){
-						cb(e);
-					}
-				});
-			}*/
+			this.el.onclick = cb;
 		}
 		
 	},

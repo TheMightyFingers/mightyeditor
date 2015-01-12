@@ -32,6 +32,11 @@ var SourceLoader = function(name){
 
 SourceLoader.prototype = {
 	getScript: function(script, cb, inc){
+		console.log("get script", inc);
+		if(!inc){
+			console.log("Skipping:", script);
+			return;
+		}
 		if(ignore.indexOf(script) > -1){
 			console.log("ignored "+ script);
 			// skip callback - as callback will be launched in release version
@@ -80,6 +85,8 @@ SourceLoader.prototype = {
 		
 		
 		for(var i=0; i<fileList.length; i++){
+			console.log("includes:", includes[i]);
+			
 			var scope = includes[i].split(".");
 			scope.pop();
 			scope = scope.join(".");
