@@ -17,7 +17,7 @@ MT.extend("core.BasicPlugin")(
 		this.dataFile = "mt.data.js";
 		this.jsonFile = "mt.data.json";
 		this.exampleFile = "index.html";
-		this.hacksFile = "phaserHacks.js";
+		this.hacksFiles = ["phaserHacks2.0.7.js", "phaserHacks.js"];
 		
 		
 		this.phaserPath = "phaser";
@@ -80,41 +80,21 @@ MT.extend("core.BasicPlugin")(
 			var localFilePath = "phaser/js/lib/" +  this.dataFile;
 			var filePath = libsPath + this.dataFile;
 			
-			//this.fs.scandir(this.projects.path + this.sep + this.src, function(data){
-				
-				//that.copydata(data, srcPath);
-				
-				that.fs.copy(this.project.path + this.sep + "src", this.dir);
-				
-				
-				that.fs.copy(tplPath + this.importFile, libsPath + this.importFile);
-				that.fs.copy(tplPath + this.hacksFile, libsPath + this.hacksFile);
-				//that.fs.copy(tplPath + this.phaserSrc, libsPath +  this.phaserSrc);
-				//that.fs.copy(tplPath + this.phaserMinSrc, libsPath + this.phaserMinSrc);
-				
-				
-				that.fs.writeFile(libsPath + this.jsonFile, contents);
-				that.fs.writeFile(libsPath + this.dataFile, "window.mt = window.mt || {}; window.mt.data = "+contents+";\r\n", function(err){
-					if(cb){
-						cb(err, localFilePath, filePath);
-					}
-				});
-				
-			//});
-			
-			/*
-			
-			this.fs.copy("phaser/mt.export.js", this.dir + this.sep + this.importFile);
-			
-			this.fs.copy("phaser" + this.sep + this.phaserSrc, this.dir + this.sep + this.phaserSrc);
-			this.fs.copy("phaser" + this.sep + this.phaserMinSrc, this.dir + this.sep + this.phaserMinSrc);
-			this.fs.copy("phaser" + this.sep + this.exampleFile, this.dir + this.sep + this.exampleFile);
-			this.fs.copy("phaser" + this.sep + this.hacksFile, this.dir + this.sep + this.hacksFile);
-			
-			*/
+			that.fs.copy(this.project.path + this.sep + "src", this.dir);
 			
 			
+			that.fs.copy(tplPath + this.importFile, libsPath + this.importFile);
 			
+			for(var i=0; i<this.hacksFiles.length; i++){
+				that.fs.copy(tplPath + this.hacksFiles[i], libsPath + this.hacksFiles[i]);
+			}
+			
+			that.fs.writeFile(libsPath + this.jsonFile, contents);
+			that.fs.writeFile(libsPath + this.dataFile, "window.mt = window.mt || {}; window.mt.data = "+contents+";\r\n", function(err){
+				if(cb){
+					cb(err, localFilePath, filePath);
+				}
+			});
 		},
 		
 		

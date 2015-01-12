@@ -4,17 +4,14 @@
 
 (function(){
 	"use strict";
-	// fix align by wordWrapWidth
 	Phaser.Text.prototype.updateText = function () {
-		if(!this || !this.texture){
-			return;
-		}
-		this.texture.baseTexture.resolution = this.resolution;
-
 		this.context.font = this.style.font;
 
 		var outputText = this.text;
+		var maxLineWidth = 0;
 
+		// word wrap
+		// preserve original text
 		if (this.style.wordWrap)
 		{
 			outputText = this.runWordWrap(this.text);
@@ -26,9 +23,7 @@
 
 		//calculate text width
 		var lineWidths = [];
-		var maxLineWidth = 0;
-		var fontProperties = this.determineFontProperties(this.style.font);
-
+		
 		for (var i = 0; i < lines.length; i++)
 		{
 			var lineWidth = this.context.measureText(lines[i]).width;
@@ -36,78 +31,65 @@
 			maxLineWidth = Math.max(maxLineWidth, lineWidth);
 		}
 
-		var width = maxLineWidth + this.style.strokeThickness;
-
-		this.canvas.width = (width + this.context.lineWidth) * this.resolution;
+		this.canvas.width = maxLineWidth + this.style.strokeThickness;
 
 		//calculate text height
-		var lineHeight = fontProperties.fontSize + this.style.strokeThickness;
+		var lineHeight = this.determineFontHeight('font: ' + this.style.font + ';') + this.style.strokeThickness + this._lineSpacing + this.style.shadowOffsetY;
 
-		var height = lineHeight * lines.length;
-
-		this.canvas.height = height * this.resolution;
-
-		this.context.scale(this.resolution, this.resolution);
+		this.canvas.height = lineHeight * lines.length;
 
 		if (navigator.isCocoonJS)
 		{
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		}
 
+		//set canvas text styles
 		this.context.fillStyle = this.style.fill;
 		this.context.font = this.style.font;
+
 		this.context.strokeStyle = this.style.stroke;
-		this.context.textBaseline = 'alphabetic';
+		this.context.lineWidth = this.style.strokeThickness;
+
 		this.context.shadowOffsetX = this.style.shadowOffsetX;
 		this.context.shadowOffsetY = this.style.shadowOffsetY;
 		this.context.shadowColor = this.style.shadowColor;
 		this.context.shadowBlur = this.style.shadowBlur;
-		this.context.lineWidth = this.style.strokeThickness;
+
+		this.context.textBaseline = 'top';
 		this.context.lineCap = 'round';
 		this.context.lineJoin = 'round';
-
-		var linePositionX;
-		var linePositionY;
-
-		this._charCount = 0;
-
+		
+		
+		var linePosition = new PIXI.Point(0, 0);
 		//draw lines line by line
 		for (i = 0; i < lines.length; i++)
 		{
-			linePositionX = this.style.strokeThickness / 2;
-			linePositionY = (this.style.strokeThickness / 2 + i * lineHeight) + fontProperties.ascent;
+			linePosition.x = this.style.strokeThickness / 2;
+			linePosition.y = this.style.strokeThickness / 2 + i * lineHeight + this._lineSpacing;
 
 			if (this.style.align === 'right')
 			{
-				linePositionX += maxLineWidth - lineWidths[i];
+				linePosition.x += maxLineWidth - lineWidths[i];
 			}
 			else if (this.style.align === 'center')
 			{
-				linePositionX += (maxLineWidth - lineWidths[i]) / 2;
+				linePosition.x += (maxLineWidth - lineWidths[i]) / 2;
 			}
 
-			linePositionY += this._lineSpacing;
-
-			if (this.colors.length > 0)
+			if (this.style.stroke && this.style.strokeThickness)
 			{
-				this.updateLine(lines[i], linePositionX, linePositionY);
+				this.context.strokeText(lines[i], linePosition.x, linePosition.y);
 			}
-			else
-			{
-				if (this.style.stroke && this.style.strokeThickness)
-				{
-					this.context.strokeText(lines[i], linePositionX, linePositionY);
-				}
 
-				if (this.style.fill)
-				{
-					this.context.fillText(lines[i], linePositionX, linePositionY);
-				}
+			if (this.style.fill)
+			{
+				this.context.fillText(lines[i], linePosition.x, linePosition.y);
 			}
 		}
 
 		this.updateTexture();
 	};
+	
 	// add scaleX/Y and anchorX/Y - so we can skip extra tweens
 	(function(){
 		

@@ -41,7 +41,14 @@
 		init: function(game){
 			this.game = game;
 			this.game.load.crossOrigin = "anonymous";
-			this.game.load.script("hacks", "js/lib/phaserHacks.js");
+			
+			if(Phaser.VERSION == "2.0.7"){
+				this.game.load.script("hacks", "js/lib/phaserHacks2.0.7.js");
+			}
+			else{
+				this.game.load.script("hacks", "js/lib/phaserHacks.js");
+			}
+			
 		},
  
 		setBackgroundColor: function(appendToBody){
