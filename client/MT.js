@@ -18848,7 +18848,7 @@ MT.extend("core.BasicPlugin")(
 		
 		uploadFile: function(data){
 			var tmp = data.src;
-			data.src = Array.apply(null, new Uint8Array(data.src));
+			data.src = Array.prototype.slice.call(new Uint8Array(data.src));
 			this.send("uploadFile", data);
 		},
 		
@@ -19493,6 +19493,7 @@ MT.extend("core.BasicPlugin")(
 		
 	}
 );
+
 //MT/plugins/MapManager.js
 MT.namespace('plugins');
 /*
