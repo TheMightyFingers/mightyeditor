@@ -10662,7 +10662,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		/* helper fns */
 		
 		sync: function(sprite, obj){
-			
+			this.sendDelayed("updateData", this.settings, 100);
 		},
    
 		createObject: function(obj){
@@ -10685,6 +10685,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.updateSettings(obj);
 			this.sendDelayed("updateData", this.settings, 100);
 		},
+		
 		
 		received: false,
 		a_receive: function(obj){
@@ -10870,6 +10871,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		}
 	}
 );
+
 //MT/misc/tooltips.js
 MT.namespace('misc');
 MT.misc.tooltips = {
@@ -17053,6 +17055,7 @@ MT.extend("core.Emitter")(
 					info.lastFrame = 0;
 				}
 				that.changeFrame();
+				that.map.sync();
 			});
 			
 			ev.on("mouseup", function(e){
@@ -17973,6 +17976,7 @@ MT.extend("core.Emitter")(
 		}
 	}
 );
+
 //MT/plugins/Notification.js
 MT.namespace('plugins');
 "use strict";
