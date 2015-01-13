@@ -253,6 +253,7 @@ MT.extend("core.Emitter")(
 					info.lastFrame = 0;
 				}
 				that.changeFrame();
+				that.map.sync();
 			});
 			
 			ev.on("mouseup", function(e){

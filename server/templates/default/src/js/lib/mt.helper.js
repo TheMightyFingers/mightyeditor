@@ -759,7 +759,7 @@
 					this._ifps = 1000/this._fps;
 					
 				}
-				this._lastFrame =  movie.info.lastFrame;
+				this._lastFrame =  movie.info.lastFrame  || mt.data.map.movieInfo.lastFrame;;
 				this._mainTimer = mt.game.time.create(false);
 				
 				if(movie.subdata && movie.subdata.length > 0){

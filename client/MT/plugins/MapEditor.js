@@ -1595,7 +1595,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		/* helper fns */
 		
 		sync: function(sprite, obj){
-			
+			this.sendDelayed("updateData", this.settings, 100);
 		},
    
 		createObject: function(obj){
@@ -1618,6 +1618,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			this.updateSettings(obj);
 			this.sendDelayed("updateData", this.settings, 100);
 		},
+		
 		
 		received: false,
 		a_receive: function(obj){
