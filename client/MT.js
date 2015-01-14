@@ -8161,7 +8161,7 @@ MT.extend("ui.Keyframes")(
 				
 			}
 			
-			frames.push({keyframe: this.mm.activeFrame, length: movie.info.lastFrame});
+			frames.push({keyframe: this.mm.activeFrame, length: data.info.lastFrame});
 			
 			this.mm.sortFrames(frames);
 			this.mm.redrawAll();
@@ -8169,6 +8169,7 @@ MT.extend("ui.Keyframes")(
 		}
 	}
 );
+
 //MT/ui/Keyframes.js
 MT.namespace('ui');
 "use strict";
@@ -17952,7 +17953,7 @@ MT.extend("core.Emitter")(
 					for(var j = 0; j<movieContents.length; j++){
 						if(movieContents[j].name == key){
 							mdata = movieContents[j];
-							
+							mdata.info = movies[key].info;
 							continue scan;
 						}
 					}
