@@ -3,12 +3,22 @@ MT.core.Exporter = function(server, auth){
 	server.addRoute("/export/", function(req, res, httpd){
 		var projectId = req.url.substring(8);
 		
-		auth.db.get("SELECT access FROM projects WHERE link = ?", function(err, row){
+		if(!projectId){
+			return true;
+		}
+		
+		auth.db.get("SELECT access FROM projects WHERE link = ?", projectId, function(err, row){
 			
 			if(err){
 				MT.log("Export failed", err);
 				return;
 			}
+			
+			if(!row){
+				httpd.notFound(req, res);
+				return;
+			}
+			
 			var acc = auth.getProjectAccess(row.access);
 			if(!acc.allowCopy){
 				return;

@@ -124,7 +124,7 @@ MT.extend("ui.Keyframes")(
 				
 			}
 			
-			frames.push({keyframe: this.mm.activeFrame, length: movie.info.lastFrame});
+			frames.push({keyframe: this.mm.activeFrame, length: data.info.lastFrame});
 			
 			this.mm.sortFrames(frames);
 			this.mm.redrawAll();

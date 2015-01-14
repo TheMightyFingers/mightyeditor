@@ -1150,7 +1150,7 @@ MT.extend("core.Emitter")(
 					for(var j = 0; j<movieContents.length; j++){
 						if(movieContents[j].name == key){
 							mdata = movieContents[j];
-							
+							mdata.info = movies[key].info;
 							continue scan;
 						}
 					}
