@@ -328,7 +328,10 @@ var gloabl = window;
 			}
 			var span = document.createElement("span");
 			span.style.font = font;
-			
+			// cocoon or something else that doesn not work as browser
+			if(!span.style.fontFamily){
+				return;
+			}
 			var fontFamily = span.style.fontFamily.replace(/'/gi, '');
 			
 			if(this.isKnownFontFamily(fontFamily)){
