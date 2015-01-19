@@ -21,6 +21,7 @@ MT.core.Exporter = function(server, auth){
 			
 			var acc = auth.getProjectAccess(row.access);
 			if(!acc.allowCopy){
+				httpd.notFound(req, res);
 				return;
 			}
 			
@@ -35,9 +36,12 @@ MT.core.Exporter = function(server, auth){
 				if(err){
 					httpd.notFound(req, res);
 				}
-				httpd.redirect("/"+targetFile, req, res);
+				else{
+					httpd.redirect("/"+targetFile, req, res);
+				}
 			});
 		});
+		
 		return false;
 	});
 };
