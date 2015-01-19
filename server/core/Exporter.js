@@ -1,4 +1,4 @@
-MT.core.Exporter = function(server, auth){
+MT.core.Exporter = function(server, auth, config){
 	var exec = require('child_process').exec;
 	server.addRoute("/export/", function(req, res, httpd){
 		var projectId = req.url.substring(8);

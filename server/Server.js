@@ -38,6 +38,6 @@ server.openSocket(function(socket){
 
 
 // some good stuff
-new MT.core.Exporter(server, auth);
+new MT.core.Exporter(server, auth, config);
 new MT.core.GeoIP(server, "mightyeditor.mightyfingers.com");
 
