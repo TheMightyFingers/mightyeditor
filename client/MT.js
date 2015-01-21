@@ -1924,13 +1924,13 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(this.active){
 				this.createPanels(images);
 				if(!this.active.data.lastImage){
-					if(this.active.data.images.length){
+					if(this.active.data.images && this.active.data.images.length){
 						this.active.data.lastImage = this.active.data.images[0];
 					}
 				}
 				
 				if(this.active.data.lastImage){
-					if(this.active.data.images.length){
+					if(this.active.data.images && this.active.data.images.length){
 						var p = this.panels[this.active.data.lastImage];
 						if(p){
 							this.activePanel = p;
@@ -1993,6 +1993,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		}
 	}
 );
+
 //MT/plugins/tools/Text.js
 MT.namespace('plugins.tools');
 "use strict";
@@ -6621,6 +6622,9 @@ MT.extend("core.Emitter")(
 				if( !item ){
 					return;
 				}
+				
+				that.emit("dragstart", e, item);
+				
 				mdown = true;
 				scrollTop = that.tree.el.scrollTop;
 				
@@ -6654,6 +6658,8 @@ MT.extend("core.Emitter")(
 						return;
 					}
 				}
+				that.emit("dragend", e, item);
+				
 				
 				
 				if(!dragged){
@@ -6689,12 +6695,21 @@ MT.extend("core.Emitter")(
 				if(!mdown || !item){
 					return;
 				}
+				
 				if(Math.abs(startDragPos.x - ev.mouse.x) < 5 && Math.abs(startDragPos.y - ev.mouse.y) < 5 ){
 					return;
 				}
 				
-				
 				dragged = true;
+				
+				that.emit("dragmove", e, item);
+				if(e.isPropagationStopped || !MT.ui.hasParent(e.target, that.tree.el)){
+					dragHelper.style.display = "none";
+					dd.style.display = "none";
+					dragHelper.y = 0;
+					dragged = false;
+					return;
+				}
 				
 				dragHelper.style.zIndex = 9999
 				dragHelper.style.display = "block";
@@ -6808,11 +6823,12 @@ MT.extend("core.Emitter")(
 					}
 				}
 			});
-			
 		},
+		
 		disableRename: function(){
 			this.renameEnabled = false;
 		},
+		
 		renameEnabled: true,
 		enableRename: function(el){
 			if(!this.renameEnabled){
@@ -7019,6 +7035,7 @@ MT.extend("core.Emitter")(
 		
 	}
 );
+
 //MT/ui/DomElement.js
 MT.namespace('ui');
 MT(
@@ -10757,7 +10774,12 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			if( obj.object.input.checkPointerOver(this.game.input.activePointer)){
 				if(this.ui.events.mouse.lastEvent.ctrlKey && !this.activeObject && checkGroup){
-					this.activeObject = obj.parent.magic;
+					if(obj.parent && obj.parent.magic){
+						this.activeObject = obj.parent.magic;
+					}
+					else{
+						this.activeObject = obj;
+					}
 					return this.activeObject
 				}
 				
@@ -13405,6 +13427,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.on("open", update);
 			this.tv.on("close", update);
 			
+			
+			
+			
+			
 			this.preview = ui.createPanel("assetPreview");
 			this.preview.setFree();
 			
@@ -14081,6 +14107,34 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				that.setPreviewAssets(asset);
 			});
+			
+			
+			var map = this.project.plugins.mapeditor;
+			this.tv.on("dragmove", function(e, item){
+				if(e.target !== map.game.canvas){
+					tools.removeTmpObject();
+					return;
+				}
+				tools.tools.stamp.init(item.data);
+				return;
+				e.stopPropagation();
+				
+				tools.initTmpObject(item.data);
+				tools.tmpObject.x = e.x - map.offsetX;
+				tools.tmpObject.y = e.y - map.offsetY;
+				
+			});
+			this.tv.on("dragend", function(e, item){
+				
+				if(e.target !== map.game.canvas){
+					tools.removeTmpObject();
+					return;
+				}
+				tools.tools.stamp.mouseDown(e);
+				tools.removeTmpObject();
+			});
+			
+			
 		},
 		
 		selectAssetById: function(id, redraw){
@@ -14143,7 +14197,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			this.readFile(file, function(fr){
-				that.send("addAtlas", {id: asset.id, ext: ext, data: fr.result});
+				that.send("addAtlas", {id: asset.id, ext: ext, data: Array.prototype.slice.call(new Uint8Array(fr.result)) });
 			});
 			
 		},
@@ -18753,6 +18807,7 @@ MT.extend("core.BasicPlugin")(
 		MT.core.BasicPlugin.call(this, "source");
 		this.project = project;
 		this.documents = {};
+		
 	},
 	{
 		initUI: function(ui){
@@ -18966,7 +19021,8 @@ MT.extend("core.BasicPlugin")(
 				panel = new MT.ui.Panel(data.name);
 				panel.data = {
 					data: data,
-					needFocus: true
+					needFocus: true,
+					opened: 0
 				};
 				
 				panel.mainTab.el.setAttribute("title", data.fullPath);
@@ -19021,6 +19077,10 @@ MT.extend("core.BasicPlugin")(
 			panel.show();
 			
 			if(!MT.core.Helper.isAudio(data.name)){
+				if(Date.now() - panel.data.opened < 5*1000){
+					return;
+				}
+				panel.data.opened = Date.now();
 				this.send("getContent", data);
 			}
 			else{
@@ -19366,38 +19426,52 @@ MT.extend("core.BasicPlugin")(
 				var conf = {
 					browser: true,
 					globalstrict: true,
+					strict: "implied",
+					undef: true,
+					unused: true,
 					loopfunc: true,
 					predef: {
-						"Phaser": Phaser,
+						"Phaser": false,
 						"mt": false,
 						"console": false
 					},
 					laxcomma: false
 				};
-				JSHINT(that.editor.getValue(), conf);
 				
-				for (var i = 0; i < JSHINT.errors.length; ++i) {
-					var err = JSHINT.errors[i];
-					if (!err) continue;
-					
-					var msg = document.createElement("a");
-					msg.errorTxt = err.reason;
-					var icon = msg.appendChild(document.createElement("span"));
-					
-					icon.innerHTML = "!";
-					icon.className = "lint-error-icon";
-					
-					var text = msg.appendChild(document.createElement("span"));
-					text.className = "lint-error-text";
-					text.appendChild(document.createTextNode(err.reason));
-					
-					//var evidence = msg.appendChild(document.createElement("span"));
-					//evidence.className = "lint-error-text evidence";
-					//evidence.appendChild(document.createTextNode(err.evidence));
-					
-					msg.className = "lint-error";
-					that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
+				if(that.lastWorker){
+					that.lastWorker.terminate();
 				}
+				
+				var worker = new Worker("js/jshint-worker.js");
+				that.lastWorker = worker;
+				
+				worker.onmessage = function(e) {
+					console.log("jshint:", e.data[0].length);
+					var errors = e.data[0]
+					for (var i = 0; i < errors.length; ++i) {
+						var err = errors[i];
+						if (!err) continue;
+						
+						var msg = document.createElement("a");
+						msg.errorTxt = err.reason;
+						var icon = msg.appendChild(document.createElement("span"));
+						
+						icon.innerHTML = "!";
+						icon.className = "lint-error-icon";
+						
+						var text = msg.appendChild(document.createElement("span"));
+						text.className = "lint-error-text";
+						text.appendChild(document.createTextNode(err.reason));
+						
+						//var evidence = msg.appendChild(document.createElement("span"));
+						//evidence.className = "lint-error-text evidence";
+						//evidence.appendChild(document.createTextNode(err.evidence));
+						
+						msg.className = "lint-error";
+						that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
+					}
+				};
+				worker.postMessage([that.editor.getValue(), conf ]);
 			});
 		},
 		
@@ -19412,7 +19486,7 @@ MT.extend("core.BasicPlugin")(
 				this.delay = window.setTimeout(function(){
 					that.updateHints();
 					that.delay = 0;
-				}, 5000);
+				}, 100);
 			}
 			
 			
@@ -19738,7 +19812,7 @@ MT.extend("core.BasicPlugin")(
 					}
 				},
 				{
-					label: "Video",
+					label: "Video Tutorial",
 					className: "",
 					cb: function(){
 						that.openVideo();
@@ -19756,6 +19830,13 @@ MT.extend("core.BasicPlugin")(
 					className: "",
 					cb: function(){
 						that.openFonts();
+					}
+				},
+				{
+					label: "Leshy SpriteSheet Tool",
+					className: "",
+					cb: function(){
+						that.openLink("http://www.leshylabs.com/apps/sstool/");
 					}
 				},
 				{
@@ -19796,7 +19877,7 @@ MT.extend("core.BasicPlugin")(
 		openVideo: function(){
 			//https://www.youtube.com/watch?v=7dk2naCCePc
 			var w = window.open("about:blank","_newTab");
-			w.opener=null; w.location.href="https://www.youtube.com/watch?v=7dk2naCCePc";
+			w.opener=null; w.location.href="https://www.youtube.com/watch?v=gzGHMRx3yz0";
 		},
 		
 		openFonts: function(){
@@ -19811,6 +19892,7 @@ MT.extend("core.BasicPlugin")(
 		}
 	}
 );
+
 //MT/ui/Fieldset.js
 MT.namespace('ui');
 MT.extend("ui.DomElement")(
@@ -20255,6 +20337,17 @@ MT.ui.removeClass = function(el, clsName){
 	el.className = c.join(" ");
 };
 
+MT.ui.hasParent = function(el, parent){
+	var ret = false;
+	var element = el;
+	while(element.parentNode){
+		if(element == parent){
+			return true;
+		}
+		element = element.parentNode;
+	}
+	return false;
+};
 
 MT.extend("core.Emitter")(
 	MT.ui.Controller = function(){
