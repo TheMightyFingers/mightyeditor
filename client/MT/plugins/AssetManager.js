@@ -204,6 +204,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.on("open", update);
 			this.tv.on("close", update);
 			
+			
+			
+			
+			
 			this.preview = ui.createPanel("assetPreview");
 			this.preview.setFree();
 			
@@ -880,6 +884,34 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				that.setPreviewAssets(asset);
 			});
+			
+			
+			var map = this.project.plugins.mapeditor;
+			this.tv.on("dragmove", function(e, item){
+				if(e.target !== map.game.canvas){
+					tools.removeTmpObject();
+					return;
+				}
+				tools.tools.stamp.init(item.data);
+				return;
+				e.stopPropagation();
+				
+				tools.initTmpObject(item.data);
+				tools.tmpObject.x = e.x - map.offsetX;
+				tools.tmpObject.y = e.y - map.offsetY;
+				
+			});
+			this.tv.on("dragend", function(e, item){
+				
+				if(e.target !== map.game.canvas){
+					tools.removeTmpObject();
+					return;
+				}
+				tools.tools.stamp.mouseDown(e);
+				tools.removeTmpObject();
+			});
+			
+			
 		},
 		
 		selectAssetById: function(id, redraw){
@@ -942,7 +974,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			this.readFile(file, function(fr){
-				that.send("addAtlas", {id: asset.id, ext: ext, data: fr.result});
+				that.send("addAtlas", {id: asset.id, ext: ext, data: Array.prototype.slice.call(new Uint8Array(fr.result)) });
 			});
 			
 		},

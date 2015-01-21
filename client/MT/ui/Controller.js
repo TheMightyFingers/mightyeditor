@@ -58,6 +58,17 @@ MT.ui.removeClass = function(el, clsName){
 	el.className = c.join(" ");
 };
 
+MT.ui.hasParent = function(el, parent){
+	var ret = false;
+	var element = el;
+	while(element.parentNode){
+		if(element == parent){
+			return true;
+		}
+		element = element.parentNode;
+	}
+	return false;
+};
 
 MT.extend("core.Emitter")(
 	MT.ui.Controller = function(){

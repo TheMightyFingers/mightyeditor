@@ -95,6 +95,7 @@ MT.extend("core.BasicPlugin")(
 		MT.core.BasicPlugin.call(this, "source");
 		this.project = project;
 		this.documents = {};
+		
 	},
 	{
 		initUI: function(ui){
@@ -308,7 +309,8 @@ MT.extend("core.BasicPlugin")(
 				panel = new MT.ui.Panel(data.name);
 				panel.data = {
 					data: data,
-					needFocus: true
+					needFocus: true,
+					opened: 0
 				};
 				
 				panel.mainTab.el.setAttribute("title", data.fullPath);
@@ -363,6 +365,10 @@ MT.extend("core.BasicPlugin")(
 			panel.show();
 			
 			if(!MT.core.Helper.isAudio(data.name)){
+				if(Date.now() - panel.data.opened < 5*1000){
+					return;
+				}
+				panel.data.opened = Date.now();
 				this.send("getContent", data);
 			}
 			else{
@@ -708,38 +714,52 @@ MT.extend("core.BasicPlugin")(
 				var conf = {
 					browser: true,
 					globalstrict: true,
+					strict: "implied",
+					undef: true,
+					unused: true,
 					loopfunc: true,
 					predef: {
-						"Phaser": Phaser,
+						"Phaser": false,
 						"mt": false,
 						"console": false
 					},
 					laxcomma: false
 				};
-				JSHINT(that.editor.getValue(), conf);
 				
-				for (var i = 0; i < JSHINT.errors.length; ++i) {
-					var err = JSHINT.errors[i];
-					if (!err) continue;
-					
-					var msg = document.createElement("a");
-					msg.errorTxt = err.reason;
-					var icon = msg.appendChild(document.createElement("span"));
-					
-					icon.innerHTML = "!";
-					icon.className = "lint-error-icon";
-					
-					var text = msg.appendChild(document.createElement("span"));
-					text.className = "lint-error-text";
-					text.appendChild(document.createTextNode(err.reason));
-					
-					//var evidence = msg.appendChild(document.createElement("span"));
-					//evidence.className = "lint-error-text evidence";
-					//evidence.appendChild(document.createTextNode(err.evidence));
-					
-					msg.className = "lint-error";
-					that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
+				if(that.lastWorker){
+					that.lastWorker.terminate();
 				}
+				
+				var worker = new Worker("js/jshint-worker.js");
+				that.lastWorker = worker;
+				
+				worker.onmessage = function(e) {
+					console.log("jshint:", e.data[0].length);
+					var errors = e.data[0]
+					for (var i = 0; i < errors.length; ++i) {
+						var err = errors[i];
+						if (!err) continue;
+						
+						var msg = document.createElement("a");
+						msg.errorTxt = err.reason;
+						var icon = msg.appendChild(document.createElement("span"));
+						
+						icon.innerHTML = "!";
+						icon.className = "lint-error-icon";
+						
+						var text = msg.appendChild(document.createElement("span"));
+						text.className = "lint-error-text";
+						text.appendChild(document.createTextNode(err.reason));
+						
+						//var evidence = msg.appendChild(document.createElement("span"));
+						//evidence.className = "lint-error-text evidence";
+						//evidence.appendChild(document.createTextNode(err.evidence));
+						
+						msg.className = "lint-error";
+						that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
+					}
+				};
+				worker.postMessage([that.editor.getValue(), conf ]);
 			});
 		},
 		
@@ -754,7 +774,7 @@ MT.extend("core.BasicPlugin")(
 				this.delay = window.setTimeout(function(){
 					that.updateHints();
 					that.delay = 0;
-				}, 5000);
+				}, 100);
 			}
 			
 			

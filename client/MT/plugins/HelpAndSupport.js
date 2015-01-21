@@ -15,7 +15,7 @@ MT.extend("core.BasicPlugin")(
 					}
 				},
 				{
-					label: "Video",
+					label: "Video Tutorial",
 					className: "",
 					cb: function(){
 						that.openVideo();
@@ -33,6 +33,13 @@ MT.extend("core.BasicPlugin")(
 					className: "",
 					cb: function(){
 						that.openFonts();
+					}
+				},
+				{
+					label: "Leshy SpriteSheet Tool",
+					className: "",
+					cb: function(){
+						that.openLink("http://www.leshylabs.com/apps/sstool/");
 					}
 				},
 				{
@@ -73,7 +80,7 @@ MT.extend("core.BasicPlugin")(
 		openVideo: function(){
 			//https://www.youtube.com/watch?v=7dk2naCCePc
 			var w = window.open("about:blank","_newTab");
-			w.opener=null; w.location.href="https://www.youtube.com/watch?v=7dk2naCCePc";
+			w.opener=null; w.location.href="https://www.youtube.com/watch?v=gzGHMRx3yz0";
 		},
 		
 		openFonts: function(){

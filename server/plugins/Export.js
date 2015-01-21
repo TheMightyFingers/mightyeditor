@@ -17,7 +17,7 @@ MT.extend("core.BasicPlugin")(
 		this.dataFile = "mt.data.js";
 		this.jsonFile = "mt.data.json";
 		this.exampleFile = "index.html";
-		this.hacksFiles = ["phaserHacks2.0.7.js", "phaserHacks.js"];
+		this.hacksFiles = ["phaserHacks2.0.7.js", "phaserHacks2.1.3.js", "phaserHacks.js"];
 		
 		
 		this.phaserPath = "phaser";

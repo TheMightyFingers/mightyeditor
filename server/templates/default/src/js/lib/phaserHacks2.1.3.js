@@ -4,14 +4,17 @@
 
 (function(){
 	"use strict";
+	// fix align by wordWrapWidth
 	Phaser.Text.prototype.updateText = function () {
+		if(!this || !this.texture){
+			return;
+		}
+		this.texture.baseTexture.resolution = this.resolution;
+
 		this.context.font = this.style.font;
 
 		var outputText = this.text;
-		var maxLineWidth = 0;
 
-		// word wrap
-		// preserve original text
 		if (this.style.wordWrap)
 		{
 			outputText = this.runWordWrap(this.text);
@@ -23,7 +26,9 @@
 
 		//calculate text width
 		var lineWidths = [];
-		
+		var maxLineWidth = 0;
+		var fontProperties = this.determineFontProperties(this.style.font);
+
 		for (var i = 0; i < lines.length; i++)
 		{
 			var lineWidth = this.context.measureText(lines[i]).width;
@@ -31,124 +36,199 @@
 			maxLineWidth = Math.max(maxLineWidth, lineWidth);
 		}
 
-		this.canvas.width = maxLineWidth + this.style.strokeThickness;
+		var width = maxLineWidth + this.style.strokeThickness;
+
+		this.canvas.width = (width + this.context.lineWidth) * this.resolution;
 
 		//calculate text height
-		var lineHeight = this.determineFontHeight('font: ' + this.style.font + ';') + this.style.strokeThickness + this._lineSpacing + this.style.shadowOffsetY;
+		var lineHeight = fontProperties.fontSize + this.style.strokeThickness;
 
-		this.canvas.height = lineHeight * lines.length;
+		var height = lineHeight * lines.length;
+
+		this.canvas.height = height * this.resolution;
+
+		this.context.scale(this.resolution, this.resolution);
 
 		if (navigator.isCocoonJS)
 		{
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		}
 
-		//set canvas text styles
 		this.context.fillStyle = this.style.fill;
 		this.context.font = this.style.font;
-
 		this.context.strokeStyle = this.style.stroke;
-		this.context.lineWidth = this.style.strokeThickness;
-
+		this.context.textBaseline = 'alphabetic';
 		this.context.shadowOffsetX = this.style.shadowOffsetX;
 		this.context.shadowOffsetY = this.style.shadowOffsetY;
 		this.context.shadowColor = this.style.shadowColor;
 		this.context.shadowBlur = this.style.shadowBlur;
-
-		this.context.textBaseline = 'top';
+		this.context.lineWidth = this.style.strokeThickness;
 		this.context.lineCap = 'round';
 		this.context.lineJoin = 'round';
-		
-		
-		var linePosition = new PIXI.Point(0, 0);
+
+		var linePositionX;
+		var linePositionY;
+
+		this._charCount = 0;
+
 		//draw lines line by line
 		for (i = 0; i < lines.length; i++)
 		{
-			linePosition.x = this.style.strokeThickness / 2;
-			linePosition.y = this.style.strokeThickness / 2 + i * lineHeight + this._lineSpacing;
+			linePositionX = this.style.strokeThickness / 2;
+			linePositionY = (this.style.strokeThickness / 2 + i * lineHeight) + fontProperties.ascent;
 
 			if (this.style.align === 'right')
 			{
-				linePosition.x += maxLineWidth - lineWidths[i];
+				linePositionX += maxLineWidth - lineWidths[i];
 			}
 			else if (this.style.align === 'center')
 			{
-				linePosition.x += (maxLineWidth - lineWidths[i]) / 2;
+				linePositionX += (maxLineWidth - lineWidths[i]) / 2;
 			}
 
-			if (this.style.stroke && this.style.strokeThickness)
-			{
-				this.context.strokeText(lines[i], linePosition.x, linePosition.y);
-			}
+			linePositionY += this._lineSpacing;
 
-			if (this.style.fill)
+			if (this.colors.length > 0)
 			{
-				this.context.fillText(lines[i], linePosition.x, linePosition.y);
+				this.updateLine(lines[i], linePositionX, linePositionY);
+			}
+			else
+			{
+				if (this.style.stroke && this.style.strokeThickness)
+				{
+					this.context.strokeText(lines[i], linePositionX, linePositionY);
+				}
+
+				if (this.style.fill)
+				{
+					this.context.fillText(lines[i], linePositionX, linePositionY);
+				}
 			}
 		}
 
 		this.updateTexture();
 	};
-	
 	// add scaleX/Y and anchorX/Y - so we can skip extra tweens
-	(function(){
+	Object.defineProperty(Phaser.Sprite.prototype, "scaleX", {
+		set: function(val){
+			this.scale.x = val;
+		},
+		get: function(){
+			return this.scale.x;
+		}
+	});
+	
+	Object.defineProperty(Phaser.Sprite.prototype, "scaleY", {
+		set: function(val){
+			this.scale.y = val;
+		},
+		get: function(){
+			return this.scale.y;
+		}
+	});
+	
+	Object.defineProperty(Phaser.Sprite.prototype, "anchorX", {
+		set: function(val){
+			this.anchor.x = val;
+		},
+		get: function(){
+			return this.anchor.x;
+		}
+	});
+	
+	Object.defineProperty(Phaser.Sprite.prototype, "anchorY", {
+		set: function(val){
+			this.anchor.y = val;
+		},
+		get: function(){
+			return this.anchor.y;
+		}
+	});
+	
+	Object.defineProperty(Phaser.Group.prototype, "scaleX", {
+		set: function(val){
+			this.scale.x = val;
+		},
+		get: function(){
+			return this.scale.x;
+		}
+	});
+	
+	Object.defineProperty(Phaser.Group.prototype, "scaleY", {
+		set: function(val){
+			this.scale.y = val;
+		},
+		get: function(){
+			return this.scale.y;
+		}
+	});
+	
+	// tweens moved here from helper - as different tweens is needed for different versions
+	var TweenCollection = function(movieName, pack, fps, length, delay, manager){
+		this.name = movieName;
 		
-		Object.defineProperty(Phaser.Sprite.prototype, "scaleX", {
-			set: function(val){
-				this.scale.x = val;
-			},
-			get: function(){
-				return this.scale.x;
-			}
-		});
+		this.onComplete = new Phaser.Signal();
+		this._pack = pack;
+		this._tweens = [];
+		this._subtweens = [];
+		this._mainTimer = null;
+		this._startPos = [];
+		if(manager){
+			this.manager = manager;
+		}
+		else{
+			
+			this.manager = new Phaser.TweenManager(mt.game);
+			this.manager.destroy = function(){};
+			this.manager.update = function() {
+				var addTweens = this._add.length;
+				var numTweens = this._tweens.length;
+				
+				if (numTweens === 0 && addTweens === 0){
+					return false;
+				}
+				var i = 0;
+				while (i < numTweens){
+					if (this._tweens[i].update(this.game.time.now)){
+						i++;
+					}
+					else{
+						this._tweens.splice(i, 1);
+						numTweens--;
+					}
+				}
+				//  If there are any new tweens to be added, do so now - otherwise they can be spliced out of the array before ever running
+				if (addTweens > 0){
+					this._tweens = this._tweens.concat(this._add);
+					this._add.length = 0;
+				}
+				
+				
+				return true;
+			};
+		}
 		
-		Object.defineProperty(Phaser.Sprite.prototype, "scaleY", {
-			set: function(val){
-				this.scale.y = val;
-			},
-			get: function(){
-				return this.scale.y;
-			}
-		});
+		this._delay = delay;
+		this._length = length;
 		
-		Object.defineProperty(Phaser.Sprite.prototype, "anchorX", {
-			set: function(val){
-				this.anchor.x = val;
-			},
-			get: function(){
-				return this.anchor.x;
-			}
-		});
+		if(fps != void(0)){
+			this._fps = fps;
+			this._ifps = 1000/this._fps;
+		}
 		
-		Object.defineProperty(Phaser.Sprite.prototype, "anchorY", {
-			set: function(val){
-				this.anchor.y = val;
-			},
-			get: function(){
-				return this.anchor.y;
-			}
-		});
+		if(length != void(0)){
+			this._lastFrame = length;
+		}
 		
-		Object.defineProperty(Phaser.Group.prototype, "scaleX", {
-			set: function(val){
-				this.scale.x = val;
-			},
-			get: function(){
-				return this.scale.x;
-			}
-		});
+		this._buildTweens(this._pack, true);
 		
-		Object.defineProperty(Phaser.Group.prototype, "scaleY", {
-			set: function(val){
-				this.scale.y = val;
-			},
-			get: function(){
-				return this.scale.y;
-			}
-		});
+		if(movieName != mt.mainMovie){
+			this._buildChildTweens(this._pack.children);
+		}
 		
-	})();
-		TweenCollection.prototype = {
+	};
+	
+	TweenCollection.prototype = {
 		isLooping: false,
 		_fps: -1,
 		_lastFrame: -1,

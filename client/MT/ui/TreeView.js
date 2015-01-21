@@ -524,6 +524,9 @@ MT.extend("core.Emitter")(
 				if( !item ){
 					return;
 				}
+				
+				that.emit("dragstart", e, item);
+				
 				mdown = true;
 				scrollTop = that.tree.el.scrollTop;
 				
@@ -557,6 +560,8 @@ MT.extend("core.Emitter")(
 						return;
 					}
 				}
+				that.emit("dragend", e, item);
+				
 				
 				
 				if(!dragged){
@@ -592,12 +597,21 @@ MT.extend("core.Emitter")(
 				if(!mdown || !item){
 					return;
 				}
+				
 				if(Math.abs(startDragPos.x - ev.mouse.x) < 5 && Math.abs(startDragPos.y - ev.mouse.y) < 5 ){
 					return;
 				}
 				
-				
 				dragged = true;
+				
+				that.emit("dragmove", e, item);
+				if(e.isPropagationStopped || !MT.ui.hasParent(e.target, that.tree.el)){
+					dragHelper.style.display = "none";
+					dd.style.display = "none";
+					dragHelper.y = 0;
+					dragged = false;
+					return;
+				}
 				
 				dragHelper.style.zIndex = 9999
 				dragHelper.style.display = "block";
@@ -711,11 +725,12 @@ MT.extend("core.Emitter")(
 					}
 				}
 			});
-			
 		},
+		
 		disableRename: function(){
 			this.renameEnabled = false;
 		},
+		
 		renameEnabled: true,
 		enableRename: function(el){
 			if(!this.renameEnabled){

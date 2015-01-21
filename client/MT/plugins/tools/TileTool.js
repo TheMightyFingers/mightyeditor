@@ -503,13 +503,13 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(this.active){
 				this.createPanels(images);
 				if(!this.active.data.lastImage){
-					if(this.active.data.images.length){
+					if(this.active.data.images && this.active.data.images.length){
 						this.active.data.lastImage = this.active.data.images[0];
 					}
 				}
 				
 				if(this.active.data.lastImage){
-					if(this.active.data.images.length){
+					if(this.active.data.images && this.active.data.images.length){
 						var p = this.panels[this.active.data.lastImage];
 						if(p){
 							this.activePanel = p;
