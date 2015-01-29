@@ -21,7 +21,8 @@ MT(
 		
 		installUI: function(){
 			var that = this;
-			this.project.plugins.tools.on(MT.ASSET_FRAME_CHANGED, function(obj, frame){
+			
+			this.project.plugins.assetmanager.on([MT.ASSET_FRAME_CHANGED, MT.ASSET_SELECTED], function(obj, frame){
 				if(obj){
 					that.handleAssets(obj);
 				}
@@ -29,8 +30,17 @@ MT(
 					that.clear();
 				}
 			});
+			
+			/*this.project.plugins.tools.on(MT.ASSET_FRAME_CHANGED, function(obj, frame){
+				if(obj){
+					that.handleAssets(obj);
+				}
+				else{
+					that.clear();
+				}
+			});*/
 			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
-				that.handleObjects(obj);
+				that.handleObjects(that.project.plugins.mapeditor.getById(obj.id));
 				that.active = obj.id;
 			});
 			this.project.plugins.tools.on(MT.OBJECT_UNSELECTED, function(obj){
@@ -49,12 +59,10 @@ MT(
 			});
 			*/
 		},
-   
 		handleClick: function(obj){
 			
 			
 		},
-   
 		clear: function(){
 			var stack = this.inputs[this.stack];
 			for(var i in stack){
@@ -457,6 +465,32 @@ MT(
 			this.scene.viewportWidth  = this.addInput( {key: "viewportWidth"}, obj, true, cb);
 			this.scene.viewportHeight = this.addInput( {key: "viewportHeight"}, obj, true, cb);
 			
+			
+			var scaleMode = [
+				{
+					label: "NO_SCALE",
+					value: "NO_SCALE",
+					title: "A scale mode that prevents any scaling"
+				},{
+					label: "SHOW_ALL",
+					value: "SHOW_ALL",
+					title: "A scale mode that shows the entire game while maintaining proportions"
+				},{
+					label: "EXACT_FIT",
+					value: "EXACT_FIT",
+					title: "A scale mode that stretches content to fill all available space"
+				},{
+					label: "RESIZE",
+					value: "RESIZE",
+					title: "A scale mode that causes the Game size to change"
+				},{
+					label: "USER_SCALE",
+					value: "USER_SCALE",
+					title: "A scale mode that allows a custom scale factor"
+				}
+			];
+			
+			this.scene.scaleMode = this.addInput({key: "scaleMode", options: scaleMode, type: "select"}, obj, true, cb)
 			
 			this.scene.gridX = this.addInput( {key: "gridX", min: 2}, obj, true, cb);
 			this.scene.gridY = this.addInput( {key: "gridY", min: 2}, obj, true, cb);

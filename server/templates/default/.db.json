@@ -135,6 +135,7 @@
 					"gridY": 32,
 					"gridOffsetX": 0,
 					"gridOffsetY": 0,
+					"scaleMode": "SHOW_ALL",
 					"showGrid": 1,
 					"gridOpacity": 0.3,
 					"movieInfo": {

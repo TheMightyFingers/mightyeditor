@@ -74,6 +74,22 @@ MT(
 				if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
 			}
 			return "";
+		},
+   
+		updateObject: function(obj, data){
+			for(var i in data){
+				if(typeof data[i] == "object"){
+					if(obj[i] == void(0)){
+						obj[i] = data[i];
+					}
+					else{
+						this.updateObject(obj[i], data[i]);
+					}
+				}
+				else{
+					obj[i] = data[i];
+				}
+			}
 		}
 	}
 );

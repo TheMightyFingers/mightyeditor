@@ -25,7 +25,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 					return;
 				}
 			}
-			if(that.isVisible && autohide){
+			if(autohide){
 				that.hide();
 			}
 		});
@@ -63,16 +63,26 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		show: function(parent){
-			if(this.isVisible){
-				return;
-			}
+			this.shown = Date.now();
+
 			this.update();
 			this.isVisible = true;
 			MT.ui.DomElement.show.call(this, parent);
 			this.emit("show");
+			if(this.x + this.width > window.innerWidth){
+				this.x -= this.width;
+			}
+			if(this.y + this.height > window.innerHeight){
+				this.y -= this.height;
+			}
+			
 		},
 		
 		hide: function(){
+			// prevent instant show/hide
+			if(Date.now() - this.shown < 100){
+				return;
+			}
 			if(!this.isVisible){
 				return;
 			}

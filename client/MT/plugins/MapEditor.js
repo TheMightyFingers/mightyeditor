@@ -53,6 +53,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			viewportWidth: 800,
 			viewportHeight: 480,
 			
+			scaleMode: "SHOW_ALL",
+			
 			gridX: 32,
 			gridY: 32,
 			
@@ -76,26 +78,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	},
 	{
 		_mousedown: false,
-		
-		getTileMap: function(obj){
-			var tileWidth = obj.tileWidth || 64;
-			var tileHeight = obj.tileHeight || 64;
-			return this.game.add.tilemap(null, tileWidth, tileHeight, obj.widthInTiles, obj.heightInTiles);
-		},
-		
-		addTileLayer: function(obj){
-			var tilemap = this.getTileMap(obj);
-			
-			var tl = tilemap.createBlankLayer(obj.name, obj.widthInTiles, obj.heightInTiles, obj.tileWidth, obj.tileHeight);
-			tl.fixedToCamera = obj.isFixedToCamera;
-			return tl;
-		},
-		
-		updateTileMap: function(obj, oldLayer){
-			oldLayer.destroy();
-			
-			return this.addTileLayer(obj);
-		},
 		
 		setZoom: function(zoom){
 			this.zoom = 1/zoom;
@@ -138,12 +120,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				that.handleMouseDown(e);
 			});
 			
-			window.oncontextmenu = function(e){
-				if(e.target == that.game.canvas){
-					e.preventDefault();
-				}
-			};
-			
 			this.isCtrlDown = false;
 			
 			ui.events.on(ui.events.MOUSEUP, function(e){
@@ -154,6 +130,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			var dx = 0;
 			var dy = 0;
+			
 			ui.events.on(ui.events.MOUSEMOVE, function(e){
 				if( e.target != game.canvas && e.button != 2 && !mdown){
 					return;
@@ -167,7 +144,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				that.handleMouseMove(e);
 			});
-			
 			
 			ui.events.on(ui.events.KEYDOWN, function(e){
 				var w = e.which;
@@ -186,7 +162,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					that.selector.clear();
 					return;
 				}
-				
 				
 				that.selector.forEach(function(obj){
 					that.moveByKey(e, obj);
@@ -1426,14 +1401,14 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!this._activeObject){
 				return null;
 			}
-				
+			
 			if(!this._activeObject.game){
 				this._activeObject = this.getById(this._activeObject.xxx.id);
 			}
 			
 			return this._activeObject;
 		},
-		
+		savedSettings: null,
 		set activeObject(val){
 			this._activeObject = val;
 		},

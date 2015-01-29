@@ -123,13 +123,17 @@ MT.extend("core.Emitter")(
 			that.input.focus();
 		});
 		ui.events.on(ui.events.MOUSEUP, function(e){
+			if(!mdown){
+				return;
+			}
+			e.stopPropagation();
 			mdown = false;
 			that.isBase = false;
 			that.baseHandle.reset();
 			that.handleX.reset();
 			that.handleY.reset();
 			that.input.focus();
-		});
+		}, true);
 		
 		
 		that.input.onkeyup = function(e){

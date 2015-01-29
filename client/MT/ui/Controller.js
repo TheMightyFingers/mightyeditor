@@ -73,6 +73,10 @@ MT.ui.hasParent = function(el, parent){
 MT.extend("core.Emitter")(
 	MT.ui.Controller = function(){
 		this.events = new MT.ui.Events();
+		//disble context menu
+		window.oncontextmenu = function(e){
+			e.preventDefault();
+		};
 		this.panels = [];
 		
 		
@@ -164,8 +168,8 @@ MT.extend("core.Emitter")(
 			if(!activePanel){
 				return;
 			}
-			e.preventDefault();
-			e.stopPropagation();
+			//e.preventDefault();
+			//e.stopPropagation();
 			if(needResize){
 				that.resizePanel(activePanel, e);
 				return;
@@ -243,7 +247,7 @@ MT.extend("core.Emitter")(
 			if(!activePanel){
 				return;
 			}
-			
+			e.stopPropagation();
 			activePanel.addClass("animated");
 			activePanel.isNeedUnjoin = true;
 			activePanel.mdown = false;
@@ -263,7 +267,7 @@ MT.extend("core.Emitter")(
 			that.sortPanels();
 			that.update();
 			that.saveLayout();
-		});
+		}, true);
 		
 		
 		// delay a little bit first animation - sometimes game do not resize well 
@@ -453,6 +457,10 @@ MT.extend("core.Emitter")(
 		   
 		checkResize: function(panel, e){
 			if(!panel.isResizeable){
+				this.setResizeCursor(true);
+				return false;
+			}
+			if(!MT.ui.hasParent(e.target, panel.el)){
 				this.setResizeCursor(true);
 				return false;
 			}

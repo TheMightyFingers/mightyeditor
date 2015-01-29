@@ -215,9 +215,6 @@ MT.extend("core.Emitter")(
 				this.addImage(el, data);
 			}
 			
-			
-			
-			
 			if(this.options.showHide){
 				el.addClass("show-hide-enabled");
 				var b = this._mkShowHide(el);
@@ -420,7 +417,17 @@ MT.extend("core.Emitter")(
 		
 		enableInput: function(ev){
 			var that = this;
-			ev.on("click", function(e){
+			var ditem = null;
+			
+			ev.on("mousedown", function(e){
+				// ????
+				if(!e.target.parentNode){
+					return;
+				}
+				ditem = that.getOwnItem(e.target.parentNode.parentNode);
+			});
+			
+			ev.on("mouseup", function(e){
 				
 				if(!e.target.ctrl){
 					return;
@@ -433,11 +440,19 @@ MT.extend("core.Emitter")(
 				if(that.dragged){
 					return;
 				}
+
 				var item = that.getOwnItem(e.target.parentNode.parentNode);
-				if(item){
-					that.emit("click", item.data, item);
+				if(item && item == ditem){
+					if(e.button == 0){
+						that.emit("click", item.data, item);
+					}
+					else if(e.button == 2){
+						that.emit("context", e, item);
+					}
 				}
 			});
+			
+			
 		},
 		
 		sortable: function(ev){
@@ -553,21 +568,21 @@ MT.extend("core.Emitter")(
 				if(!mdown){
 					return;
 				}
-				
 				mdown = false;
-				for(var i=0; i<that._onDrop.length; i++){
-					if(that._onDrop[i](e, item, last) === false){
-						return;
-					}
-				}
 				that.emit("dragend", e, item);
-				
-				
 				
 				if(!dragged){
 					return;
 				}
 				dragged = false;
+				
+				
+				for(var i=0; i<that._onDrop.length; i++){
+					if(that._onDrop[i](e, item, last) === false){
+						return;
+					}
+				}
+				
 				
 				
 				if(!last || last == item || last.hasParent(item)){

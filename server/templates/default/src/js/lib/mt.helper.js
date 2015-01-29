@@ -655,7 +655,7 @@ Phaser.Loader.prototype.scriptLoad = function (index, url, type, onload, onerror
 			var tile = null;
 			for(var y in tiles){
 				for(var x in tiles[y]){
-					tile = map.putTile(tiles[y][x], x, y, tl);
+					tile = map.putTile(tiles[y][x], parseInt(x, 10), parseInt(y, 10), tl);
 				}
 			}
 			tl.fixedToCamera = object.isFixedToCamera;

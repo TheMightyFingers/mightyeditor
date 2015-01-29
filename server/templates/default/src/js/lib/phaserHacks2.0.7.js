@@ -148,11 +148,76 @@
 		});
 		
 	})();
-		TweenCollection.prototype = {
+	var TweenCollection = function(movieName, pack, fps, length, delay, manager){
+		this.name = movieName;
+		
+		this.onComplete = new Phaser.Signal();
+		this._pack = pack;
+		this._tweens = [];
+		this._subtweens = [];
+		this._mainTimer = null;
+		this._startPos = [];
+		if(manager){
+			this.manager = manager;
+		}
+		else{
+			
+			this.manager = new Phaser.TweenManager(mt.game);
+			this.manager.destroy = function(){};
+			this.manager.update = function() {
+				var addTweens = this._add.length;
+				var numTweens = this._tweens.length;
+				
+				if (numTweens === 0 && addTweens === 0){
+					return false;
+				}
+				var i = 0;
+				while (i < numTweens){
+					if (this._tweens[i].update(this.game.time.now)){
+						i++;
+					}
+					else{
+						this._tweens.splice(i, 1);
+						numTweens--;
+					}
+				}
+				//  If there are any new tweens to be added, do so now - otherwise they can be spliced out of the array before ever running
+				if (addTweens > 0){
+					this._tweens = this._tweens.concat(this._add);
+					this._add.length = 0;
+				}
+				
+				
+				return true;
+			};
+		}
+		
+		this._delay = delay;
+		this._length = length;
+		
+		if(fps != void(0)){
+			this._fps = fps;
+			this._ifps = 1000/this._fps;
+		}
+		
+		if(length != void(0)){
+			this._lastFrame = length;
+		}
+		
+		this._buildTweens(this._pack, true);
+		
+		if(movieName != mt.mainMovie){
+			this._buildChildTweens(this._pack.children);
+		}
+		
+	};
+	
+	TweenCollection.prototype = {
 		isLooping: false,
 		_fps: -1,
 		_lastFrame: -1,
 		_buildTweens: function(pack, isMain){
+			var delay;
 			var start, stop, tween, easings;
 			if(!pack.data.movies){
 				return;
@@ -335,7 +400,7 @@
 			}
 		},
 		start: function(){
-			var i, j, tween;
+			var i, j, l, tween;
 			if(!this._subtweens.length && !this._tweens.length){
 				return this;
 			}
@@ -459,5 +524,3 @@
 	
 	mt.TweenCollection = TweenCollection;
 })();
-
-

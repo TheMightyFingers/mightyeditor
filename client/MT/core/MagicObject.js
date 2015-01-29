@@ -325,6 +325,10 @@ MT(
 		},
    
 		updateSprite: function(){
+			// sometimes gets deleted - Alt -> click -> delete
+			if(!this.object.game){
+				return;
+			}
 			this.object.anchor.x = this.data.anchorX;
 			this.object.anchor.y = this.data.anchorY;
 			this.object.loadTexture(this.data.assetId);
@@ -944,9 +948,6 @@ MT(
 				}
 				this.angle += Phaser.Math.radToDeg(diff);
 				
-				console.log(Math.round(Phaser.Math.radToDeg(diff)));
-				
-				
 				if(e.ctrlKey){
 					this.data.angle = Math.round(this.data.angle / 15)*15;
 				}
@@ -995,8 +996,6 @@ MT(
 					this.moveAnchor(Math.round(this.anchorX * 10) * 0.1, Math.round(this.anchorY * 10) * 0.1);
 						var angle = this.getOffsetAngle();
 					
-						console.log(this.width * (this.anchorX - sx));
-						
 						var ddx = this.width * (this.anchorX - sx) * this.map.scale.x;
 						var ddy = this.height * (this.anchorY - sy) * this.map.scale.y;
 						
@@ -1569,7 +1568,6 @@ MT(
 		},
 		
 		set style(val){
-			console.log("do not set style!!");
 			return;
 			this.data.style = val;
 			this.object.style = val;
@@ -1845,6 +1843,19 @@ MT(
    
 		getBounds: function(){
 			return this.object.getBounds();
+		},
+		
+		_mapSettings: {},
+		get mapSettings(){
+			if(this.data.type != MT.objectTypes.TILE_LAYER){
+				return null;
+			}
+			else{
+				this._mapSettings.gridX = this.tileWidth;
+				this._mapSettings.gridY = this.tileHeight;
+				this._mapSettings.gridOffsetX = this.x;
+				this._mapSettings.gridOffsetY = this.y;
+			}
 		}
 		
 	}

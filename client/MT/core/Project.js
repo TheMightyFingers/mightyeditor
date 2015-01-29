@@ -28,6 +28,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				fontSize: 12
 			}
 		};
+		this.defaultData = JSON.stringify(this.data);
 		
 		window.pp = this;
 		
@@ -340,6 +341,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							}
 						});
 					}
+					else{
+						removeItem(e);
+					}
 					return;
 				}
 				if(e.target.project){
@@ -425,7 +429,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.panel.addButton(null, "logo",  function(e){
 				
-				that.setPop.show();
+				//that.setPop.show();
 			});
 			
 			/* TODO: move to config */
@@ -493,21 +497,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		createSettings: function(){
 			var that = this;
-			var lastData;
-			
-			
-			this.setPop = new MT.ui.Popup("","");
-			this.setPop.removeHeader();
-			
-			this.setPop.style.height = "50%";
-			this.setPop.style.width = "70%";
-			this.setPop.y = 200;
-			
 			
 			this.setInputs = {
+				label: new MT.ui.Input(this.ui, {key: "title", type: "text"}, this.data),
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
 				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor)
-				
 			};
 			
 			
@@ -520,56 +514,72 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			this.setFields = {
+				project: new MT.ui.Fieldset("Project"),
 				ui: new MT.ui.Fieldset("UI"),
 				sourceEditor: new MT.ui.Fieldset("SourceEditor")
 			};
 			
-			this.setPop.on("show", function(){
+			
+			
+			this.setPanel = new MT.ui.Panel("Personalise");
+			this.setPanel.removeBorder();
+			this.setPanel.fitIn();
+			MT.ui.addClass(this.setPanel.el, "editor-settings");
+			
+			this.setPanel.on("show", function(){
 				console.log("pop show");
 				lastData = JSON.stringify(that.data);
-			});
-			
-			this.setPanel = new MT.ui.Panel("Editor Properties");
-			this.setPanel.removeBorder();
-			
-			this.setPanel.hide().show(this.setPop.content).fitIn();
-			
-			this.setPop.hide();
-			
-			
-			this.setPop.addButton("Save", function(){
-				that.setPop.hide();
-				that.send("saveProjectInfo", that.data);
-				that.emit("updateData", that.data);
-			});
-			this.setPop.addButton("Cancel", function(){
-				that.setPop.hide();
-				that.data = JSON.parse(lastData);
-				
-				that.setInputs.bgColor.setValue(that.data.backgroundColor);
-				that.setInputs.srcEdFontSize.setValue(that.data.sourceEditor.fontSize);
-				that.setUpData();
 			});
 			
 			this.setButtons = {
 				resetLayout: new MT.ui.Button("Reset Layout", "", null, function(){
 					that.ui.resetLayout();
+				}),
+				reset: new MT.ui.Button("Reset", "", null, function(){
+					MT.core.Helper.updateObject(that.data, JSON.parse(that.defaultData));
+					that.send("saveProjectInfo", that.data);
+					that.emit("updateData", that.data);
+					that.setUpData();
+				}),
+				
+				cancel: new MT.ui.Button("Cancel", "", null, function(){
+					
+					that.data = JSON.parse(lastData);
+					that.setInputs.bgColor.setValue(that.data.backgroundColor);
+					that.setInputs.srcEdFontSize.setValue(that.data.sourceEditor.fontSize);
+					that.setUpData();
 				})
 			};
 			
 			
+			
+			this.setInputs.label.show(this.setFields.project.el);
 			this.setInputs.bgColor.show(this.setFields.ui.el);
 			this.setButtons.resetLayout.show(this.setFields.ui.el);
 			
 			this.setInputs.srcEdFontSize.show(this.setFields.sourceEditor.el);
-			
-			
 			
 			for(var i in this.setFields){
 				this.setPanel.content.el.appendChild(this.setFields[i].el);
 				this.setFields[i].addClass("full");
 			}
 			
+			this.setPanel.content.el.appendChild(this.setButtons.reset.el);
+			//this.setPanel.content.el.appendChild(this.setButtons.cancel.el);
+			
+			
+			var that = this;
+			
+			this.plugins.auth.on("showProperties", function(panel){
+				panel.addJoint(that.setPanel);
+				lastData = JSON.stringify(that.data);
+			});
+			
+			this.plugins.auth.on("hideProperties", function(){
+				that.send("saveProjectInfo", that.data);
+				that.emit("updateData", that.data);
+				that.setUpData();
+			});
 		},
 		
 		showList: function(){

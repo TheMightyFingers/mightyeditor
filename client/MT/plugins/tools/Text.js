@@ -744,11 +744,19 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseDown: function(e){
+			this.mDown = true;
+			
 			//console.log("mouse down");
 		},
-		
 		mouseUp: function(e){
 			//this.tools.tools.select.mouseUp(e);
+			
+			
+			if(!this.mDown){
+				return;
+			}
+			this.mDown = false;
+			
 			if(e.target != this.map.game.canvas){
 				return;
 			}

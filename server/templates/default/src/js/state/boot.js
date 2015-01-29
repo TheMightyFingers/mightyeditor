@@ -4,8 +4,7 @@ window["%namespace%"].state.boot = {
 		// set world size
 		this.game.world.setBounds(0, 0, mt.data.map.worldWidth, mt.data.map.worldHeight);
 		
-		// enable resize
-		this.enableFitScreen();
+		this.enableScaling();
 		
 		//init mt helper
 		mt.init(this.game);
@@ -25,23 +24,9 @@ window["%namespace%"].state.boot = {
 		// goto load state
 		this.game.state.start("load");
 	},
-	
-	
-	// reference to fit screen function - used to remove resize later
-	_fitScreen: null,
-	enableFitScreen: function(){
+	enableScaling: function(){
 		var game = this.game;
-		
-		var resizeGame = this._fitScreen = function() {
-			game.scale.setShowAll();
-			game.scale.refresh();
-		};
-		
-		window.addEventListener('resize', resizeGame, false);
-		
-		resizeGame();
-	},
-	disableFitScreen: function(){
-		window.removeEventListener('resize', this._fitScreen);
+		game.scale.parentIsWindow = (game.canvas.parentNode == document.body);
+		game.scale.scaleMode = Phaser.ScaleManager[mt.data.map.scaleMode];
 	}
 };

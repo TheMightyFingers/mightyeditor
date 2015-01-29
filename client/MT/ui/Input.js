@@ -83,6 +83,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				opt = document.createElement("div");
 				opt.innerHTML = options[i].label;
 				sel.appendChild(opt);
+				if(options[i].title){
+					opt.title = options[i].title;
+				}
 				this.options.push(opt);
 			}
 			

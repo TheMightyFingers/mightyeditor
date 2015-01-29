@@ -694,7 +694,7 @@ body>div.ui-wrapper {
 	height: 100%;
 	position: absolute;
 	background-color: rgba(0, 0, 0, .5);
-	pointer-events: none;
+	/*pointer-events: none;*/
 }
 .ui-popup {
 	margin: 0 auto;
@@ -968,7 +968,9 @@ legend {
 fieldset div.ui-input {
 	margin: 2px 0 2px 15px;
 	float: left;
-	min-width: 43%}
+	min-width: 43%
+}
+
 fieldset.full div.ui-input {
 	margin: 2px 0 2px 15px;
 	float: none;
@@ -1624,7 +1626,7 @@ span.ui-kf-frame.active.ui-kf-frame-main {
 	height: 34px;
 	overflow: visible;
 }
-.ui-mysettings input.ui-input {
+.ui-mysettings .signup input.ui-input {
 	position: absolute;
 	padding: 12px;
 	margin: 0;
@@ -2116,4 +2118,90 @@ span.panel-head-tab.goprotab:before {
 	right: 0;
 	background-color: rgba(191, 195, 15, 0.63);
 	background: linear-gradient(to bottom, rgba(251, 255, 56, 0.63) 5%, rgba(0,0,0,0) 90%, rgba(0,0,0,0) 100%);
+}
+
+.panel-buttonsHolder {
+	text-align: right;
+	color: rgba(255,255,255,0.85);
+	height: 20px;
+	overflow: hidden;
+}
+.ui-button.panel-head-button {
+	width: 18px;
+	/*background-color: rgba(0,0,0,0.3);*/
+	margin: 1px 2px;
+	display: inline-block;
+	height: 18px;
+	position: relative;
+}
+
+.ui-button.panel-head-button:hover{
+	color: #fff;
+}
+
+.ui-button.panel-head-button:before, .ui-button.panel-head-button:after {
+position: absolute;
+left: 0;
+right: 0;
+top: 0;
+bottom: 0;
+text-align: center;
+font-family: FontAwesome;
+line-height: 20px;
+font-size: 14px;
+}
+
+
+.ui-button.panel-head-button.new-folder:before{
+	content: "\f07b";
+	top: 1px;
+}
+.ui-button.panel-head-button.new-folder:after{
+	content: "\f067";
+	color: #000;
+	font-size: 9px;
+	top: 1px;
+}
+
+.ui-button.panel-head-button.delete-selected:before{
+	content: "\f1f8";
+}
+.ui-button.panel-head-button.upload-file:before{
+	content: "\f093";
+}
+.ui-button.panel-head-button.upload-folder:before{
+	content: "\f07b";
+	top: 1px;
+}
+.ui-button.panel-head-button.upload-folder:after{
+content: "\f062";
+color: #FFF;
+font-size: 10px;
+top: -4px;
+text-shadow: 0 1px 1px #000;
+}
+
+.ui-button.panel-head-button.add-group:before{
+	content: "\f03a";
+}
+
+.ui-button.panel-head-button.add-tilelayer:before{
+	content: "\f00a";
+}
+
+.ui-button.panel-head-button.Group-selected:before{
+	content: "\f03c";
+}
+
+.ui-mysettings .editor-settings .ui-button {
+position: relative;
+width: auto;
+height: auto;
+padding: 7px 20px;
+line-height: 10px !important;
+display: inline-block;
+}
+
+.ui-mysettings .editor-settings .ui-input{
+	background: transparent;
 }

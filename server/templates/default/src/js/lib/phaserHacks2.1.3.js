@@ -233,6 +233,7 @@
 		_fps: -1,
 		_lastFrame: -1,
 		_buildTweens: function(pack, isMain){
+			var delay;
 			var start, stop, tween, easings;
 			if(!pack.data.movies){
 				return;
@@ -415,7 +416,7 @@
 			}
 		},
 		start: function(){
-			var i, j, tween;
+			var i, j, l, tween;
 			if(!this._subtweens.length && !this._tweens.length){
 				return this;
 			}

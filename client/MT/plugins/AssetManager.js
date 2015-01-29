@@ -70,33 +70,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panel.setFree();
 			this.panel.content.style.padding = 0;
 			
-			this.panel.addOptions([
+			this.panel.addButtons([
 				{
-					label: "new Folder",
-					className: "",
+					label: "New Folder",
+					className: "new-folder",
 					cb: function(){
 						that.newFolder();
-						that.panel.options.list.hide();
 					}
 				},
 				{
-					label: "delete selected",
-					className: "",
-					cb: function(){
-						that.deleteSelected();
-						that.panel.options.list.hide();
-					}
-				},
-				{
-					label: "upload file",
-					className: "",
+					label: "Upload File",
+					className: "upload-file",
 					cb: function(){
 						that.upload();
 					}
 				},
 				{
-					label: "upload directory",
-					className: "",
+					label: "Upload Folder",
+					className: "upload-folder",
 					cb: function(){
 						that.uploadFolder();
 					},
@@ -104,6 +95,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						if(window.navigator.userAgent.indexOf("WebKit") > -1){
 							return true;
 						}
+					}
+				},
+				{
+					label: "Delete Selected",
+					className: "delete-selected",
+					cb: function(){
+						that.confirmDeleteSelected();
 					}
 				}
 			]);
@@ -119,11 +117,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			var select = function(data, element){
-				
-				if(data.contents){
-					return;
-				}
-				
 				if(that.active == element){
 					return;
 				}
@@ -143,6 +136,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active.addClass("selected");
 				//that.emit(MT.ASSET_SELECTED, that.active.data);
 				//that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+				
+				
+				if(data.contents){
+					return;
+				}
+				//that.emit(MT.ASSET_SELECTED, that.active.data, that.activeFrame);
 				that.setPreviewAssets(that.active.data);
 			};
 			
@@ -166,14 +165,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						that.selector.add(element);
 						element.addClass("selected");
 					}
-					that.emit(MT.ASSET_FRAME_CHANGED, null, null);
+					//that.emit(MT.ASSET_FRAME_CHANGED, null, null);
 					return;
 				}
 				else{
 					
-					if(data.contents){
-						return;
-					}
+					//if(data.contents){
+					//	return;
+					//}
 					that.selector.forEach(function(el){
 						el.removeClass("active.selected");
 					});
@@ -189,11 +188,51 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active = element;
 				that.active.addClass("active.selected");
 				
-				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+				//that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+				that.emit(MT.ASSET_SELECTED, that.active.data, that.activeFrame);
 				that.setPreviewAssets(data);
 			});
 			
 			this.tv.on("select", select);
+			
+			
+			
+			var list = new MT.ui.List([
+				{
+					label: "Make active",
+					cb: function(){
+						that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+					}
+					
+				},
+				{
+					label: "Download image",
+					cb: function(){
+						console.log(that.active);
+						window.open(that.active.img.src);
+					}
+					
+				},
+				{
+					label: "Delete",
+					cb: function(){
+						that.confirmDeleteAsset(that.active.data.id);
+						list.hide();
+					}
+					
+				}
+			], this.ui, true);
+			list.width = 250;
+			
+			
+			this.tv.on("context", function(e, item){
+				console.log("context");
+				select(item.data, item);
+				list.x = e.pageX;
+				list.y = e.pageY;
+				list.show();
+			});
+			
 			
 			this.tv.on("change", function(oldItem, newItem){
 				if(oldItem && newItem){
@@ -214,7 +253,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.scale = 1;
 			
-			this.preview.addOptions(this.mkScaleOptions());
+			//this.preview.addOptions(this.mkScaleOptions());
 			var pce = window.pce = this.preview.content;
 			
 			ui.events.on(ui.events.WHEEL, function(e){
@@ -309,9 +348,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		_previewCache: null,
 		setPreviewAssets: function(asset){
+			if(asset.contents){
+				this.preview.content.clear();
+				return;
+			}
+			
 			// tiletool uses his own preview
 			var tools = this.project.plugins.tools;
 			if( tools && tools.activeTool && tools.activeTool == tools.tools.tiletool){
+				tools.tools.tiletool.updatePreview(asset);
 				return;
 			}
 				
@@ -614,21 +659,25 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			ctx.drawImage(image, 0, 0, image.width, image.height);
 			ctx.beginPath();
 			
-			for(var i = imgData.frameWidth; i<image.width; i += imgData.frameWidth + imgData.spacing){
-				ctx.moveTo(imgData.margin + i+0.5, imgData.margin);
+			// vertical lines
+			for(var i = imgData.frameWidth + imgData.margin; i<image.width; i += imgData.frameWidth + imgData.spacing){
+				ctx.moveTo(i+0.5, imgData.margin);
 				ctx.lineTo(i+0.5, image.height);
 			}
-			for(var i = imgData.frameHeight; i<image.height; i += imgData.frameHeight + imgData.spacing){
-				ctx.moveTo(imgData.margin + 0, imgData.margin + i+0.5);
+			
+			// horizontal lines
+			for(var i = imgData.frameHeight + imgData.margin; i<image.height; i += imgData.frameHeight + imgData.spacing){
+				ctx.moveTo(imgData.margin, i+0.5);
 				ctx.lineTo(image.width, i+0.5);
 			}
 			ctx.stroke();
 			
 			
-			var off = imgData.margin + imgData.spacing*Math.floor(image.width / imgData.frameWidth  - imgData.spacing);
+			var off = imgData.margin + imgData.spacing * Math.floor( image.width / imgData.frameWidth - imgData.spacing );
 			
-			var widthInFrames = (image.width - off) / (imgData.frameWidth )    
-			
+			var widthInFrames = (image.width - off) / (imgData.frameWidth );
+			console.log("width", widthInFrames);
+			console.log("FRAME", this.activeFrame);
 			
 			var dx = this.getTileX(this.activeFrame, widthInFrames);
 			var dy = this.getTileY(this.activeFrame, widthInFrames);
@@ -659,9 +708,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var canvas = panel.data.canvas;
 			var mdown = false;
 			
+			var lastAsset = null;
+			
 			var select = function(e){
 				var frame = that.getFrame(panel.data.asset, e.offsetX, e.offsetY);
-				if(frame == that.activeFrame){
+				if(frame == that.activeFrame && that.active == panel.data.asset){
 					return;
 				}
 				
@@ -714,7 +765,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				var frame = panel.data.frames.start;
 				var found = false;
 				
-				
 				for(var i=0; i<panel.data.rectangles.length; i++){
 					if(panel.data.rectangles[i].contains(x, y)){
 						frame += i;
@@ -726,7 +776,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					return;
 				}
 				
-				if(frame == that.activeFrame){
+				if(frame == that.activeFrame && that.active == panel.data.asset){
 					return;
 				}
 				
@@ -858,6 +908,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
+			
 			this.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				if(tools.activeTool != tools.tools.select){
 					return;
@@ -887,22 +938,25 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			var map = this.project.plugins.mapeditor;
+			
+			var shouldEnd = false;
+			
 			this.tv.on("dragmove", function(e, item){
 				if(e.target !== map.game.canvas){
 					tools.removeTmpObject();
 					return;
 				}
+				
+				shouldEnd = true;
 				tools.tools.stamp.init(item.data);
-				return;
-				e.stopPropagation();
-				
-				tools.initTmpObject(item.data);
-				tools.tmpObject.x = e.x - map.offsetX;
-				tools.tmpObject.y = e.y - map.offsetY;
-				
 			});
+			
 			this.tv.on("dragend", function(e, item){
+				if(shouldEnd == false){
+					return;
+				}
 				
+				shouldEnd = false;
 				if(e.target !== map.game.canvas){
 					tools.removeTmpObject();
 					return;
@@ -981,8 +1035,18 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		getFrame: function(o, x, y){
 			
-			var gx = Math.floor(x/(o.frameWidth + o.spacing));
-			var gy = Math.floor(y/(o.frameHeight + o.spacing));
+			
+			var dx = (x - o.margin);
+			var dy = (y - o.margin);
+			
+			if(dx < 0){
+				dx = 0;
+			}
+			if(dy < 0){
+				dy = 0;
+			}
+			var gx = Math.floor( dx /(o.frameWidth + o.spacing));
+			var gy = Math.floor( dy /(o.frameHeight + o.spacing));
 			
 			var maxX = Math.floor( o.width / o.frameWidth);
 			
@@ -1064,8 +1128,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.handleFiles(this.files);
 			};
 			input.click();
-			
-			this.panel.options.list.hide();
 		},
 		
 		uploadFolder: function(){
@@ -1081,8 +1143,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.handleFiles(this.files);
 			};
 			input.click();
-			
-			this.panel.options.list.hide();
 		},
 		
 		handleEntry: function(entry){
@@ -1170,6 +1230,34 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 		},
 		
+		confirmDeleteAsset: function(id){
+			var that = this;
+			var pop = new MT.ui.Popup("Delete Asset?", "Do you really want to delete asset?");
+			
+			pop.addButton("no", function(){
+				pop.hide();
+			});
+			
+			pop.addButton("yes", function(){
+				that.deleteAsset(id);
+				pop.hide();
+			});
+			pop.showClose();
+		},
+		confirmDeleteSelected: function(id){
+			var that = this;
+			var pop = new MT.ui.Popup("Delete all selected assets?", "Do you really want to delete all selected assets?");
+			
+			pop.addButton("no", function(){
+				pop.hide();
+			});
+			
+			pop.addButton("yes", function(){
+				that.deleteSelected(id);
+				pop.hide();
+			});
+			pop.showClose();
+		},
 		getById: function(id){
 			var items = this.tv.items;
 			for(var i=0; i<items.length; i++){

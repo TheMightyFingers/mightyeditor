@@ -1,7 +1,7 @@
 "use strict";
 MT.requireFile("MT/misc/validation.js");
 MT.require("ui.InputCollection");
-MT.extend("core.BasicPlugin")(
+MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.Auth = function(project){
 		MT.core.BasicPlugin.call(this, "Auth");
 		this.project = project;
@@ -125,15 +125,23 @@ MT.extend("core.BasicPlugin")(
 				MT.core.Helper.clearSelection();
 				return;
 			}
+			
 			var that = this;
 			this.mainButton.addClass("active");
-			this.ui.events.once("click", function(){
+			var up = this.mouseUp = function(e){
+				if(e && MT.ui.hasParent(e.target, that.propContainer)){
+					return;
+				}
 				if(that.propContainer.parentNode){
 					that.propContainer.parentNode.removeChild(that.propContainer);
 					that.mainButton.removeClass("active");
 					MT.core.Helper.clearSelection();
+					that.emit("hideProperties", that.propPanels.projects);
 				}
-			});
+				that.ui.events.off("mouseup", up);
+				
+			};
+			this.ui.events.on("mouseup", up);
 			
 			document.body.appendChild(this.propContainer);
 			if(this.logoutButton.el.parentNode){
@@ -141,6 +149,7 @@ MT.extend("core.BasicPlugin")(
 			}
 			this.propContainer.appendChild(this.logoutButton.el);
 			
+			this.emit("showProperties", this.propPanels.projects);
 		},
 		initUI: function(ui){
 			this.ui = ui;

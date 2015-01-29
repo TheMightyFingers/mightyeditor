@@ -12,6 +12,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					return;
 				}
 				that.init(asset);
+				that.tools.tmpObject.frame = 0;
 			});
 			
 			this.tools.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){

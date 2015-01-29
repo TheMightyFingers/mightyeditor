@@ -45,6 +45,7 @@
 		MT.requireFile(cmPath+"/scroll/scrollpastend.js"); //!!
 		
 		MT.requireFile(cmPath+"/search/search.js");
+		MT.requireFile(cmPath+"/search/goto-line.js");
 		MT.requireFile(cmPath+"/search/searchcursor.js");
 		MT.requireFile(cmPath+"/search/match-highlighter.js");
 		MT.requireFile(cmPath+"/selection/active-line.js");
@@ -618,9 +619,10 @@ MT.extend("core.BasicPlugin")(
 					
 					"Ctrl-Space": function(){
 						that.showHints();
-						
 					},
-					"Cmd-Space": "autocomplete",
+					"Cmd-Space": function(){
+						that.showHints();
+					},
 					
 					"Alt-Up": function(ed, e){
 						that.moveLine(ed, -1);
@@ -645,7 +647,9 @@ MT.extend("core.BasicPlugin")(
 					},
 					"Cmd-+": function(ed){
 						alert();
-					}
+					},
+					"Ctrl-L": "gotoLine",
+					"Cmd-L": "gotoLine"
 				},
 				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-jslint"],
 				highlightSelectionMatches: {showToken: /\w/},

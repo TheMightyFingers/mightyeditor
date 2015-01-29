@@ -59,13 +59,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var that = this;
 			
-			this.panel.addOptions([
+			this.panel.addButtons([
 				{
 					label: "Add Group",
-					className: "",
+					className: "add-group",
 					cb: function(){
 						that.createGroup();
-						that.panel.options.list.hide();
 					}
 				},
 				/*{
@@ -73,31 +72,27 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.createMovieClip();
-						that.panel.options.list.hide();
 					}
 				},*/
 				{
 					label: "Add TileLayer",
-					className: "",
+					className: "add-tilelayer",
 					cb: function(){
 						that.createTileLayer();
-						that.panel.options.list.hide();
 					}
 				},
 				{
 					label: "Group Selected Objects",
-					className: "",
+					className: "Group-selected",
 					cb: function(){
 						that.groupSelected();
-						that.panel.options.list.hide();
 					}
 				},
 				{
 					label: "Delete Selected Objects",
-					className: "",
+					className: "delete-selected",
 					cb: function(){
 						that.deleteSelected();
-						that.panel.options.list.hide();
 					}
 				}
 			], ui, true);
@@ -118,16 +113,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.tree.show(this.panel.content.el);
 			
 			
-			this.tv.on("show", function(item){
+			this.tv.on(["lock", "open", "close", "show"], function(item){
 				that.update();
+				that.sync();
 			});
 			
-			this.tv.on("lock", function(item){
-				that.update();
-			});
-			
-			this.tv.on("click", function(data, el){
+			this.tv.on(["click", "select"], function(data, el){
 				that.emit(MT.OBJECT_SELECTED, data);
+				console.log("SELECT");
 			});
 			
 			var timeouts = {};
@@ -238,7 +231,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		insertObject: function(obj, silent, data, affectParent){
 			data = data || this.tv.getData();
-			var data = this.tv.getData();
+			//var data = this.tv.getData();
 			var map = this.project.plugins.mapeditor;
 			
 			var active, cont;
@@ -380,6 +373,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				isVisible: 1,
 				isLocked: 0,
 				isFixedToCamera: 0,
+				isClosed: 0,
 				scaleX: 1,
 				scaleY: 1,
 				alpha: 1
@@ -457,8 +451,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				isVisible: 1,
 				isLocked: 0,
 				isFixedToCamera: 0,
-				tileWidth: 64,
-				tileHeight: 64,
+				tileWidth: 32,
+				tileHeight: 32,
 				widthInTiles: 10,
 				heightInTiles: 10,
 				alpha: 1
@@ -628,6 +622,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		groupSelected: function(){
 			var folder = this.createGroup(true);
+			folder.isClosed = false;
 			var that = this;
 			
 			var data = this.tv.getData();

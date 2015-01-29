@@ -237,12 +237,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var map = this.active.tilemap;
 			ctx.beginPath();
 			
-			for(var i = imgData.frameWidth; i<image.width; i += imgData.frameWidth + imgData.spacing){
-				ctx.moveTo(imgData.margin + i+0.5, imgData.margin);
+			for(var i = imgData.frameWidth + imgData.margin; i<image.width; i += imgData.frameWidth + imgData.spacing){
+				ctx.moveTo(i+0.5, imgData.margin);
 				ctx.lineTo(i+0.5, image.height);
 			}
-			for(var i = imgData.frameHeight; i<image.height; i += imgData.frameHeight + imgData.spacing){
-				ctx.moveTo(imgData.margin + 0, imgData.margin + i+0.5);
+			for(var i = imgData.frameHeight + imgData.margin; i<image.height; i += imgData.frameHeight + imgData.spacing){
+				ctx.moveTo(imgData.margin, i+0.5);
 				ctx.lineTo(image.width, i+0.5);
 			}
 			ctx.stroke();
@@ -258,7 +258,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			if(this.start == this.stop){
 				
-				ctx.fillRect(imgData.margin + imgData.frameWidth * tx + tx * imgData.spacing + 0.5,
+				ctx.fillRect(
+							imgData.margin + imgData.frameWidth * tx + tx * imgData.spacing + 0.5,
 							imgData.margin + imgData.frameHeight * ty + ty * imgData.spacing + 0.5,
 							imgData.frameWidth+0.5, imgData.frameHeight+0.5
 				);
@@ -280,7 +281,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					for(var j=starty; j<=endy; j++){
 						ctx.fillRect(
 							imgData.margin + imgData.frameWidth * i  + i * imgData.spacing + 0.5,
-							imgData.frameHeight * j + j * imgData.spacing + 0.5,
+							imgData.margin + imgData.frameHeight * j + j * imgData.spacing + 0.5,
+				   
 							imgData.frameWidth + 0.5,
 							imgData.frameHeight + 0.5
 						);
@@ -289,7 +291,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				}
 			}
 		},
-		
+		updatePreview: function(asset){
+			console.log("update");
+			console.log(this.panels);
+			this.drawImage(this.panels[asset.id]);
+		},
 		getTileX: function(tile, width){
 			
 			return tile % width;
@@ -304,10 +310,34 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			return this.getTile(e.offsetX, e.offsetY, image, panel.data.data);
 		},
 		
-		getTile: function(x, y, image, imageData){
+		getTile2: function(x, y, image, imageData){
 			var tx = (x + imageData.margin - imageData.spacing) / (imageData.frameWidth + imageData.spacing ) | 0;
 			var ty = (y + imageData.margin - imageData.spacing) / (imageData.frameHeight + imageData.spacing ) | 0;
 			return this.getId(tx, ty, image, imageData);
+		},
+		
+		getTile: function(x, y, image, o){
+			
+			
+			var dx = (x - o.margin);
+			var dy = (y - o.margin);
+			
+			if(dx < 0){
+				dx = 0;
+			}
+			if(dy < 0){
+				dy = 0;
+			}
+			var gx = Math.floor( dx /(o.frameWidth + o.spacing));
+			var gy = Math.floor( dy /(o.frameHeight + o.spacing));
+			
+			var maxX = Math.floor( o.width / o.frameWidth);
+			
+			var frame = gx + maxX * gy;
+			
+			console.log(frame, "frame");
+			
+			return frame;
 		},
 		
 		getId: function(tx, ty, image, imageData){
@@ -548,7 +578,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					i--;
 					continue;
 				}
-				//addTilesetImage(tileset, key, tileWidth, tileHeight, tileMargin, tileSpacing, gid) → {Phaser.Tileset}
+				//addTilesetImage(tileset, key, tileWidth, tileHeight, tileMargin, tileSpacing, gid) ??? {Phaser.Tileset}
 				tilesetImage = map.addTilesetImage(image.id, image.id, image.frameWidth, image.frameHeight, image.margin, image.spacing, nextId);
 				nextId += tilesetImage.total;
 			}

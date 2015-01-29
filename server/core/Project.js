@@ -205,6 +205,12 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		saveProjectInfo: function(info){
+			console.log("save Project Info", info);
+			var old = this.data.contents[0];
+			if(old && old.title != info.title){
+				this.auth.updateTitle(info, this.id);
+			}
+			
 			this.data.contents[0] = info;
 		},
 		

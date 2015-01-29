@@ -42,6 +42,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		deactivate: function(){
 			this.mDown = false;
 			this.map.handleMouseMove = this.mouseMoveFree;
+			map.selection.width = 0;
+			map.selection.height = 0;
 		},
 		
 		select: function(obj){
@@ -80,24 +82,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			else{
 				obj.mouseMove(x, y, e);
 			}
-			return;
-			
-			
-			if(this.ui.events.mouse.down && self.activeState != self.states.NONE){
-				self.resizeObject(this.activeObject, this.ui.events.mouse);
-				return;
-			}
-			
-			var type = this.activeObject.data.type;
-			
-			var obj = this.activeObject;
-			var scale = this.game.camera.scale.x;
-			var x = e.x - this.ox;
-			var y = e.y - this.oy;
-			
-			if(this.tools.activeTool !== self){
-				this.tools.mouseMove(e);
-			}
 		},
 		altKeyReady: false,
 		checkAltKey: function(e){
@@ -124,6 +108,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var sprite;
 			for(var i=0; i<data.length; i++){
 				sprite = this.map.getById(data[i].id);
+				if(!sprite){
+					console.log("Failed to find a sprite");
+					continue;
+				}
 				sprite.object.updateTransform();
 				
 				//bounds = sprite.object.getBounds();
@@ -180,6 +168,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			
+			console.log("INIT MOVE");
+			
 			this.checkAltKey(e);
 			
 			var that = this;
@@ -211,6 +201,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		mDown: false,
 		
 		mouseUp: function(e){
+			console.log("UPP");
+			
+			if(this.map.activeObject){
+				this.map.activeObject.mouseUp(e.x - this.map.ox, e.y - this.map.oy, e);
+			}
+			
 			this.mDown = false;
 			var x = e.x - this.map.offsetXCam;
 			var y = e.y - this.map.offsetYCam;
@@ -224,9 +220,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			if(this.map.activeObject){
 				this.map.activeObject.mouseUp(e.x - this.map.ox, e.y - this.map.oy, e);
-				//this.initMove(e);
-				//return;
 			}
+			
+			this.checkAltKey(e);
 			
 			map.handleMouseMove = this.mouseMoveFree;
 		},

@@ -206,6 +206,13 @@ MT.extend(MT.core.BasicPlugin)(
 			this.db.run("INSERT INTO projects (user_id, title, created, link, secret) VALUES (?, ?, ?, ?, ?)", [user.id, info.title, Date.now(), link, this.md5.update(Date.now()+"").digest('hex')]);
 		},
 		
+		updateTitle: function(info, link){
+			if(!link){
+				return;
+			}
+			this.db.run("UPDATE projects SET title = ? WHERE link = ?", [info.title, link]);
+		},
+		
 		updateProjectLink: function(id, link){
 			this.db.run("UPDATE projects SET link = ? WHERE id = ?", [link, id]);
 		},

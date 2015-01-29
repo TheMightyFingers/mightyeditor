@@ -189,9 +189,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						var cop = null;
 						for(var i=0; i<toCopy.length; i++){
 							bounds = toCopy[i].getBounds();
-							cop = that.copy(toCopy[i].data, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
+							
+							if(!e.shiftKey){
+								cop = that.copy(toCopy[i].data, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
+							}
+							else{
+								cop = that.copy(toCopy[i].data, toCopy[i].data.x, toCopy[i].data.y);
+							}
+							
 							that.map.selector.add(cop);
 						}
+						
 					}
 				}
 				else if(e.target.tagName != "INPUT" && e.target.tagName != "TEXTAREA") {

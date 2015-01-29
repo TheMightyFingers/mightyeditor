@@ -52,6 +52,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.left = null;
 		
 		this.ui = ui;
+		
 	},
 	{
 		isResizeable: false,
@@ -69,6 +70,14 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		get title(){
 			return this.mainTab.title.innerHTML;
+		},
+		
+		get activeJoint(){
+			for(var i=0; i<this.joints.length; i++){
+				if(this.joints[i].isVisible){
+					return this.joints[i];
+				}
+			}
 		},
 		
 		startRename: function(){
@@ -198,7 +207,22 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			return this.options;
 		},
-		
+		addButtons: function(options){
+			if(!this.buttonsHolder){
+				this.buttonsHolder = document.createElement("div");
+				this.buttonsHolder.className = "panel-buttonsHolder";
+				this.content.el.appendChild(this.buttonsHolder);
+			}
+			var buttons = [];
+			var button;
+			for(var i=0; i<options.length; i++){
+				button = new MT.ui.Button(null, "panel-head-button "+options[i].className, null, options[i].cb);
+				button.show(this.buttonsHolder);
+				button.el.setAttribute("title", options[i].label);
+			}
+			
+			
+		},
 		removeBorder: function(){
 			this.addClass("borderless");
 		},
@@ -485,6 +509,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.setAll("top", this.top);
 			this.setAll("bottom", this.bottom);
 			
+			var j = this.activeJoint;
+			if(j){
+				j.show();
+			}
 			return;
 			if(!panel.isVisible && this.isVisible){
 				//panel.show();
