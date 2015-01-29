@@ -17,8 +17,6 @@ MT.extend(MT.core.BasicPlugin)(
 		this.request = MT.plugins.Auth.request;
 		this.serverConfig = MT.plugins.Auth.serverConfig;
 		
-		this.bcrypt = MT.plugins.Auth.bcrypt;
-		
 		this.db = MT.plugins.Auth.db;
 		this.postman = MT.plugins.Auth.postman;
 		this.sessionId = "";
@@ -253,7 +251,6 @@ MT.extend(MT.core.BasicPlugin)(
 			self.serverConfig = config;
 			self.config = config.auth;
 			self.request = require('request');
-			self.bcrypt = require('bcrypt');
 			self.postman = new MT.plugins.Postman(config);
 			
 			// init db

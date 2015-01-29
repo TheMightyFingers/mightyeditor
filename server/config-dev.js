@@ -2,7 +2,7 @@ var host = "http://tools.mightyfingers.com:8080";
 this.config = {
 	root: "../client",
 	hostname: host,
-	host: "123.123.123.123",
+	host: "0.0.0.0",
 	port: 8080,
 	shutdownTimeout: 0.5,
 	index: "index.html",
