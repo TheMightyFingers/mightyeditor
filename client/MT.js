@@ -1049,13 +1049,17 @@ MT.extend("core.Emitter")(
 			that.input.focus();
 		});
 		ui.events.on(ui.events.MOUSEUP, function(e){
+			if(!mdown){
+				return;
+			}
+			e.stopPropagation();
 			mdown = false;
 			that.isBase = false;
 			that.baseHandle.reset();
 			that.handleX.reset();
 			that.handleY.reset();
 			that.input.focus();
-		});
+		}, true);
 		
 		
 		that.input.onkeyup = function(e){
@@ -1658,12 +1662,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var map = this.active.tilemap;
 			ctx.beginPath();
 			
-			for(var i = imgData.frameWidth; i<image.width; i += imgData.frameWidth + imgData.spacing){
-				ctx.moveTo(imgData.margin + i+0.5, imgData.margin);
+			for(var i = imgData.frameWidth + imgData.margin; i<image.width; i += imgData.frameWidth + imgData.spacing){
+				ctx.moveTo(i+0.5, imgData.margin);
 				ctx.lineTo(i+0.5, image.height);
 			}
-			for(var i = imgData.frameHeight; i<image.height; i += imgData.frameHeight + imgData.spacing){
-				ctx.moveTo(imgData.margin + 0, imgData.margin + i+0.5);
+			for(var i = imgData.frameHeight + imgData.margin; i<image.height; i += imgData.frameHeight + imgData.spacing){
+				ctx.moveTo(imgData.margin, i+0.5);
 				ctx.lineTo(image.width, i+0.5);
 			}
 			ctx.stroke();
@@ -1679,7 +1683,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			if(this.start == this.stop){
 				
-				ctx.fillRect(imgData.margin + imgData.frameWidth * tx + tx * imgData.spacing + 0.5,
+				ctx.fillRect(
+							imgData.margin + imgData.frameWidth * tx + tx * imgData.spacing + 0.5,
 							imgData.margin + imgData.frameHeight * ty + ty * imgData.spacing + 0.5,
 							imgData.frameWidth+0.5, imgData.frameHeight+0.5
 				);
@@ -1701,7 +1706,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					for(var j=starty; j<=endy; j++){
 						ctx.fillRect(
 							imgData.margin + imgData.frameWidth * i  + i * imgData.spacing + 0.5,
-							imgData.frameHeight * j + j * imgData.spacing + 0.5,
+							imgData.margin + imgData.frameHeight * j + j * imgData.spacing + 0.5,
+				   
 							imgData.frameWidth + 0.5,
 							imgData.frameHeight + 0.5
 						);
@@ -1710,7 +1716,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				}
 			}
 		},
-		
+		updatePreview: function(asset){
+			console.log("update");
+			console.log(this.panels);
+			this.drawImage(this.panels[asset.id]);
+		},
 		getTileX: function(tile, width){
 			
 			return tile % width;
@@ -1725,10 +1735,34 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			return this.getTile(e.offsetX, e.offsetY, image, panel.data.data);
 		},
 		
-		getTile: function(x, y, image, imageData){
+		getTile2: function(x, y, image, imageData){
 			var tx = (x + imageData.margin - imageData.spacing) / (imageData.frameWidth + imageData.spacing ) | 0;
 			var ty = (y + imageData.margin - imageData.spacing) / (imageData.frameHeight + imageData.spacing ) | 0;
 			return this.getId(tx, ty, image, imageData);
+		},
+		
+		getTile: function(x, y, image, o){
+			
+			
+			var dx = (x - o.margin);
+			var dy = (y - o.margin);
+			
+			if(dx < 0){
+				dx = 0;
+			}
+			if(dy < 0){
+				dy = 0;
+			}
+			var gx = Math.floor( dx /(o.frameWidth + o.spacing));
+			var gy = Math.floor( dy /(o.frameHeight + o.spacing));
+			
+			var maxX = Math.floor( o.width / o.frameWidth);
+			
+			var frame = gx + maxX * gy;
+			
+			console.log(frame, "frame");
+			
+			return frame;
 		},
 		
 		getId: function(tx, ty, image, imageData){
@@ -1969,7 +2003,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					i--;
 					continue;
 				}
-				//addTilesetImage(tileset, key, tileWidth, tileHeight, tileMargin, tileSpacing, gid) → {Phaser.Tileset}
+				//addTilesetImage(tileset, key, tileWidth, tileHeight, tileMargin, tileSpacing, gid) ??? {Phaser.Tileset}
 				tilesetImage = map.addTilesetImage(image.id, image.id, image.frameWidth, image.frameHeight, image.margin, image.spacing, nextId);
 				nextId += tilesetImage.total;
 			}
@@ -2742,11 +2776,19 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseDown: function(e){
+			this.mDown = true;
+			
 			//console.log("mouse down");
 		},
-		
 		mouseUp: function(e){
 			//this.tools.tools.select.mouseUp(e);
+			
+			
+			if(!this.mDown){
+				return;
+			}
+			this.mDown = false;
+			
 			if(e.target != this.map.game.canvas){
 				return;
 			}
@@ -2931,6 +2973,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					return;
 				}
 				that.init(asset);
+				that.tools.tmpObject.frame = 0;
 			});
 			
 			this.tools.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
@@ -3083,6 +3126,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		deactivate: function(){
 			this.mDown = false;
 			this.map.handleMouseMove = this.mouseMoveFree;
+			map.selection.width = 0;
+			map.selection.height = 0;
 		},
 		
 		select: function(obj){
@@ -3121,24 +3166,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			else{
 				obj.mouseMove(x, y, e);
 			}
-			return;
-			
-			
-			if(this.ui.events.mouse.down && self.activeState != self.states.NONE){
-				self.resizeObject(this.activeObject, this.ui.events.mouse);
-				return;
-			}
-			
-			var type = this.activeObject.data.type;
-			
-			var obj = this.activeObject;
-			var scale = this.game.camera.scale.x;
-			var x = e.x - this.ox;
-			var y = e.y - this.oy;
-			
-			if(this.tools.activeTool !== self){
-				this.tools.mouseMove(e);
-			}
 		},
 		altKeyReady: false,
 		checkAltKey: function(e){
@@ -3165,6 +3192,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var sprite;
 			for(var i=0; i<data.length; i++){
 				sprite = this.map.getById(data[i].id);
+				if(!sprite){
+					console.log("Failed to find a sprite");
+					continue;
+				}
 				sprite.object.updateTransform();
 				
 				//bounds = sprite.object.getBounds();
@@ -3221,6 +3252,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			
+			console.log("INIT MOVE");
+			
 			this.checkAltKey(e);
 			
 			var that = this;
@@ -3252,6 +3285,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		mDown: false,
 		
 		mouseUp: function(e){
+			console.log("UPP");
+			
+			if(this.map.activeObject){
+				this.map.activeObject.mouseUp(e.x - this.map.ox, e.y - this.map.oy, e);
+			}
+			
 			this.mDown = false;
 			var x = e.x - this.map.offsetXCam;
 			var y = e.y - this.map.offsetYCam;
@@ -3265,9 +3304,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			if(this.map.activeObject){
 				this.map.activeObject.mouseUp(e.x - this.map.ox, e.y - this.map.oy, e);
-				//this.initMove(e);
-				//return;
 			}
+			
+			this.checkAltKey(e);
 			
 			map.handleMouseMove = this.mouseMoveFree;
 		},
@@ -3380,7 +3419,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 					return;
 				}
 			}
-			if(that.isVisible && autohide){
+			if(autohide){
 				that.hide();
 			}
 		});
@@ -3418,16 +3457,26 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		show: function(parent){
-			if(this.isVisible){
-				return;
-			}
+			this.shown = Date.now();
+
 			this.update();
 			this.isVisible = true;
 			MT.ui.DomElement.show.call(this, parent);
 			this.emit("show");
+			if(this.x + this.width > window.innerWidth){
+				this.x -= this.width;
+			}
+			if(this.y + this.height > window.innerHeight){
+				this.y -= this.height;
+			}
+			
 		},
 		
 		hide: function(){
+			// prevent instant show/hide
+			if(Date.now() - this.shown < 100){
+				return;
+			}
 			if(!this.isVisible){
 				return;
 			}
@@ -3525,6 +3574,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				opt = document.createElement("div");
 				opt.innerHTML = options[i].label;
 				sel.appendChild(opt);
+				if(options[i].title){
+					opt.title = options[i].title;
+				}
 				this.options.push(opt);
 			}
 			
@@ -4338,6 +4390,10 @@ MT(
 		},
    
 		updateSprite: function(){
+			// sometimes gets deleted - Alt -> click -> delete
+			if(!this.object.game){
+				return;
+			}
 			this.object.anchor.x = this.data.anchorX;
 			this.object.anchor.y = this.data.anchorY;
 			this.object.loadTexture(this.data.assetId);
@@ -4957,9 +5013,6 @@ MT(
 				}
 				this.angle += Phaser.Math.radToDeg(diff);
 				
-				console.log(Math.round(Phaser.Math.radToDeg(diff)));
-				
-				
 				if(e.ctrlKey){
 					this.data.angle = Math.round(this.data.angle / 15)*15;
 				}
@@ -5008,8 +5061,6 @@ MT(
 					this.moveAnchor(Math.round(this.anchorX * 10) * 0.1, Math.round(this.anchorY * 10) * 0.1);
 						var angle = this.getOffsetAngle();
 					
-						console.log(this.width * (this.anchorX - sx));
-						
 						var ddx = this.width * (this.anchorX - sx) * this.map.scale.x;
 						var ddy = this.height * (this.anchorY - sy) * this.map.scale.y;
 						
@@ -5582,7 +5633,6 @@ MT(
 		},
 		
 		set style(val){
-			console.log("do not set style!!");
 			return;
 			this.data.style = val;
 			this.object.style = val;
@@ -5858,6 +5908,19 @@ MT(
    
 		getBounds: function(){
 			return this.object.getBounds();
+		},
+		
+		_mapSettings: {},
+		get mapSettings(){
+			if(this.data.type != MT.objectTypes.TILE_LAYER){
+				return null;
+			}
+			else{
+				this._mapSettings.gridX = this.tileWidth;
+				this._mapSettings.gridY = this.tileHeight;
+				this._mapSettings.gridOffsetX = this.x;
+				this._mapSettings.gridOffsetY = this.y;
+			}
 		}
 		
 	}
@@ -6030,6 +6093,22 @@ MT(
 				if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
 			}
 			return "";
+		},
+   
+		updateObject: function(obj, data){
+			for(var i in data){
+				if(typeof data[i] == "object"){
+					if(obj[i] == void(0)){
+						obj[i] = data[i];
+					}
+					else{
+						this.updateObject(obj[i], data[i]);
+					}
+				}
+				else{
+					obj[i] = data[i];
+				}
+			}
 		}
 	}
 );
@@ -6313,9 +6392,6 @@ MT.extend("core.Emitter")(
 				this.addImage(el, data);
 			}
 			
-			
-			
-			
 			if(this.options.showHide){
 				el.addClass("show-hide-enabled");
 				var b = this._mkShowHide(el);
@@ -6518,7 +6594,17 @@ MT.extend("core.Emitter")(
 		
 		enableInput: function(ev){
 			var that = this;
-			ev.on("click", function(e){
+			var ditem = null;
+			
+			ev.on("mousedown", function(e){
+				// ????
+				if(!e.target.parentNode){
+					return;
+				}
+				ditem = that.getOwnItem(e.target.parentNode.parentNode);
+			});
+			
+			ev.on("mouseup", function(e){
 				
 				if(!e.target.ctrl){
 					return;
@@ -6531,11 +6617,19 @@ MT.extend("core.Emitter")(
 				if(that.dragged){
 					return;
 				}
+
 				var item = that.getOwnItem(e.target.parentNode.parentNode);
-				if(item){
-					that.emit("click", item.data, item);
+				if(item && item == ditem){
+					if(e.button == 0){
+						that.emit("click", item.data, item);
+					}
+					else if(e.button == 2){
+						that.emit("context", e, item);
+					}
 				}
 			});
+			
+			
 		},
 		
 		sortable: function(ev){
@@ -6651,21 +6745,21 @@ MT.extend("core.Emitter")(
 				if(!mdown){
 					return;
 				}
-				
 				mdown = false;
-				for(var i=0; i<that._onDrop.length; i++){
-					if(that._onDrop[i](e, item, last) === false){
-						return;
-					}
-				}
 				that.emit("dragend", e, item);
-				
-				
 				
 				if(!dragged){
 					return;
 				}
 				dragged = false;
+				
+				
+				for(var i=0; i<that._onDrop.length; i++){
+					if(that._onDrop[i](e, item, last) === false){
+						return;
+					}
+				}
+				
 				
 				
 				if(!last || last == item || last.hasParent(item)){
@@ -7575,86 +7669,6 @@ MT.extend("ui.DomElement")(
 	}
 );
 
-//MT/core/BasicPlugin.js
-MT.namespace('core');
-MT(
-	MT.core.BasicPlugin = function(channel){
-		this.channel = channel;
-		this.dealys = {};
-	},
-	{
-		
-		initUI: function(ui){
-			this.ui = ui;
-		},
-		
-		initSocket: function(socket){
-			if(this.channel == void(0)){
-				return;
-			}
-			
-			if(this.socket == socket){
-				return;
-			}
-			
-			var that = this;
-			this.socket = socket;
-			
-			this.socket.on(this.channel, function(action, data){
-				var act = "a_"+action;
-				if(that[act]){
-					that[act](data);
-				}
-				else{
-					console.warn("unknown action", that.channel + "["+act+"]", data);
-				}
-			});
-		},
-		send: function(action, data, cb){
-			this.socket.send(this.channel, action, data, cb);
-		},
-		sendDelayed: function(action, data, timeout){
-			var that = this;
-			if(this.dealys[action]){
-				window.clearTimeout(this.dealys[action]);
-			}
-			
-			this.dealys[action] = window.setTimeout(function(){
-				that.send(action, data);
-				that.dealys[action] = 0;
-			}, timeout);
-			
-		}
-	}
-);
-
-//MT/ui/InputCollection.js
-MT.namespace('ui');
-MT(
-	MT.ui.InputCollection = function(ui, props, object){
-		this.object = object || {};
-		this.inputs = {};
-		for(var i in props){
-			if(!props[i].key){
-				props[i].key = i;
-			}
-			this.inputs[i] = new MT.ui.Input(ui, props[i], this.object);
-		}
-		
-	},
-	{
-		show: function(par){
-			for(var i in this.inputs){
-				this.inputs[i].show(par);
-			}
-		},
-		hide: function(){
-			for(var i in this.inputs){
-				this.inputs[i].hide();
-			}
-		}
-	}
-);
 //MT/core/Emitter.js
 MT.namespace('core');
 MT(
@@ -7788,6 +7802,86 @@ MT(
 				console.log(stack.join("\n"));
 			}
 			
+		}
+	}
+);
+//MT/core/BasicPlugin.js
+MT.namespace('core');
+MT(
+	MT.core.BasicPlugin = function(channel){
+		this.channel = channel;
+		this.dealys = {};
+	},
+	{
+		
+		initUI: function(ui){
+			this.ui = ui;
+		},
+		
+		initSocket: function(socket){
+			if(this.channel == void(0)){
+				return;
+			}
+			
+			if(this.socket == socket){
+				return;
+			}
+			
+			var that = this;
+			this.socket = socket;
+			
+			this.socket.on(this.channel, function(action, data){
+				var act = "a_"+action;
+				if(that[act]){
+					that[act](data);
+				}
+				else{
+					console.warn("unknown action", that.channel + "["+act+"]", data);
+				}
+			});
+		},
+		send: function(action, data, cb){
+			this.socket.send(this.channel, action, data, cb);
+		},
+		sendDelayed: function(action, data, timeout){
+			var that = this;
+			if(this.dealys[action]){
+				window.clearTimeout(this.dealys[action]);
+			}
+			
+			this.dealys[action] = window.setTimeout(function(){
+				that.send(action, data);
+				that.dealys[action] = 0;
+			}, timeout);
+			
+		}
+	}
+);
+
+//MT/ui/InputCollection.js
+MT.namespace('ui');
+MT(
+	MT.ui.InputCollection = function(ui, props, object){
+		this.object = object || {};
+		this.inputs = {};
+		for(var i in props){
+			if(!props[i].key){
+				props[i].key = i;
+			}
+			this.inputs[i] = new MT.ui.Input(ui, props[i], this.object);
+		}
+		
+	},
+	{
+		show: function(par){
+			for(var i in this.inputs){
+				this.inputs[i].show(par);
+			}
+		},
+		hide: function(){
+			for(var i in this.inputs){
+				this.inputs[i].hide();
+			}
 		}
 	}
 );
@@ -9138,6 +9232,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			viewportWidth: 800,
 			viewportHeight: 480,
 			
+			scaleMode: "SHOW_ALL",
+			
 			gridX: 32,
 			gridY: 32,
 			
@@ -9161,26 +9257,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	},
 	{
 		_mousedown: false,
-		
-		getTileMap: function(obj){
-			var tileWidth = obj.tileWidth || 64;
-			var tileHeight = obj.tileHeight || 64;
-			return this.game.add.tilemap(null, tileWidth, tileHeight, obj.widthInTiles, obj.heightInTiles);
-		},
-		
-		addTileLayer: function(obj){
-			var tilemap = this.getTileMap(obj);
-			
-			var tl = tilemap.createBlankLayer(obj.name, obj.widthInTiles, obj.heightInTiles, obj.tileWidth, obj.tileHeight);
-			tl.fixedToCamera = obj.isFixedToCamera;
-			return tl;
-		},
-		
-		updateTileMap: function(obj, oldLayer){
-			oldLayer.destroy();
-			
-			return this.addTileLayer(obj);
-		},
 		
 		setZoom: function(zoom){
 			this.zoom = 1/zoom;
@@ -9223,12 +9299,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				that.handleMouseDown(e);
 			});
 			
-			window.oncontextmenu = function(e){
-				if(e.target == that.game.canvas){
-					e.preventDefault();
-				}
-			};
-			
 			this.isCtrlDown = false;
 			
 			ui.events.on(ui.events.MOUSEUP, function(e){
@@ -9239,6 +9309,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			var dx = 0;
 			var dy = 0;
+			
 			ui.events.on(ui.events.MOUSEMOVE, function(e){
 				if( e.target != game.canvas && e.button != 2 && !mdown){
 					return;
@@ -9252,7 +9323,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				that.handleMouseMove(e);
 			});
-			
 			
 			ui.events.on(ui.events.KEYDOWN, function(e){
 				var w = e.which;
@@ -9271,7 +9341,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					that.selector.clear();
 					return;
 				}
-				
 				
 				that.selector.forEach(function(obj){
 					that.moveByKey(e, obj);
@@ -10511,14 +10580,14 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			if(!this._activeObject){
 				return null;
 			}
-				
+			
 			if(!this._activeObject.game){
 				this._activeObject = this.getById(this._activeObject.xxx.id);
 			}
 			
 			return this._activeObject;
 		},
-		
+		savedSettings: null,
 		set activeObject(val){
 			this._activeObject = val;
 		},
@@ -11720,9 +11789,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						var cop = null;
 						for(var i=0; i<toCopy.length; i++){
 							bounds = toCopy[i].getBounds();
-							cop = that.copy(toCopy[i].data, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
+							
+							if(!e.shiftKey){
+								cop = that.copy(toCopy[i].data, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
+							}
+							else{
+								cop = that.copy(toCopy[i].data, toCopy[i].data.x, toCopy[i].data.y);
+							}
+							
 							that.map.selector.add(cop);
 						}
+						
 					}
 				}
 				else if(e.target.tagName != "INPUT" && e.target.tagName != "TEXTAREA") {
@@ -12056,7 +12133,8 @@ MT(
 		
 		installUI: function(){
 			var that = this;
-			this.project.plugins.tools.on(MT.ASSET_FRAME_CHANGED, function(obj, frame){
+			
+			this.project.plugins.assetmanager.on([MT.ASSET_FRAME_CHANGED, MT.ASSET_SELECTED], function(obj, frame){
 				if(obj){
 					that.handleAssets(obj);
 				}
@@ -12064,8 +12142,17 @@ MT(
 					that.clear();
 				}
 			});
+			
+			/*this.project.plugins.tools.on(MT.ASSET_FRAME_CHANGED, function(obj, frame){
+				if(obj){
+					that.handleAssets(obj);
+				}
+				else{
+					that.clear();
+				}
+			});*/
 			this.project.plugins.tools.on(MT.OBJECT_SELECTED, function(obj){
-				that.handleObjects(obj);
+				that.handleObjects(that.project.plugins.mapeditor.getById(obj.id));
 				that.active = obj.id;
 			});
 			this.project.plugins.tools.on(MT.OBJECT_UNSELECTED, function(obj){
@@ -12084,12 +12171,10 @@ MT(
 			});
 			*/
 		},
-   
 		handleClick: function(obj){
 			
 			
 		},
-   
 		clear: function(){
 			var stack = this.inputs[this.stack];
 			for(var i in stack){
@@ -12493,6 +12578,32 @@ MT(
 			this.scene.viewportHeight = this.addInput( {key: "viewportHeight"}, obj, true, cb);
 			
 			
+			var scaleMode = [
+				{
+					label: "NO_SCALE",
+					value: "NO_SCALE",
+					title: "A scale mode that prevents any scaling"
+				},{
+					label: "SHOW_ALL",
+					value: "SHOW_ALL",
+					title: "A scale mode that shows the entire game while maintaining proportions"
+				},{
+					label: "EXACT_FIT",
+					value: "EXACT_FIT",
+					title: "A scale mode that stretches content to fill all available space"
+				},{
+					label: "RESIZE",
+					value: "RESIZE",
+					title: "A scale mode that causes the Game size to change"
+				},{
+					label: "USER_SCALE",
+					value: "USER_SCALE",
+					title: "A scale mode that allows a custom scale factor"
+				}
+			];
+			
+			this.scene.scaleMode = this.addInput({key: "scaleMode", options: scaleMode, type: "select"}, obj, true, cb)
+			
 			this.scene.gridX = this.addInput( {key: "gridX", min: 2}, obj, true, cb);
 			this.scene.gridY = this.addInput( {key: "gridY", min: 2}, obj, true, cb);
 			this.scene.showGrid = this.addInput( {key: "showGrid", min: 0, max: 1}, obj, true, cb);
@@ -12576,13 +12687,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var that = this;
 			
-			this.panel.addOptions([
+			this.panel.addButtons([
 				{
 					label: "Add Group",
-					className: "",
+					className: "add-group",
 					cb: function(){
 						that.createGroup();
-						that.panel.options.list.hide();
 					}
 				},
 				/*{
@@ -12590,31 +12700,27 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "",
 					cb: function(){
 						that.createMovieClip();
-						that.panel.options.list.hide();
 					}
 				},*/
 				{
 					label: "Add TileLayer",
-					className: "",
+					className: "add-tilelayer",
 					cb: function(){
 						that.createTileLayer();
-						that.panel.options.list.hide();
 					}
 				},
 				{
 					label: "Group Selected Objects",
-					className: "",
+					className: "Group-selected",
 					cb: function(){
 						that.groupSelected();
-						that.panel.options.list.hide();
 					}
 				},
 				{
 					label: "Delete Selected Objects",
-					className: "",
+					className: "delete-selected",
 					cb: function(){
 						that.deleteSelected();
-						that.panel.options.list.hide();
 					}
 				}
 			], ui, true);
@@ -12635,16 +12741,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.tv.tree.show(this.panel.content.el);
 			
 			
-			this.tv.on("show", function(item){
+			this.tv.on(["lock", "open", "close", "show"], function(item){
 				that.update();
+				that.sync();
 			});
 			
-			this.tv.on("lock", function(item){
-				that.update();
-			});
-			
-			this.tv.on("click", function(data, el){
+			this.tv.on(["click", "select"], function(data, el){
 				that.emit(MT.OBJECT_SELECTED, data);
+				console.log("SELECT");
 			});
 			
 			var timeouts = {};
@@ -12755,7 +12859,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		insertObject: function(obj, silent, data, affectParent){
 			data = data || this.tv.getData();
-			var data = this.tv.getData();
+			//var data = this.tv.getData();
 			var map = this.project.plugins.mapeditor;
 			
 			var active, cont;
@@ -12897,6 +13001,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				isVisible: 1,
 				isLocked: 0,
 				isFixedToCamera: 0,
+				isClosed: 0,
 				scaleX: 1,
 				scaleY: 1,
 				alpha: 1
@@ -12974,8 +13079,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				isVisible: 1,
 				isLocked: 0,
 				isFixedToCamera: 0,
-				tileWidth: 64,
-				tileHeight: 64,
+				tileWidth: 32,
+				tileHeight: 32,
 				widthInTiles: 10,
 				heightInTiles: 10,
 				alpha: 1
@@ -13145,6 +13250,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		groupSelected: function(){
 			var folder = this.createGroup(true);
+			folder.isClosed = false;
 			var that = this;
 			
 			var data = this.tv.getData();
@@ -13293,33 +13399,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.panel.setFree();
 			this.panel.content.style.padding = 0;
 			
-			this.panel.addOptions([
+			this.panel.addButtons([
 				{
-					label: "new Folder",
-					className: "",
+					label: "New Folder",
+					className: "new-folder",
 					cb: function(){
 						that.newFolder();
-						that.panel.options.list.hide();
 					}
 				},
 				{
-					label: "delete selected",
-					className: "",
-					cb: function(){
-						that.deleteSelected();
-						that.panel.options.list.hide();
-					}
-				},
-				{
-					label: "upload file",
-					className: "",
+					label: "Upload File",
+					className: "upload-file",
 					cb: function(){
 						that.upload();
 					}
 				},
 				{
-					label: "upload directory",
-					className: "",
+					label: "Upload Folder",
+					className: "upload-folder",
 					cb: function(){
 						that.uploadFolder();
 					},
@@ -13327,6 +13424,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						if(window.navigator.userAgent.indexOf("WebKit") > -1){
 							return true;
 						}
+					}
+				},
+				{
+					label: "Delete Selected",
+					className: "delete-selected",
+					cb: function(){
+						that.confirmDeleteSelected();
 					}
 				}
 			]);
@@ -13342,11 +13446,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			var select = function(data, element){
-				
-				if(data.contents){
-					return;
-				}
-				
 				if(that.active == element){
 					return;
 				}
@@ -13366,6 +13465,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active.addClass("selected");
 				//that.emit(MT.ASSET_SELECTED, that.active.data);
 				//that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+				
+				
+				if(data.contents){
+					return;
+				}
+				//that.emit(MT.ASSET_SELECTED, that.active.data, that.activeFrame);
 				that.setPreviewAssets(that.active.data);
 			};
 			
@@ -13389,14 +13494,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						that.selector.add(element);
 						element.addClass("selected");
 					}
-					that.emit(MT.ASSET_FRAME_CHANGED, null, null);
+					//that.emit(MT.ASSET_FRAME_CHANGED, null, null);
 					return;
 				}
 				else{
 					
-					if(data.contents){
-						return;
-					}
+					//if(data.contents){
+					//	return;
+					//}
 					that.selector.forEach(function(el){
 						el.removeClass("active.selected");
 					});
@@ -13412,11 +13517,51 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.active = element;
 				that.active.addClass("active.selected");
 				
-				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+				//that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+				that.emit(MT.ASSET_SELECTED, that.active.data, that.activeFrame);
 				that.setPreviewAssets(data);
 			});
 			
 			this.tv.on("select", select);
+			
+			
+			
+			var list = new MT.ui.List([
+				{
+					label: "Make active",
+					cb: function(){
+						that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
+					}
+					
+				},
+				{
+					label: "Download image",
+					cb: function(){
+						console.log(that.active);
+						window.open(that.active.img.src);
+					}
+					
+				},
+				{
+					label: "Delete",
+					cb: function(){
+						that.confirmDeleteAsset(that.active.data.id);
+						list.hide();
+					}
+					
+				}
+			], this.ui, true);
+			list.width = 250;
+			
+			
+			this.tv.on("context", function(e, item){
+				console.log("context");
+				select(item.data, item);
+				list.x = e.pageX;
+				list.y = e.pageY;
+				list.show();
+			});
+			
 			
 			this.tv.on("change", function(oldItem, newItem){
 				if(oldItem && newItem){
@@ -13437,7 +13582,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.scale = 1;
 			
-			this.preview.addOptions(this.mkScaleOptions());
+			//this.preview.addOptions(this.mkScaleOptions());
 			var pce = window.pce = this.preview.content;
 			
 			ui.events.on(ui.events.WHEEL, function(e){
@@ -13532,9 +13677,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		_previewCache: null,
 		setPreviewAssets: function(asset){
+			if(asset.contents){
+				this.preview.content.clear();
+				return;
+			}
+			
 			// tiletool uses his own preview
 			var tools = this.project.plugins.tools;
 			if( tools && tools.activeTool && tools.activeTool == tools.tools.tiletool){
+				tools.tools.tiletool.updatePreview(asset);
 				return;
 			}
 				
@@ -13837,21 +13988,25 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			ctx.drawImage(image, 0, 0, image.width, image.height);
 			ctx.beginPath();
 			
-			for(var i = imgData.frameWidth; i<image.width; i += imgData.frameWidth + imgData.spacing){
-				ctx.moveTo(imgData.margin + i+0.5, imgData.margin);
+			// vertical lines
+			for(var i = imgData.frameWidth + imgData.margin; i<image.width; i += imgData.frameWidth + imgData.spacing){
+				ctx.moveTo(i+0.5, imgData.margin);
 				ctx.lineTo(i+0.5, image.height);
 			}
-			for(var i = imgData.frameHeight; i<image.height; i += imgData.frameHeight + imgData.spacing){
-				ctx.moveTo(imgData.margin + 0, imgData.margin + i+0.5);
+			
+			// horizontal lines
+			for(var i = imgData.frameHeight + imgData.margin; i<image.height; i += imgData.frameHeight + imgData.spacing){
+				ctx.moveTo(imgData.margin, i+0.5);
 				ctx.lineTo(image.width, i+0.5);
 			}
 			ctx.stroke();
 			
 			
-			var off = imgData.margin + imgData.spacing*Math.floor(image.width / imgData.frameWidth  - imgData.spacing);
+			var off = imgData.margin + imgData.spacing * Math.floor( image.width / imgData.frameWidth - imgData.spacing );
 			
-			var widthInFrames = (image.width - off) / (imgData.frameWidth )    
-			
+			var widthInFrames = (image.width - off) / (imgData.frameWidth );
+			console.log("width", widthInFrames);
+			console.log("FRAME", this.activeFrame);
 			
 			var dx = this.getTileX(this.activeFrame, widthInFrames);
 			var dy = this.getTileY(this.activeFrame, widthInFrames);
@@ -13882,9 +14037,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var canvas = panel.data.canvas;
 			var mdown = false;
 			
+			var lastAsset = null;
+			
 			var select = function(e){
 				var frame = that.getFrame(panel.data.asset, e.offsetX, e.offsetY);
-				if(frame == that.activeFrame){
+				if(frame == that.activeFrame && that.active == panel.data.asset){
 					return;
 				}
 				
@@ -13937,7 +14094,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				var frame = panel.data.frames.start;
 				var found = false;
 				
-				
 				for(var i=0; i<panel.data.rectangles.length; i++){
 					if(panel.data.rectangles[i].contains(x, y)){
 						frame += i;
@@ -13949,7 +14105,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					return;
 				}
 				
-				if(frame == that.activeFrame){
+				if(frame == that.activeFrame && that.active == panel.data.asset){
 					return;
 				}
 				
@@ -14081,6 +14237,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
+			
 			this.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				if(tools.activeTool != tools.tools.select){
 					return;
@@ -14110,22 +14267,25 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			var map = this.project.plugins.mapeditor;
+			
+			var shouldEnd = false;
+			
 			this.tv.on("dragmove", function(e, item){
 				if(e.target !== map.game.canvas){
 					tools.removeTmpObject();
 					return;
 				}
+				
+				shouldEnd = true;
 				tools.tools.stamp.init(item.data);
-				return;
-				e.stopPropagation();
-				
-				tools.initTmpObject(item.data);
-				tools.tmpObject.x = e.x - map.offsetX;
-				tools.tmpObject.y = e.y - map.offsetY;
-				
 			});
+			
 			this.tv.on("dragend", function(e, item){
+				if(shouldEnd == false){
+					return;
+				}
 				
+				shouldEnd = false;
 				if(e.target !== map.game.canvas){
 					tools.removeTmpObject();
 					return;
@@ -14204,8 +14364,18 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		getFrame: function(o, x, y){
 			
-			var gx = Math.floor(x/(o.frameWidth + o.spacing));
-			var gy = Math.floor(y/(o.frameHeight + o.spacing));
+			
+			var dx = (x - o.margin);
+			var dy = (y - o.margin);
+			
+			if(dx < 0){
+				dx = 0;
+			}
+			if(dy < 0){
+				dy = 0;
+			}
+			var gx = Math.floor( dx /(o.frameWidth + o.spacing));
+			var gy = Math.floor( dy /(o.frameHeight + o.spacing));
 			
 			var maxX = Math.floor( o.width / o.frameWidth);
 			
@@ -14287,8 +14457,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.handleFiles(this.files);
 			};
 			input.click();
-			
-			this.panel.options.list.hide();
 		},
 		
 		uploadFolder: function(){
@@ -14304,8 +14472,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.handleFiles(this.files);
 			};
 			input.click();
-			
-			this.panel.options.list.hide();
 		},
 		
 		handleEntry: function(entry){
@@ -14393,6 +14559,34 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 		},
 		
+		confirmDeleteAsset: function(id){
+			var that = this;
+			var pop = new MT.ui.Popup("Delete Asset?", "Do you really want to delete asset?");
+			
+			pop.addButton("no", function(){
+				pop.hide();
+			});
+			
+			pop.addButton("yes", function(){
+				that.deleteAsset(id);
+				pop.hide();
+			});
+			pop.showClose();
+		},
+		confirmDeleteSelected: function(id){
+			var that = this;
+			var pop = new MT.ui.Popup("Delete all selected assets?", "Do you really want to delete all selected assets?");
+			
+			pop.addButton("no", function(){
+				pop.hide();
+			});
+			
+			pop.addButton("yes", function(){
+				that.deleteSelected(id);
+				pop.hide();
+			});
+			pop.showClose();
+		},
 		getById: function(id){
 			var items = this.tv.items;
 			for(var i=0; i<items.length; i++){
@@ -14576,6 +14770,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.left = null;
 		
 		this.ui = ui;
+		
 	},
 	{
 		isResizeable: false,
@@ -14593,6 +14788,14 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		get title(){
 			return this.mainTab.title.innerHTML;
+		},
+		
+		get activeJoint(){
+			for(var i=0; i<this.joints.length; i++){
+				if(this.joints[i].isVisible){
+					return this.joints[i];
+				}
+			}
 		},
 		
 		startRename: function(){
@@ -14722,7 +14925,22 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			return this.options;
 		},
-		
+		addButtons: function(options){
+			if(!this.buttonsHolder){
+				this.buttonsHolder = document.createElement("div");
+				this.buttonsHolder.className = "panel-buttonsHolder";
+				this.content.el.appendChild(this.buttonsHolder);
+			}
+			var buttons = [];
+			var button;
+			for(var i=0; i<options.length; i++){
+				button = new MT.ui.Button(null, "panel-head-button "+options[i].className, null, options[i].cb);
+				button.show(this.buttonsHolder);
+				button.el.setAttribute("title", options[i].label);
+			}
+			
+			
+		},
 		removeBorder: function(){
 			this.addClass("borderless");
 		},
@@ -15009,6 +15227,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.setAll("top", this.top);
 			this.setAll("bottom", this.bottom);
 			
+			var j = this.activeJoint;
+			if(j){
+				j.show();
+			}
 			return;
 			if(!panel.isVisible && this.isVisible){
 				//panel.show();
@@ -15693,7 +15915,7 @@ MT.namespace('plugins');
 "use strict";
 MT.requireFile("MT/misc/validation.js");
 MT.require("ui.InputCollection");
-MT.extend("core.BasicPlugin")(
+MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.Auth = function(project){
 		MT.core.BasicPlugin.call(this, "Auth");
 		this.project = project;
@@ -15817,15 +16039,23 @@ MT.extend("core.BasicPlugin")(
 				MT.core.Helper.clearSelection();
 				return;
 			}
+			
 			var that = this;
 			this.mainButton.addClass("active");
-			this.ui.events.once("click", function(){
+			var up = this.mouseUp = function(e){
+				if(e && MT.ui.hasParent(e.target, that.propContainer)){
+					return;
+				}
 				if(that.propContainer.parentNode){
 					that.propContainer.parentNode.removeChild(that.propContainer);
 					that.mainButton.removeClass("active");
 					MT.core.Helper.clearSelection();
+					that.emit("hideProperties", that.propPanels.projects);
 				}
-			});
+				that.ui.events.off("mouseup", up);
+				
+			};
+			this.ui.events.on("mouseup", up);
 			
 			document.body.appendChild(this.propContainer);
 			if(this.logoutButton.el.parentNode){
@@ -15833,6 +16063,7 @@ MT.extend("core.BasicPlugin")(
 			}
 			this.propContainer.appendChild(this.logoutButton.el);
 			
+			this.emit("showProperties", this.propPanels.projects);
 		},
 		initUI: function(ui){
 			this.ui = ui;
@@ -18757,6 +18988,7 @@ MT.namespace('plugins');
 		MT.requireFile(cmPath+"/scroll/scrollpastend.js"); //!!
 		
 		MT.requireFile(cmPath+"/search/search.js");
+		MT.requireFile(cmPath+"/search/goto-line.js");
 		MT.requireFile(cmPath+"/search/searchcursor.js");
 		MT.requireFile(cmPath+"/search/match-highlighter.js");
 		MT.requireFile(cmPath+"/selection/active-line.js");
@@ -19330,9 +19562,10 @@ MT.extend("core.BasicPlugin")(
 					
 					"Ctrl-Space": function(){
 						that.showHints();
-						
 					},
-					"Cmd-Space": "autocomplete",
+					"Cmd-Space": function(){
+						that.showHints();
+					},
 					
 					"Alt-Up": function(ed, e){
 						that.moveLine(ed, -1);
@@ -19357,7 +19590,9 @@ MT.extend("core.BasicPlugin")(
 					},
 					"Cmd-+": function(ed){
 						alert();
-					}
+					},
+					"Ctrl-L": "gotoLine",
+					"Cmd-L": "gotoLine"
 				},
 				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-jslint"],
 				highlightSelectionMatches: {showToken: /\w/},
@@ -20352,6 +20587,10 @@ MT.ui.hasParent = function(el, parent){
 MT.extend("core.Emitter")(
 	MT.ui.Controller = function(){
 		this.events = new MT.ui.Events();
+		//disble context menu
+		window.oncontextmenu = function(e){
+			e.preventDefault();
+		};
 		this.panels = [];
 		
 		
@@ -20443,8 +20682,8 @@ MT.extend("core.Emitter")(
 			if(!activePanel){
 				return;
 			}
-			e.preventDefault();
-			e.stopPropagation();
+			//e.preventDefault();
+			//e.stopPropagation();
 			if(needResize){
 				that.resizePanel(activePanel, e);
 				return;
@@ -20522,7 +20761,7 @@ MT.extend("core.Emitter")(
 			if(!activePanel){
 				return;
 			}
-			
+			e.stopPropagation();
 			activePanel.addClass("animated");
 			activePanel.isNeedUnjoin = true;
 			activePanel.mdown = false;
@@ -20542,7 +20781,7 @@ MT.extend("core.Emitter")(
 			that.sortPanels();
 			that.update();
 			that.saveLayout();
-		});
+		}, true);
 		
 		
 		// delay a little bit first animation - sometimes game do not resize well 
@@ -20732,6 +20971,10 @@ MT.extend("core.Emitter")(
 		   
 		checkResize: function(panel, e){
 			if(!panel.isResizeable){
+				this.setResizeCursor(true);
+				return false;
+			}
+			if(!MT.ui.hasParent(e.target, panel.el)){
 				this.setResizeCursor(true);
 				return false;
 			}
@@ -21944,6 +22187,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				fontSize: 12
 			}
 		};
+		this.defaultData = JSON.stringify(this.data);
 		
 		window.pp = this;
 		
@@ -22256,6 +22500,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							}
 						});
 					}
+					else{
+						removeItem(e);
+					}
 					return;
 				}
 				if(e.target.project){
@@ -22341,7 +22588,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.panel.addButton(null, "logo",  function(e){
 				
-				that.setPop.show();
+				//that.setPop.show();
 			});
 			
 			/* TODO: move to config */
@@ -22409,21 +22656,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		createSettings: function(){
 			var that = this;
-			var lastData;
-			
-			
-			this.setPop = new MT.ui.Popup("","");
-			this.setPop.removeHeader();
-			
-			this.setPop.style.height = "50%";
-			this.setPop.style.width = "70%";
-			this.setPop.y = 200;
-			
 			
 			this.setInputs = {
+				label: new MT.ui.Input(this.ui, {key: "title", type: "text"}, this.data),
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
 				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor)
-				
 			};
 			
 			
@@ -22436,56 +22673,72 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			this.setFields = {
+				project: new MT.ui.Fieldset("Project"),
 				ui: new MT.ui.Fieldset("UI"),
 				sourceEditor: new MT.ui.Fieldset("SourceEditor")
 			};
 			
-			this.setPop.on("show", function(){
+			
+			
+			this.setPanel = new MT.ui.Panel("Personalise");
+			this.setPanel.removeBorder();
+			this.setPanel.fitIn();
+			MT.ui.addClass(this.setPanel.el, "editor-settings");
+			
+			this.setPanel.on("show", function(){
 				console.log("pop show");
 				lastData = JSON.stringify(that.data);
-			});
-			
-			this.setPanel = new MT.ui.Panel("Editor Properties");
-			this.setPanel.removeBorder();
-			
-			this.setPanel.hide().show(this.setPop.content).fitIn();
-			
-			this.setPop.hide();
-			
-			
-			this.setPop.addButton("Save", function(){
-				that.setPop.hide();
-				that.send("saveProjectInfo", that.data);
-				that.emit("updateData", that.data);
-			});
-			this.setPop.addButton("Cancel", function(){
-				that.setPop.hide();
-				that.data = JSON.parse(lastData);
-				
-				that.setInputs.bgColor.setValue(that.data.backgroundColor);
-				that.setInputs.srcEdFontSize.setValue(that.data.sourceEditor.fontSize);
-				that.setUpData();
 			});
 			
 			this.setButtons = {
 				resetLayout: new MT.ui.Button("Reset Layout", "", null, function(){
 					that.ui.resetLayout();
+				}),
+				reset: new MT.ui.Button("Reset", "", null, function(){
+					MT.core.Helper.updateObject(that.data, JSON.parse(that.defaultData));
+					that.send("saveProjectInfo", that.data);
+					that.emit("updateData", that.data);
+					that.setUpData();
+				}),
+				
+				cancel: new MT.ui.Button("Cancel", "", null, function(){
+					
+					that.data = JSON.parse(lastData);
+					that.setInputs.bgColor.setValue(that.data.backgroundColor);
+					that.setInputs.srcEdFontSize.setValue(that.data.sourceEditor.fontSize);
+					that.setUpData();
 				})
 			};
 			
 			
+			
+			this.setInputs.label.show(this.setFields.project.el);
 			this.setInputs.bgColor.show(this.setFields.ui.el);
 			this.setButtons.resetLayout.show(this.setFields.ui.el);
 			
 			this.setInputs.srcEdFontSize.show(this.setFields.sourceEditor.el);
-			
-			
 			
 			for(var i in this.setFields){
 				this.setPanel.content.el.appendChild(this.setFields[i].el);
 				this.setFields[i].addClass("full");
 			}
 			
+			this.setPanel.content.el.appendChild(this.setButtons.reset.el);
+			//this.setPanel.content.el.appendChild(this.setButtons.cancel.el);
+			
+			
+			var that = this;
+			
+			this.plugins.auth.on("showProperties", function(panel){
+				panel.addJoint(that.setPanel);
+				lastData = JSON.stringify(that.data);
+			});
+			
+			this.plugins.auth.on("hideProperties", function(){
+				that.send("saveProjectInfo", that.data);
+				that.emit("updateData", that.data);
+				that.setUpData();
+			});
 		},
 		
 		showList: function(){
