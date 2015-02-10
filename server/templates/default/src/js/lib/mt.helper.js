@@ -4,7 +4,7 @@
  */
 (function(global){
 	"use strict";
-	// phaser script loader that shows scripts in chrome's dev console
+	// phaser script loader that shows scripts in the chrome's dev console
 	var _loadFile = Phaser.Loader.prototype.loadFile;
 
 	Phaser.Loader.prototype.loadFile = function(){
@@ -80,6 +80,9 @@
 			var newBox = span.getBoundingClientRect();
 			if(csmsBox.width != newBox.width || csmsBox.height != newBox.height){
 				document.body.removeChild(span);
+				for(var i in PIXI.Text.heightCache){
+					delete PIXI.Text.heightCache[i];
+				}
 				_this[onload](index);
 			}
 			else{
