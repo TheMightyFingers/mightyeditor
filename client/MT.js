@@ -787,6 +787,9 @@ MT.extend("core.Emitter")(
 					options.onchange(button.text);
 				}
 			}
+			else{
+				that.emit("update", input.value);
+			}
 		};
 		
 		var prev = function(e){
@@ -795,7 +798,6 @@ MT.extend("core.Emitter")(
 		input.onmouseup = prev;
 		input.onmousedown = prev;
 		input.onclick = prev;
-		
 		
 		
 		var list = null;
@@ -821,12 +823,21 @@ MT.extend("core.Emitter")(
 				var b = button.el.getBoundingClientRect();
 				list.style.top = (b.top + b.height)+"px";
 				list.style.left = b.left+"px";
+				var top;
 				
 				if(list.el.offsetTop + list.panel.content.el.offsetHeight > window.innerHeight){
-					list.style.top = (b.top - list.panel.content.el.offsetHeight)+"px";
+					top = b.top - list.panel.content.el.offsetHeight;
+					if(top > 0){
+						list.style.top = top+"px";
+					}
+					if(list.panel.content.el.offsetHeight > 0){
+						list.style.maxHeight = "350px";
+						list.style.overflow = "auto";
+					}
+					
 				}
 				if(options.listStyle){
-					list.width = options.listStyle.width;
+					list.style.minWidth = options.listStyle.width;
 				}
 				
 			});
@@ -856,6 +867,7 @@ MT.extend("core.Emitter")(
 			input.focus();
 			that.emit("show");
 			
+			
 		});
 		
 		if(options.button.width){
@@ -867,6 +879,13 @@ MT.extend("core.Emitter")(
 		}
 		
 		
+		this.on("show", function(){
+			button.addClass("active");
+		});
+		
+		this.on("hide", function(){
+			button.removeClass("active");
+		});
 	},
 	{
 		
@@ -2038,6 +2057,10 @@ MT.require("ui.TextColorPicker");
 MT.extend("core.BasicTool").extend("core.Emitter")(
 	MT.plugins.tools.Text = function(tools){
 		MT.core.BasicTool.call(this, tools);
+		
+		this.manager = this.tools.project.plugins.fontmanager;
+		this.fonts = this.manager.fonts;
+		
 		this.name = "text";
 		this.isInitialized = false;
 		
@@ -2049,16 +2072,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		this.tester = document.createElement("span");
 		
-		this.fonts = [
-			"Arial",
-			"Comic Sans MS",
-			"Courier New",
-			"Georgia",
-			"Impact",
-			"Times New Roman",
-			"Trebuchet MS",
-			"Verdana"
-		];
 		
 		this.tools.on(MT.OBJECT_SELECTED, function(obj){
 			if(tools.map.selector.count > 1){
@@ -2082,7 +2095,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 		});
 		
-		this.manager = this.tools.project.plugins.fontmanager;
+		
+		this.manager.on("update", function(){
+			that.updateFontFaces();
+		});
 		
 		var ready = function(){
 			that.checkFonts();
@@ -2093,7 +2109,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		
 		this.createPanel();
-		
+
 	},{
 		
 		createPanel: function(){
@@ -2102,14 +2118,18 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.panel = ui.createPanel("Text");
 			
-			this.panel.style.height = this.project.panel.height+"px";
-			this.panel.style.top = this.tools.map.panel.content.bounds.top+"px";
-			this.panel.style.left = this.project.panel.width+"px";
+			this.panel.style.height = this.project.panel.height + "px";
+			this.panel.style.top = this.tools.map.panel.content.bounds.top + "px";
+			this.panel.style.left = this.project.panel.width + "px";
 			
 			this.panel.addClass("text-tools");
 			this.panel.removeHeader();
 			
 			this.panel.hide();
+			
+			
+			this.buildOptions();
+			
 			
 			var fonts = this.fonts;
 			
@@ -2138,6 +2158,18 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			for(var i=0; i<fontSizes.length; i++){
 				fsList.push(this._mk_setFontSizeSelect(fontSizes[i]));
 			}
+			this.panel.addButton(this.fontFace.button);
+			this.fontFace.on("update", function(Val){
+				if(Val == ""){
+					that.fontFace.list.reset();
+					console.log("reset");
+					return;
+				}
+				var val = Val.toLowerCase();
+				that.fontFace.list.filter(function(item){
+					return item.label.toLowerCase().indexOf(val) >= 0;
+				});
+			});
 			
 			this.fontSize = new MT.ui.Dropdown({
 				list: fsList,
@@ -2154,7 +2186,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				
 			}, ui);
 			
-			this.panel.addButton(this.fontFace.button);
+			
 			this.panel.addButton(this.fontSize.button);
 			
 			ui.on(ui.events.RESIZE, function(){
@@ -2166,20 +2198,23 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			});
 			
 			
-			this.bold = this.panel.addButton("B", "text-bold", function(){
+			this.bold = this.panel.addButton("", "text-bold", function(){
 				that.toggleBold();
-			});
+			}, null, "Bold");
 			this.bold.width = "auto";
+			this.bold.el.title = "Bold";
 			
-			this.italic = this.panel.addButton("I", "text-italic", function(){
+			this.italic = this.panel.addButton("", "text-italic", function(){
 				that.toggleItalic();
-			});
+			}, null, "Italic");
 			this.italic.width = "auto";
+			this.italic.el.title = "Italic";
 			
-			this.wordWrap = this.panel.addButton("Wx", "text-wrap", function(){
+			this.wordWrap = this.panel.addButton("", "text-wrap", function(){
 				that.toggleWordWrap();
-			});
+			}, null, "Wrap Text");
 			this.wordWrap.width = "auto";
+			this.wordWrap.el.title = "Word Wrap";
 			
 			this.wordWrapWidth = new MT.ui.Dropdown({
 				button: {
@@ -2190,6 +2225,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					that.setWordWrapWidth(val);
 				}
 			}, ui);
+			this.wordWrapWidth.button.el.title = "Word Wrap Width";
+			
 			
 			this.wordWrapWidth.on("show", function(show){
 				that.wordWrapWidth.button.el.removeAttribute("px");
@@ -2199,25 +2236,31 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			});
 			this.panel.addButton(this.wordWrapWidth.button);
 			
-			this.left = this.panel.addButton("L", "text-left", function(){
+			this.left = this.panel.addButton("", "text-left", function(){
 				that.setAlign("left");
-			});
+			}, null, "left");
 			this.left.width = "auto";
+			this.left.el.title = "Align Left";
 			
-			this.center = this.panel.addButton("C", "text-center", function(){
+			this.center = this.panel.addButton("", "text-center", function(){
 				that.setAlign("center");
-			});
+			}, null, "center");
 			this.center.width = "auto";
+			this.center.el.title = "Align Center";
 			
-			this.right = this.panel.addButton("R", "text-right", function(){
+			
+			this.right = this.panel.addButton("", "text-right", function(){
 				that.setAlign("right");
-			});
+			}, null, "right");
 			this.right.width = "auto";
+			this.right.el.title = "Align Right";
 			
-			this.colorButton = this.panel.addButton("C", "text-color", function(){
+			
+			this.colorButton = this.panel.addButton("", "text-color", function(){
 				that.showColorPicker();
-			});
+			}, null, "color");
 			this.colorButton.width = "auto";
+			this.colorButton.el.title = "Color";
 			
 			this.colorPicker = new MT.ui.TextColorPicker(this.tools.ui);
 			this.colorPicker.el.style.zIndex = 3;
@@ -2236,12 +2279,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				that.setShadow(obj);
 			});
 			
-			
-			
-			this.textButton = this.panel.addButton("txt", "text-edit", function(){
+			this.textButton = this.panel.addButton("", "text-edit", function(){
 				that.showTextEdit();
-			});
+			}, null, "Edit Text");
 			this.textButton.width = "auto";
+			this.textButton.el.title= "Edit Text";
+			
 			
 			this.textPopup = new MT.ui.Popup("Edit Text", "");
 			this.textPopup.hide();
@@ -2272,11 +2315,76 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 		},
 		
+		
+		buildOptions: function(){
+			var ui = this.tools.ui,
+				that = this;
+			
+			this.options = ui.createPanel("Text Options");
+			this.options.hide();
+			this.options.isResizeable = true;
+			this.options.isMovable = true;
+			this.options.isDockable = false;
+			this.options.isJoinable = false;
+			
+			this.sysButton = this.panel.addButton("", "text-system", function(){
+				//that.showOptions();
+				if(that.manager.systemFonts.length == 0){
+					that.sysButton.addClass("active");
+				}
+				else{
+					that.sysButton.removeClass("active");
+				}
+				
+				that.manager.toggleSysFonts(function(){
+					that.updateFontFaces();
+					console.log("SYS fonts loaded");
+				});
+			});
+			this.sysButton.el.title = "Show System Fonts";
+		},
+		
+		showOptions: function(){
+			//this.options.show();
+			
+		},
+		
+		updateFontFaces: function(){
+			var loadedFonts = this.manager.loadedFonts;
+			var sysFonts = this.manager.systemFonts;
+			
+			var list = this.fontFace.list;
+			list.origList.length = 0;
+			
+			for(var i=0; i<loadedFonts.length; i++){
+				list.origList.push(this._mk_setFontSelect(loadedFonts[i]));
+			}
+			
+			for(var i=0; i<this.fonts.length; i++){
+				list.origList.push(this._mk_setFontSelect(this.fonts[i]));
+			}
+			
+			for(var i=0; i<sysFonts.length; i++){
+				list.origList.push(this._mk_setFontSelect(sysFonts[i], true));
+			}
+			
+			
+			
+			//list.origList.push(this._mk_setFontSelect("xxx"));
+			
+			
+			
+			list.update();
+			
+			
+		},
+		
 		showColorPicker: function(){
 			if(this.colorPicker.isVisible){
 				this.colorPicker.hide();
 				return;
 			}
+			
 			this.colorPicker.show(document.body);
 			var r = this.colorButton.el.getBoundingClientRect();
 			this.colorPicker.y = r.top + r.height;
@@ -2285,7 +2393,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 		},
 		
-		_mk_setFontSelect: function(font){
+		
+		
+		_mk_setFontSelect: function(font, gray){
 			var that = this;
 			return {
 				label: font,
@@ -2294,7 +2404,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				},
 				create: function(element){
 					element.style.fontFamily = font;
-				}
+					if(gray){
+						element.className += " grayed";
+					}
+				},
+				className: gray ? "grayed" : ""
 			};
 		},
 		
@@ -2380,6 +2494,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.map.activeObject.align = pos;
 			this.select(this.map.activeObject);
 		},
+		
 		isUnknownFont: function(font, cb){
 			for(var i=0; i<this.fonts.length; i++){
 				if(this.fonts[i] == font){
@@ -2394,11 +2509,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.fonts.push(font);
 				// might not be isInitialized yet
 				if(this.fontFace){
-					this.fontFace.addItem(this._mk_setFontSelect(font));
+					this.fontFace.list.list.push(this._mk_setFontSelect(font));
+					this.fontFace.list.update();
 				}
 			}
 		},
-		
 		
 		checkFonts: function(){
 			var objects = this.tools.map.loadedObjects;
@@ -2409,45 +2524,40 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			for(var i=0; i<objects.length; i++){
 				o = objects[i];
-				if(o.data.type == MT.objectTypes.TEXT){
-					//this._setFontFamily(o);
-					font = o.data.style.fontFamily;
-					if(!font){
-						continue;
-					}
-					if(this.isUnknownFont(font)){
-						this.addFont(font);
-						toLoad++;
-						this.manager.loadFont(font, function(){
-							toLoad--;
-							if(toLoad != 0){
-								return;
-							}
-							window.setTimeout(function(){
-								that.updateTextObjects();
-							}, 500);
-						});
-					}
+				if(o.data.type != MT.objectTypes.TEXT){
+					continue;
 				}
+				
+				//this._setFontFamily(o);
+				font = o.data.style.fontFamily;
+				if(!font){
+					continue;
+				}
+				
+				if(!this.isUnknownFont(font)){
+					continue;
+				}
+				
+				this.addFont(font);
+				
+				toLoad++;
+				this.manager.loadFont(font, function(){
+					toLoad--;
+					if(toLoad != 0){
+						return;
+					}
+					window.setTimeout(function(){
+						that.manager.updateTextObjects();
+					}, 500);
+				});
 			}
 		},
 		
-		updateTextObjects: function(fontIn){
+		
+		__setFontFamily: function(fontFamily){
 			
-			var objects = this.tools.map.loadedObjects;
-			PIXI.Text.heightCache = {};
-			var font;
-			for(var i=0; i<objects.length; i++){
-				if(objects[i].data.type == MT.objectTypes.TEXT ){
-					font = objects[i].data.style.fontFamily;
-					if(fontIn == void(0) || font == fontIn || font.indexOf(fontIn) > -1 ){ 
-						objects[i].object.dirty = true;
-					}
-				}
-			}
-		},
-		
-		setFontFamily: function(fontFamily){
+			console.log("Set font family");
+			
 			this.map = this.tools.map;
 			if(!this.map.activeObject){
 				return;
@@ -2462,7 +2572,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.manager.loadFont(fontFamily, function(){
 					that.setFontFamily(fontFamily);
 					window.setTimeout(function(){
-						that.updateTextObjects(fontFamily);
+						that.manager.updateTextObjects(fontFamily);
 					}, 1000);
 				});
 				return;
@@ -2474,7 +2584,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!obj){
 				return;
 			}
-			this._setFontFamily(obj, fontFamily);
+			//this._setFontFamily(obj, fontFamily);
 			obj.object.dirty = true;
 			this.select(obj);
 			
@@ -2488,7 +2598,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var font = this.tester.style.fontFamily;
 			font = font.replace(/'/gi, "");
 			
-			this.fontFace.button.style.fontFamily = font;
+			//this.fontFace.button.style.fontFamily = font;
 			obj.font = font;
 			if(this.tester.style.fontSize){
 				obj.fontSize = this.tester.style.fontSize;
@@ -2498,6 +2608,26 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.select(obj);
 			obj.object.dirty = true;
+		},
+		
+				
+		setFontFamily: function(fontFamily){
+			this.map = this.tools.map;
+			var obj = this.map.activeObject;
+			
+			this.tester.style.font = obj.style.font;
+			this.tester.style.fontFamily = fontFamily;
+			
+			obj.fontFamily = this.tester.style.fontFamily.replace(/'/gi,"");
+			obj.fontWeight = this.tester.style.fontWeight.replace(/normal/gi,'');
+			if(this.tester.style.fontStyle == "italic"){
+				obj.fontWeight += " "+this.tester.style.fontStyle.replace(/normal/gi,"");;
+			}
+			obj.fontSize = parseInt(this.tester.style.fontSize);
+			this.select(obj);
+			
+			this.manager.checkFont(fontFamily);
+			
 		},
 		
 		setFontSize: function(size){
@@ -2595,20 +2725,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.select(this.map.activeObject);
 			
 		},
-		
-		_setFontFamily: function(obj, fontFamily){
-			obj = obj || this.map.activeObject;
-			
-			this.tester.style.font = obj.style.font;
-			this.tester.style.fontFamily = fontFamily;
-			
-			obj.fontFamily = this.tester.style.fontFamily.replace(/'/gi,"");
-			obj.fontWeight = this.tester.style.fontWeight.replace(/normal/gi,'');
-			if(this.tester.style.fontStyle == "italic"){
-				obj.fontWeight += " "+this.tester.style.fontStyle.replace(/normal/gi,"");;
-			}
-			obj.fontSize = parseInt(this.tester.style.fontSize);
-		},
+
 		
 		init: function(){
 			this.map = this.tools.map;
@@ -2653,7 +2770,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			
 			this.fontFace.value = this.tester.style.fontFamily.replace(/'/gi, "");;
-			this.fontFace.button.style.fontFamily = this.tester.style.fontFamily;
+			//this.fontFace.button.style.fontFamily = this.tester.style.fontFamily;
 			
 			this.fontSize.value = obj.fontSize;
 			
@@ -3419,6 +3536,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 					return;
 				}
 			}
+			if(MT.ui.hasParent(e.target, that.el)){
+				return;
+			}
 			if(autohide){
 				that.hide();
 			}
@@ -3426,11 +3546,17 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		this.isVisible = false;
 		this.list = list;
+		this.origList = list;
 		this.update();
 		
 		this.addChild(this.panel).show();
 	},
 	{
+		filter: function(cb){
+			this.list = this.origList.filter(cb);
+			this.update();
+			console.log("filter");
+		},
 		update: function(){
 			//this.clear();
 			while(this._items.length){
@@ -3440,13 +3566,17 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				this.addItem(this.list[i]);
 			}
 		},
-		
+		reset: function(){
+			this.list = this.origList;
+			this.update();
+		},
 		addItem: function(item){
 			if(item.check && !item.check()){
 				return;
 			}
 			
 			var b = this.panel.addButton(item.label, item.className, item.cb);
+			b.el.title = item.label;
 			b.style.position = "relative";
 			b.addClass("ui-list-button");
 			
@@ -3456,10 +3586,13 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this._items.push(b);
 		},
 		
+		removeItem: function(item){
+			
+		},
+		
 		show: function(parent){
 			this.shown = Date.now();
-
-			this.update();
+			this.reset();
 			this.isVisible = true;
 			MT.ui.DomElement.show.call(this, parent);
 			this.emit("show");
@@ -3467,7 +3600,12 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				this.x -= this.width;
 			}
 			if(this.y + this.height > window.innerHeight){
-				this.y -= this.height;
+				if(this.y - this.height < 0){
+					this.el.style["min-height"] = "350px";
+				}
+				else{
+					this.y -= this.height;
+				}
 			}
 			
 		},
@@ -3497,7 +3635,7 @@ MT.namespace('ui');
 MT.require("core.keys");
 MT.require("ui.ColorPicker");
 MT.extend("ui.DomElement").extend("core.Emitter")(
-	MT.ui.Input = function(ui, properties, obj){
+	MT.ui.Input = function(ui, properties, obj, callback){
 		var events = ui.events;
 		MT.ui.DomElement.call(this);
 		MT.core.Emitter.call(this);
@@ -3572,11 +3710,19 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			var opt;
 			for(var i=0; i<options.length; i++){
 				opt = document.createElement("div");
-				opt.innerHTML = options[i].label;
 				sel.appendChild(opt);
-				if(options[i].title){
-					opt.title = options[i].title;
+				
+				if(typeof options[i] == "string"){
+					opt.innerHTML = options[i];
 				}
+				else{
+					opt.innerHTML = options[i].label;
+					opt.value = options[i].value;
+					if(options[i].title){
+						opt.title = options[i].title;
+					}
+				}
+				
 				this.options.push(opt);
 			}
 			
@@ -3844,6 +3990,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				that.setValue(val, false);
 			});
 		}
+		
+		if(callback){
+			this.on("change", callback);
+		}
+		
 	},
 	{
 		selectedValue: "",
@@ -6030,8 +6181,14 @@ MT(
 			return (ext == "png" || ext == "jpg" || ext == "gif" || ext == "jpeg");
 		},
 		
+		// default upload - managed by source editor
 		isSource: function(path){
 			return !this.isImage(path);
+		},
+   
+		isFont: function(path){
+			var ext = this.getExt(path);
+			return (ext == "ttf" || ext == "otf" || ext == "eot" || ext == "woff" || ext == "woff2");
 		},
    
 		htmlEntities: function(str) {
@@ -6109,6 +6266,16 @@ MT(
 					obj[i] = data[i];
 				}
 			}
+		},
+   
+		loadSwf: function(url, parent){
+			parent = parent || document.body;
+			var objElement = document.createElement('object');
+			objElement.setAttribute('type', 'application/x-shockwave-flash');
+			objElement.setAttribute('data', url);
+			parent.appendChild(objElement);
+			
+			return objElement;
 		}
 	}
 );
@@ -6172,6 +6339,9 @@ function binb2hex (binarray) {
 }
 function hex_sha256(s){return binb2hex(core_sha256(str2binb(s),s.length * chrsz));}
 MT.core.Helper.sha256 = hex_sha256;
+
+
+MT.helper = MT.core.Helper;
 })();
 //MT/ui/TreeView.js
 MT.namespace('ui');
@@ -12001,13 +12171,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 	}
 );
+//MT/plugins/Import.js
+MT.namespace('plugins');
+MT.extend("core.Emitter").extend("core.BasicPlugin")(
+	MT.plugins.Import = function(project){
+		MT.core.BasicPlugin.call(this, "Import");
+		this.project = project;
+	},
+	{}
+);
 //MT/plugins/Export.js
 MT.namespace('plugins');
 MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	MT.plugins.Export = function(project){
 		MT.core.BasicPlugin.call(this, "Export");
 		this.project = project;
-		
 	},
 	{
 		initUI: function(ui){
@@ -14775,8 +14953,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 	{
 		isResizeable: false,
 		isMovable: false,
-		isDockable: false,
-		isJoinable: false,
+		isDockable: true,
+		isJoinable: true,
 		acceptsPanels: false,
 		isPickable: true,
 		isCloaseable: false,
@@ -16764,7 +16942,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		show: function(panel, show){
 			panel.addJoint(this.panel);
 			if(show){
-				loginPanel.show();
+				this.panel.show();
 			}
 		},
 		
@@ -18424,10 +18602,20 @@ MT(
 				}
 				
 				info = MT.misc.tooltips[attr];
+				
+				if(!info){
+					info = {
+						title: attr
+					};
+				}
+				
 				bounds = e.target.getBoundingClientRect();
 				
 				that.el.show(document.body);
-				that.el.el.innerHTML = '<div class="ui-tooltip-label">'+info.title+'</div>' + '<div class="ui-tooltip-description">'+info.desc;
+				that.el.el.innerHTML = '<div class="ui-tooltip-label">'+info.title+'</div>';
+				if(info.desc){
+					that.el.el.innerHTML += '<div class="ui-tooltip-description">'+info.desc;
+				}
 				that.el.x = bounds.left + bounds.width;
 				that.el.y = bounds.top + (bounds.height - that.el.height)*0.5;
 				
@@ -19033,8 +19221,10 @@ MT.namespace('plugins');
 	});
 })();
 
+MT.FILE_UPLOADED = "FILE_UPLOADED";
+MT.FILE_LIST_RECEIVED = "MT.FILE_LIST_RECEIVED";
 
-MT.extend("core.BasicPlugin")(
+MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.SourceEditor = function(project){
 		MT.core.BasicPlugin.call(this, "source");
 		this.project = project;
@@ -19148,12 +19338,19 @@ MT.extend("core.BasicPlugin")(
 		a_receiveFiles: function(files){
 			this.tv.merge(files);
 			var data = this.tv.getData();
+			this.emit(MT.FILE_LIST_RECEIVED, files);
 		},
 		
 		uploadFile: function(data){
 			var tmp = data.src;
+			var that = this;
+			var nota = this.project.plugins.notification.show(data.path, "Upload in progress...", 999999);
+			
 			data.src = Array.prototype.slice.call(new Uint8Array(data.src));
-			this.send("uploadFile", data);
+			this.send("uploadFile", data, function(){
+				that.emit(MT.FILE_UPLOADED, data.path);
+				nota.hide();
+			});
 		},
 		
 		save: function(panel){
@@ -19307,15 +19504,13 @@ MT.extend("core.BasicPlugin")(
 			}
 			
 			panel.show();
-			
-			if(!MT.core.Helper.isAudio(data.name)){
-				if(Date.now() - panel.data.opened < 5*1000){
-					return;
-				}
-				panel.data.opened = Date.now();
-				this.send("getContent", data);
+			if(Date.now() - panel.data.opened < 5*1000){
+				return;
 			}
-			else{
+			panel.data.opened = Date.now();
+			
+			
+			if(MT.core.Helper.isAudio(data.name)){
 				if(panel.audio){
 					return;
 				}
@@ -19330,10 +19525,58 @@ MT.extend("core.BasicPlugin")(
 				audio.onended = function(){
 					audio.load();
 				};
+			}
+			else if(MT.core.Helper.isFont(data.name)){
+				this.project.plugins.fontmanager.includeFont(data.fullPath);
 				
+				this.project.plugins.fontmanager.getFontInfo(data.fullPath, function(infostr){
+					var info = {};
+					var html = "";
+					var char;
+					
+					if(infostr){
+						info = JSON.parse(infostr);
+					}
+					var fontFamily = info["Family name"];
+					
+					console.log("asd");
+					var pangrams = "";
+					
+					for(var j=0; j<5; j++){
+							
+						var prev = '<div><span style="font-family: \''+fontFamily+'\'; font-size: '+(12+j*j)+'px">';
+						for(var i=65; i<91; i++){
+							char = String.fromCharCode(i);
+							prev+= char.toLowerCase()+char+" ";
+						}
+						prev += '</span></div>';
+						
+						pangrams += prev;
+					}
+					
+					pangrams += that.genPangram(fontFamily, 15);
+					var table = "<table>";
+					for(var k in info){
+						table += "<tr><td>"+k+"</td><td>"+info[k]+"</td></tr>";
+					}
+					table += "</table>";
+					
+					html = '<div class="font-preview">' + table + pangrams + "</div>";
+					panel.content.addClass("font-preview");
+					panel.content.el.innerHTML = html;
+				});
+			}
+			else{
+				this.send("getContent", data);
 			}
 			
 			return panel;
+		},
+		
+		genPangram: function(fontFamily, size){
+			var txt = "Zwölf Boxkämpfer jagen Victor quer über den großen Sylter Deich";
+			return '<div><span style="font-family: \''+fontFamily+'\'; font-size: '+size+'px">'+txt+'</span></div>';
+			
 		},
 		
 		a_fileContent: function(data){
@@ -19726,7 +19969,7 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			var data = this.activePanel.data;
-			if(data.src != data.doc.getValue()){
+			if(data.doc && data.src != data.doc.getValue()){
 				this.activePanel.mainTab.title.innerHTML = data.data.name + "*";
 			}
 			else{
@@ -19998,33 +20241,297 @@ MT.extend("core.BasicPlugin")(
 );
 //MT/plugins/FontManager.js
 MT.namespace('plugins');
-MT.extend("core.BasicPlugin")(
+MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.FontManager = function(project){
-		MT.core.BasicPlugin.call(this, "Analytics");
+		MT.core.BasicPlugin.call(this, "FontManager");
 		this.project = project;
+		
+		this.fonts = [
+			"Arial",
+			"Comic Sans MS",
+			"Courier New",
+			"Georgia",
+			"Impact",
+			"Times New Roman",
+			"Trebuchet MS",
+			"Verdana"
+		];
+		
+		this.style = document.createElement("style");
+		this.style.setAttribute("type", "text/css");
+		this.style.setAttribute("ME","style import");
 	},
 	{
+		installUI: function(){
+			var that = this;
+			this.project.plugins.sourceeditor.on(MT.FILE_UPLOADED, function(path){
+				if(MT.core.Helper.isFont(path)){
+					that.send("convertFont", path);
+				}
+			});
+			
+			this.project.plugins.sourceeditor.on(MT.FILE_LIST_RECEIVED, function(list){
+				for(var i=0; i<list.length; i++){
+					if(list[i].name == "fonts"){
+						that.loadPrivateFonts(list[i].contents);
+						return;
+					}
+				}
+			});
+		},
+		
+		
+		checkFont: function(fontRaw){
+			if(
+				this.systemFonts.indexOf(fontRaw) == -1
+				&& this._systemFonts.indexOf(fontRaw) == -1
+				&& this.loadedFonts.indexOf(fontRaw) == -1
+				&& this.fonts.indexOf(fontRaw) == -1
+			){
+				var font = MT.helper.htmlEntities(fontRaw);
+				
+				if(font != fontRaw){
+					return;
+				}
+				
+				var not = this.project.plugins.notification.show(font, "Trying to get font ("+font+") from the web services.");
+				var that = this;
+				
+				this.send("getFont", font, function(err){
+					not.hide();
+					if(err === false){
+						that.project.plugins.notification.show(font, "Failed to retrieve font. Make sure font ("+font+") exists at google fonts.");
+					}
+				});
+			}
+			
+		},
+		
 		loadFont: function(font, cb){
-			// <link href='http://fonts.googleapis.com/css?family=Faster+One' rel='stylesheet' type='text/css'>
-			var fontUrl = font.replace(/ /gi, "+");
-			var link = document.createElement("link");
-			link.setAttribute("rel", "stylesheet");
-			link.setAttribute("type", "text/css");
-			link.onload = function(e){
-				var sp = document.createElement("span");
-				sp.style.fontFamily = font;
-				sp.innerHTML = "ignore";
-				sp.style.visibility = "hidden";
-				document.body.appendChild(sp);
-				window.setTimeout(function(){
-					document.body.removeChild(sp);
-				}, 5000);
-				cb(font);
+			cb(font);
+		},
+		
+		updateTextObjects: function(fontIn){
+			PIXI.Text.heightCache = {};
+			
+			var objects = this.project.plugins.mapeditor.loadedObjects;
+			var font;
+			for(var i=0; i<objects.length; i++){
+				if(objects[i].data.type == MT.objectTypes.TEXT ){
+					font = objects[i].data.style.fontFamily;
+					if(fontIn == void(0) || font == fontIn || font.indexOf(fontIn) > -1 ){ 
+						objects[i].object.dirty = true;
+					}
+				}
+			}
+		},
+		
+		loadedFonts: [],
+		loadPrivateFonts: function(list){
+			console.log("LOAD LIST", list);
+			var font;
+			var fullstr = "";
+			var str;
+			
+			/*
+			@font-face {
+				font-family: 'MyWebFont';
+				src: url('webfont.eot');
+				src: url('webfont.eot?#iefix') format('embedded-opentype'),
+					url('webfont.woff2') format('woff2'),
+					url('webfont.woff') format('woff'),
+					url('webfont.ttf')  format('truetype'), 
+					url('webfont.svg#svgFontName') format('svg');
+			}
+			*/
+			
+			var names = [];
+			
+			for(var i=0; i<list.length; i++){
+				font = list[i];
+				if(!font.contents){
+					continue;
+				}
+				fontName = font.name;
+				
+				if(this.loadedFonts.indexOf(fontName) != -1){
+					continue;
+				}
+				if(!fontName){
+					continue;
+				}
+				
+				names.push(font.name);
+				
+				this.loadedFonts.push(fontName);
+				
+				
+				str = "@font-face {"+
+					"font-family: '"+fontName+"';src:";
+				
+				var file = "";
+				
+				for(var j=font.contents.length-1; j>-1; j--){
+					file = font.contents[j];
+					var ext = file.name.split(".").pop();
+					var path = this.project.path + '/src' + file.fullPath;
+					switch(ext){
+						case "woff":
+							//str += "url('"+path+"') format('woff'),";
+						break;
+						case "woff2":
+							str += "url('"+path+"') format('woff2'),";
+						break;
+						case "ttf":
+							str += "url('"+path+"') format('truetype'),";
+						break;
+						case "eot":
+							//str += "url('"+path+"') format('embedded-opentype'),";
+						break;
+					}
+				}
+				
+				//remove last ,
+				str = str.substring(0, str.length - 1) + ";";
+				
+				str += '}';
+				
+				fullstr += (str + "\n\r");
+			}
+			
+			if(names.length == 0){
+				return;
+			}
+			
+			if(this.style.parentElement){
+				this.style.parentNode.removeChild(this.style);
+			}
+			
+			this.style.innerHTML = "";
+			this.style.appendChild(document.createTextNode(fullstr));
+			
+			document.body.appendChild(this.style);
+			
+			
+			var not = this.project.plugins.notification.show("Loading fonts", names.join("<br />"));
+			
+			var that = this;
+			var todo = names.length;
+			var done = function(){
+				todo--;
+				if(todo !== 0){
+					return;
+				}
+				not.hide();
+				that.updateTextObjects();
+				that.emit("update");
 			};
 			
-			link.href="//fonts.googleapis.com/css?family="+fontUrl;
+			for(var i=0; i<names.length; i++){
+				this.loadFont(function(){
+					done();
+				}, names[i]);
+			}
+		},
+		
+		loadFont: function(cb, name){
+			var _this = this;
+			var span = document.createElement("span");
+			span.style.fontFamily = "Comic Sans MS";
+			span.style.position = "fixed";
+			span.style.top = "-1000px";
 			
-			document.head.appendChild(link);
+			
+			span.appendChild(document.createTextNode("`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}ASDFGHJKL:ZXCVBNM<>?"));
+			document.body.appendChild(span);
+			
+			var csmsBox = span.getBoundingClientRect();
+			span.style.fontFamily = name;
+			
+			//span.style;
+			var checkLoaded = function(){
+				var newBox = span.getBoundingClientRect();
+				if(csmsBox.width != newBox.width || csmsBox.height != newBox.height){
+					document.body.removeChild(span);
+					cb();
+				}
+				else{
+					window.setTimeout(checkLoaded, 100);
+				}
+			};
+			window.setTimeout(checkLoaded, 1000);
+		},
+		
+		includeFont: function(){
+			
+		},
+		
+		getFontInfo: function(font, cb){
+			this.send("getFontInfo", font, cb);
+		},
+		
+		_systemFonts: [],
+		systemFonts: [],
+		loadSysFonts: function(cb){
+			if(this.systemFonts.length){
+				return;
+			}
+			
+			var that = this;
+			window.listFonts = function(fonts){
+				var f;
+				for(var i=0; i<fonts.length; i++){
+					f = fonts[i];
+					if(that.systemFonts.indexOf(f) < 0){
+						that.systemFonts.push(f);
+					}
+				}
+				cb(fonts);
+				that.swf.parentNode.removeChild(that.swf);
+				delete window.listFonts;
+			};
+			this.swf = MT.core.Helper.loadSwf("/swf/FontList.swf?callback=listFonts");
+			this._sysFontsLoaded = true;
+		},
+		
+		toggleSysFonts: function(cb){
+			if(this.systemFonts.length > 0){
+				this._systemFonts = this.systemFonts.slice(0);
+				this.systemFonts.length = 0;
+				if(cb){cb();}
+			}
+			else{
+				this.loadSysFonts(cb);
+			}
+		},
+		
+		showOptions: function(fontname, path){
+		/*
+			
+			console.log("font info", fontname);
+			var that = this;
+			var pop = new MT.ui.Popup("Import font", path.split("/").pop());
+			
+			var options = {
+				fontname: fontname,
+				path: path,
+				ttfHinting: 
+			};
+			
+			pop.showClose();
+			pop.addButton("OK", function(){
+				that.send("convertFont", options);
+			});
+			
+			
+			var fn = new MT.ui.Input(this.ui, {
+				key: "fontname",
+				type: "text"
+			}, options);
+			
+			pop.content.appendChild(fn.el);
+			
+		*/
 		}
 	}
 );
@@ -20287,6 +20794,7 @@ MT.require("plugins.ObjectManager");
 MT.require("plugins.MapEditor");
 MT.require("plugins.Settings");
 MT.require("plugins.Export");
+MT.require("plugins.Import");
 MT.require("plugins.Tools");
 MT.require("plugins.UndoRedo");
 MT.require("plugins.DataLink");
@@ -20587,6 +21095,7 @@ MT.ui.hasParent = function(el, parent){
 MT.extend("core.Emitter")(
 	MT.ui.Controller = function(){
 		this.events = new MT.ui.Events();
+		
 		//disble context menu
 		window.oncontextmenu = function(e){
 			e.preventDefault();
@@ -21540,14 +22049,14 @@ MT.extend("core.Emitter")(
 			}
 			
 			var hideHelper = true;
-			
-			var over = this.vsPanels(e, panel);
-			
-			if(over && over.acceptsPanels){
-				var percX = (e.x - over.x) / over.width;
-				var percY = (e.y - over.y) / over.height;
-				this.showHelperOverPanel(over, percX, percY);
-				hideHelper = false;
+			if(panel.isDockable && panel.isJoinable){
+				var over = this.vsPanels(e, panel);
+				if(over && over.acceptsPanels && over.isJoinable && over.isDockable){
+					var percX = (e.x - over.x) / over.width;
+					var percY = (e.y - over.y) / over.height;
+					this.showHelperOverPanel(over, percX, percY);
+					hideHelper = false;
+				}
 			}
 			
 			var mx = this.events.mouse.mx;
@@ -21572,14 +22081,17 @@ MT.extend("core.Emitter")(
 			panel.x += mx;
 			panel.y += my;
 			
+			if(!panel.isDockable){
+				
+				return;
+			}
+			
 			if(hideHelper){
-				
-				
-				if( /* this.box.x + panel.width < window.innerWidth*0.5 && */ Math.abs(e.x - this.box.x) < this.snapPx && !over){
+				if(  Math.abs(e.x - this.box.x) < this.snapPx && !over){
 					this.showDockHelperLeft(panel);
 					hideHelper = false;
 				}
-				else if( /*this.box.width - panel.width > window.innerWidth*0.5 && */ Math.abs(e.x - this.box.width) < this.snapPx && !over){
+				else if( Math.abs(e.x - this.box.width) < this.snapPx && !over){
 					this.showDockHelperRight(panel);
 					hideHelper = false;
 				}
@@ -22200,6 +22712,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"Tools",
 			"Settings",
 			"Export",
+			//"Import",
 			
 			"UndoRedo",
 			//"DataLink",
@@ -22413,18 +22926,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			
+			
 			newProject.show(pop.content);
 			docs.show(pop.content)
 			
 			
-			var recentPanel = this.ui.createPanel("RecentProjects");
+			var recentPanel = this.ui.createPanel("Recent Projects");
 			recentPanel.hide();
 			recentPanel.fitIn();
 			recentPanel.removeBorder();
-			
-			// enable Auth
-			this.plugins.auth.installUI(this.ui);
-			this.plugins.auth.show(recentPanel);
 			
 			//recentPanel.show(pop.content);
 			
@@ -22434,6 +22944,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			projects.className = "project-list";
 			
 			recentPanel.show(projects);
+			
+			
+			// enable Auth
+			this.plugins.auth.installUI(this.ui);
+			this.plugins.auth.show(recentPanel, true);
 			
 			var tmp = null;
 			var items = this.getLocalProjects();
@@ -22622,6 +23137,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				e.stopPropagation();
 				that.showList();
 			});
+			
 		},
 		
 		clone: function(us){
@@ -22824,9 +23340,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if (entry.isFile) {
 				entry.file(function(file){
 					that.readFile(file, entry.fullPath, e);
-					
 				});
-			} else if (entry.isDirectory) {
+			}
+			else if (entry.isDirectory) {
 				this.send("newFolder", entry.fullPath);
 				
 				var reader = entry.createReader();
