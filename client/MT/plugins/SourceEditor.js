@@ -90,8 +90,10 @@
 	});
 })();
 
+MT.FILE_UPLOADED = "FILE_UPLOADED";
+MT.FILE_LIST_RECEIVED = "MT.FILE_LIST_RECEIVED";
 
-MT.extend("core.BasicPlugin")(
+MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.SourceEditor = function(project){
 		MT.core.BasicPlugin.call(this, "source");
 		this.project = project;
@@ -205,12 +207,19 @@ MT.extend("core.BasicPlugin")(
 		a_receiveFiles: function(files){
 			this.tv.merge(files);
 			var data = this.tv.getData();
+			this.emit(MT.FILE_LIST_RECEIVED, files);
 		},
 		
 		uploadFile: function(data){
 			var tmp = data.src;
+			var that = this;
+			var nota = this.project.plugins.notification.show(data.path, "Upload in progress...", 999999);
+			
 			data.src = Array.prototype.slice.call(new Uint8Array(data.src));
-			this.send("uploadFile", data);
+			this.send("uploadFile", data, function(){
+				that.emit(MT.FILE_UPLOADED, data.path);
+				nota.hide();
+			});
 		},
 		
 		save: function(panel){
@@ -364,15 +373,13 @@ MT.extend("core.BasicPlugin")(
 			}
 			
 			panel.show();
-			
-			if(!MT.core.Helper.isAudio(data.name)){
-				if(Date.now() - panel.data.opened < 5*1000){
-					return;
-				}
-				panel.data.opened = Date.now();
-				this.send("getContent", data);
+			if(Date.now() - panel.data.opened < 5*1000){
+				return;
 			}
-			else{
+			panel.data.opened = Date.now();
+			
+			
+			if(MT.core.Helper.isAudio(data.name)){
 				if(panel.audio){
 					return;
 				}
@@ -387,10 +394,58 @@ MT.extend("core.BasicPlugin")(
 				audio.onended = function(){
 					audio.load();
 				};
+			}
+			else if(MT.core.Helper.isFont(data.name)){
+				this.project.plugins.fontmanager.includeFont(data.fullPath);
 				
+				this.project.plugins.fontmanager.getFontInfo(data.fullPath, function(infostr){
+					var info = {};
+					var html = "";
+					var char;
+					
+					if(infostr){
+						info = JSON.parse(infostr);
+					}
+					var fontFamily = info["Family name"];
+					
+					console.log("asd");
+					var pangrams = "";
+					
+					for(var j=0; j<5; j++){
+							
+						var prev = '<div><span style="font-family: \''+fontFamily+'\'; font-size: '+(12+j*j)+'px">';
+						for(var i=65; i<91; i++){
+							char = String.fromCharCode(i);
+							prev+= char.toLowerCase()+char+" ";
+						}
+						prev += '</span></div>';
+						
+						pangrams += prev;
+					}
+					
+					pangrams += that.genPangram(fontFamily, 15);
+					var table = "<table>";
+					for(var k in info){
+						table += "<tr><td>"+k+"</td><td>"+info[k]+"</td></tr>";
+					}
+					table += "</table>";
+					
+					html = '<div class="font-preview">' + table + pangrams + "</div>";
+					panel.content.addClass("font-preview");
+					panel.content.el.innerHTML = html;
+				});
+			}
+			else{
+				this.send("getContent", data);
 			}
 			
 			return panel;
+		},
+		
+		genPangram: function(fontFamily, size){
+			var txt = "Zwölf Boxkämpfer jagen Victor quer über den großen Sylter Deich";
+			return '<div><span style="font-family: \''+fontFamily+'\'; font-size: '+size+'px">'+txt+'</span></div>';
+			
 		},
 		
 		a_fileContent: function(data){
@@ -783,7 +838,7 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			var data = this.activePanel.data;
-			if(data.src != data.doc.getValue()){
+			if(data.doc && data.src != data.doc.getValue()){
 				this.activePanel.mainTab.title.innerHTML = data.data.name + "*";
 			}
 			else{

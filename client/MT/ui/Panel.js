@@ -57,8 +57,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 	{
 		isResizeable: false,
 		isMovable: false,
-		isDockable: false,
-		isJoinable: false,
+		isDockable: true,
+		isJoinable: true,
 		acceptsPanels: false,
 		isPickable: true,
 		isCloaseable: false,

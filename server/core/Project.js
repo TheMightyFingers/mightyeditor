@@ -4,6 +4,7 @@ MT.require("plugins.Export");
 MT.require("plugins.MapEditor");
 MT.require("plugins.SourceEditor");
 MT.require("plugins.Auth");
+MT.require("plugins.FontManager");
 
 MT.require("core.JsonDB");
 MT.require("core.FS");
@@ -234,6 +235,7 @@ MT.extend("core.BasicPlugin")(
 			this.map = new MT.plugins.MapEditor(this);
 			
 			this.sourceeditor = new MT.plugins.SourceEditor(this);
+			this.fontmanager = new MT.plugins.FontManager(this);
 		},
 		
 		unloadPlugins: function(){

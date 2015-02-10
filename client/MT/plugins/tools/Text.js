@@ -6,6 +6,10 @@ MT.require("ui.TextColorPicker");
 MT.extend("core.BasicTool").extend("core.Emitter")(
 	MT.plugins.tools.Text = function(tools){
 		MT.core.BasicTool.call(this, tools);
+		
+		this.manager = this.tools.project.plugins.fontmanager;
+		this.fonts = this.manager.fonts;
+		
 		this.name = "text";
 		this.isInitialized = false;
 		
@@ -17,16 +21,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		this.tester = document.createElement("span");
 		
-		this.fonts = [
-			"Arial",
-			"Comic Sans MS",
-			"Courier New",
-			"Georgia",
-			"Impact",
-			"Times New Roman",
-			"Trebuchet MS",
-			"Verdana"
-		];
 		
 		this.tools.on(MT.OBJECT_SELECTED, function(obj){
 			if(tools.map.selector.count > 1){
@@ -50,7 +44,10 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 		});
 		
-		this.manager = this.tools.project.plugins.fontmanager;
+		
+		this.manager.on("update", function(){
+			that.updateFontFaces();
+		});
 		
 		var ready = function(){
 			that.checkFonts();
@@ -61,7 +58,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		
 		this.createPanel();
-		
+
 	},{
 		
 		createPanel: function(){
@@ -70,14 +67,18 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.panel = ui.createPanel("Text");
 			
-			this.panel.style.height = this.project.panel.height+"px";
-			this.panel.style.top = this.tools.map.panel.content.bounds.top+"px";
-			this.panel.style.left = this.project.panel.width+"px";
+			this.panel.style.height = this.project.panel.height + "px";
+			this.panel.style.top = this.tools.map.panel.content.bounds.top + "px";
+			this.panel.style.left = this.project.panel.width + "px";
 			
 			this.panel.addClass("text-tools");
 			this.panel.removeHeader();
 			
 			this.panel.hide();
+			
+			
+			this.buildOptions();
+			
 			
 			var fonts = this.fonts;
 			
@@ -106,6 +107,18 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			for(var i=0; i<fontSizes.length; i++){
 				fsList.push(this._mk_setFontSizeSelect(fontSizes[i]));
 			}
+			this.panel.addButton(this.fontFace.button);
+			this.fontFace.on("update", function(Val){
+				if(Val == ""){
+					that.fontFace.list.reset();
+					console.log("reset");
+					return;
+				}
+				var val = Val.toLowerCase();
+				that.fontFace.list.filter(function(item){
+					return item.label.toLowerCase().indexOf(val) >= 0;
+				});
+			});
 			
 			this.fontSize = new MT.ui.Dropdown({
 				list: fsList,
@@ -122,7 +135,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				
 			}, ui);
 			
-			this.panel.addButton(this.fontFace.button);
+			
 			this.panel.addButton(this.fontSize.button);
 			
 			ui.on(ui.events.RESIZE, function(){
@@ -134,20 +147,23 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			});
 			
 			
-			this.bold = this.panel.addButton("B", "text-bold", function(){
+			this.bold = this.panel.addButton("", "text-bold", function(){
 				that.toggleBold();
-			});
+			}, null, "Bold");
 			this.bold.width = "auto";
+			this.bold.el.title = "Bold";
 			
-			this.italic = this.panel.addButton("I", "text-italic", function(){
+			this.italic = this.panel.addButton("", "text-italic", function(){
 				that.toggleItalic();
-			});
+			}, null, "Italic");
 			this.italic.width = "auto";
+			this.italic.el.title = "Italic";
 			
-			this.wordWrap = this.panel.addButton("Wx", "text-wrap", function(){
+			this.wordWrap = this.panel.addButton("", "text-wrap", function(){
 				that.toggleWordWrap();
-			});
+			}, null, "Wrap Text");
 			this.wordWrap.width = "auto";
+			this.wordWrap.el.title = "Word Wrap";
 			
 			this.wordWrapWidth = new MT.ui.Dropdown({
 				button: {
@@ -158,6 +174,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					that.setWordWrapWidth(val);
 				}
 			}, ui);
+			this.wordWrapWidth.button.el.title = "Word Wrap Width";
+			
 			
 			this.wordWrapWidth.on("show", function(show){
 				that.wordWrapWidth.button.el.removeAttribute("px");
@@ -167,25 +185,31 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			});
 			this.panel.addButton(this.wordWrapWidth.button);
 			
-			this.left = this.panel.addButton("L", "text-left", function(){
+			this.left = this.panel.addButton("", "text-left", function(){
 				that.setAlign("left");
-			});
+			}, null, "left");
 			this.left.width = "auto";
+			this.left.el.title = "Align Left";
 			
-			this.center = this.panel.addButton("C", "text-center", function(){
+			this.center = this.panel.addButton("", "text-center", function(){
 				that.setAlign("center");
-			});
+			}, null, "center");
 			this.center.width = "auto";
+			this.center.el.title = "Align Center";
 			
-			this.right = this.panel.addButton("R", "text-right", function(){
+			
+			this.right = this.panel.addButton("", "text-right", function(){
 				that.setAlign("right");
-			});
+			}, null, "right");
 			this.right.width = "auto";
+			this.right.el.title = "Align Right";
 			
-			this.colorButton = this.panel.addButton("C", "text-color", function(){
+			
+			this.colorButton = this.panel.addButton("", "text-color", function(){
 				that.showColorPicker();
-			});
+			}, null, "color");
 			this.colorButton.width = "auto";
+			this.colorButton.el.title = "Color";
 			
 			this.colorPicker = new MT.ui.TextColorPicker(this.tools.ui);
 			this.colorPicker.el.style.zIndex = 3;
@@ -204,12 +228,12 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				that.setShadow(obj);
 			});
 			
-			
-			
-			this.textButton = this.panel.addButton("txt", "text-edit", function(){
+			this.textButton = this.panel.addButton("", "text-edit", function(){
 				that.showTextEdit();
-			});
+			}, null, "Edit Text");
 			this.textButton.width = "auto";
+			this.textButton.el.title= "Edit Text";
+			
 			
 			this.textPopup = new MT.ui.Popup("Edit Text", "");
 			this.textPopup.hide();
@@ -240,11 +264,76 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 		},
 		
+		
+		buildOptions: function(){
+			var ui = this.tools.ui,
+				that = this;
+			
+			this.options = ui.createPanel("Text Options");
+			this.options.hide();
+			this.options.isResizeable = true;
+			this.options.isMovable = true;
+			this.options.isDockable = false;
+			this.options.isJoinable = false;
+			
+			this.sysButton = this.panel.addButton("", "text-system", function(){
+				//that.showOptions();
+				if(that.manager.systemFonts.length == 0){
+					that.sysButton.addClass("active");
+				}
+				else{
+					that.sysButton.removeClass("active");
+				}
+				
+				that.manager.toggleSysFonts(function(){
+					that.updateFontFaces();
+					console.log("SYS fonts loaded");
+				});
+			});
+			this.sysButton.el.title = "Show System Fonts";
+		},
+		
+		showOptions: function(){
+			//this.options.show();
+			
+		},
+		
+		updateFontFaces: function(){
+			var loadedFonts = this.manager.loadedFonts;
+			var sysFonts = this.manager.systemFonts;
+			
+			var list = this.fontFace.list;
+			list.origList.length = 0;
+			
+			for(var i=0; i<loadedFonts.length; i++){
+				list.origList.push(this._mk_setFontSelect(loadedFonts[i]));
+			}
+			
+			for(var i=0; i<this.fonts.length; i++){
+				list.origList.push(this._mk_setFontSelect(this.fonts[i]));
+			}
+			
+			for(var i=0; i<sysFonts.length; i++){
+				list.origList.push(this._mk_setFontSelect(sysFonts[i], true));
+			}
+			
+			
+			
+			//list.origList.push(this._mk_setFontSelect("xxx"));
+			
+			
+			
+			list.update();
+			
+			
+		},
+		
 		showColorPicker: function(){
 			if(this.colorPicker.isVisible){
 				this.colorPicker.hide();
 				return;
 			}
+			
 			this.colorPicker.show(document.body);
 			var r = this.colorButton.el.getBoundingClientRect();
 			this.colorPicker.y = r.top + r.height;
@@ -253,7 +342,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 		},
 		
-		_mk_setFontSelect: function(font){
+		
+		
+		_mk_setFontSelect: function(font, gray){
 			var that = this;
 			return {
 				label: font,
@@ -262,7 +353,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				},
 				create: function(element){
 					element.style.fontFamily = font;
-				}
+					if(gray){
+						element.className += " grayed";
+					}
+				},
+				className: gray ? "grayed" : ""
 			};
 		},
 		
@@ -348,6 +443,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.map.activeObject.align = pos;
 			this.select(this.map.activeObject);
 		},
+		
 		isUnknownFont: function(font, cb){
 			for(var i=0; i<this.fonts.length; i++){
 				if(this.fonts[i] == font){
@@ -362,11 +458,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.fonts.push(font);
 				// might not be isInitialized yet
 				if(this.fontFace){
-					this.fontFace.addItem(this._mk_setFontSelect(font));
+					this.fontFace.list.list.push(this._mk_setFontSelect(font));
+					this.fontFace.list.update();
 				}
 			}
 		},
-		
 		
 		checkFonts: function(){
 			var objects = this.tools.map.loadedObjects;
@@ -377,45 +473,40 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			for(var i=0; i<objects.length; i++){
 				o = objects[i];
-				if(o.data.type == MT.objectTypes.TEXT){
-					//this._setFontFamily(o);
-					font = o.data.style.fontFamily;
-					if(!font){
-						continue;
-					}
-					if(this.isUnknownFont(font)){
-						this.addFont(font);
-						toLoad++;
-						this.manager.loadFont(font, function(){
-							toLoad--;
-							if(toLoad != 0){
-								return;
-							}
-							window.setTimeout(function(){
-								that.updateTextObjects();
-							}, 500);
-						});
-					}
+				if(o.data.type != MT.objectTypes.TEXT){
+					continue;
 				}
+				
+				//this._setFontFamily(o);
+				font = o.data.style.fontFamily;
+				if(!font){
+					continue;
+				}
+				
+				if(!this.isUnknownFont(font)){
+					continue;
+				}
+				
+				this.addFont(font);
+				
+				toLoad++;
+				this.manager.loadFont(font, function(){
+					toLoad--;
+					if(toLoad != 0){
+						return;
+					}
+					window.setTimeout(function(){
+						that.manager.updateTextObjects();
+					}, 500);
+				});
 			}
 		},
 		
-		updateTextObjects: function(fontIn){
+		
+		__setFontFamily: function(fontFamily){
 			
-			var objects = this.tools.map.loadedObjects;
-			PIXI.Text.heightCache = {};
-			var font;
-			for(var i=0; i<objects.length; i++){
-				if(objects[i].data.type == MT.objectTypes.TEXT ){
-					font = objects[i].data.style.fontFamily;
-					if(fontIn == void(0) || font == fontIn || font.indexOf(fontIn) > -1 ){ 
-						objects[i].object.dirty = true;
-					}
-				}
-			}
-		},
-		
-		setFontFamily: function(fontFamily){
+			console.log("Set font family");
+			
 			this.map = this.tools.map;
 			if(!this.map.activeObject){
 				return;
@@ -430,7 +521,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				this.manager.loadFont(fontFamily, function(){
 					that.setFontFamily(fontFamily);
 					window.setTimeout(function(){
-						that.updateTextObjects(fontFamily);
+						that.manager.updateTextObjects(fontFamily);
 					}, 1000);
 				});
 				return;
@@ -442,7 +533,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(!obj){
 				return;
 			}
-			this._setFontFamily(obj, fontFamily);
+			//this._setFontFamily(obj, fontFamily);
 			obj.object.dirty = true;
 			this.select(obj);
 			
@@ -456,7 +547,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var font = this.tester.style.fontFamily;
 			font = font.replace(/'/gi, "");
 			
-			this.fontFace.button.style.fontFamily = font;
+			//this.fontFace.button.style.fontFamily = font;
 			obj.font = font;
 			if(this.tester.style.fontSize){
 				obj.fontSize = this.tester.style.fontSize;
@@ -466,6 +557,26 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.select(obj);
 			obj.object.dirty = true;
+		},
+		
+				
+		setFontFamily: function(fontFamily){
+			this.map = this.tools.map;
+			var obj = this.map.activeObject;
+			
+			this.tester.style.font = obj.style.font;
+			this.tester.style.fontFamily = fontFamily;
+			
+			obj.fontFamily = this.tester.style.fontFamily.replace(/'/gi,"");
+			obj.fontWeight = this.tester.style.fontWeight.replace(/normal/gi,'');
+			if(this.tester.style.fontStyle == "italic"){
+				obj.fontWeight += " "+this.tester.style.fontStyle.replace(/normal/gi,"");;
+			}
+			obj.fontSize = parseInt(this.tester.style.fontSize);
+			this.select(obj);
+			
+			this.manager.checkFont(fontFamily);
+			
 		},
 		
 		setFontSize: function(size){
@@ -563,20 +674,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.select(this.map.activeObject);
 			
 		},
-		
-		_setFontFamily: function(obj, fontFamily){
-			obj = obj || this.map.activeObject;
-			
-			this.tester.style.font = obj.style.font;
-			this.tester.style.fontFamily = fontFamily;
-			
-			obj.fontFamily = this.tester.style.fontFamily.replace(/'/gi,"");
-			obj.fontWeight = this.tester.style.fontWeight.replace(/normal/gi,'');
-			if(this.tester.style.fontStyle == "italic"){
-				obj.fontWeight += " "+this.tester.style.fontStyle.replace(/normal/gi,"");;
-			}
-			obj.fontSize = parseInt(this.tester.style.fontSize);
-		},
+
 		
 		init: function(){
 			this.map = this.tools.map;
@@ -621,7 +719,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			
 			this.fontFace.value = this.tester.style.fontFamily.replace(/'/gi, "");;
-			this.fontFace.button.style.fontFamily = this.tester.style.fontFamily;
+			//this.fontFace.button.style.fontFamily = this.tester.style.fontFamily;
 			
 			this.fontSize.value = obj.fontSize;
 			

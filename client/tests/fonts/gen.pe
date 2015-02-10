@@ -1,0 +1,5 @@
+Open($1)
+Generate($fontname + "-x.otf")
+Generate($fontname + "-x.woff")
+Generate($fontname + "-x.svg")
+Generate($fontname + "-x.eot")

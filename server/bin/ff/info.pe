@@ -1,0 +1,8 @@
+Open($1);
+Print("{");
+Print('"Font name":"' + $fontname + '",')
+Print('"Full name":"' + $fullname + '",')
+Print('"Weight":"' + $weight+'",')
+Print('"Family name":"' + $familyname+'",')
+Print('"Copyright":"'+ $copyright+'"')
+Print("}");

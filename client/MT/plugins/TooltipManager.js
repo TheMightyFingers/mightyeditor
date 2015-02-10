@@ -31,10 +31,20 @@ MT(
 				}
 				
 				info = MT.misc.tooltips[attr];
+				
+				if(!info){
+					info = {
+						title: attr
+					};
+				}
+				
 				bounds = e.target.getBoundingClientRect();
 				
 				that.el.show(document.body);
-				that.el.el.innerHTML = '<div class="ui-tooltip-label">'+info.title+'</div>' + '<div class="ui-tooltip-description">'+info.desc;
+				that.el.el.innerHTML = '<div class="ui-tooltip-label">'+info.title+'</div>';
+				if(info.desc){
+					that.el.el.innerHTML += '<div class="ui-tooltip-description">'+info.desc;
+				}
 				that.el.x = bounds.left + bounds.width;
 				that.el.y = bounds.top + (bounds.height - that.el.height)*0.5;
 				

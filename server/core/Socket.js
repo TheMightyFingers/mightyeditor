@@ -266,7 +266,7 @@ MT(
 		},
 		emit: function(channel, action, data, cb){
 			if(!this.channels[channel]){
-				MT.error("Socket::Unknown channel", channel);
+				MT.error("Socket::Unknown channel", channel,":",data);
 				return;
 			}
 			var chns = this.channels[channel];

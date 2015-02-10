@@ -41,6 +41,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"Tools",
 			"Settings",
 			"Export",
+			//"Import",
 			
 			"UndoRedo",
 			//"DataLink",
@@ -254,18 +255,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			
 			
+			
 			newProject.show(pop.content);
 			docs.show(pop.content)
 			
 			
-			var recentPanel = this.ui.createPanel("RecentProjects");
+			var recentPanel = this.ui.createPanel("Recent Projects");
 			recentPanel.hide();
 			recentPanel.fitIn();
 			recentPanel.removeBorder();
-			
-			// enable Auth
-			this.plugins.auth.installUI(this.ui);
-			this.plugins.auth.show(recentPanel);
 			
 			//recentPanel.show(pop.content);
 			
@@ -275,6 +273,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			projects.className = "project-list";
 			
 			recentPanel.show(projects);
+			
+			
+			// enable Auth
+			this.plugins.auth.installUI(this.ui);
+			this.plugins.auth.show(recentPanel, true);
 			
 			var tmp = null;
 			var items = this.getLocalProjects();
@@ -463,6 +466,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				e.stopPropagation();
 				that.showList();
 			});
+			
 		},
 		
 		clone: function(us){
@@ -665,9 +669,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if (entry.isFile) {
 				entry.file(function(file){
 					that.readFile(file, entry.fullPath, e);
-					
 				});
-			} else if (entry.isDirectory) {
+			}
+			else if (entry.isDirectory) {
 				this.send("newFolder", entry.fullPath);
 				
 				var reader = entry.createReader();

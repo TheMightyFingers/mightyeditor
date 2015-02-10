@@ -27,14 +27,24 @@
 		_exists: function(file, cb){
 			fs.exists(file, cb);
 		},
-		writeFile: function(file, contents, cb){
-			this.addQueue([this._writeFile, file, contents, this.mkcb(cb) ]);//no arguments
+		
+		writeFile: function(file, contents, cb, encoding){
+			this.addQueue([this._writeFile, file, contents, encoding, this.mkcb(cb) ]);//no arguments
 		},
  
-		_writeFile: function(file, contents, cb){
-			fs.writeFile(file, contents, function(e){
-				cb(e);
-			});
+		_writeFile: function(file, contents, encoding, cb){
+			if(encoding){
+				
+				console.log("witing binary data", file, encoding);
+				fs.writeFile(file, contents, encoding, function(e){
+					cb(e);
+				});
+			}
+			else{
+				fs.writeFile(file, contents, function(e){
+					cb(e);
+				});
+			}
 			
 		},
 		
@@ -52,8 +62,32 @@
 		mkdir: function(path, cb){
 			this.addQueue([this._mkdir, path, this.mkcb(cb)]);//no arguments
 		},
-		_mkdir: function(path, cb){
-			fs.mkdir(path, cb);
+ 
+		_mkparent: function(dest, cb){
+			var that = this;
+			var par = path.dirname(dest);
+			if(par == dest){
+				MT.log("failed to create directory");
+				cb();
+				return;
+			}
+			this._mkdir(par, cb);
+		},
+		_mkdir: function(dest, cb){
+			var that = this;
+			fs.mkdir(dest, function(err){
+				if(err && err.code == 'ENOENT') {
+					that._mkparent(dest, cb);
+				}
+				else{
+					if(err){
+						if(err.code != 'EEXIST'){
+							console.log("MKDIR err", err);
+						}
+					}
+					cb();
+				}
+			});
 		},
 		
 		move: function(a, b, cb){
@@ -71,6 +105,7 @@
 		_copyWrap: function(source, target, cb){
 			fs.stat(source, function(err, stats){
 				if(err){
+					MT.log("Cnnot find source:", source, err.message);
 					cb(err);
 					return;
 				}
@@ -107,7 +142,7 @@
 					fs.stat(dirname, function(err){
 						if(err){
 							that._mkdir(dirname, function(){
-								that._copy(source, target, cb);
+								that._copyWrap(source, target, cb);
 							});
 						}
 						else{
@@ -124,11 +159,13 @@
 			
 			var rd = fs.createReadStream(source);
 			rd.on("error", function(err) {
+				console.log("\n\n\n","READ STREAM ERROR", err, "\n\n\n");
 				done(err);
 			});
 			
 			var wr = fs.createWriteStream(target);
 			wr.on("error", function(err) {
+				console.log("\n\n\n","WRITE STREAM ERROR - (no dir??)", err, "\n\n\n");
 				done(err);
 			});
 			
@@ -301,9 +338,9 @@
  
 		mkcb: function(cb){
 			var that = this;
-			var cbx = function(a, b, c){
+			var cbx = function(a, b, c, d){
 				if(typeof cb === "function"){
-					cb(a, b, c);
+					cb(a, b, c, d);
 				}
 				that.processing = false;
 				that.processQueue();

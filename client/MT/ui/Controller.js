@@ -73,6 +73,7 @@ MT.ui.hasParent = function(el, parent){
 MT.extend("core.Emitter")(
 	MT.ui.Controller = function(){
 		this.events = new MT.ui.Events();
+		
 		//disble context menu
 		window.oncontextmenu = function(e){
 			e.preventDefault();
@@ -1026,14 +1027,14 @@ MT.extend("core.Emitter")(
 			}
 			
 			var hideHelper = true;
-			
-			var over = this.vsPanels(e, panel);
-			
-			if(over && over.acceptsPanels){
-				var percX = (e.x - over.x) / over.width;
-				var percY = (e.y - over.y) / over.height;
-				this.showHelperOverPanel(over, percX, percY);
-				hideHelper = false;
+			if(panel.isDockable && panel.isJoinable){
+				var over = this.vsPanels(e, panel);
+				if(over && over.acceptsPanels && over.isJoinable && over.isDockable){
+					var percX = (e.x - over.x) / over.width;
+					var percY = (e.y - over.y) / over.height;
+					this.showHelperOverPanel(over, percX, percY);
+					hideHelper = false;
+				}
 			}
 			
 			var mx = this.events.mouse.mx;
@@ -1058,14 +1059,17 @@ MT.extend("core.Emitter")(
 			panel.x += mx;
 			panel.y += my;
 			
+			if(!panel.isDockable){
+				
+				return;
+			}
+			
 			if(hideHelper){
-				
-				
-				if( /* this.box.x + panel.width < window.innerWidth*0.5 && */ Math.abs(e.x - this.box.x) < this.snapPx && !over){
+				if(  Math.abs(e.x - this.box.x) < this.snapPx && !over){
 					this.showDockHelperLeft(panel);
 					hideHelper = false;
 				}
-				else if( /*this.box.width - panel.width > window.innerWidth*0.5 && */ Math.abs(e.x - this.box.width) < this.snapPx && !over){
+				else if( Math.abs(e.x - this.box.width) < this.snapPx && !over){
 					this.showDockHelperRight(panel);
 					hideHelper = false;
 				}

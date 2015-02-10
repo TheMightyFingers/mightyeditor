@@ -253,26 +253,56 @@ MT(
 			res.end();
 		},
 		
-		getBody: function(req, cb){
+   
+		get: function(url, cb){
+			if(cb == void(0)){
+				return;
+			}
+			
+			var that = this;
+			this.http.get(url, function(res){
+				that.getBody(res, cb);
+			});
+		},
+		
+		getBody: function(res, cb){
 			if(cb == void(0)){
 				return;
 			}
 			var body = "";
-			req.on('data', function (data) {
+			var chunks = 0;
+			res.on('data', function (data) {
 				// 1e6 === 1 * Math.pow(10, 6) === 1 * 1000000 ~~~ 1MB
 				if (body.length > 1e6) { 
-					// FLOOD ATTACK OR FAULTY CLIENT, NUKE REQUEST
 					MT.log("FLOOD ATTACK OR FAULTY CLIENT, NUKE REQUEST");
-					req.connection.destroy();
+					res.connection.destroy();
 				}
 				body += data;
 			});
 			
 			
-			req.on('end', function(){
-				cb(body);
+			res.on('end', function(){
+				MT.log("res.ended");
+				cb(null, body, res);
 			});
-		}
+		},
+
+		download: function(url, file, cb){
+			var fs = this.fs;
+			var ws = fs.createWriteStream(file);
+			
+			var request = this.http.get(url, function(response) {
+				response.pipe(ws);
+				ws.on('finish', function(){
+					ws.close(cb);
+				});
+			}).on('error', function(err){
+				fs.unlink(ws);
+				if(cb){
+					cb(err);
+				}
+			});
+		},
    
 	}
 );

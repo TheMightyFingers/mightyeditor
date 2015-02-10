@@ -210,7 +210,7 @@ span.panel-head-tab {
 	max-width: 100px;
 	border-right: 1px solid rgba(0, 0, 0, .6);
 	border-bottom: 1px transparent;
-	text-shadow: 1px 1px 1px rgba(255, 255, 255, .4);
+	/*text-shadow: 1px 1px 1px rgba(255, 255, 255, .4);*/
 	position: relative;
 	z-index: 1;
 	padding: 0 3px;
@@ -219,6 +219,7 @@ span.panel-head-tab {
 	height: 15px;
 	border-top-right-radius: 5px;
 	border-top-left-radius: 2px;
+	color: #9a9a9a;
 }
 span.panel-head-tab>span {
 	cursor: default;
@@ -549,6 +550,7 @@ div.ui-treeview-folder.open>.ui-treeView-folder-head:last-child>div {
 	border-bottom: solid 1px rgba(50, 50, 50, .9);
 	border-top: solid 1px rgba(255, 255, 255, .4);
 	border-right: solid 1px rgba(0, 0, 0, .3);
+	white-space: nowrap;
 }
 .ui-list-button:hover {
 	background-color: rgba(0, 0, 0, .7);
@@ -621,7 +623,7 @@ input.ui-input.ui-panel-rename {
 	font-size: 11px;
 }
 input.ui-input.ui-input-helper {
-	margin: 2px 0 0;
+	margin: 0 0;
 	padding-left: 10px;
 }
 .ui-preview {
@@ -781,87 +783,169 @@ border-top-style: none;
 }
 
 div.ui-panel.text-tools .ui-button {
-	width: 34px;
-	height: 26px;
-	line-height: 26px;
+	width: 25px;
+	height: 23px;
+	line-height: 24px;
 	padding: 0 10px;
 	float: left;
 	position: relative;
 	top: 1px;
 	overflow: hidden;
+	white-space: nowrap;
+	font-family: fontAwesome;
+	font-weight: normal;
+	margin: 3px 3px 0;
 }
+
+div.ui-panel.text-tools .ui-button.active {
+	background-image: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%,rgba(0,0,0,0) 100%);
+	line-height: 24px;
+	border-radius: 4px;
+	border: solid 1px rgba(0,0,0,0.7);
+}
+
 div.ui-panel.text-tools .ui-button:hover {
-	background-color: rgba(77, 77, 77, .85);
+	background-image: linear-gradient(to bottom, rgba(0,0,0,0.45) 20%,rgba(0,0,0,0.25) 100%);
 	padding: 0 10px;
+	border-radius: 4px;
+	border: solid 1px rgba(0,0,0,0.7);
 }
+
+div.ui-panel.text-tools .ui-button:before, div.ui-panel.text-tools .ui-button:after{
+font-family: fontAwesome;
+
+position: absolute;
+left: 0;
+top: 0;
+right: 0;
+bottom: 0;
+}
+
+div.ui-panel.text-tools .ui-button:after{
+	font-size: 11px;
+	line-height: 32px;
+	text-align: right;
+	color: #111;
+}
+
+div.ui-panel.text-tools .ui-button:before{
+	text-align: center;
+	font-size: 18px;
+	color: #eee;
+}
+
+div.ui-panel.text-tools .ui-button.active:before {
+	font-weight: bold;
+}
+
+
+div.ui-panel.text-tools .ui-button.text-system:before {
+	content: "\f031";
+}
+
+div.ui-panel.text-tools .ui-button.text-system:after {
+	content: "\f14c";
+}
+
+
 div.ui-panel.text-tools .ui-button.text-font {
-	width: 175px;
+	width: 185px;
+	text-overflow: ellipsis;
+	padding-right: 20px;
 }
-div.ui-panel.text-tools .ui-button.text-edit {
-	background-image: url(../img/icons/textbar/10.png);
-	background-position: center center;
-	background-repeat: no-repeat;
-	color: transparent;
+div.ui-panel.text-tools .ui-button.text-font:after {
+	content: "\f0d7";
+	color: #eee;
+	font-weight: bold;
+	font-size: 15px;
+	line-height: 24px;
+	right: 6px;
 }
-div.ui-panel.text-tools .ui-button.text-color {
-	background-image: url(../img/icons/textbar/09.png);
-	background-position: center center;
-	background-repeat: no-repeat;
-	color: transparent;
+div.ui-panel.text-tools .ui-button.text-font.active:after{
+	content: "";
 }
-div.ui-panel.text-tools .ui-button.text-right {
-	background-image: url(../img/icons/textbar/08.png);
-	background-position: center center;
-	background-repeat: no-repeat;
-	color: transparent;
-}
-div.ui-panel.text-tools .ui-button.text-center {
-	background-image: url(../img/icons/textbar/07.png);
-	background-position: center center;
-	background-repeat: no-repeat;
-	color: transparent;
-}
-div.ui-panel.text-tools .ui-button.text-left {
-	background-image: url(../img/icons/textbar/06.png);
-	background-position: center center;
-	background-repeat: no-repeat;
-	color: transparent;
-}
-div.ui-panel.text-tools .ui-button.text-wrap {
-	background-image: url(../img/icons/textbar/05.png);
-	background-position: center center;
-	background-repeat: no-repeat;
-	color: transparent;
-}
-div.ui-panel.text-tools .ui-button.text-italic {
-	background-image: url(../img/icons/textbar/04.png);
-	background-position: center center;
-	background-repeat: no-repeat;
-	color: transparent;
-}
-div.ui-panel.text-tools .ui-button.text-bold {
-	background-image: url(../img/icons/textbar/03.png);
-	background-position: center center;
-	background-repeat: no-repeat;
-	color: transparent;
-}
+
 div.ui-panel.text-tools .ui-button.text-size {
-	background-image: url(../img/icons/textbar/01.png);
-	background-position: center right;
-	background-repeat: no-repeat;
-	border-left: 1px solid #fff;
+	text-overflow: ellipsis;
+	padding-right: 20px;
 	width: 60px;
 }
-div.ui-panel.text-tools .ui-button.active {
-	color: transparent;
-	background-color: rgba(50, 50, 50, .99);
+div.ui-panel.text-tools .ui-button.text-size:after {
+	content: "\f0d7";
+	color: #eee;
+	font-weight: bold;
+	font-size: 15px;
+	line-height: 24px;
+	right: 6px;
 }
+div.ui-panel.text-tools .ui-button.text-size.active:after{
+	content: "";
+}
+
+
+div.ui-panel.text-tools .ui-button.text-bold:before {
+	content: "\f032";
+}
+div.ui-panel.text-tools .ui-button.text-italic:before {
+	content: "\f033";
+}
+div.ui-panel.text-tools .ui-button.text-wrap:before {
+	content: "\f064";
+	transform: rotate(180deg);
+	line-height: 21px;
+}
+
+div.ui-panel.text-tools .ui-button.text-wrap.active:before {
+	line-height: 18px;
+}
+
 div.ui-panel.text-tools div.ui-button.word-wrap-width-size {
-	width: 75px;
+	width: auto;
+	padding-right: 20px;
+	min-width: 60px;
 }
 div.ui-panel.text-tools div.ui-button.word-wrap-width-size:after {
 	content: attr(px);
 }
+
+div.ui-panel.text-tools .ui-button.text-left:before {
+	content: "\f036";
+	font-weight: normal !important;
+	font-size: 19px !important;
+}
+
+div.ui-panel.text-tools .ui-button.text-center:before {
+	content: "\f037";
+	font-weight: normal !important;
+	font-size: 19px !important;
+}
+
+div.ui-panel.text-tools .ui-button.text-right:before {
+	content: "\f038";
+	font-weight: normal !important;
+	font-size: 19px !important;
+}
+
+div.ui-panel.text-tools .ui-button.text-color:before {
+	content: "\f1fb";
+}
+
+div.ui-panel.text-tools .ui-button.text-edit:before {
+	content: "\f044";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 div.ui-colorpalette {
 	background-color: rgba(33, 33, 33, .95);
 	padding: 10px;
@@ -2182,7 +2266,7 @@ text-shadow: 0 1px 1px #000;
 }
 
 .ui-button.panel-head-button.add-group:before{
-	content: "\f03a";
+	content: "\f1b2";
 }
 
 .ui-button.panel-head-button.add-tilelayer:before{
@@ -2190,7 +2274,7 @@ text-shadow: 0 1px 1px #000;
 }
 
 .ui-button.panel-head-button.Group-selected:before{
-	content: "\f03c";
+	content: "\f1b3";
 }
 
 .ui-mysettings .editor-settings .ui-button {
@@ -2204,4 +2288,16 @@ display: inline-block;
 
 .ui-mysettings .editor-settings .ui-input{
 	background: transparent;
+}
+
+.grayed{
+	background-color: rgba(32, 32, 32, 0.64);
+	color: rgba(100,100,100,1);
+}
+
+
+
+.font-preview table{
+	font-size: 11px;
+	margin: 5px 0 10px;
 }

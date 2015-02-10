@@ -2,7 +2,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	MT.plugins.Export = function(project){
 		MT.core.BasicPlugin.call(this, "Export");
 		this.project = project;
-		
 	},
 	{
 		initUI: function(ui){

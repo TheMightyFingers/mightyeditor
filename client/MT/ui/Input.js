@@ -6,7 +6,7 @@
 MT.require("core.keys");
 MT.require("ui.ColorPicker");
 MT.extend("ui.DomElement").extend("core.Emitter")(
-	MT.ui.Input = function(ui, properties, obj){
+	MT.ui.Input = function(ui, properties, obj, callback){
 		var events = ui.events;
 		MT.ui.DomElement.call(this);
 		MT.core.Emitter.call(this);
@@ -81,11 +81,19 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			var opt;
 			for(var i=0; i<options.length; i++){
 				opt = document.createElement("div");
-				opt.innerHTML = options[i].label;
 				sel.appendChild(opt);
-				if(options[i].title){
-					opt.title = options[i].title;
+				
+				if(typeof options[i] == "string"){
+					opt.innerHTML = options[i];
 				}
+				else{
+					opt.innerHTML = options[i].label;
+					opt.value = options[i].value;
+					if(options[i].title){
+						opt.title = options[i].title;
+					}
+				}
+				
 				this.options.push(opt);
 			}
 			
@@ -353,6 +361,11 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				that.setValue(val, false);
 			});
 		}
+		
+		if(callback){
+			this.on("change", callback);
+		}
+		
 	},
 	{
 		selectedValue: "",

@@ -17,7 +17,7 @@ MT.extend("core.BasicPlugin")(
 			this.createSourceList();
 		}
 		else{
-			this.buildIdIndex();
+			this.updateSourceList();
 		}
 	},
 	{
@@ -39,6 +39,12 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		newFile: function(name){
+			for(var i=0; i<this.data.contents.length; i++){
+				if(this.data.contents[i].name == name){
+					return this.data.contents[i];
+				}
+			}
+			
 			this.data.count++;
 			var file = {
 				name: name,
@@ -66,7 +72,7 @@ MT.extend("core.BasicPlugin")(
 			this.project.db.save();
 		},
 		
-		a_uploadFile: function(data){
+		a_uploadFile: function(data, cb){
 			var path = data.path;
 			var src = data.src;
 			var name = path.split(this.fs.path.sep).pop();
@@ -78,6 +84,10 @@ MT.extend("core.BasicPlugin")(
 					that.project.db.save();
 					// tell client about uploaded file
 					that.a_getFiles();
+					
+					if(cb){
+						cb();
+					}
 				});
 			});
 			
@@ -119,7 +129,7 @@ MT.extend("core.BasicPlugin")(
 		
 		a_delete: function(data){
 			var path = this.fs.path.normalize(data.fullPath);
-			if(path.substring(0,1) != "/"){
+			if(path.substring(0, 1) != "/"){
 				MT.log("source:delete, something wrong:", path);
 				return;
 			}
@@ -189,23 +199,96 @@ MT.extend("core.BasicPlugin")(
 			});
 		},
 		
+		updateSourceList: function(cb){
+			var cont = this.data.contents;
+			var that = this;
+			
+			this.fs.readdir(this.path, true, function(list){
+				that._updateList(list, cont);
+				
+				that.rebuildIndex();
+				that.project.db.save();
+				if(cb){cb();}
+			});
+		},
 		
-		rebuildIndex: function(data){
+		_updateList: function(list, cont){
+			var found = false;
+			// checking new
+			for(var i=0; i<list.length; i++){
+				//skip hidden files
+				if(list[i].name.substring(0, 1) == "."){
+					continue;
+				}
+				found = false;
+				for(var j=0; j<cont.length; j++){
+					if(cont[j].name != list[i].name){
+						continue;
+					}
+					
+					if(list[i].contents){
+						this._updateList(list[i].contents, cont[j].contents);
+					}
+					
+					found = true;
+					break;
+				}
+				
+				if(found){
+					continue;
+				}
+				MT.log("new entry", list[i]);
+				cont.push(list[i]);
+			}
+			
+			// checking missing
+			for(var j=0; j<cont.length; j++){
+				found = false;
+				for(var i=0; i<list.length; i++){
+					if(list[i].name == cont[j].name){
+						found = true;
+						break;
+					}
+				}
+				
+				if(!found){
+					cont.splice(j, 1);
+					j--;
+				}
+			}
+			
+			
+		},
+		
+		rebuildIndex: function(data, dirname){
+			var src = dirname || "/";
 			data = data || this.data;
 			if(data.contents){
 				for(var i=0; i<data.contents.length; i++){
-					this.rebuildIndex(data.contents[i]);
+					this.rebuildIndex(data.contents[i], src + data.contents[i].name);
 				}
 			}
 			
 			this.data.count++;
 			data.id = this.data.count;
+			data.fullPath = src;
 			
 			if(data == this.data){
 				this.buildIdIndex();
 			}
 		},
 		
+		
+		getId: function(path){
+			console.log("Getting ID:");
+			for(var i in this.ids){
+				//console.log(this.ids[i]);
+				if(this.ids[i].fullPath == path){
+					return i;
+				}
+			}
+			return null;
+		},
 		
 		delete: function(id, data){
 			var data = data || this.data.contents;
@@ -225,7 +308,6 @@ MT.extend("core.BasicPlugin")(
 		
 		_delete: function(id, data){
 			var ret = null;
-			
 			for(var i=0; i<data.length; i++){
 				if(data[i].id == id){
 					return data.splice(i, 1)[0];
@@ -249,8 +331,6 @@ MT.extend("core.BasicPlugin")(
 					this.ids[cont[i].id] = cont[i]; 
 				}
 			}
-			
-			
 		},
 		
 		getById: function(id){

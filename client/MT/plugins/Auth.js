@@ -850,7 +850,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		show: function(panel, show){
 			panel.addJoint(this.panel);
 			if(show){
-				loginPanel.show();
+				this.panel.show();
 			}
 		},
 		

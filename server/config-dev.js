@@ -19,5 +19,9 @@ this.config = {
 		// one week
 		sessionLifeTime: 1000*60*60*24*7,
 		hashRounds: 12
+	},
+	tools:{
+		// path to fonforge - or executable if it's in the path
+		fontforge: "fontforge"
 	}
 };

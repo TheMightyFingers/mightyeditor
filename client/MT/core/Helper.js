@@ -11,8 +11,14 @@ MT(
 			return (ext == "png" || ext == "jpg" || ext == "gif" || ext == "jpeg");
 		},
 		
+		// default upload - managed by source editor
 		isSource: function(path){
 			return !this.isImage(path);
+		},
+   
+		isFont: function(path){
+			var ext = this.getExt(path);
+			return (ext == "ttf" || ext == "otf" || ext == "eot" || ext == "woff" || ext == "woff2");
 		},
    
 		htmlEntities: function(str) {
@@ -90,6 +96,16 @@ MT(
 					obj[i] = data[i];
 				}
 			}
+		},
+   
+		loadSwf: function(url, parent){
+			parent = parent || document.body;
+			var objElement = document.createElement('object');
+			objElement.setAttribute('type', 'application/x-shockwave-flash');
+			objElement.setAttribute('data', url);
+			parent.appendChild(objElement);
+			
+			return objElement;
 		}
 	}
 );
@@ -153,4 +169,7 @@ function binb2hex (binarray) {
 }
 function hex_sha256(s){return binb2hex(core_sha256(str2binb(s),s.length * chrsz));}
 MT.core.Helper.sha256 = hex_sha256;
+
+
+MT.helper = MT.core.Helper;
 })();

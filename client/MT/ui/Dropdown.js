@@ -38,6 +38,9 @@ MT.extend("core.Emitter")(
 					options.onchange(button.text);
 				}
 			}
+			else{
+				that.emit("update", input.value);
+			}
 		};
 		
 		var prev = function(e){
@@ -46,7 +49,6 @@ MT.extend("core.Emitter")(
 		input.onmouseup = prev;
 		input.onmousedown = prev;
 		input.onclick = prev;
-		
 		
 		
 		var list = null;
@@ -72,12 +74,21 @@ MT.extend("core.Emitter")(
 				var b = button.el.getBoundingClientRect();
 				list.style.top = (b.top + b.height)+"px";
 				list.style.left = b.left+"px";
+				var top;
 				
 				if(list.el.offsetTop + list.panel.content.el.offsetHeight > window.innerHeight){
-					list.style.top = (b.top - list.panel.content.el.offsetHeight)+"px";
+					top = b.top - list.panel.content.el.offsetHeight;
+					if(top > 0){
+						list.style.top = top+"px";
+					}
+					if(list.panel.content.el.offsetHeight > 0){
+						list.style.maxHeight = "350px";
+						list.style.overflow = "auto";
+					}
+					
 				}
 				if(options.listStyle){
-					list.width = options.listStyle.width;
+					list.style.minWidth = options.listStyle.width;
 				}
 				
 			});
@@ -107,6 +118,7 @@ MT.extend("core.Emitter")(
 			input.focus();
 			that.emit("show");
 			
+			
 		});
 		
 		if(options.button.width){
@@ -118,6 +130,13 @@ MT.extend("core.Emitter")(
 		}
 		
 		
+		this.on("show", function(){
+			button.addClass("active");
+		});
+		
+		this.on("hide", function(){
+			button.removeClass("active");
+		});
 	},
 	{
 		

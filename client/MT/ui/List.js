@@ -25,6 +25,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 					return;
 				}
 			}
+			if(MT.ui.hasParent(e.target, that.el)){
+				return;
+			}
 			if(autohide){
 				that.hide();
 			}
@@ -32,11 +35,17 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		
 		this.isVisible = false;
 		this.list = list;
+		this.origList = list;
 		this.update();
 		
 		this.addChild(this.panel).show();
 	},
 	{
+		filter: function(cb){
+			this.list = this.origList.filter(cb);
+			this.update();
+			console.log("filter");
+		},
 		update: function(){
 			//this.clear();
 			while(this._items.length){
@@ -46,13 +55,17 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				this.addItem(this.list[i]);
 			}
 		},
-		
+		reset: function(){
+			this.list = this.origList;
+			this.update();
+		},
 		addItem: function(item){
 			if(item.check && !item.check()){
 				return;
 			}
 			
 			var b = this.panel.addButton(item.label, item.className, item.cb);
+			b.el.title = item.label;
 			b.style.position = "relative";
 			b.addClass("ui-list-button");
 			
@@ -62,10 +75,13 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this._items.push(b);
 		},
 		
+		removeItem: function(item){
+			
+		},
+		
 		show: function(parent){
 			this.shown = Date.now();
-
-			this.update();
+			this.reset();
 			this.isVisible = true;
 			MT.ui.DomElement.show.call(this, parent);
 			this.emit("show");
@@ -73,7 +89,12 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				this.x -= this.width;
 			}
 			if(this.y + this.height > window.innerHeight){
-				this.y -= this.height;
+				if(this.y - this.height < 0){
+					this.el.style["min-height"] = "350px";
+				}
+				else{
+					this.y -= this.height;
+				}
 			}
 			
 		},
