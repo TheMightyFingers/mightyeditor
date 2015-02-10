@@ -1,7 +1,7 @@
 "use strict";
 window["%namespace%"] = {
 	
-	// reference to Phaser.Game instance
+	// reference to the Phaser.Game instance
 	game: null,
 	
 	// main function

@@ -179,8 +179,8 @@ MT.extend("core.BasicPlugin")(
 				}
 				
 				cont.sort(function(a, b){
-					var ax = (a.contents ? 0 : 999999);
-					var bx = (b.contents ? 0 : 999999);
+					var ax = (a.contents ? -1 : 999999);
+					var bx = (b.contents ? -1 : 999999);
 					
 					if(ax != bx){
 						return ax - bx;
@@ -256,8 +256,6 @@ MT.extend("core.BasicPlugin")(
 					j--;
 				}
 			}
-			
-			
 		},
 		
 		rebuildIndex: function(data, dirname){
