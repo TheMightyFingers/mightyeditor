@@ -31,9 +31,9 @@ Phaser.Text.prototype.updateText = function () {
 	this.canvas.width = maxLineWidth + this.style.strokeThickness;
 
 	//calculate text height
-	var lineHeight = this.determineFontHeight('font: ' + this.style.font + ';') + this.style.strokeThickness + this._lineSpacing + this.style.shadowOffsetY;
+	var lineHeight = this.determineFontHeight('font: ' + this.style.font + ';') + this.style.strokeThickness + this._lineSpacing;
 
-	this.canvas.height = lineHeight * lines.length;
+	this.canvas.height = lineHeight * lines.length  + this.style.shadowOffsetY;
 
 	if (navigator.isCocoonJS)
 	{

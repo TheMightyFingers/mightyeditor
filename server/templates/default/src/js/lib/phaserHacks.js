@@ -43,7 +43,7 @@
 		//calculate text height
 		var lineHeight = fontProperties.fontSize + this.style.strokeThickness;
 
-		var height = lineHeight * lines.length;
+		var height = lineHeight * lines.length + this.style.shadowOffsetY;
 
 		this.canvas.height = height * this.resolution;
 

@@ -385,11 +385,9 @@
 					if(this.knownFonts.indexOf(object.style.fontFamily) != -1){
 						continue;
 					}
-					console.log("load text", object);
 					this.game.load.font(object.style.fontFamily);
 				}
 			}
-			
 		},
  
 		_mkDiff: function(o1, o2, flip){
