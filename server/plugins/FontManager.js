@@ -303,7 +303,7 @@ MT.extend("core.BasicPlugin")(
 			child.exec(cmd, {
 				cwd: path,
 				env: {
-					PATH: path + ":" + process.env.PATH
+					PATH: process.env.PATH + ":" + path
 				}
 			}, function(err, sout, serr){
 				if(err){
