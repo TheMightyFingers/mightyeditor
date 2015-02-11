@@ -15,14 +15,18 @@
 	padding: 0;
 	margin: 0;
 	border: 0;
-	user-select: none;
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
 	box-sizing: border-box;
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-ms-box-sizing: border-box;
+}
+
+*:not(input){
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 .loading {
 	position: absolute;
