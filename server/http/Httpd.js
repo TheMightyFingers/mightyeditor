@@ -133,10 +133,21 @@ MT(
 			return list;
 		},
 		getIp: function(req){
-			return req.headers['x-forwarded-for'] || 
-					req.connection.remoteAddress || 
-					req.socket.remoteAddress ||
-					req.connection.socket.remoteAddress;
+			if(req.headers && req.headers['x-forwarded-for']){
+				return req.headers['x-forwarded-for'];
+			}
+			if(req.connection){
+				if(req.connection.remoteAddress){
+					return req.connection.remoteAddress;
+				}
+				if(req.connection.socket && req.connection.socket.remoteAddress){
+					return req.connection.socket.removeAddress;
+				}
+			}
+			if(req.socket && req.socket.remoteAddress){
+				return req.socket.remoteAddress
+			}
+			return "0.0.0.0";
 		},
 		removeSocket: function(ws){
 			for(var i=0; i<this.sockets.length; i++){
