@@ -21,7 +21,7 @@
 	-ms-box-sizing: border-box;
 }
 
-*:not(input){
+*:not(.ui-input-value):not(input):not(textarea){
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
