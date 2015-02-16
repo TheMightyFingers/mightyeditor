@@ -114,7 +114,7 @@ MT.extend("core.Emitter")(
 		var that = this;
 		var mDown = false;
 		
-		var activePanel = null;
+		this.activePanel = null;
 		var needResize = false;
 		var toTop = null;
 		
@@ -152,48 +152,48 @@ MT.extend("core.Emitter")(
 				var panel = e.target.panel || that.pickPanel(e);
 				if(!panel){
 					that.resetResizeCursor();
-					activePanel = null;
+					that.activePanel = null;
 					return;
 				}
 				toTop = panel;
 				needResize = that.checkResize(panel, e);
 				if(!e.target.panel && !needResize && !e.altKey){
-					activePanel = null;
+					that.activePanel = null;
 					return;
 				}
-				activePanel = panel;
+				that.activePanel = panel;
 				return;
 			}
 			
 			
-			if(!activePanel){
+			if(!that.activePanel){
 				return;
 			}
 			//e.preventDefault();
 			//e.stopPropagation();
 			if(needResize){
-				that.resizePanel(activePanel, e);
+				that.resizePanel(that.activePanel, e);
 				return;
 			}
 			
 			
-			if(!that.tryUnjoin(activePanel, e)){
+			if(!that.tryUnjoin(that.activePanel, e)){
 				return;
 			}
 			
-			that.movePanel(activePanel, e);
+			that.movePanel(that.activePanel, e);
 		});
 		
 		this.events.on(this.events.DBLCLICK, function(e){
 			console.log("rename");
-			if(!activePanel){
+			if(!that.activePanel){
 				return;
 			}
-			if(!activePanel.isRenamable){
+			if(!that.activePanel.isRenamable){
 				return;
 			}
 			
-			activePanel.startRename();
+			that.activePanel.startRename();
 		});
 		
 		var prevClicked = null;
@@ -210,7 +210,7 @@ MT.extend("core.Emitter")(
 			mDown = true;
 			
 			
-			if(!activePanel){
+			if(!that.activePanel){
 				if(toTop && !toTop.isDocked){
 					that.updateZ(toTop);
 					window.setTimeout(function(){
@@ -226,44 +226,44 @@ MT.extend("core.Emitter")(
 				if(e.target.data.panel !== prevClicked){
 					prevClicked = e.target.data.panel;
 				}
-				if(!activePanel.isVisible){
-					activePanel.show(null);
+				if(!that.activePanel.isVisible){
+					that.activePanel.show(null);
 				}
-				activePanel.isNeedUnjoin = true;
+				that.activePanel.isNeedUnjoin = true;
 			}
 			else{
-				activePanel.isNeedUnjoin = false;
+				that.activePanel.isNeedUnjoin = false;
 			}
 			
-			activePanel.removeClass("animated");
-			that.updateZ(activePanel);
+			that.activePanel.removeClass("animated");
+			that.updateZ(that.activePanel);
 			window.setTimeout(function(){
-				activePanel.focus();
+				that.activePanel.focus();
 			},0);
 		});
 		
 		this.events.on(this.events.MOUSEUP, function(e){
 			mDown = false;
 			
-			if(!activePanel){
+			if(!that.activePanel){
 				return;
 			}
 			e.stopPropagation();
-			activePanel.addClass("animated");
-			activePanel.isNeedUnjoin = true;
-			activePanel.mdown = false;
+			that.activePanel.addClass("animated");
+			that.activePanel.isNeedUnjoin = true;
+			that.activePanel.mdown = false;
 			
 			
-			if(activePanel.toJoinWith){
-				that.joinPanels(activePanel.toJoinWith, activePanel);
-				activePanel.setAll("toJoinWith", null);
-				activePanel.isDockNeeded = false;
+			if(that.activePanel.toJoinWith){
+				that.joinPanels(that.activePanel.toJoinWith, that.activePanel);
+				that.activePanel.setAll("toJoinWith", null);
+				that.activePanel.isDockNeeded = false;
 			}
 			
-			that.hideDockHelper(activePanel);
+			that.hideDockHelper(that.activePanel);
 			
-			activePanel.ox = 0;
-			activePanel.oy = 0;
+			that.activePanel.ox = 0;
+			that.activePanel.oy = 0;
 			
 			that.sortPanels();
 			that.update();

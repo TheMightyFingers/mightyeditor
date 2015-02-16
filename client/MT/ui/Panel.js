@@ -24,6 +24,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this._input = document.createElement("input");
 		this._input.setAttribute("readonly", "readonly");
 		this._input.style.cssText = "position: fixed; top: -99999px;";
+		this._input.panel = this;
 		this.content.el.appendChild(this._input);
 		
 		if(title){
@@ -171,8 +172,34 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.acceptsPanels = true;
 		},
 		focus: function(){
+			console.log("panel focused");
+			this.saveScroll();
 			this._input.focus();
+			this.restoreScroll();
 		},
+		
+		saveScroll: function(){
+			if(!this.savePos){
+				this.savedPos = {
+					left: this.content.el.scrollLeft,
+					top: this.content.el.scrollTop
+				};
+			}
+			else{
+				this.savedPos.left = this.content.el.scrollLeft;
+				this.savedPos.top = this.content.el.scrollTop;
+			}
+			
+		},
+		
+		restoreScroll: function(){
+			if(!this.savedPos){
+				return;
+			}
+			this.content.el.scrollLeft = this.savedPos.left;
+			this.content.el.scrollTop = this.savedPos.top;
+		},
+		
 		addOptions: function(options){
 			this.options = {};
 			var list = this.options.list = new MT.ui.List(options, this.ui, true);
@@ -376,9 +403,12 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 					return;
 				}
 				that.content.y = that.header.el.offsetHeight;
+				that.restoreScroll();
+				
 			};
 			
 			align();
+			
 			
 			return this;
 		},
@@ -863,6 +893,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(!this.isVisible){
 				return this;
 			}
+			this.saveScroll();
+			
 			this.isVisible = false;
 			MT.ui.DomElement.hide.call(this);
 			if(noEmit != void(0)){

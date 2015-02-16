@@ -106,7 +106,22 @@ MT(
 			parent.appendChild(objElement);
 			
 			return objElement;
-		}
+		},
+		
+		dowload: function(title, content){
+			var a = document.createElement("a");
+			var b = new Blob([content]);
+			a.style.cssText = "position: fixed; top - 1000";
+			a.download = title;
+			a.href = window.URL.createObjectURL(b);
+			
+			document.body.appendChild(a);
+			
+			a.click();
+			
+			document.body.removeChild(a);
+		},
+   
 	}
 );
 (function(){

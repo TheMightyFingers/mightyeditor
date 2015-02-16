@@ -38,6 +38,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		//hack
 		this.pendingFrame = -1;
+		
+		this.tmpName = "";
 	},
 	{
 		
@@ -208,8 +210,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				{
 					label: "Download image",
 					cb: function(){
-						console.log(that.active);
-						window.open(that.active.img.src);
+						window.open(that.active.img.origSource);
 					}
 					
 				},
@@ -394,11 +395,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(images.all_frames){
 					panel = this.createPreviewPanel("all_frames", panels, asset, images, true);
 					this.drawAtlasImage(panel);
+					
+					
+					
 				}
 				
 				for(var i in images){
 					panel = this.createPreviewPanel(i || "xxx", panels, asset, images, true);
 					this.drawAtlasImage(panel);
+
+					
 				}
 			}
 			else{
@@ -450,14 +456,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(!panels.active){
 				panels.active = panels[0];
 			}
-			panels.active.hide();
+			//panels.active.hide();
 			panels.active.show(this.preview.content.el);
-			if(panels.active.data.scrollLeft){
+			
+			
+			/*if(panels.active.data.scrollLeft){
 				panels.active.content.el.scrollLeft = panels.active.data.scrollLeft;
 			}
 			if(panels.active.data.scrollTop){
 				panels.active.content.el.scrollTop = panels.active.data.scrollTop;
-			}
+			}*/
 			
 			this.panels[asset.id] = panels;
 		},
@@ -491,7 +499,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				ctx: null
 			};
 			panel.data.ctx = panel.data.canvas.getContext("2d");
-			
 			if(pp){
 				pp.addJoint(panel);
 			}
@@ -722,10 +729,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(maxframe < frame){
 					return;
 				}
-				
+				/*
 				panel.data.scrollTop = panel.content.el.scrollTop;
 				panel.data.scrollLeft = panel.content.el.scrollLeft;
-				
+				*/
 				that.activeFrame = frame;
 				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
 			};
@@ -779,13 +786,27 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(frame == that.activeFrame && that.active == panel.data.asset){
 					return;
 				}
-				
+				/*
 				panel.data.scrollTop = panel.content.el.scrollTop;
 				panel.data.scrollLeft = panel.content.el.scrollLeft;
-				
+				*/
 				that.activeFrame = frame;
 				panel.data.group.active = panel;
 				
+				if(panel.title == "all_frames"){
+					var g = panel.data.group, p;
+					for(var i=1; i<g.length; i++){
+						p = g[i];
+						if(p.data.frames.start <= frame && p.data.frames.end > frame){
+							that.tmpName = p.title;
+							break;
+						}
+					}
+					
+				}
+				else{
+					that.tmpName = panel.title;
+				}
 				that.emit(MT.ASSET_FRAME_CHANGED, panel.data.asset, frame);
 			};
 			panel.data.canvas.oncontextmenu = function(e){
@@ -872,16 +893,19 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.project.plugins.objectmanager.sync();
 				
 				
-				that.setPreviewAssets(data);
+				//that.setPreviewAssets(data);
 			};
 			
 			
 			tools.on(MT.OBJECT_SELECTED, function(obj){
 				if(obj){
 					that.pendingFrame = obj.frame;
-					that.selectAssetById(obj.data.assetId);
+					var asset = that.selectAssetById(obj.data.assetId);
 					
-					//that.setPreviewAssets(obj);
+					var p = that.panels[obj.data.assetId]
+					
+					
+					//that.setPreviewAssets(asset);
 				}
 			});
 			
@@ -910,6 +934,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			this.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
+				that.setPreviewAssets(asset);
 				if(tools.activeTool != tools.tools.select){
 					return;
 				}
@@ -933,7 +958,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.project.plugins.objectmanager.sync();
 				});
 				
-				that.setPreviewAssets(asset);
+				
 			});
 			
 			
@@ -988,6 +1013,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		updateImage: function(asset, e){
+			
+			var notify = this.project.plugins.notification.show("Updating image", asset.name);
+			
 			var that = this;
 			this.project.plugins.mapeditor.cleanImage(asset.id);
 			
@@ -1007,6 +1035,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.emit(MT.ASSET_FRAME_CHANGED, asset, that.activeFrame);
 					that.active.data = asset;
 					that.send("updateImage", {asset: asset, data: data});
+					
+					that.project.plugins.mapeditor.addAtlas(asset, null, null, function(){
+						notify.hide();
+					});
 				};
 				img.src = that.toPng(fr.result);
 			});
@@ -1027,8 +1059,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				return;
 			}
 			
+			var notify = this.project.plugins.notification.show("Updating atlas", file.name);
 			this.readFile(file, function(fr){
-				that.send("addAtlas", {id: asset.id, ext: ext, data: Array.prototype.slice.call(new Uint8Array(fr.result)) });
+				asset.updated = Date.now();
+				that.send("addAtlas", {id: asset.id, ext: ext, data: Array.prototype.slice.call(new Uint8Array(fr.result)) }, function(){
+					notify.hide();
+				});
 			});
 			
 		},

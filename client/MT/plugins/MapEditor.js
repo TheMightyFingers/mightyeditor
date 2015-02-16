@@ -1000,45 +1000,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			if(asset.atlas){
-				var ext = asset.atlas.split(".").pop().toLowerCase();
-				
-				MT.loader.get(that.project.path + "/" + asset.atlas+"?"+Date.now(), function(dataString){
-					var data = null;
-					var type = Phaser.Loader.TEXTURE_ATLAS_XML_STARLING;
-					/*
-					 * Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY
-					 * Phaser.Loader.TEXTURE_ATLAS_JSON_HASH
-					 * Phaser.Loader.TEXTURE_ATLAS_XML_STARLING
-					 */
-					if(ext == "json"){
-						data = that.parseJSON(dataString);
-						if(Array.isArray(data.frames)){
-							type = Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY;
-						}
-						else{
-							type = Phaser.Loader.TEXTURE_ATLAS_JSON_HASH;
-						}
-						
-					}
-					else{
-						data = that.parseXML(dataString);
-					}
-					
-					if(!data){
-						console.error("failed to parse atlas");
-					}
-					else{
-						that.loadImage(path + "?" + Date.now(), function(){
-							that.game.cache.addTextureAtlas(asset.id, asset.__image, this, data, type);
-							that.findAtlasNames(asset.id);
-							if(asset.type != type){
-								asset.type = type;
-								that.project.plugins.assetmanager.updateData();
-							}
-							cb();
-						});
-					}
-				});
+				this.addAtlas(asset, null, null, cb);
 				return;
 			}
 			
@@ -1093,6 +1055,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		ajax: function(src, cb){
+			console.log("ajax used?");
 			var xhr = new XMLHttpRequest();
 			xhr.open('get', src);
 			xhr.onreadystatechange = function() {
@@ -1117,6 +1080,73 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			};
 			image.src = src;
 		},
+		
+		
+		
+		addAtlas: function(asset, atlasImage, atlasData, cb){
+			var ext = asset.atlas.split(".").pop().toLowerCase();
+			var that = this;
+			var path = this.project.path + "/" + asset.__image;
+			
+			
+			var setImage = function(data, type, image){
+				that.game.cache.addTextureAtlas(asset.id, asset.__image, image, data, type);
+				that.findAtlasNames(asset.id);
+				if(asset.type != type){
+					asset.type = type;
+					that.project.plugins.assetmanager.updateData();
+				}
+				if(cb){
+					cb();
+				}
+			};
+			
+			
+			var setData = function(dataString){
+				var data = null;
+				var type = Phaser.Loader.TEXTURE_ATLAS_XML_STARLING;
+				/*
+					* Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY
+					* Phaser.Loader.TEXTURE_ATLAS_JSON_HASH
+					* Phaser.Loader.TEXTURE_ATLAS_XML_STARLING
+					*/
+				if(ext == "json"){
+					data = that.parseJSON(dataString);
+					if(Array.isArray(data.frames)){
+						type = Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY;
+					}
+					else{
+						type = Phaser.Loader.TEXTURE_ATLAS_JSON_HASH;
+					}
+					
+				}
+				else{
+					data = that.parseXML(dataString);
+				}
+				
+				if(!data){
+					console.error("failed to parse atlas");
+				}
+				else{
+					if(atlasImage == void(0)){
+						that.loadImage(path + "?" + Date.now(), function(){
+							setImage(data, type, this);
+						});
+					}
+					else{
+						setImage(data, type);
+					}
+				}
+			};
+			
+			if(atlasData == void(0)){
+				MT.loader.get(that.project.path + "/" + asset.atlas+"?"+Date.now(), setData);
+			}
+			else{
+				setData(atlasData);
+			}
+		},
+		
 		
 		atlasNames: {},
 		
@@ -1186,6 +1216,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		cleanImage: function(id){
 			this.game.cache.removeImage(id);
+			delete this.atlasNames[id];
 		},
 		
 		checkId: function(){
@@ -1206,7 +1237,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		_addTimeout: 0,
+		lastAddedObjects: null,
 		addObjects: function(objs, group){
+			
+			this.lastAddedObjects = objs;
+			
 			// check if assets is loaded - if not - call again this method after a while
 			if(!this.isAssetsAdded){
 				var that = this;
@@ -1217,7 +1252,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				this._addTimeout = window.setTimeout(function(){
 					that.addObjects(objs, group);
-					this._addTimeout = 0;
+					that._addTimeout = 0;
 				}, 100);
 				return;
 			}
@@ -1248,21 +1283,30 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		_addObjects: function(objs, group){
 			
-			var tmp, k=0;
+			var tmp, k=0, o;
 			for(var i=objs.length-1; i>-1; i--){
-				tmp = this.getById(objs[i].id);
+				o = objs[i];
+				
+				if(o instanceof MT.core.MagicObject){
+					tmp = o;
+				}
+				else{
+					tmp = this.getById(o.id);
+				}
 				
 				if(!tmp ){
-					tmp = new MT.core.MagicObject(objs[i], group, this);
+					tmp = new MT.core.MagicObject(o, group, this);
 					this.loadedObjects.push(tmp);
 				}
+				
 				tmp.isRemoved = false;
-				tmp.update(objs[i], group);
-				tmp.object.z = 0;
+				tmp.update(o.data, group);
+				tmp.object.visible = tmp.isVisible;
+				//tmp.object.z = 0;
 				
 				// handle group and parents
-				if(objs[i].contents){
-					this._addObjects(objs[i].contents, tmp.object);
+				if(tmp.data.contents){
+					this._addObjects(tmp.data.contents, tmp.object);
 					continue;
 				}
 				
@@ -1389,8 +1433,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		reloadObjects: function(){
-			if(this.loadedObjects && !this._addTimeout){
-				this.addObjects(this.loadedObjects);
+			if(this.lastAddedObjects  && !this._addTimeout){
+				this.addObjects(this.lastAddedObjects);
 			}
 		},
 		
@@ -1457,7 +1501,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		_handleMouseMove: function(){
 			
 		},
-		
 		
 		set handleMouseMove(val){
 			this._handleMouseMove = val;
@@ -1533,6 +1576,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					inc = this.settings.gridY;
 				}
 			}
+			else if(e.shiftKey){
+				inc *= 10;
+			}
+			
 			
 			if(w == MT.keys.LEFT){
 				object.x -= inc;

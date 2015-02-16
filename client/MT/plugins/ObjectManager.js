@@ -286,9 +286,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			var data = this.tv.getData();
-			var name = asset.name.split(".");
-			name.pop();
-			name = name.join("");
+			var name;
+			if(asset.atlas){
+				if(this.project.plugins.assetmanager.tmpName){
+					name = this.project.plugins.assetmanager.tmpName;
+				}
+			}
+			if(!name){
+				name = asset.name.split(".");
+				name.pop();
+				name = name.join("");
+			}
 			
 			return  {
 				assetId: asset.id,

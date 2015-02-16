@@ -56,6 +56,10 @@ MT.extend("core.BasicPlugin")(
 			var that = this;
 			this.fs.mkdir(this.dir);
 			var data;
+			
+			
+			MT.log("EXPORT data only");
+			
 			if(contents == void(0)){
 				data = JSON.parse(JSON.stringify({
 					assets: this.project.db.get("assets"),
@@ -69,8 +73,9 @@ MT.extend("core.BasicPlugin")(
 			
 			
 			this.createIdList(data.assets.contents, this.dir + this.sep + this.assetsPath);
-			this.parseObjects(data.objects.contents);
 			
+			this.parseAssets(data.assets.contents);
+			this.parseObjects(data.objects.contents);
 			
 			contents = JSON.stringify(data, null, "\t");
 			
@@ -220,10 +225,13 @@ MT.extend("core.BasicPlugin")(
 				}
 				
 				asset.source = path + this.sep + asset.name;
-				this.fs.copy(this.project.path + this.sep + asset.__image, asset.source);
+				if(asset.__image){
+					this.fs.copy(this.project.path + this.sep + asset.__image, asset.source);
+				}
 				if(asset.atlas){
+					MT.log("Asset ATLASSSS", asset.atlas);
 					var aext = asset.atlas.split(".").pop();
-					this.fs.copy(this.project.path + this.sep + asset.atlas, asset.source + "." + aext);
+					this.fs.copy(this.project.path + this.sep + asset.id + "." + aext, asset.source + "." + aext);
 					asset.atlas = asset.name + "." + aext;
 				}
 			}

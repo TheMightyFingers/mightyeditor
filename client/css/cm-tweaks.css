@@ -114,8 +114,15 @@ a.lint-error:hover .lint-error-text{
 	border-right: 2px solid #000;
 }
 
+.CodeMirror-hint {
+	padding: 4px 5px 4px 22px;
+}
 
-
+.CodeMirror-Tern-hint-doc {
+	max-width: initial;
+	margin-top: -3px;
+	padding-top: 6px;
+}
 
 
 

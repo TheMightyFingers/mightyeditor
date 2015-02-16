@@ -1,11 +1,20 @@
 "use strict";
 /*
  * Needs to be reviewed - too many hacks already
- * usage: 
  */
 MT.require("ui.DomElement");
 MT.extend("core.Emitter")(
 	MT.ui.TreeView = function(data, options){
+		// first instance will create canvas used for small thumbs
+		if(!MT.ui.TreeView.canvas){
+			MT.ui.TreeView.canvas = document.createElement("canvas");
+			MT.ui.TreeView.canvas.ctx = MT.ui.TreeView.canvas.getContext("2d");
+			MT.ui.TreeView.canvas.width = 64;
+			MT.ui.TreeView.canvas.height = 64;
+		}
+		this.canvas = MT.ui.TreeView.canvas;
+		
+		
 		MT.core.Emitter.call(this);
 		this.options = {};
 		
@@ -24,6 +33,8 @@ MT.extend("core.Emitter")(
 		this._onDrop = [];
 	},
 	{
+		// static - all correct
+		cache: {},
 		
 		onDrop: function(cb){
 			this._onDrop.push(cb);
@@ -265,12 +276,48 @@ MT.extend("core.Emitter")(
 		addImage: function(el, data){
 			var im;
 			el.head.addClass("has-image");
-			im = document.createElement("img");
-			im.src = this.rootPath + "/" +data.__image;
-			el.head.el.appendChild(im);
-			im.style.pointerEvents = "none";
-			el.img = im;
 			
+			im = document.createElement("img");
+			im.style.pointerEvents = "none";
+			
+			this.loadAndDrawImage(im, this.rootPath + "/" +data.__image, data);
+			
+			
+			el.head.el.appendChild(im);
+			el.img = im;
+		},
+		
+		loadAndDrawImage: function(im, src, data){
+			var that = this;
+			
+			if(data.updated && im.updated == data.updated){
+				return;
+			}
+			
+			if(!data.updated && that.cache[src]){
+				im.src = im.origSource = that.cache[src];
+				return;
+			}
+			
+			var img = new Image();
+			im.updated = data.updated;
+			img.onload = function(){
+				var asr = this.width / this.height;
+				
+				
+				that.canvas.ctx.clearRect(0, 0, that.canvas.width, that.canvas.height);
+				console.log("asr", asr);
+				if(asr > 1){
+					that.canvas.ctx.drawImage(this, 0, 0, this.width, this.height, 0, 0, that.canvas.width, that.canvas.width / asr);
+				}
+				else{
+					var w = that.canvas.width * asr;
+					that.canvas.ctx.drawImage(this, 0, 0, this.width, this.height, (that.canvas.width - w)*0.5, 0, w, that.canvas.width);
+				}
+				im.src = that.cache[src] = that.canvas.toDataURL("image/png");
+			};
+			
+			img.src = im.origSource = src;
 		},
 		
 		removeImage: function(el){
@@ -340,7 +387,7 @@ MT.extend("core.Emitter")(
 					
 					if(data.__image){
 						if(item.img){
-							item.img.src = this.rootPath + "/" + data.__image + "?"+Date.now();
+							this.loadAndDrawImage(item.img, this.rootPath + "/" + data.__image, data);
 						}
 						else{
 							this.addImage(item, data);

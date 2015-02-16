@@ -146,6 +146,10 @@ MT.extend("core.BasicPlugin")(
 		},
 		save: function(){
 			
+			
+		},
+		
+		_save: function(){
 			var str = JSON.stringify(this.buffer);
 			var off = this.currentOffset;
 			

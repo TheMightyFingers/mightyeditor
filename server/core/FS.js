@@ -105,7 +105,7 @@
 		_copyWrap: function(source, target, cb){
 			fs.stat(source, function(err, stats){
 				if(err){
-					MT.log("Cnnot find source:", source, err.message);
+					MT.stack("Cnnot find source:", source, err.message);
 					cb(err);
 					return;
 				}

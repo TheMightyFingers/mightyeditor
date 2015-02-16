@@ -1,3 +1,4 @@
+var defs = [];
 (function(){
 	var cmPath = "js/cm";
 	var addCss = function(src){
@@ -7,7 +8,19 @@
 		style.setAttribute("href", src);
 		document.head.appendChild(style);
 	};
-		
+	
+	var defFiles = ["js/tern/defs/ecma5.json", "js/tern/defs/ecma6.json", "js/tern/defs/browser.json"];
+	
+	for(var i=0; i<defFiles.length; i++){
+		(function(i){
+			MT.loader.get(defFiles[i], function(src){
+				console.log("loaded",i);
+				defs[i] = JSON.parse(src);
+			});
+		})(i);
+	}
+	
+	
 	if(window.release){
 		MT.requireFile(cmPath+"/lib/codemirror-full.js",function(){
 			cmPath += "/addon";
@@ -20,6 +33,7 @@
 			addCss(cmPath+"/fold/foldgutter.css");
 			addCss(cmPath+"/dialog/dialog.css");
 			addCss("css/cm-tweaks.css");
+			addCss(cmPath+"/tern/tern.css");
 		});
 		return;
 	}
@@ -50,13 +64,39 @@
 		MT.requireFile(cmPath+"/search/match-highlighter.js");
 		MT.requireFile(cmPath+"/selection/active-line.js");
 		
+		
+		MT.requireFile(cmPath+"/tern/tern.js");
+		
+		
+		//MT.requireFile(cmPath+"/tern/worker.js");
+		
 		MT.requireFile("js/jshint.js");
-		//MT.requireFile("js/esprima.js");
+		
+		
+		MT.requireFile("js/acorn/acorn.js", function(){
+			MT.requireFile("js/acorn/acorn_loose.js");
+			MT.requireFile("js/acorn/util/walk.js");
+			
+			MT.requireFile("js/tern/lib/signal.js", function(){
+				MT.requireFile("js/tern/tern.js",function(){
+					MT.requireFile("js/tern/lib/def.js");
+					MT.requireFile("js/tern/lib/comment.js");
+					MT.requireFile("js/tern/lib/infer.js", function(){
+						MT.requireFile("js/tern/plugin/doc_comment.js");
+					});
+				});
+			});
+			
+		});
+
+		
+		//aaa server.server.cx.topScope.props.PIXI
 		
 		addCss("css/codemirror.css");
 		addCss(cmPath+"/hint/show-hint.css");
 		addCss(cmPath+"/fold/foldgutter.css");
 		addCss(cmPath+"/dialog/dialog.css");
+		addCss(cmPath+"/tern/tern.css");
 		addCss("css/cm-tweaks.css");
 		
 		
@@ -206,10 +246,38 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		a_receiveFiles: function(files){
 			this.tv.merge(files);
-			var data = this.tv.getData();
 			this.emit(MT.FILE_LIST_RECEIVED, files);
+			this.data = files;
+			var fo;
+			
+			fo = this.getInData("/index.html");
+			if(fo){
+				this.loadDocument(fo);
+			}
+			fo = this.getInData("/js/state/play.js");
+			if(fo){
+				this.loadDocument(fo);
+			}
+			fo = this.getInData("/js/state/menu.js");
+			if(fo){
+				this.loadDocument(fo);
+			}
 		},
-		
+		getInData: function(path, cont){
+			cont = cont || this.data;
+			for(var i=0; i<cont.length; i++){
+				if(cont[i].fullPath == path){
+					return cont[i];
+				}
+				
+				if(cont[i].contents){
+					var tmp = this.getInData(path, cont[i].contents);
+					if(tmp){
+						return tmp;
+					}
+				}
+			}
+		},
 		uploadFile: function(data){
 			var tmp = data.src;
 			var that = this;
@@ -308,8 +376,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				n: n
 			});
 		},
-		
-		
 		
 		loadDocument: function(data, needFocus){
 			var that = this;
@@ -460,6 +526,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				if(!doc){
 					doc = CodeMirror.Doc(data.src, mode, 0);
+					doc.name = data.fullPath;
 					that.documents[data.fullPath].data.doc = doc;
 				}
 				
@@ -471,7 +538,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		loadDoc: function(panel){
-			
+			panel.show();
 			if(this.editorElement.parentNode){
 				this.editorElement.parentNode.removeChild(this.editorElement);
 			}
@@ -672,8 +739,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					"Ctrl-/": "toggleComment",
 					"Cmd-/": "toggleComment",
 					
-					"Ctrl-Space": function(){
+					"Ctrl-Space": function(cm){
 						that.showHints();
+						
+						// server.complete(cm);
+						
 					},
 					"Cmd-Space": function(){
 						that.showHints();
@@ -704,13 +774,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						alert();
 					},
 					"Ctrl-L": "gotoLine",
-					"Cmd-L": "gotoLine"
+					"Cmd-L": "gotoLine",
+					"Ctrl-Alt-Right": function(cm) { server.jumpToDef(cm); },
+					"Ctrl-Alt-Left": function(cm) { server.jumpBack(cm); },
 				},
 				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-jslint"],
 				highlightSelectionMatches: {showToken: /\w/},
 				
-				onCursorActivity: function() {
+				onCursorActivity: function(cm) {
 					editor.matchHighlight("CodeMirror-matchhighlight");
+					server.updateArgHints(cm);
 				},
 				
 				tabMode: "shift",
@@ -739,6 +812,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.editor.on("change", function(){
 				that.checkChanges();
+				that.showHints(true);
 			});
 			this.editor.on("keyup", function(ed, e){
 				
@@ -751,6 +825,35 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
+			window.server = this.server = new CodeMirror.TernServer({
+				defs: defs,
+				plugins: {doc_comment: {
+					fullDocs: true
+				}, complete_strings: {
+					maxLength: 15
+				}},
+				switchToDoc: function(name, doc) { 
+					that.loadDoc(that.documents[doc.name]);
+				},
+
+				workerDeps: ["../../../acorn/acorn.js", "../../../acorn/acorn_loose.js",
+							"../../../acorn/util/walk.js", "../../../tern/lib/signal.js", "../../../tern/lib/tern.js",
+							"../../../tern/lib/def.js", "../../../tern/lib/infer.js", "../../../tern/lib/comment.js",
+							"../../../tern/plugin/doc_comment.js"],
+				workerScript: "js/cm/addon/tern/worker.js",
+				//useWorker: true
+			});
+			
+			
+			MT.loader.get(this.project.path + "/src/js/lib/phaser.js", function(data){
+				server.server.addFile("[phaser]", data);
+			});
+			MT.loader.get(this.project.path + "/src/js/lib/mt.helper.js", function(data){
+				server.server.addFile("[helper]", data);
+			});
+			
+			
+			
 			/*this.editor.on("keyHandled", function(ed, a,b,c){
 				console.log(a,b,c);
 				return;
@@ -759,12 +862,66 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});*/
 		},
 		
-		showHints: function(){
-			this.editor.execCommand("autocomplete");
+		showHints: function(autocall){
+			//skipSingle = true;
+			var that = this;
+			var sel = this.editor.doc.sel;
+			var range = sel.ranges[0];
+			if(!range){
+				return;
+			}
+			var token = this.editor.getTokenAt(range.anchor);
+			token.string = token.string.trim();
+			if(autocall && token.string != "." && (!token.type || token.string == "" ) ){
+				return;
+			}
+			
+			
+			
+			server.getHint(this.editor, function(hints){
+				
+				/*if(skipSingle && hints.list.length > 20 && hints.from.ch == hints.to.ch && hints.from.line == hints.to.line){
+					return;
+				}
+				*/
+				//hints.list.reverse();
+				
+				if(autocall){
+					//if(hints.list.length > 10){
+						hints.list = hints.list.filter(function(a){
+							console.log((a.text.substring(0, 1) != "_"), a.text);
+							return (a.text.substring(0, 1) != "_");
+						});
+					//}
+				}
+				
+				var list = hints.list;
+				for(var i=0; i<list.length; i++){
+					var hint = list[i];
+					var data = hint.data;
+					if(!data.doc){
+						continue;
+					}
+					if(data.type.indexOf("fn") !== 0){
+						continue;
+					}
+					
+					
+					data.doc =data.type.substring(2) + "\r\n\r\n" + data.doc;
+					continue;
+				}
+				
+				that.editor.showHint({hint: function(){return hints;}, completeSingle: !autocall, selectFirst: !autocall});
+			});
+			
+			
+			
+			//this.editor.execCommand("autocomplete");
 		},
 		
 		updateHints: function(){
 			var that = this;
+			
 			this.editor.operation(function(){
 				that.editor.clearGutter("CodeMirror-jslint");
 				if(that.editor.options.mode.name != "javascript"){
@@ -793,7 +950,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.lastWorker = worker;
 				
 				worker.onmessage = function(e) {
-					console.log("jshint:", e.data[0].length);
+					console.log("jshint:", e.data[0]);
 					var errors = e.data[0]
 					for (var i = 0; i < errors.length; ++i) {
 						var err = errors[i];

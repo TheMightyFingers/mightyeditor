@@ -69,19 +69,24 @@ MT.extend("core.BasicPlugin")(
 			});
 		},
 		
-		a_addAtlas: function(data){
+		a_addAtlas: function(data, cb){
 			var that = this;
 			var asset = this.getById(data.id);
 			
 			if(asset == void(0)){
-				MT.log("Assets::addAtlast - failed to loacte asset", data.id);
+				MT.log("Assets::addAtlas - failed to locate asset", data.id);
 				return;
 			}
 			
 			asset.atlas = data.id + "." + data.ext;
 			this.fs.writeFile(this.project.path + "/" + asset.atlas , new Buffer(data.data, "binary"), function(e){
+				that.project.db.save();
 				that.a_sendFiles();
+				if(cb){
+					cb();
+				}
 			});
+			
 		},
 		
 		a_delete: function(id){
@@ -198,6 +203,7 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		getById: function(id){
+			this.buildIdIndex();
 			return this.ids[id];
 		}
 	}

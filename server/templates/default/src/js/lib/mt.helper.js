@@ -212,7 +212,11 @@
 			}
 		},
 		
-		// create seperate group
+		/**
+		* create sprite or group from name
+		* @param {string} name - name of the object
+		* @param {Group} [parent] - parent of the created object group or sprite
+		*/
 		create: function(name, parent){
 			parent = parent || this.game.world;
 			var data = this.getObjectGroupByName(name);
@@ -223,9 +227,10 @@
 			
 			return this._add(data, parent, "");
 		},
-		
+		/**
+		 * same as mt.create
+		 */
 		createGroup: function(name, parent){
-			console.warn('mt.createGroup is deprecated. Use mt.create("'+name+'") instead');
 			return mt.create(name, parent);
 		},
 		

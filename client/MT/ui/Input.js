@@ -122,17 +122,18 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 			this.input.onchange = function(e){
 				that.emit("change", e, that.object);
+				this.value = "";
 			};
 			
 			this.label.style.right = "0";
 			this.label.el.onclick = function(e){
 				that.input.click();
 			};
-			if(this.object[this.key] !== void(0)){
+			/*if(this.object[this.key] !== void(0)){
 				this.setValue(this.object[this.key], true);
 				this.addChild(this.value).show();
 				
-			}
+			}*/
 			return;
 		}
 		

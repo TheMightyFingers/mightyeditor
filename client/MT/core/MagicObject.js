@@ -58,8 +58,6 @@ MT(
 	{
 		radius: 3,
 		activeRadius: 5,
-		
-		
 		/* interpolation */
 		changeMovieFrame: function(movie, frame, skipChildren){
 			this.activeMovie = movie;
@@ -1807,7 +1805,6 @@ MT(
 		},
    
 		get isVisible(){
-			
 			var o = this;
 			while(o.parent.magic){
 				if(!o.data.isVisible){
@@ -1815,6 +1812,7 @@ MT(
 				}
 				o = o.parent.magic;
 			}
+			
 			return o.data.isVisible;
 		},
 		
