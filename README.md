@@ -16,7 +16,7 @@ Requirements
 * chrome / chromium browser
 * npm
 * nodejs
-
+* fontforge and woff_convert for the font conversions
 
 set up
 ============
