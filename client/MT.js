@@ -6648,24 +6648,23 @@ MT.extend("core.Emitter")(
 		
 		loadAndDrawImage: function(im, src, data){
 			var that = this;
-			
 			if(data.updated && im.updated == data.updated){
 				return;
 			}
 			
-			if(!data.updated && that.cache[src]){
+			if(that.cache[src] && im.updated == data.updated){
 				im.src = im.origSource = that.cache[src];
 				return;
 			}
 			
+			console.log("redraw image");
+			
 			var img = new Image();
 			im.updated = data.updated;
+			
 			img.onload = function(){
 				var asr = this.width / this.height;
-				
-				
 				that.canvas.ctx.clearRect(0, 0, that.canvas.width, that.canvas.height);
-				console.log("asr", asr);
 				if(asr > 1){
 					that.canvas.ctx.drawImage(this, 0, 0, this.width, this.height, 0, 0, that.canvas.width, that.canvas.width / asr);
 				}
@@ -15232,7 +15231,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.acceptsPanels = true;
 		},
 		focus: function(){
-			console.log("panel focused");
 			this.saveScroll();
 			this._input.focus();
 			this.restoreScroll();
@@ -16139,7 +16137,6 @@ MT(
 			var cb = this._mk_cb(i);
 			this._cbs.push(cb);
 			window.addEventListener(i, cb, false);
-			
 		},
 		
 		off: function(type, cb){
@@ -19353,12 +19350,12 @@ var defs = [];
 	}
 	
 	
-	MT.requireFile("js/acorn/acorn.js", function(){
+	/*MT.requireFile("js/acorn/acorn.js", function(){
 		MT.requireFile("js/acorn/acorn_loose.js");
 		MT.requireFile("js/acorn/util/walk.js");
 		
 		MT.requireFile("js/tern/lib/signal.js", function(){
-			MT.requireFile("js/tern/tern.js",function(){
+			MT.requireFile("js/tern/lib/tern.js",function(){
 				MT.requireFile("js/tern/lib/def.js", function(){
 					MT.requireFile("js/tern/lib/comment.js");
 					MT.requireFile("js/tern/lib/infer.js", function(){
@@ -19367,7 +19364,7 @@ var defs = [];
 				});
 			});
 		});
-	});
+	});*/
 	
 	if(window.release){
 		MT.requireFile(cmPath+"/lib/codemirror-full.js",function(){
@@ -20177,7 +20174,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							"../../../tern/lib/def.js", "../../../tern/lib/infer.js", "../../../tern/lib/comment.js",
 							"../../../tern/plugin/doc_comment.js"],
 				workerScript: "js/cm/addon/tern/worker.js",
-				//useWorker: true
+				useWorker: true
 			});
 			
 			

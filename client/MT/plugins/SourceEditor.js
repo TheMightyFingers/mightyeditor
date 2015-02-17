@@ -21,12 +21,12 @@ var defs = [];
 	}
 	
 	
-	MT.requireFile("js/acorn/acorn.js", function(){
+	/*MT.requireFile("js/acorn/acorn.js", function(){
 		MT.requireFile("js/acorn/acorn_loose.js");
 		MT.requireFile("js/acorn/util/walk.js");
 		
 		MT.requireFile("js/tern/lib/signal.js", function(){
-			MT.requireFile("js/tern/tern.js",function(){
+			MT.requireFile("js/tern/lib/tern.js",function(){
 				MT.requireFile("js/tern/lib/def.js", function(){
 					MT.requireFile("js/tern/lib/comment.js");
 					MT.requireFile("js/tern/lib/infer.js", function(){
@@ -35,7 +35,7 @@ var defs = [];
 				});
 			});
 		});
-	});
+	});*/
 	
 	if(window.release){
 		MT.requireFile(cmPath+"/lib/codemirror-full.js",function(){
@@ -845,7 +845,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							"../../../tern/lib/def.js", "../../../tern/lib/infer.js", "../../../tern/lib/comment.js",
 							"../../../tern/plugin/doc_comment.js"],
 				workerScript: "js/cm/addon/tern/worker.js",
-				//useWorker: true
+				useWorker: true
 			});
 			
 			

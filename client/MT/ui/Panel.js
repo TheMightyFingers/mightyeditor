@@ -172,7 +172,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.acceptsPanels = true;
 		},
 		focus: function(){
-			console.log("panel focused");
 			this.saveScroll();
 			this._input.focus();
 			this.restoreScroll();

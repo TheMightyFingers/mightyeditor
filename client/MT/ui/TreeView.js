@@ -289,24 +289,23 @@ MT.extend("core.Emitter")(
 		
 		loadAndDrawImage: function(im, src, data){
 			var that = this;
-			
 			if(data.updated && im.updated == data.updated){
 				return;
 			}
 			
-			if(!data.updated && that.cache[src]){
+			if(that.cache[src] && im.updated == data.updated){
 				im.src = im.origSource = that.cache[src];
 				return;
 			}
 			
+			console.log("redraw image");
+			
 			var img = new Image();
 			im.updated = data.updated;
+			
 			img.onload = function(){
 				var asr = this.width / this.height;
-				
-				
 				that.canvas.ctx.clearRect(0, 0, that.canvas.width, that.canvas.height);
-				console.log("asr", asr);
 				if(asr > 1){
 					that.canvas.ctx.drawImage(this, 0, 0, this.width, this.height, 0, 0, that.canvas.width, that.canvas.width / asr);
 				}
