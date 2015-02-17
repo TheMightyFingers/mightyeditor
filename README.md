@@ -13,9 +13,9 @@ Please use chrome / chromium with MightyEditor
 
 Requirements
 ============
-*chrome / chromium browser
-*npm
-*nodejs
+* chrome / chromium browser
+* npm
+* nodejs
 
 
 set up
