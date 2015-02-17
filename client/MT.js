@@ -3402,8 +3402,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		mDown: false,
 		
 		mouseUp: function(e){
-			console.log("UPP");
-			
 			if(this.map.activeObject){
 				this.map.activeObject.mouseUp(e.x - this.map.ox, e.y - this.map.oy, e);
 			}
@@ -3751,17 +3749,18 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			}
 			this.input.onchange = function(e){
 				that.emit("change", e, that.object);
+				this.value = "";
 			};
 			
 			this.label.style.right = "0";
 			this.label.el.onclick = function(e){
 				that.input.click();
 			};
-			if(this.object[this.key] !== void(0)){
+			/*if(this.object[this.key] !== void(0)){
 				this.setValue(this.object[this.key], true);
 				this.addChild(this.value).show();
 				
-			}
+			}*/
 			return;
 		}
 		
@@ -4274,8 +4273,6 @@ MT(
 	{
 		radius: 3,
 		activeRadius: 5,
-		
-		
 		/* interpolation */
 		changeMovieFrame: function(movie, frame, skipChildren){
 			this.activeMovie = movie;
@@ -6023,7 +6020,6 @@ MT(
 		},
    
 		get isVisible(){
-			
 			var o = this;
 			while(o.parent.magic){
 				if(!o.data.isVisible){
@@ -6031,6 +6027,7 @@ MT(
 				}
 				o = o.parent.magic;
 			}
+			
 			return o.data.isVisible;
 		},
 		
@@ -6276,7 +6273,22 @@ MT(
 			parent.appendChild(objElement);
 			
 			return objElement;
-		}
+		},
+		
+		dowload: function(title, content){
+			var a = document.createElement("a");
+			var b = new Blob([content]);
+			a.style.cssText = "position: fixed; top - 1000";
+			a.download = title;
+			a.href = window.URL.createObjectURL(b);
+			
+			document.body.appendChild(a);
+			
+			a.click();
+			
+			document.body.removeChild(a);
+		},
+   
 	}
 );
 (function(){
@@ -6348,11 +6360,20 @@ MT.namespace('ui');
 "use strict";
 /*
  * Needs to be reviewed - too many hacks already
- * usage: 
  */
 MT.require("ui.DomElement");
 MT.extend("core.Emitter")(
 	MT.ui.TreeView = function(data, options){
+		// first instance will create canvas used for small thumbs
+		if(!MT.ui.TreeView.canvas){
+			MT.ui.TreeView.canvas = document.createElement("canvas");
+			MT.ui.TreeView.canvas.ctx = MT.ui.TreeView.canvas.getContext("2d");
+			MT.ui.TreeView.canvas.width = 64;
+			MT.ui.TreeView.canvas.height = 64;
+		}
+		this.canvas = MT.ui.TreeView.canvas;
+		
+		
 		MT.core.Emitter.call(this);
 		this.options = {};
 		
@@ -6371,6 +6392,8 @@ MT.extend("core.Emitter")(
 		this._onDrop = [];
 	},
 	{
+		// static - all correct
+		cache: {},
 		
 		onDrop: function(cb){
 			this._onDrop.push(cb);
@@ -6612,12 +6635,48 @@ MT.extend("core.Emitter")(
 		addImage: function(el, data){
 			var im;
 			el.head.addClass("has-image");
-			im = document.createElement("img");
-			im.src = this.rootPath + "/" +data.__image;
-			el.head.el.appendChild(im);
-			im.style.pointerEvents = "none";
-			el.img = im;
 			
+			im = document.createElement("img");
+			im.style.pointerEvents = "none";
+			
+			this.loadAndDrawImage(im, this.rootPath + "/" +data.__image, data);
+			
+			
+			el.head.el.appendChild(im);
+			el.img = im;
+		},
+		
+		loadAndDrawImage: function(im, src, data){
+			var that = this;
+			
+			if(data.updated && im.updated == data.updated){
+				return;
+			}
+			
+			if(!data.updated && that.cache[src]){
+				im.src = im.origSource = that.cache[src];
+				return;
+			}
+			
+			var img = new Image();
+			im.updated = data.updated;
+			img.onload = function(){
+				var asr = this.width / this.height;
+				
+				
+				that.canvas.ctx.clearRect(0, 0, that.canvas.width, that.canvas.height);
+				console.log("asr", asr);
+				if(asr > 1){
+					that.canvas.ctx.drawImage(this, 0, 0, this.width, this.height, 0, 0, that.canvas.width, that.canvas.width / asr);
+				}
+				else{
+					var w = that.canvas.width * asr;
+					that.canvas.ctx.drawImage(this, 0, 0, this.width, this.height, (that.canvas.width - w)*0.5, 0, w, that.canvas.width);
+				}
+				im.src = that.cache[src] = that.canvas.toDataURL("image/png");
+			};
+			
+			img.src = im.origSource = src;
 		},
 		
 		removeImage: function(el){
@@ -6687,7 +6746,7 @@ MT.extend("core.Emitter")(
 					
 					if(data.__image){
 						if(item.img){
-							item.img.src = this.rootPath + "/" + data.__image + "?"+Date.now();
+							this.loadAndDrawImage(item.img, this.rootPath + "/" + data.__image, data);
 						}
 						else{
 							this.addImage(item, data);
@@ -10349,45 +10408,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			
 			if(asset.atlas){
-				var ext = asset.atlas.split(".").pop().toLowerCase();
-				
-				MT.loader.get(that.project.path + "/" + asset.atlas+"?"+Date.now(), function(dataString){
-					var data = null;
-					var type = Phaser.Loader.TEXTURE_ATLAS_XML_STARLING;
-					/*
-					 * Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY
-					 * Phaser.Loader.TEXTURE_ATLAS_JSON_HASH
-					 * Phaser.Loader.TEXTURE_ATLAS_XML_STARLING
-					 */
-					if(ext == "json"){
-						data = that.parseJSON(dataString);
-						if(Array.isArray(data.frames)){
-							type = Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY;
-						}
-						else{
-							type = Phaser.Loader.TEXTURE_ATLAS_JSON_HASH;
-						}
-						
-					}
-					else{
-						data = that.parseXML(dataString);
-					}
-					
-					if(!data){
-						console.error("failed to parse atlas");
-					}
-					else{
-						that.loadImage(path + "?" + Date.now(), function(){
-							that.game.cache.addTextureAtlas(asset.id, asset.__image, this, data, type);
-							that.findAtlasNames(asset.id);
-							if(asset.type != type){
-								asset.type = type;
-								that.project.plugins.assetmanager.updateData();
-							}
-							cb();
-						});
-					}
-				});
+				this.addAtlas(asset, null, null, cb);
 				return;
 			}
 			
@@ -10442,6 +10463,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		ajax: function(src, cb){
+			console.log("ajax used?");
 			var xhr = new XMLHttpRequest();
 			xhr.open('get', src);
 			xhr.onreadystatechange = function() {
@@ -10466,6 +10488,73 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			};
 			image.src = src;
 		},
+		
+		
+		
+		addAtlas: function(asset, atlasImage, atlasData, cb){
+			var ext = asset.atlas.split(".").pop().toLowerCase();
+			var that = this;
+			var path = this.project.path + "/" + asset.__image;
+			
+			
+			var setImage = function(data, type, image){
+				that.game.cache.addTextureAtlas(asset.id, asset.__image, image, data, type);
+				that.findAtlasNames(asset.id);
+				if(asset.type != type){
+					asset.type = type;
+					that.project.plugins.assetmanager.updateData();
+				}
+				if(cb){
+					cb();
+				}
+			};
+			
+			
+			var setData = function(dataString){
+				var data = null;
+				var type = Phaser.Loader.TEXTURE_ATLAS_XML_STARLING;
+				/*
+					* Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY
+					* Phaser.Loader.TEXTURE_ATLAS_JSON_HASH
+					* Phaser.Loader.TEXTURE_ATLAS_XML_STARLING
+					*/
+				if(ext == "json"){
+					data = that.parseJSON(dataString);
+					if(Array.isArray(data.frames)){
+						type = Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY;
+					}
+					else{
+						type = Phaser.Loader.TEXTURE_ATLAS_JSON_HASH;
+					}
+					
+				}
+				else{
+					data = that.parseXML(dataString);
+				}
+				
+				if(!data){
+					console.error("failed to parse atlas");
+				}
+				else{
+					if(atlasImage == void(0)){
+						that.loadImage(path + "?" + Date.now(), function(){
+							setImage(data, type, this);
+						});
+					}
+					else{
+						setImage(data, type);
+					}
+				}
+			};
+			
+			if(atlasData == void(0)){
+				MT.loader.get(that.project.path + "/" + asset.atlas+"?"+Date.now(), setData);
+			}
+			else{
+				setData(atlasData);
+			}
+		},
+		
 		
 		atlasNames: {},
 		
@@ -10535,6 +10624,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		cleanImage: function(id){
 			this.game.cache.removeImage(id);
+			delete this.atlasNames[id];
 		},
 		
 		checkId: function(){
@@ -10555,7 +10645,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		_addTimeout: 0,
+		lastAddedObjects: null,
 		addObjects: function(objs, group){
+			
+			this.lastAddedObjects = objs;
+			
 			// check if assets is loaded - if not - call again this method after a while
 			if(!this.isAssetsAdded){
 				var that = this;
@@ -10566,7 +10660,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				this._addTimeout = window.setTimeout(function(){
 					that.addObjects(objs, group);
-					this._addTimeout = 0;
+					that._addTimeout = 0;
 				}, 100);
 				return;
 			}
@@ -10597,21 +10691,30 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		_addObjects: function(objs, group){
 			
-			var tmp, k=0;
+			var tmp, k=0, o;
 			for(var i=objs.length-1; i>-1; i--){
-				tmp = this.getById(objs[i].id);
+				o = objs[i];
+				
+				if(o instanceof MT.core.MagicObject){
+					tmp = o;
+				}
+				else{
+					tmp = this.getById(o.id);
+				}
 				
 				if(!tmp ){
-					tmp = new MT.core.MagicObject(objs[i], group, this);
+					tmp = new MT.core.MagicObject(o, group, this);
 					this.loadedObjects.push(tmp);
 				}
+				
 				tmp.isRemoved = false;
-				tmp.update(objs[i], group);
-				tmp.object.z = 0;
+				tmp.update(o.data, group);
+				tmp.object.visible = tmp.isVisible;
+				//tmp.object.z = 0;
 				
 				// handle group and parents
-				if(objs[i].contents){
-					this._addObjects(objs[i].contents, tmp.object);
+				if(tmp.data.contents){
+					this._addObjects(tmp.data.contents, tmp.object);
 					continue;
 				}
 				
@@ -10738,8 +10841,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		reloadObjects: function(){
-			if(this.loadedObjects && !this._addTimeout){
-				this.addObjects(this.loadedObjects);
+			if(this.lastAddedObjects  && !this._addTimeout){
+				this.addObjects(this.lastAddedObjects);
 			}
 		},
 		
@@ -10806,7 +10909,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		_handleMouseMove: function(){
 			
 		},
-		
 		
 		set handleMouseMove(val){
 			this._handleMouseMove = val;
@@ -10882,6 +10984,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					inc = this.settings.gridY;
 				}
 			}
+			else if(e.shiftKey){
+				inc *= 10;
+			}
+			
 			
 			if(w == MT.keys.LEFT){
 				object.x -= inc;
@@ -11710,6 +11816,10 @@ MT.extend("core.BasicPlugin")(
 		},
 		save: function(){
 			
+			
+		},
+		
+		_save: function(){
 			var str = JSON.stringify(this.buffer);
 			var off = this.currentOffset;
 			
@@ -12266,7 +12376,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		openLink: function(name){
-			var w = window.open("about::blank",name || Date.now());
+			var w = window.open("about:blank",name || Date.now());
 			w.focus();
 			//w.opener = null;
 			
@@ -13092,9 +13202,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			var data = this.tv.getData();
-			var name = asset.name.split(".");
-			name.pop();
-			name = name.join("");
+			var name;
+			if(asset.atlas){
+				if(this.project.plugins.assetmanager.tmpName){
+					name = this.project.plugins.assetmanager.tmpName;
+				}
+			}
+			if(!name){
+				name = asset.name.split(".");
+				name.pop();
+				name = name.join("");
+			}
 			
 			return  {
 				assetId: asset.id,
@@ -13545,6 +13663,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		//hack
 		this.pendingFrame = -1;
+		
+		this.tmpName = "";
 	},
 	{
 		
@@ -13715,8 +13835,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				{
 					label: "Download image",
 					cb: function(){
-						console.log(that.active);
-						window.open(that.active.img.src);
+						window.open(that.active.img.origSource);
 					}
 					
 				},
@@ -13901,11 +14020,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(images.all_frames){
 					panel = this.createPreviewPanel("all_frames", panels, asset, images, true);
 					this.drawAtlasImage(panel);
+					
+					
+					
 				}
 				
 				for(var i in images){
 					panel = this.createPreviewPanel(i || "xxx", panels, asset, images, true);
 					this.drawAtlasImage(panel);
+
+					
 				}
 			}
 			else{
@@ -13957,14 +14081,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(!panels.active){
 				panels.active = panels[0];
 			}
-			panels.active.hide();
+			//panels.active.hide();
 			panels.active.show(this.preview.content.el);
-			if(panels.active.data.scrollLeft){
+			
+			
+			/*if(panels.active.data.scrollLeft){
 				panels.active.content.el.scrollLeft = panels.active.data.scrollLeft;
 			}
 			if(panels.active.data.scrollTop){
 				panels.active.content.el.scrollTop = panels.active.data.scrollTop;
-			}
+			}*/
 			
 			this.panels[asset.id] = panels;
 		},
@@ -13998,7 +14124,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				ctx: null
 			};
 			panel.data.ctx = panel.data.canvas.getContext("2d");
-			
 			if(pp){
 				pp.addJoint(panel);
 			}
@@ -14071,7 +14196,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					
 					panel.data.rectangles.push(new Phaser.Rectangle(frame.x, frame.y, pixi.width, pixi.height));
 					if(this.activeFrame == i){
-						ctx.fillStyle = "rgba(0,0,0,0.5);"
+						ctx.fillStyle = "rgba(0,0,0,0.5)";
+						
 						ctx.fillRect(frame.x,  frame.y, pixi.width, pixi.height);
 						
 						if(!active || !active.data.frames || i < active.data.frames.start ||  i > active.data.frames.end){
@@ -14128,7 +14254,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				
 				if(this.activeFrame == i){
-					ctx.fillStyle = "rgba(0,0,0,0.5);"
+					ctx.fillStyle = "rgba(0,0,0,0.5)";
 					ctx.fillRect(startX, 0, pixi.width, height);
 					if(!active || i < active.data.frames.start ||  i > active.data.frames.end){
 						panel.data.group.active = panel;
@@ -14218,6 +14344,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var lastAsset = null;
 			
 			var select = function(e){
+				
+				if(e.offsetX == void(0)){
+					e.offsetX = e.layerX;
+					e.offsetY = e.layerY;
+				}
+				
 				var frame = that.getFrame(panel.data.asset, e.offsetX, e.offsetY);
 				if(frame == that.activeFrame && that.active == panel.data.asset){
 					return;
@@ -14229,10 +14361,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(maxframe < frame){
 					return;
 				}
-				
+				/*
 				panel.data.scrollTop = panel.content.el.scrollTop;
 				panel.data.scrollLeft = panel.content.el.scrollLeft;
-				
+				*/
 				that.activeFrame = frame;
 				that.emit(MT.ASSET_FRAME_CHANGED, that.active.data, that.activeFrame);
 			};
@@ -14266,7 +14398,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var select = function(e){
 				var total = panel.data.frames.end - panel.data.frames.start  - 1;
 				var width = panel.data.canvas.width;
-				
+				if(e.offsetX == void(0)){
+					e.offsetX = e.layerX;
+					e.offsetY = e.layerY;
+				}
 				var x = e.offsetX / that.scale;
 				var y = e.offsetY / that.scale;
 				var frame = panel.data.frames.start;
@@ -14286,13 +14421,27 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(frame == that.activeFrame && that.active == panel.data.asset){
 					return;
 				}
-				
+				/*
 				panel.data.scrollTop = panel.content.el.scrollTop;
 				panel.data.scrollLeft = panel.content.el.scrollLeft;
-				
+				*/
 				that.activeFrame = frame;
 				panel.data.group.active = panel;
 				
+				if(panel.title == "all_frames"){
+					var g = panel.data.group, p;
+					for(var i=1; i<g.length; i++){
+						p = g[i];
+						if(p.data.frames.start <= frame && p.data.frames.end > frame){
+							that.tmpName = p.title;
+							break;
+						}
+					}
+					
+				}
+				else{
+					that.tmpName = panel.title;
+				}
 				that.emit(MT.ASSET_FRAME_CHANGED, panel.data.asset, frame);
 			};
 			panel.data.canvas.oncontextmenu = function(e){
@@ -14379,16 +14528,19 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.project.plugins.objectmanager.sync();
 				
 				
-				that.setPreviewAssets(data);
+				//that.setPreviewAssets(data);
 			};
 			
 			
 			tools.on(MT.OBJECT_SELECTED, function(obj){
 				if(obj){
 					that.pendingFrame = obj.frame;
-					that.selectAssetById(obj.data.assetId);
+					var asset = that.selectAssetById(obj.data.assetId);
 					
-					//that.setPreviewAssets(obj);
+					var p = that.panels[obj.data.assetId]
+					
+					
+					//that.setPreviewAssets(asset);
 				}
 			});
 			
@@ -14417,6 +14569,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			this.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
+				that.setPreviewAssets(asset);
 				if(tools.activeTool != tools.tools.select){
 					return;
 				}
@@ -14440,7 +14593,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.project.plugins.objectmanager.sync();
 				});
 				
-				that.setPreviewAssets(asset);
+				
 			});
 			
 			
@@ -14495,6 +14648,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		updateImage: function(asset, e){
+			
+			var notify = this.project.plugins.notification.show("Updating image", asset.name);
+			
 			var that = this;
 			this.project.plugins.mapeditor.cleanImage(asset.id);
 			
@@ -14514,6 +14670,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.emit(MT.ASSET_FRAME_CHANGED, asset, that.activeFrame);
 					that.active.data = asset;
 					that.send("updateImage", {asset: asset, data: data});
+					
+					that.project.plugins.mapeditor.addAtlas(asset, null, null, function(){
+						notify.hide();
+					});
 				};
 				img.src = that.toPng(fr.result);
 			});
@@ -14534,8 +14694,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				return;
 			}
 			
+			var notify = this.project.plugins.notification.show("Updating atlas", file.name);
 			this.readFile(file, function(fr){
-				that.send("addAtlas", {id: asset.id, ext: ext, data: Array.prototype.slice.call(new Uint8Array(fr.result)) });
+				asset.updated = Date.now();
+				that.send("addAtlas", {id: asset.id, ext: ext, data: Array.prototype.slice.call(new Uint8Array(fr.result)) }, function(){
+					notify.hide();
+				});
 			});
 			
 		},
@@ -14920,6 +15084,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this._input = document.createElement("input");
 		this._input.setAttribute("readonly", "readonly");
 		this._input.style.cssText = "position: fixed; top: -99999px;";
+		this._input.panel = this;
 		this.content.el.appendChild(this._input);
 		
 		if(title){
@@ -15067,8 +15232,34 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.acceptsPanels = true;
 		},
 		focus: function(){
+			console.log("panel focused");
+			this.saveScroll();
 			this._input.focus();
+			this.restoreScroll();
 		},
+		
+		saveScroll: function(){
+			if(!this.savePos){
+				this.savedPos = {
+					left: this.content.el.scrollLeft,
+					top: this.content.el.scrollTop
+				};
+			}
+			else{
+				this.savedPos.left = this.content.el.scrollLeft;
+				this.savedPos.top = this.content.el.scrollTop;
+			}
+			
+		},
+		
+		restoreScroll: function(){
+			if(!this.savedPos){
+				return;
+			}
+			this.content.el.scrollLeft = this.savedPos.left;
+			this.content.el.scrollTop = this.savedPos.top;
+		},
+		
 		addOptions: function(options){
 			this.options = {};
 			var list = this.options.list = new MT.ui.List(options, this.ui, true);
@@ -15272,9 +15463,12 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 					return;
 				}
 				that.content.y = that.header.el.offsetHeight;
+				that.restoreScroll();
+				
 			};
 			
 			align();
+			
 			
 			return this;
 		},
@@ -15759,6 +15953,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(!this.isVisible){
 				return this;
 			}
+			this.saveScroll();
+			
 			this.isVisible = false;
 			MT.ui.DomElement.hide.call(this);
 			if(noEmit != void(0)){
@@ -16001,6 +16197,11 @@ MT(
 			var cb = function(e){
 				e.x = e.x || e.pageX;
 				e.y = e.y || e.pageY;
+				
+				if(e.offsetX === void(0)){
+					e.offsetX = e.layerX;
+					e.offsetY = e.layerY;
+				}
 				
 				that.mouse.mx = e.pageX - that.mouse.x;
 				that.mouse.my = e.pageY - that.mouse.y;
@@ -19129,6 +19330,7 @@ MT.extend("core.BasicPlugin")(
 );
 //MT/plugins/SourceEditor.js
 MT.namespace('plugins');
+var defs = [];
 (function(){
 	var cmPath = "js/cm";
 	var addCss = function(src){
@@ -19138,11 +19340,40 @@ MT.namespace('plugins');
 		style.setAttribute("href", src);
 		document.head.appendChild(style);
 	};
+	
+	var defFiles = ["js/tern/defs/ecma5.json", "js/tern/defs/ecma6.json", "js/tern/defs/browser.json"];
+	
+	for(var i=0; i<defFiles.length; i++){
+		(function(i){
+			MT.loader.get(defFiles[i], function(src){
+				console.log("loaded",i);
+				defs[i] = JSON.parse(src);
+			});
+		})(i);
+	}
+	
+	
+	MT.requireFile("js/acorn/acorn.js", function(){
+		MT.requireFile("js/acorn/acorn_loose.js");
+		MT.requireFile("js/acorn/util/walk.js");
 		
+		MT.requireFile("js/tern/lib/signal.js", function(){
+			MT.requireFile("js/tern/tern.js",function(){
+				MT.requireFile("js/tern/lib/def.js", function(){
+					MT.requireFile("js/tern/lib/comment.js");
+					MT.requireFile("js/tern/lib/infer.js", function(){
+						MT.requireFile("js/tern/plugin/doc_comment.js");
+					});
+				});
+			});
+		});
+	});
+	
 	if(window.release){
 		MT.requireFile(cmPath+"/lib/codemirror-full.js",function(){
 			cmPath += "/addon";
 			
+			MT.requireFile(cmPath+"/tern/tern.js");
 			MT.requireFile(cmPath+"/scroll/scrollpastend.min.js"); 
 			MT.requireFile("js/jshint.min.js");
 			
@@ -19151,6 +19382,7 @@ MT.namespace('plugins');
 			addCss(cmPath+"/fold/foldgutter.css");
 			addCss(cmPath+"/dialog/dialog.css");
 			addCss("css/cm-tweaks.css");
+			addCss(cmPath+"/tern/tern.css");
 		});
 		return;
 	}
@@ -19172,6 +19404,8 @@ MT.namespace('plugins');
 		MT.requireFile(cmPath+"/hint/anyword-hint.js");
 		MT.requireFile(cmPath+"/hint/show-hint.js");
 		MT.requireFile(cmPath+"/hint/javascript-hint.js");
+		MT.requireFile(cmPath+"/hint/xml-hint.js");
+		MT.requireFile(cmPath+"/hint/html-hint.js");
 		
 		MT.requireFile(cmPath+"/scroll/scrollpastend.js"); //!!
 		
@@ -19181,13 +19415,16 @@ MT.namespace('plugins');
 		MT.requireFile(cmPath+"/search/match-highlighter.js");
 		MT.requireFile(cmPath+"/selection/active-line.js");
 		
+		
 		MT.requireFile("js/jshint.js");
-		//MT.requireFile("js/esprima.js");
+		MT.requireFile(cmPath+"/tern/tern.js");
+
 		
 		addCss("css/codemirror.css");
 		addCss(cmPath+"/hint/show-hint.css");
 		addCss(cmPath+"/fold/foldgutter.css");
 		addCss(cmPath+"/dialog/dialog.css");
+		addCss(cmPath+"/tern/tern.css");
 		addCss("css/cm-tweaks.css");
 		
 		
@@ -19313,10 +19550,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(!MT.core.Helper.isSource(data.path)){
 					return;
 				}
-				console.dir(e.target);
-				var item = that.tv.getOwnItem(e.target);
-				if(item && item.data.contents){
-					data.path = item.data.fullPath + data.path;
+				// not dropped file
+				if(e){
+					var item = that.tv.getOwnItem(e.target);
+					if(item && item.data.contents){
+						data.path = item.data.fullPath + data.path;
+					}
 				}
 				
 				that.uploadFile(data);
@@ -19337,10 +19576,42 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		a_receiveFiles: function(files){
 			this.tv.merge(files);
-			var data = this.tv.getData();
 			this.emit(MT.FILE_LIST_RECEIVED, files);
+			this.data = files;
+			var fo;
+			
+			fo = this.getInData("/index.html");
+			if(fo){
+				this.loadDocument(fo);
+			}
+			fo = this.getInData("/js/state/play.js");
+			if(fo){
+				this.loadDocument(fo);
+			}
+			fo = this.getInData("/js/state/menu.js");
+			if(fo){
+				this.loadDocument(fo);
+			}
+			fo = this.getInData("/js/state/load.js");
+			if(fo){
+				this.loadDocument(fo);
+			}
 		},
-		
+		getInData: function(path, cont){
+			cont = cont || this.data;
+			for(var i=0; i<cont.length; i++){
+				if(cont[i].fullPath == path){
+					return cont[i];
+				}
+				
+				if(cont[i].contents){
+					var tmp = this.getInData(path, cont[i].contents);
+					if(tmp){
+						return tmp;
+					}
+				}
+			}
+		},
 		uploadFile: function(data){
 			var tmp = data.src;
 			var that = this;
@@ -19439,8 +19710,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				n: n
 			});
 		},
-		
-		
 		
 		loadDocument: function(data, needFocus){
 			var that = this;
@@ -19591,6 +19860,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				if(!doc){
 					doc = CodeMirror.Doc(data.src, mode, 0);
+					doc.name = data.fullPath;
 					that.documents[data.fullPath].data.doc = doc;
 				}
 				
@@ -19602,7 +19872,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		loadDoc: function(panel){
-			
+			panel.show();
 			if(this.editorElement.parentNode){
 				this.editorElement.parentNode.removeChild(this.editorElement);
 			}
@@ -19803,8 +20073,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					"Ctrl-/": "toggleComment",
 					"Cmd-/": "toggleComment",
 					
-					"Ctrl-Space": function(){
+					"Ctrl-Space": function(cm){
 						that.showHints();
+						
+						// server.complete(cm);
+						
 					},
 					"Cmd-Space": function(){
 						that.showHints();
@@ -19835,13 +20108,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						alert();
 					},
 					"Ctrl-L": "gotoLine",
-					"Cmd-L": "gotoLine"
+					"Cmd-L": "gotoLine",
+					"Ctrl-Alt-Right": function(cm) { server.jumpToDef(cm); },
+					"Ctrl-Alt-Left": function(cm) { server.jumpBack(cm); },
 				},
 				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-jslint"],
 				highlightSelectionMatches: {showToken: /\w/},
 				
-				onCursorActivity: function() {
+				onCursorActivity: function(cm) {
 					editor.matchHighlight("CodeMirror-matchhighlight");
+					server.updateArgHints(cm);
 				},
 				
 				tabMode: "shift",
@@ -19870,6 +20146,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.editor.on("change", function(){
 				that.checkChanges();
+				that.showHints(true);
 			});
 			this.editor.on("keyup", function(ed, e){
 				
@@ -19882,6 +20159,37 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
+			window.server = this.server = new CodeMirror.TernServer({
+				defs: defs,
+				plugins: {doc_comment: {
+					fullDocs: true
+				}, complete_strings: {
+					maxLength: 15
+				}},
+				switchToDoc: function(name, doc) {
+					if(that.documents[doc.name]){
+						that.loadDoc(that.documents[doc.name]);
+					}
+				},
+
+				workerDeps: ["../../../acorn/acorn.js", "../../../acorn/acorn_loose.js",
+							"../../../acorn/util/walk.js", "../../../tern/lib/signal.js", "../../../tern/lib/tern.js",
+							"../../../tern/lib/def.js", "../../../tern/lib/infer.js", "../../../tern/lib/comment.js",
+							"../../../tern/plugin/doc_comment.js"],
+				workerScript: "js/cm/addon/tern/worker.js",
+				//useWorker: true
+			});
+			
+			
+			MT.loader.get(this.project.path + "/src/js/lib/phaser.js", function(data){
+				server.server.addFile("[phaser]", data);
+			});
+			MT.loader.get(this.project.path + "/src/js/lib/mt.helper.js", function(data){
+				server.server.addFile("[helper]", data);
+			});
+			
+			
+			
 			/*this.editor.on("keyHandled", function(ed, a,b,c){
 				console.log(a,b,c);
 				return;
@@ -19890,12 +20198,69 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});*/
 		},
 		
-		showHints: function(){
-			this.editor.execCommand("autocomplete");
+		showHints: function(autocall){
+			if(this.__showHints){
+				return;
+			}
+			
+			if(autocall && !this.project.data.sourceEditor.autocomplete){
+				return;
+			}
+			
+			//skipSingle = true;
+			var that = this;
+			var sel = this.editor.doc.sel;
+			var range = sel.ranges[0];
+			if(!range){
+				return;
+			}
+			var token = this.editor.getTokenAt(range.anchor);
+			token.string = token.string.trim();
+			if(autocall && token.string != "." && (!token.type || token.string == "" ) ){
+				return;
+			}
+			
+			if(this.editor.doc.mode.name != "javascript"){
+				this.__showHints = true;
+				this.editor.showHint({completeSingle: !autocall, selectFirst: !autocall});
+				window.setTimeout(function(){
+					that.__showHints = false;
+				}, 0);
+				return;
+			}
+			
+			server.getHint(this.editor, function(hints){
+				
+				if(autocall && token.string != "_"){
+					hints.list = hints.list.filter(function(a){
+						return (a.text.substring(0, 1) != "_");
+					});
+				}
+				
+				var list = hints.list;
+				for(var i=0; i<list.length; i++){
+					var hint = list[i];
+					var data = hint.data;
+					if(!data.doc){
+						continue;
+					}
+					if(data.type.indexOf("fn") !== 0){
+						continue;
+					}
+					
+					
+					data.doc = data.type.substring(2) + "\n\n" + data.doc;
+					continue;
+				}
+				
+				that.editor.showHint({hint: function(){return hints;}, completeSingle: !autocall, selectFirst: !autocall});
+			});
+			
 		},
 		
 		updateHints: function(){
 			var that = this;
+			
 			this.editor.operation(function(){
 				that.editor.clearGutter("CodeMirror-jslint");
 				if(that.editor.options.mode.name != "javascript"){
@@ -19910,6 +20275,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					loopfunc: true,
 					predef: {
 						"Phaser": false,
+						"PIXI": false,
 						"mt": false,
 						"console": false
 					},
@@ -19924,7 +20290,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.lastWorker = worker;
 				
 				worker.onmessage = function(e) {
-					console.log("jshint:", e.data[0].length);
 					var errors = e.data[0]
 					for (var i = 0; i < errors.length; ++i) {
 						var err = errors[i];
@@ -19941,12 +20306,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						text.className = "lint-error-text";
 						text.appendChild(document.createTextNode(err.reason));
 						
+						msg.className = "lint-error";
+						that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
+						
 						//var evidence = msg.appendChild(document.createElement("span"));
 						//evidence.className = "lint-error-text evidence";
 						//evidence.appendChild(document.createTextNode(err.evidence));
-						
-						msg.className = "lint-error";
-						that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
 					}
 				};
 				worker.postMessage([that.editor.getValue(), conf ]);
@@ -21136,7 +21501,7 @@ MT.extend("core.Emitter")(
 		var that = this;
 		var mDown = false;
 		
-		var activePanel = null;
+		this.activePanel = null;
 		var needResize = false;
 		var toTop = null;
 		
@@ -21174,48 +21539,48 @@ MT.extend("core.Emitter")(
 				var panel = e.target.panel || that.pickPanel(e);
 				if(!panel){
 					that.resetResizeCursor();
-					activePanel = null;
+					that.activePanel = null;
 					return;
 				}
 				toTop = panel;
 				needResize = that.checkResize(panel, e);
 				if(!e.target.panel && !needResize && !e.altKey){
-					activePanel = null;
+					that.activePanel = null;
 					return;
 				}
-				activePanel = panel;
+				that.activePanel = panel;
 				return;
 			}
 			
 			
-			if(!activePanel){
+			if(!that.activePanel){
 				return;
 			}
 			//e.preventDefault();
 			//e.stopPropagation();
 			if(needResize){
-				that.resizePanel(activePanel, e);
+				that.resizePanel(that.activePanel, e);
 				return;
 			}
 			
 			
-			if(!that.tryUnjoin(activePanel, e)){
+			if(!that.tryUnjoin(that.activePanel, e)){
 				return;
 			}
 			
-			that.movePanel(activePanel, e);
+			that.movePanel(that.activePanel, e);
 		});
 		
 		this.events.on(this.events.DBLCLICK, function(e){
 			console.log("rename");
-			if(!activePanel){
+			if(!that.activePanel){
 				return;
 			}
-			if(!activePanel.isRenamable){
+			if(!that.activePanel.isRenamable){
 				return;
 			}
 			
-			activePanel.startRename();
+			that.activePanel.startRename();
 		});
 		
 		var prevClicked = null;
@@ -21232,7 +21597,7 @@ MT.extend("core.Emitter")(
 			mDown = true;
 			
 			
-			if(!activePanel){
+			if(!that.activePanel){
 				if(toTop && !toTop.isDocked){
 					that.updateZ(toTop);
 					window.setTimeout(function(){
@@ -21248,44 +21613,44 @@ MT.extend("core.Emitter")(
 				if(e.target.data.panel !== prevClicked){
 					prevClicked = e.target.data.panel;
 				}
-				if(!activePanel.isVisible){
-					activePanel.show(null);
+				if(!that.activePanel.isVisible){
+					that.activePanel.show(null);
 				}
-				activePanel.isNeedUnjoin = true;
+				that.activePanel.isNeedUnjoin = true;
 			}
 			else{
-				activePanel.isNeedUnjoin = false;
+				that.activePanel.isNeedUnjoin = false;
 			}
 			
-			activePanel.removeClass("animated");
-			that.updateZ(activePanel);
+			that.activePanel.removeClass("animated");
+			that.updateZ(that.activePanel);
 			window.setTimeout(function(){
-				activePanel.focus();
+				that.activePanel.focus();
 			},0);
 		});
 		
 		this.events.on(this.events.MOUSEUP, function(e){
 			mDown = false;
 			
-			if(!activePanel){
+			if(!that.activePanel){
 				return;
 			}
 			e.stopPropagation();
-			activePanel.addClass("animated");
-			activePanel.isNeedUnjoin = true;
-			activePanel.mdown = false;
+			that.activePanel.addClass("animated");
+			that.activePanel.isNeedUnjoin = true;
+			that.activePanel.mdown = false;
 			
 			
-			if(activePanel.toJoinWith){
-				that.joinPanels(activePanel.toJoinWith, activePanel);
-				activePanel.setAll("toJoinWith", null);
-				activePanel.isDockNeeded = false;
+			if(that.activePanel.toJoinWith){
+				that.joinPanels(that.activePanel.toJoinWith, that.activePanel);
+				that.activePanel.setAll("toJoinWith", null);
+				that.activePanel.isDockNeeded = false;
 			}
 			
-			that.hideDockHelper(activePanel);
+			that.hideDockHelper(that.activePanel);
 			
-			activePanel.ox = 0;
-			activePanel.oy = 0;
+			that.activePanel.ox = 0;
+			that.activePanel.oy = 0;
 			
 			that.sortPanels();
 			that.update();
@@ -22007,12 +22372,13 @@ MT.extend("core.Emitter")(
 				return true;
 			}
 			
-			if(!panel.isJoinable){
+			if(!panel.isJoinable || !panel.isMovable){
 				return true;
 			}
 			if(!panel.isNeedUnjoin){
 				return true;
 			}
+			
 			
 			var mx = this.events.mouse.mx;
 			var my = this.events.mouse.my;
@@ -22696,7 +23062,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.data = {
 			backgroundColor: "#666666",
 			sourceEditor:{
-				fontSize: 12
+				fontSize: 12,
+				autocomplete: true
 			}
 		};
 		this.defaultData = JSON.stringify(this.data);
@@ -23176,7 +23543,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.setInputs = {
 				label: new MT.ui.Input(this.ui, {key: "title", type: "text"}, this.data),
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
-				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor)
+				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor),
+				autocomplete: new MT.ui.Input(this.ui, {key: "autocomplete", type: "bool"}, this.data.sourceEditor)
 			};
 			
 			
@@ -23187,6 +23555,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.setInputs.srcEdFontSize.on("change", function(val){
 				that.setUpData();
 			});
+			
 			
 			this.setFields = {
 				project: new MT.ui.Fieldset("Project"),
@@ -23215,6 +23584,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.send("saveProjectInfo", that.data);
 					that.emit("updateData", that.data);
 					that.setUpData();
+					
+					for(var i in that.setInputs){
+						that.setInputs[i].update();
+					}
+					
 				}),
 				
 				cancel: new MT.ui.Button("Cancel", "", null, function(){
@@ -23233,6 +23607,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.setButtons.resetLayout.show(this.setFields.ui.el);
 			
 			this.setInputs.srcEdFontSize.show(this.setFields.sourceEditor.el);
+			this.setInputs.autocomplete.show(this.setFields.sourceEditor.el);
 			
 			for(var i in this.setFields){
 				this.setPanel.content.el.appendChild(this.setFields[i].el);

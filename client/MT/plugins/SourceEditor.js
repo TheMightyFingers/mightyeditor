@@ -21,10 +21,27 @@ var defs = [];
 	}
 	
 	
+	MT.requireFile("js/acorn/acorn.js", function(){
+		MT.requireFile("js/acorn/acorn_loose.js");
+		MT.requireFile("js/acorn/util/walk.js");
+		
+		MT.requireFile("js/tern/lib/signal.js", function(){
+			MT.requireFile("js/tern/tern.js",function(){
+				MT.requireFile("js/tern/lib/def.js", function(){
+					MT.requireFile("js/tern/lib/comment.js");
+					MT.requireFile("js/tern/lib/infer.js", function(){
+						MT.requireFile("js/tern/plugin/doc_comment.js");
+					});
+				});
+			});
+		});
+	});
+	
 	if(window.release){
 		MT.requireFile(cmPath+"/lib/codemirror-full.js",function(){
 			cmPath += "/addon";
 			
+			MT.requireFile(cmPath+"/tern/tern.js");
 			MT.requireFile(cmPath+"/scroll/scrollpastend.min.js"); 
 			MT.requireFile("js/jshint.min.js");
 			
@@ -55,6 +72,8 @@ var defs = [];
 		MT.requireFile(cmPath+"/hint/anyword-hint.js");
 		MT.requireFile(cmPath+"/hint/show-hint.js");
 		MT.requireFile(cmPath+"/hint/javascript-hint.js");
+		MT.requireFile(cmPath+"/hint/xml-hint.js");
+		MT.requireFile(cmPath+"/hint/html-hint.js");
 		
 		MT.requireFile(cmPath+"/scroll/scrollpastend.js"); //!!
 		
@@ -65,32 +84,9 @@ var defs = [];
 		MT.requireFile(cmPath+"/selection/active-line.js");
 		
 		
-		MT.requireFile(cmPath+"/tern/tern.js");
-		
-		
-		//MT.requireFile(cmPath+"/tern/worker.js");
-		
 		MT.requireFile("js/jshint.js");
-		
-		
-		MT.requireFile("js/acorn/acorn.js", function(){
-			MT.requireFile("js/acorn/acorn_loose.js");
-			MT.requireFile("js/acorn/util/walk.js");
-			
-			MT.requireFile("js/tern/lib/signal.js", function(){
-				MT.requireFile("js/tern/tern.js",function(){
-					MT.requireFile("js/tern/lib/def.js");
-					MT.requireFile("js/tern/lib/comment.js");
-					MT.requireFile("js/tern/lib/infer.js", function(){
-						MT.requireFile("js/tern/plugin/doc_comment.js");
-					});
-				});
-			});
-			
-		});
+		MT.requireFile(cmPath+"/tern/tern.js");
 
-		
-		//aaa server.server.cx.topScope.props.PIXI
 		
 		addCss("css/codemirror.css");
 		addCss(cmPath+"/hint/show-hint.css");
@@ -222,10 +218,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(!MT.core.Helper.isSource(data.path)){
 					return;
 				}
-				console.dir(e.target);
-				var item = that.tv.getOwnItem(e.target);
-				if(item && item.data.contents){
-					data.path = item.data.fullPath + data.path;
+				// not dropped file
+				if(e){
+					var item = that.tv.getOwnItem(e.target);
+					if(item && item.data.contents){
+						data.path = item.data.fullPath + data.path;
+					}
 				}
 				
 				that.uploadFile(data);
@@ -259,6 +257,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.loadDocument(fo);
 			}
 			fo = this.getInData("/js/state/menu.js");
+			if(fo){
+				this.loadDocument(fo);
+			}
+			fo = this.getInData("/js/state/load.js");
 			if(fo){
 				this.loadDocument(fo);
 			}
@@ -832,8 +834,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}, complete_strings: {
 					maxLength: 15
 				}},
-				switchToDoc: function(name, doc) { 
-					that.loadDoc(that.documents[doc.name]);
+				switchToDoc: function(name, doc) {
+					if(that.documents[doc.name]){
+						that.loadDoc(that.documents[doc.name]);
+					}
 				},
 
 				workerDeps: ["../../../acorn/acorn.js", "../../../acorn/acorn_loose.js",
@@ -863,6 +867,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		showHints: function(autocall){
+			if(this.__showHints){
+				return;
+			}
+			
+			if(autocall && !this.project.data.sourceEditor.autocomplete){
+				return;
+			}
+			
 			//skipSingle = true;
 			var that = this;
 			var sel = this.editor.doc.sel;
@@ -876,23 +888,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				return;
 			}
 			
-			
+			if(this.editor.doc.mode.name != "javascript"){
+				this.__showHints = true;
+				this.editor.showHint({completeSingle: !autocall, selectFirst: !autocall});
+				window.setTimeout(function(){
+					that.__showHints = false;
+				}, 0);
+				return;
+			}
 			
 			server.getHint(this.editor, function(hints){
 				
-				/*if(skipSingle && hints.list.length > 20 && hints.from.ch == hints.to.ch && hints.from.line == hints.to.line){
-					return;
-				}
-				*/
-				//hints.list.reverse();
-				
-				if(autocall){
-					//if(hints.list.length > 10){
-						hints.list = hints.list.filter(function(a){
-							console.log((a.text.substring(0, 1) != "_"), a.text);
-							return (a.text.substring(0, 1) != "_");
-						});
-					//}
+				if(autocall && token.string != "_"){
+					hints.list = hints.list.filter(function(a){
+						return (a.text.substring(0, 1) != "_");
+					});
 				}
 				
 				var list = hints.list;
@@ -907,16 +917,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					}
 					
 					
-					data.doc =data.type.substring(2) + "\r\n\r\n" + data.doc;
+					data.doc = data.type.substring(2) + "\n\n" + data.doc;
 					continue;
 				}
 				
 				that.editor.showHint({hint: function(){return hints;}, completeSingle: !autocall, selectFirst: !autocall});
 			});
 			
-			
-			
-			//this.editor.execCommand("autocomplete");
 		},
 		
 		updateHints: function(){
@@ -936,6 +943,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					loopfunc: true,
 					predef: {
 						"Phaser": false,
+						"PIXI": false,
 						"mt": false,
 						"console": false
 					},
@@ -950,7 +958,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.lastWorker = worker;
 				
 				worker.onmessage = function(e) {
-					console.log("jshint:", e.data[0]);
 					var errors = e.data[0]
 					for (var i = 0; i < errors.length; ++i) {
 						var err = errors[i];
@@ -967,12 +974,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						text.className = "lint-error-text";
 						text.appendChild(document.createTextNode(err.reason));
 						
+						msg.className = "lint-error";
+						that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
+						
 						//var evidence = msg.appendChild(document.createElement("span"));
 						//evidence.className = "lint-error-text evidence";
 						//evidence.appendChild(document.createTextNode(err.evidence));
-						
-						msg.className = "lint-error";
-						that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
 					}
 				};
 				worker.postMessage([that.editor.getValue(), conf ]);

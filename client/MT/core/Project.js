@@ -25,7 +25,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.data = {
 			backgroundColor: "#666666",
 			sourceEditor:{
-				fontSize: 12
+				fontSize: 12,
+				autocomplete: true
 			}
 		};
 		this.defaultData = JSON.stringify(this.data);
@@ -505,7 +506,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.setInputs = {
 				label: new MT.ui.Input(this.ui, {key: "title", type: "text"}, this.data),
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
-				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor)
+				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor),
+				autocomplete: new MT.ui.Input(this.ui, {key: "autocomplete", type: "bool"}, this.data.sourceEditor)
 			};
 			
 			
@@ -516,6 +518,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.setInputs.srcEdFontSize.on("change", function(val){
 				that.setUpData();
 			});
+			
 			
 			this.setFields = {
 				project: new MT.ui.Fieldset("Project"),
@@ -544,6 +547,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.send("saveProjectInfo", that.data);
 					that.emit("updateData", that.data);
 					that.setUpData();
+					
+					for(var i in that.setInputs){
+						that.setInputs[i].update();
+					}
+					
 				}),
 				
 				cancel: new MT.ui.Button("Cancel", "", null, function(){
@@ -562,6 +570,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.setButtons.resetLayout.show(this.setFields.ui.el);
 			
 			this.setInputs.srcEdFontSize.show(this.setFields.sourceEditor.el);
+			this.setInputs.autocomplete.show(this.setFields.sourceEditor.el);
 			
 			for(var i in this.setFields){
 				this.setPanel.content.el.appendChild(this.setFields[i].el);

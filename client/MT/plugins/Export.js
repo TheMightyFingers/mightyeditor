@@ -82,7 +82,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		openLink: function(name){
-			var w = window.open("about::blank",name || Date.now());
+			var w = window.open("about:blank",name || Date.now());
 			w.focus();
 			//w.opener = null;
 			

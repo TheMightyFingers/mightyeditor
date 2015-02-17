@@ -8,6 +8,16 @@ Home page: http://mightyfingers.com
 
 Forum: http://www.html5gamedevs.com/forum/26-mightyeditor/
 
+Please use chrome / chromium with MightyEditor
+
+
+Requirements
+============
+*chrome / chromium browser
+*npm
+*nodejs
+
+
 set up
 ============
 

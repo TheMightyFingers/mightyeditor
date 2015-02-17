@@ -124,7 +124,10 @@ a.lint-error:hover .lint-error-text{
 	padding-top: 6px;
 }
 
-
+.CodeMirror div.CodeMirror-cursor {
+border-left: solid 2px black;
+margin-left: -1px;
+}
 
 
 

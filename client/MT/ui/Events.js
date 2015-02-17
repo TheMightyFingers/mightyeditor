@@ -97,7 +97,6 @@ MT(
 			var cb = this._mk_cb(i);
 			this._cbs.push(cb);
 			window.addEventListener(i, cb, false);
-			
 		},
 		
 		off: function(type, cb){
@@ -155,6 +154,11 @@ MT(
 			var cb = function(e){
 				e.x = e.x || e.pageX;
 				e.y = e.y || e.pageY;
+				
+				if(e.offsetX === void(0)){
+					e.offsetX = e.layerX;
+					e.offsetY = e.layerY;
+				}
 				
 				that.mouse.mx = e.pageX - that.mouse.x;
 				that.mouse.my = e.pageY - that.mouse.y;

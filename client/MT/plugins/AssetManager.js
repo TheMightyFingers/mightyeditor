@@ -571,7 +571,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					
 					panel.data.rectangles.push(new Phaser.Rectangle(frame.x, frame.y, pixi.width, pixi.height));
 					if(this.activeFrame == i){
-						ctx.fillStyle = "rgba(0,0,0,0.5);"
+						ctx.fillStyle = "rgba(0,0,0,0.5)";
+						
 						ctx.fillRect(frame.x,  frame.y, pixi.width, pixi.height);
 						
 						if(!active || !active.data.frames || i < active.data.frames.start ||  i > active.data.frames.end){
@@ -628,7 +629,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				
 				if(this.activeFrame == i){
-					ctx.fillStyle = "rgba(0,0,0,0.5);"
+					ctx.fillStyle = "rgba(0,0,0,0.5)";
 					ctx.fillRect(startX, 0, pixi.width, height);
 					if(!active || i < active.data.frames.start ||  i > active.data.frames.end){
 						panel.data.group.active = panel;
@@ -718,6 +719,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var lastAsset = null;
 			
 			var select = function(e){
+				
+				if(e.offsetX == void(0)){
+					e.offsetX = e.layerX;
+					e.offsetY = e.layerY;
+				}
+				
 				var frame = that.getFrame(panel.data.asset, e.offsetX, e.offsetY);
 				if(frame == that.activeFrame && that.active == panel.data.asset){
 					return;
@@ -766,7 +773,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var select = function(e){
 				var total = panel.data.frames.end - panel.data.frames.start  - 1;
 				var width = panel.data.canvas.width;
-				
+				if(e.offsetX == void(0)){
+					e.offsetX = e.layerX;
+					e.offsetY = e.layerY;
+				}
 				var x = e.offsetX / that.scale;
 				var y = e.offsetY / that.scale;
 				var frame = panel.data.frames.start;

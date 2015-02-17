@@ -76,17 +76,17 @@ SourceLoader.prototype = {
 		
 	},
 	
+	get: function(src, cb){
+		if(cb){cb("{}");}
+	},
+	
 	onReady: function(cb){
 		if(this.loadings !== 0){
 			return;
 		}
 		var src = "";
 		src += "window."+this.name+" = createClass('"+this.name+"')"+"\n";
-		
-		
 		for(var i=0; i<fileList.length; i++){
-			console.log("includes:", includes[i]);
-			
 			var scope = includes[i].split(".");
 			scope.pop();
 			scope = scope.join(".");

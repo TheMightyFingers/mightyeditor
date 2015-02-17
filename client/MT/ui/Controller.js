@@ -985,12 +985,13 @@ MT.extend("core.Emitter")(
 				return true;
 			}
 			
-			if(!panel.isJoinable){
+			if(!panel.isJoinable || !panel.isMovable){
 				return true;
 			}
 			if(!panel.isNeedUnjoin){
 				return true;
 			}
+			
 			
 			var mx = this.events.mouse.mx;
 			var my = this.events.mouse.my;

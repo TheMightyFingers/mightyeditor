@@ -201,8 +201,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		mDown: false,
 		
 		mouseUp: function(e){
-			console.log("UPP");
-			
 			if(this.map.activeObject){
 				this.map.activeObject.mouseUp(e.x - this.map.ox, e.y - this.map.oy, e);
 			}
