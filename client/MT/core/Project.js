@@ -204,8 +204,26 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		a_getProjectInfo: function(data){
-			for(var i in data){
-				this.data[i] = data[i];
+			MT.core.Helper.updateObject(this.data, data);
+			var that = this;
+			this.send("getOwnerInfo", null, function(data){
+				console.log("DATA@", data);
+				
+				that.setProjectTimer(data);
+				
+			});
+		},
+		setProjectTimer: function(data){
+			if(data.level > 0){
+				return;
+			}
+			
+			
+			var button = this.plugins.auth.mainButton;
+			
+			var min = new Date(Date.parse("2015-03-01"));
+			if(data.created < min.getTime()){
+				data.created = min.getTime();
 			}
 			
 			
@@ -560,7 +578,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		createSettings: function(){
 			var that = this;
-			
+			if(this.data.sourceEditor.autocomplete === void(0)){
+				this.data.sourceEditor.autocomplete = 1;
+			}
 			this.setInputs = {
 				label: new MT.ui.Input(this.ui, {key: "title", type: "text"}, this.data),
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),

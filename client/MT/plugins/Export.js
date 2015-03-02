@@ -111,7 +111,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var dots = "...";
 			var pop = new MT.ui.Popup("Export", label + dots);
 			
-			pop.el.style.width = "80%";
+			//pop.el.style.width = "80%";
 			pop.y = 150;
 			var interval = window.setInterval(function(){
 				dots += ".";
@@ -148,18 +148,25 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					correctLevel : QRCode.CorrectLevel.H
 				});
 				
-				var img = x.lastChild;
-				img.width = 32;
-				img.height = 32;
-				img.onmouseup = function(e){
+				var img1 = x.lastChild;
+				img1.style.cursor = "pointer";
+				img1.width = 32;
+				img1.height = 32;
+				img1.onmouseup = function(e){
 					console.log(e.which, e.button, e);
 					if(this.width < 256){
 						this.width = 256;
 						this.height = 256;
+						
+						img2.width = 32;
+						img2.height = 32;
 					}
 					else{
 						this.width = 32;
 						this.height = 32;
+						
+						img2.width = 256;
+						img2.height = 256;
 					}
 				};
 				
@@ -174,17 +181,25 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					correctLevel : QRCode.CorrectLevel.H
 				});
 				
-				img = x.lastChild;
-				//img.width = 32;
-				//img.height = 32;
-				img.onmouseup = function(e){
+				var img2 = x.lastChild;
+				img2.style.cursor = "pointer";
+				//img2.width = 32;
+				//img2.height = 32;
+				img2.onmouseup = function(e){
 					if(this.width < 256){
 						this.width = 256;
 						this.height = 256;
+						
+						img1.width = 32;
+						img1.height = 32;
 					}
 					else{
 						this.width = 32;
 						this.height = 32;
+						
+						img1.width = 256;
+						img1.height = 256;
+						
 					}
 				};
 				
