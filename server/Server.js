@@ -32,7 +32,7 @@ server.openSocket(function(socket){
 		});
 		return;
 	}
-	
+
 	new MT.core.Project(s, config, server);
 });
 

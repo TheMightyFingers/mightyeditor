@@ -5,16 +5,15 @@
 	if(window.release){
 		hostInInterest = "mightyeditor.mightyfingers.com";
 	}
-		// hack for miniser
+
+	// hack for miniser
 	if(typeof document != "undefined"){
 		var loading = document.createElement("div");
 		loading.className = "loading";
-		
 		window.showLoading = function(){
 			document.body.className = "login";
 			document.body.appendChild(loading);
 		};
-		
 		window.hideLoading = function(){
 			document.body.className = "";
 			if(loading.parentNode){
@@ -22,42 +21,40 @@
 			}
 		};
 	}
-
-	if(window && window.location){
+	if(!window || !window.location) {
+		load();
+		return;
+	}
 		// -copy etc
-		if(window.location.hash.indexOf("-") > 0){
-			load();
-			return;
-		}
-		
-		// check if we need to redirect
-		if(window.location.host == hostInInterest){
-			if(window.location.hash == "" || window.location.hash.substring(1, 2) == "u"){
-				var cb =  function(obj, req){
-					if(req.status != 202 && req.status != 200){
-						load();
-						return;
-					}
-					var parsed = JSON.parse(obj);
-					if(parsed.continent_code == "NA"){
-						window.location.host = "us."+window.location.host;
-					}
-					else{
-						load();
-					}
-				};
-				MT.loader.get("/geoip", cb);
-			}
-			else{
-				load();
-			}
-		}
-		else if(window.location.hash.substring(1,2) == "p" && window.location.host.substring(0, 3) == "us."){
-			window.location.host = window.location.host.substring(3);
+	if(window.location.hash.indexOf("-") > 0){
+		load();
+		return;
+	}
+
+	// check if we need to redirect
+	if(window.location.host == hostInInterest){
+		if(window.location.hash == "" || window.location.hash.substring(1, 2) == "u"){
+			var cb = function(obj, req){
+				if(req.status != 202 && req.status != 200){
+					load();
+					return;
+				}
+				var parsed = JSON.parse(obj);
+				if(parsed.continent_code == "NA"){
+					window.location.host = "us."+window.location.host;
+				}
+				else{
+					load();
+				}
+			};
+			MT.loader.get("/geoip", cb);
 		}
 		else{
 			load();
 		}
+	}
+	else if(window.location.hash.substring(1,2) == "p" && window.location.host.substring(0, 3) == "us."){
+		window.location.host = window.location.host.substring(3);
 	}
 	else{
 		load();
@@ -82,7 +79,6 @@
 			}
 		});
 	}
-	
 	function load(){
 		MT.require("core.Project");
 		MT.require("ui.Controller");
@@ -92,6 +88,4 @@
 			window.showLoading();
 		}
 	};
-	
-	
 })(window);

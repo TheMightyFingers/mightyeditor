@@ -1264,7 +1264,7 @@ span.ui-timeline-frame {
 	position: relative;
 	height: 26px;
 	border-bottom: solid 1px rgba(0, 0, 0, .5);
-}	
+}
 .ui-kf-frames.top {
 	border-top: solid 1px rgba(0, 0, 0, .5);
 }
@@ -1840,8 +1840,16 @@ a.ui-input-value.error:after {
 	float: right;
 	border: 1px solid #2ba2e0;
 	background: linear-gradient(to bottom, #36b5d0 0, #0a8489 100%);
-	
 }
+.ui-panel.top .ui-button.ui-login.expires:before {
+    content: attr(data-expires);
+    margin-right: 10px;
+    border-right: 1px solid #2ba2e0;
+    display: inline-block;
+    height: 100%;
+    padding-right: 15px;
+}
+
 
 @keyframes rotate {
 	0% {

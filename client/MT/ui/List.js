@@ -3,7 +3,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 	MT.ui.List = function(list, ui, autohide){
 		MT.ui.DomElement.call(this);
 		this._items = [];
-		
+		this.ui = ui;
 		this.setAbsolute();
 		this.addClass("ui-list");
 		
@@ -57,22 +57,39 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		reset: function(){
 			this.list = this.origList;
+			this.panel.buttons.length = 0;
+			this.panel.children.length = 0;
 			this.update();
 		},
 		addItem: function(item){
 			if(item.check && !item.check()){
 				return;
 			}
-			
-			var b = this.panel.addButton(item.label, item.className, item.cb);
-			b.el.title = item.label;
+			var b;
+			if (item.contents) {
+				var that = this;
+				item.list = new MT.ui.List(item.contents, this.ui, true);
+				item.cb = function (e) {
+					item.list.show();
+					var bounds = b.bounds;
+					item.list.x = bounds.left + bounds.width;
+					item.list.y = bounds.top;
+				};
+			}
+
+			b = this.panel.addButton(item.label, item.className, item.cb);
+			b.el.title = item.title || item.label;
 			b.style.position = "relative";
 			b.addClass("ui-list-button");
 			
 			if(item.create){
 				item.create(b);
 			}
+
+			
+
 			this._items.push(b);
+			item.button = b;
 		},
 		
 		removeItem: function(item){

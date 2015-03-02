@@ -423,9 +423,10 @@ MT.extend("core.BasicPlugin")(
 			
 			var path = this.path + this.fs.path.sep + relPath;
 			var that = this;
-			
+			var sep = this.fs.path.sep;
+
 			// do not scan libs and not sources
-			if(relPath.indexOf("src/js/lib") === 0 || relPath.indexOf("src/") !== 0){
+			if(relPath.indexOf("src" + sep + "js" + sep + "lib") === 0 || relPath.indexOf("src" + sep) !== 0){
 				that.fs.mkdir(that.fs.path.dirname(path), function(){
 					that.fs.copy(data.fullPath, path, function(err){
 						cb();
@@ -439,11 +440,10 @@ MT.extend("core.BasicPlugin")(
 				
 				for(var i in info.reg){
 					if(i == "namespace" && info.isValid){
-						src = src.replace(info.reg[i], "\."+info[i]);
+						src = src.replace(info.reg[i], "\." + info[i]);
 						continue;
 					}
 					src = src.replace(info.reg[i], info[i]);
-					
 				}
 				
 				that.fs.mkdir(that.fs.path.dirname(path), function(){
