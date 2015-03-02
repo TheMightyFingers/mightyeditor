@@ -13322,11 +13322,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
-		createGroup: function(silent){
+		createGroup: function(silent, isRoot){
 			var cont;
 			var data = this.tv.getData();
 			var map = this.project.plugins.mapeditor;
-			if(map.activeObject && map.activeObject.type == MT.objectTypes.GROUP){
+			if(!isRoot && map.activeObject && map.activeObject.type == MT.objectTypes.GROUP){
 				cont = map.activeObject.data.contents;
 			}
 			else{
@@ -13602,7 +13602,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		groupSelected: function(){
-			var folder = this.createGroup(true);
+			var folder = this.createGroup(true, true);
 			folder.isClosed = false;
 			var that = this;
 			
