@@ -22,9 +22,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					title: "Minified project sources based on Phaser.io framework",
                     className: "",
                     cb: function () {
-                        that.export("phaserMinify", function (data) {
-                        	window.location = that.project.path + "/" + data.file;
-                        });
+						that.minify();
                     }
 				},
 				{
@@ -58,9 +56,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				om.sync();
 				that.openLink("_open_game");
 			});
-
-			//this.list.removeHeader();
-			//this.list.content.overflow = "initial";
 
 		},
 
@@ -101,13 +96,46 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var path = this.project.path;
 			this.export("phaser", function(data){
 				if(w.location){
-					w.location.href = path + "/phaser/index.html";
+					w.location.href = path + "/" +data.name + "/index.html";
 					w.focus();
 				}
 			});
 
 		},
-
+		
+		minify: function(){
+			var that = this;
+			var label = "Export in progress";
+			var dots = "...";
+			var pop = new MT.ui.Popup("Export", label + dots);
+			
+			var interval = window.setInterval(function(){
+				dots += ".";
+				if(dots.length > 3){
+					dots = "";
+				}
+				pop.content.innerHTML = label + dots;
+			}, 100);
+			
+			
+			
+			this.export("phaserMinify", function (data) {
+				window.clearInterval(interval);
+				pop.showClose();
+				pop.addButton("Done", function(){pop.hide();});
+				
+				var base = window.location.origin + "/" + that.project.path + "/" + data.file;
+				
+				var link = base + "-minified/index.html";
+				
+				pop.content.innerHTML = '<div class="table">'+
+					'<a href="' + link + '" style="width: 90px" target="_blank">Open</a> <div><input value="'+link+'"  style="padding: 3px; width: 100%"/></div>';
+				link = base + '.min.zip';
+				pop.content.innerHTML += '<div class="table">'+
+					'<a href="' + link + '" style="width: 90px" target="_blank">Download</a> <div><input value="'+link+'"  style="padding: 3px; width: 100%"/></div>';
+			});
+		},
+		
 		a_complete: function(data){
 			this.emit("done", data);
 		}

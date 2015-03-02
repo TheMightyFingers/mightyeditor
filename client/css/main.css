@@ -743,6 +743,13 @@ div.ui-popup-content {
 	left: 0;
 	right: 0;
 }
+
+div.ui-popup-content p{
+	text-align: left;
+	text-indent: 10px;
+	padding: 3px;
+}
+
 div.ui-popup .ui-popup-close {
 	width: 28px;
 	height: 28px;
@@ -2312,4 +2319,16 @@ display: inline-block;
 .font-preview table{
 	font-size: 11px;
 	margin: 5px 0 10px;
+}
+
+
+.table{
+	display: table;
+	width: 100%;
+	text-align: left;
+	padding: 3px;
+}
+
+.table > *, .table-cell{
+	display: table-cell;
 }

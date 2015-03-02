@@ -6,11 +6,6 @@ MT.extend("core.BasicPlugin")(
 
 		this.fs = MT.core.FS;
 
-		var info = this.info = project.getProjectInfo();
-
-		console.log("ZIP name:", info);
-
-		this.zipName = info.title + ".zip";
 		this.index = "index.html";
 		this.phaserSrc = "phaser.js";
 		this.phaserMinSrc = "phaser.min.js";
@@ -25,14 +20,29 @@ MT.extend("core.BasicPlugin")(
 		this.assetsPath = "assets";
 
 		this.sep = this.fs.path.sep;
-		this.dir = this.project.path + this.sep + this.phaserPath;
 
 		this.idList = {};
 	},
 	{
+		
+		_dir: "",
+		get dir(){
+			
+			
+			
+			return this.project.path + this.sep + this.name;
+		},
+		
+		get name(){
+			var info = this.project.getProjectInfo();
+			var name = info.namespace;
+			name = name.replace(/\W+/g, "_");
+			return name;
+		},
+		
 		a_phaserDataOnly: function(){
 			var that = this;
-
+		
 			this.phaserDataOnly(function(err, localFilePath, filePath){
 				that.send("complete",{
 					file: localFilePath,
@@ -53,6 +63,8 @@ MT.extend("core.BasicPlugin")(
 		},
 
 		phaserDataOnly: function(cb, contents){
+			this.zipName = this.name + ".zip";
+			
 			var that = this;
 			this.fs.mkdir(this.dir);
 			var data;
@@ -128,18 +140,26 @@ MT.extend("core.BasicPlugin")(
 
 		a_phaser: function(){
 			var that = this;
+			
+			
+			
 			this.fs.rmdir(this.dir);
 			this.fs.rm(this.project.path + this.sep +  this.zipName);
 
 
 			this.fs.mkdir(this.dir);
 			this.fs.mkdir(this.dir + this.sep + this.assetsPath);
-
+			
+			
+			
+			
 			this.phaser(function(error, stdout, stderr){
 			    //zip -9 -r <zip file> <folder name>
+				
 			    exec("zip -9 -r ../" + that.zipName + " ./", { cwd: that.dir }, function () {
 			        that.send("complete", {
 			            file: that.zipName,
+						name: that.name,
 			            action: "phaser"
 			        });
 			    });
@@ -154,13 +174,20 @@ MT.extend("core.BasicPlugin")(
 
 		    this.fs.mkdir(this.dir);
 		    this.fs.mkdir(this.dir + this.sep + this.assetsPath);
-
+			
+			var info = this.info = this.project.getProjectInfo();
+			
 		    this.phaser(function (error, stdout, stderr) {
-		        that.minify(function(){
-		            that.send("complete", {
-		                file: that.zipName,
-		                action: "phaser"
-		            });
+		        that.minify(function(dir){
+						that.zipName = info.title;
+						
+						exec("zip -9 -r ../" + that.zipName + ".min.zip ./", { cwd: dir }, function () {
+							that.send("complete", {
+								file: that.zipName,
+								name: that.name + "-minified",
+								action: "phaser"
+							});
+						});
 		        });
 		    });
 		},
@@ -179,7 +206,7 @@ MT.extend("core.BasicPlugin")(
 			var indexFile = "index.html";
 
 
-			var miniPath = MT.core.FS.path.normalize(this.project.path + this.sep + "minified" + this.sep);
+			var miniPath = MT.core.FS.path.normalize(this.project.path + this.sep + name + "-minified" + this.sep);
 
 
 			this.fs.readFile(index, function(err, cont){
@@ -240,9 +267,10 @@ MT.extend("core.BasicPlugin")(
 						currentTag = tags.pop();
 
 						if(currentTag == "link"){
-							if(linkAttribs.href && linkAttribs.href.substring(linkAttribs.href.length - 3) === "css"
-								&& linkAttribs.href.substring(linkAttribs.href.length - 7, linkAttribs.href.length - 4) !== "min"){
-								styles.push(linkAttribs.href);
+							var h = linkAttribs.href;
+							
+							if(h && h.substring(h.length - 3) === "css" && h.substring(h.length - 7, h.length - 4) !== "min" && h.substring(0, 4) != "http"){
+								styles.push(h);
 								return;
 							}
 							html += "<link ";
@@ -254,8 +282,9 @@ MT.extend("core.BasicPlugin")(
 						}
 
 						if(currentTag == "script"){
-							if(scriptAttribs.src && scriptAttribs.src.substring(scriptAttribs.src.length - 6, scriptAttribs.src.length - 3) !== "min"){
-								scripts.push(that.dir + that.fs.path.sep + scriptAttribs.src);
+							var s = scriptAttribs.src;
+							if(s && s.substring(s.length - 6, s.length - 3) !== "min" && s.substring(0, 4) != "http"){
+								scripts.push(that.dir + that.fs.path.sep + s);
 								return;
 							}
 
@@ -277,6 +306,7 @@ MT.extend("core.BasicPlugin")(
 						else{
 							html += "</"+tag+">";
 						}
+						
 						if(!linkAdded && tag == "title"){
 							html += '<link rel="stylesheet" type="text/css" href="'+cssFileName+'" />';
 						}
@@ -319,7 +349,9 @@ MT.extend("core.BasicPlugin")(
 					MT.core.FS.copy(that.dir, miniPath);
 					MT.core.FS.writeFile(miniPath + jsFileName, code);
 					MT.core.FS.writeFile(miniPath + cssFileName, css);
-					MT.core.FS.writeFile(miniPath + indexFile, html);
+					MT.core.FS.writeFile(miniPath + indexFile, html, function(){
+						if(cb){cb(miniPath);}
+					});
 					//MT.core.FS.copy(that.dir + );
 				};
 				todo++;
