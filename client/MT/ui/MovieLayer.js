@@ -124,6 +124,10 @@ MT.extend("ui.Keyframes")(
 				
 			}
 			
+			if(!data.info){
+				data.info = {};
+			}
+			
 			frames.push({keyframe: this.mm.activeFrame, length: data.info.lastFrame});
 			
 			this.mm.sortFrames(frames);
