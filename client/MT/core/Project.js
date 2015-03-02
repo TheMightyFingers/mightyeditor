@@ -207,6 +207,64 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			for(var i in data){
 				this.data[i] = data[i];
 			}
+			
+			
+			var diff = Date.now() - data.now;
+			
+			//var 
+			button.addClass("expires");
+			button.el.title = "Project will expire";
+			this.updateExpireTime(button, data.created, diff);
+			
+			
+		},
+		
+		updateExpireTime: function(button, created, off){
+			
+			var second = 1000;
+			var minute = 60 * second;
+			var hour = 60 * minute;
+			var day = 24 * hour;
+			
+			var expire = (30 * day + (created)) - Date.now() + off;
+			
+			var dd = "", hh = "", mm = "", ss = "";
+			
+			var days = Math.floor(expire / day);
+			if(days){
+				dd = days + "";
+			}
+			
+			var hoursR = (expire - days * day)
+			
+			var hours = Math.floor(hoursR / hour);
+			
+			hh = hours+"";
+			while(hh.length < 2){
+				hh = "0"+hh;
+			}
+			
+			var minutesR = (hoursR - hours * hour);
+			var minutes = Math.floor(minutesR / minute);
+			mm = minutes + "";
+			while(mm.length < 2){
+				mm = "0"+mm;
+			}
+			
+			
+			var secondsR = (minutesR - minutes * minute);
+			var seconds = Math.floor(secondsR / second);
+			ss = seconds + "";
+			while(ss.length < 2){
+				ss = "0"+ss;
+			}
+			
+			button.el.setAttribute("data-expires", dd + "d" + " " + hh + ":" + mm + ":" + ss);
+			
+			var that = this;
+			window.setTimeout(function(){
+				that.updateExpireTime(button, created, off);
+			}, 1000);
 		},
 		
 		a_goToHome: function(){
