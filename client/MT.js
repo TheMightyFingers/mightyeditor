@@ -12308,6 +12308,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 );
 //MT/plugins/Export.js
 MT.namespace('plugins');
+MT.requireFile("js/qrcode.min.js");
+
 MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	MT.plugins.Export = function(project){
 		MT.core.BasicPlugin.call(this, "Export");
@@ -12419,6 +12421,8 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var dots = "...";
 			var pop = new MT.ui.Popup("Export", label + dots);
 			
+			pop.el.style.width = "80%";
+			pop.y = 150;
 			var interval = window.setInterval(function(){
 				dots += ".";
 				if(dots.length > 3){
@@ -12436,13 +12440,64 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				var base = window.location.origin + "/" + that.project.path + "/" + data.file;
 				
-				var link = base + "-minified/index.html";
+				var link1 = base + "-minified/index.html";
+				var link2 = base + '.min.zip';
 				
 				pop.content.innerHTML = '<div class="table">'+
-					'<a href="' + link + '" style="width: 90px" target="_blank">Open</a> <div><input value="'+link+'"  style="padding: 3px; width: 100%"/></div>';
-				link = base + '.min.zip';
+					'<a href="' + link1 + '" style="width: 90px" target="_blank">Open</a><input value="'+link1+'"  style="padding: 3px; width: 100%" /></div><div id="link1"></div>';
 				pop.content.innerHTML += '<div class="table">'+
-					'<a href="' + link + '" style="width: 90px" target="_blank">Download</a> <div><input value="'+link+'"  style="padding: 3px; width: 100%"/></div>';
+					'<a href="' + link2 + '" style="width: 90px" target="_blank">Download</a><input value="'+link2+'"  style="padding: 3px; width: 100%" /></div><div id="link2"></div>';
+				
+				var x = document.getElementById("link1");
+				var qrcode = new QRCode(x, {
+					text: link1,
+					width: 256,
+					height: 256,
+					colorDark : "#000000",
+					colorLight : "#ffffff",
+					correctLevel : QRCode.CorrectLevel.H
+				});
+				
+				var img = x.lastChild;
+				img.width = 32;
+				img.height = 32;
+				img.onmouseup = function(e){
+					console.log(e.which, e.button, e);
+					if(this.width < 256){
+						this.width = 256;
+						this.height = 256;
+					}
+					else{
+						this.width = 32;
+						this.height = 32;
+					}
+				};
+				
+				
+				x = document.getElementById("link2");
+				qrcode = new QRCode(x, {
+					text: link2,
+					width: 256,
+					height: 256,
+					colorDark : "#000000",
+					colorLight : "#ffffff",
+					correctLevel : QRCode.CorrectLevel.H
+				});
+				
+				img = x.lastChild;
+				//img.width = 32;
+				//img.height = 32;
+				img.onmouseup = function(e){
+					if(this.width < 256){
+						this.width = 256;
+						this.height = 256;
+					}
+					else{
+						this.width = 32;
+						this.height = 32;
+					}
+				};
+				
 			});
 		},
 		
@@ -23299,6 +23354,64 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			for(var i in data){
 				this.data[i] = data[i];
 			}
+			
+			
+			var diff = Date.now() - data.now;
+			
+			//var 
+			button.addClass("expires");
+			button.el.title = "Project will expire";
+			this.updateExpireTime(button, data.created, diff);
+			
+			
+		},
+		
+		updateExpireTime: function(button, created, off){
+			
+			var second = 1000;
+			var minute = 60 * second;
+			var hour = 60 * minute;
+			var day = 24 * hour;
+			
+			var expire = (30 * day + (created)) - Date.now() + off;
+			
+			var dd = "", hh = "", mm = "", ss = "";
+			
+			var days = Math.floor(expire / day);
+			if(days){
+				dd = days + "";
+			}
+			
+			var hoursR = (expire - days * day)
+			
+			var hours = Math.floor(hoursR / hour);
+			
+			hh = hours+"";
+			while(hh.length < 2){
+				hh = "0"+hh;
+			}
+			
+			var minutesR = (hoursR - hours * hour);
+			var minutes = Math.floor(minutesR / minute);
+			mm = minutes + "";
+			while(mm.length < 2){
+				mm = "0"+mm;
+			}
+			
+			
+			var secondsR = (minutesR - minutes * minute);
+			var seconds = Math.floor(secondsR / second);
+			ss = seconds + "";
+			while(ss.length < 2){
+				ss = "0"+ss;
+			}
+			
+			button.el.setAttribute("data-expires", dd + "d" + " " + hh + ":" + mm + ":" + ss);
+			
+			var that = this;
+			window.setTimeout(function(){
+				that.updateExpireTime(button, created, off);
+			}, 1000);
 		},
 		
 		a_goToHome: function(){
