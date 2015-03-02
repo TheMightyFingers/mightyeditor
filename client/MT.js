@@ -12425,7 +12425,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					dots = "";
 				}
 				pop.content.innerHTML = label + dots;
-			}, 100);
+			}, 300);
 			
 			
 			
