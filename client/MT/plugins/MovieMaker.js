@@ -26,6 +26,22 @@ MT.extend("core.Emitter")(
 		get frameSize(){
 			return this._frameSize*this.scale;
 		},
+		
+		_keyframes: null,
+		set keyframes(val){
+			this._keyframes = val;
+			if(val == this.keyframesMain){
+				this.location.style.display = "none";
+			}
+			else{
+				this.location.style.display = "block";
+			}
+			
+		},
+		get keyframes(){
+			return this._keyframes;
+		},
+		
 		initUI: function(ui){
 			this.ui = ui;
 			this.panel = this.ui.createPanel("timeline");
@@ -56,10 +72,26 @@ MT.extend("core.Emitter")(
 			this.settings = this.ui.createPanel("Easing");
 			this.settings.setFree();
 			
+			this.location = document.createElement("div");
+			this.location.className = "ui-movie-location";
+			this.location.innerHTML = "Back";
+			this.location.style.display = "none";
 			
-			this.location = new MT.ui.DomElement("div");
-			this.location.addClass("ui-movie-location");
-			this.location.el.innerHTML = "";
+			this.panel.content.el.appendChild(this.location);
+			
+			this.location.onclick = function(){
+				that.location.style.display.block;
+				var selected = that.map.activeObject;
+				
+				var d = that.data;
+				
+				that.clear();
+				that.createMainMovie();
+				that.keyframes.reactivate();
+			};
+			
+			
+			
 		},
 		
 		genEasings: function(eas, label, buffer){
@@ -171,6 +203,7 @@ MT.extend("core.Emitter")(
 				if(e.which == MT.keys.ESC){
 					that.clear();
 					that.createMainMovie();
+					that.keyframes.reactivate();
 					return;
 				}
 			});
@@ -289,6 +322,8 @@ MT.extend("core.Emitter")(
 			
 			
 			this.keyframesMain = new MT.ui.MovieLayer(this, 60);
+			this.keyframesMain.hideDelete();
+			
 			this.keyframesMain.on("select", function(data){
 				that.forwardObjectSelect(data);
 			});
@@ -374,7 +409,7 @@ MT.extend("core.Emitter")(
 			this.frameControl.build();
 			this.frameControl.el.show(this.rightPanel.content.el);
 			
-			this.panel.content.el.appendChild(this.location.el);
+			//this.panel.content.el.appendChild(this.location.el);
 			
 		},
 		hideHelpers: function(){
@@ -386,7 +421,7 @@ MT.extend("core.Emitter")(
 			this.frameControl.hide();
 			
 			this.sidebar.hide();
-			this.location.hide();
+			//this.location.hide();
 		},
    
 		clear: function(){
@@ -408,6 +443,7 @@ MT.extend("core.Emitter")(
 			
 			this.leftPanel.fitIn();
 			this.leftPanel.width = 270;
+			this.leftPanel.style.top = 19+"px";
 			this.leftPanel.style.setProperty("border-right", "none 1px #000");
 			this.leftPanel.isResizeable = true;
 			this.leftPanel.removeHeader();
@@ -424,11 +460,6 @@ MT.extend("core.Emitter")(
 			this.rightPanel.removeClass("animated");
 			
 			
-			this.leftPanel.el.style.position = "relative";
-			this.leftPanel.content.el.style.position = "relative";
-			this.leftPanel.content.el.style["min-height"] = "100%";
-			
-			
 			this.leftPanel.content.style.overflow = "visible";
 			this.rightPanel.content.style.overflow = "visible";
 			
@@ -441,9 +472,13 @@ MT.extend("core.Emitter")(
 			// 1 - moveFrame;
 			var action = 0;
 			
-			
-			
-			this.rightPanel._input.onkeyup = function(e){
+			this.ui.events.on(this.ui.events.KEYUP, function(e){
+				var p = that.ui.pickPanelGlobal();
+				if(p != that.panel && p != that.leftPanel && p != that.rightPanel){
+					return;
+				}
+				
+				
 				if(e.which == MT.keys.DELETE){
 					that.removeFrame(activeFrame);
 					e.preventDefault();
@@ -471,16 +506,22 @@ MT.extend("core.Emitter")(
 					if(e.which == MT.keys.C){
 						//copy frame;
 						that.copyFrame(activeFrame);
+						e.preventDefault();
+						e.stopPropagation();
 					}
 					if(e.which == MT.keys.X){
 						//copy frame;
 						that.cutFrame(activeFrame);
+						e.preventDefault();
+						e.stopPropagation();
 					}
 					if(e.which == MT.keys.V){
 						that.pasteFrame();
+						e.preventDefault();
+						e.stopPropagation();
 					}
 				}
-			};
+			}, true);
 			
 			// global shortcuts
 			this.ui.events.on(this.ui.events.KEYUP, function(e){
@@ -573,9 +614,6 @@ MT.extend("core.Emitter")(
 				sl.change(that.ui.events.mouse.mx);
 				that.changeFrame((sl - that.frameOffset) / that.frameSize + that.startFrame);
 				if(action == 1 && activeFrame){
-					
-					console.log(that.activeFrame, startFrame);
-					
 					if(that.moveFrame(that.selectedFrame, activeFrame, that.selectedFrame.keyframe - (startFrame - that.activeFrame))){
 						startFrame = that.activeFrame;
 					}
@@ -620,18 +658,23 @@ MT.extend("core.Emitter")(
 				}
 				return;
 			}
+			this.selectObjectForce(obj);
+			
+			
+			
+			//this.location.el.innerHTML = obj.name;
+			/*var p = this.keyframes.panels[this.keyframes.activeMovie];
+			if(p){
+				p.x = this.location.width;
+			}*/
+		},
+		
+		selectObjectForce: function(obj){
 			this.hide();
 			this.keyframes = this.keyframesSub;
 			this.setActive(obj);
-			
-			
-			this.location.el.innerHTML = obj.name;
-			var p = this.keyframes.panels[this.keyframes.activeMovie];
-			if(p){
-				p.x = this.location.width;
-			}
 		},
-   
+		
 		addMovie: function(item, name){
 			
 			if(item && name){
@@ -663,6 +706,11 @@ MT.extend("core.Emitter")(
 			this.keyframes = this.keyframesSub;
 			this.setActive(this.data);
 			this.showHelpers();
+			this.keyframes.setActiveMovie(name);
+			var that = this;
+			window.setTimeout(function(){
+				that.keyframes.update();
+			});
 		},
    
 		__addMovie: function(item, name){
@@ -1075,7 +1123,7 @@ MT.extend("core.Emitter")(
 			this.keyframes.hide();
 			this.keyframes = this.keyframesMain;
 			
-			this.location.el.innerHTML = "Main Timeline";
+			//this.location.el.innerHTML = "Main Timeline";
 			
 			this.mainMovie = {
 				name: this.mainName,

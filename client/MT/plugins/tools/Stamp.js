@@ -107,7 +107,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseUp: function(e){
-			//console.log("upp", e);
+			
 		},
 		
 		deactivate: function(){

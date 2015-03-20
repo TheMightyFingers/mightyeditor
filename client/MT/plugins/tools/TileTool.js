@@ -292,8 +292,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 		},
 		updatePreview: function(asset){
-			console.log("update");
-			console.log(this.panels);
 			this.drawImage(this.panels[asset.id]);
 		},
 		getTileX: function(tile, width){
@@ -334,9 +332,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var maxX = Math.floor( o.width / o.frameWidth);
 			
 			var frame = gx + maxX * gy;
-			
-			console.log(frame, "frame");
-			
 			return frame;
 		},
 		
@@ -546,7 +541,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 							this.activePanel.show();
 						}
 					}
-					//console.log(this.active.data.images);
 				}
 			}
 			if(this.activePanel){

@@ -144,9 +144,14 @@ MT.extend("core.BasicPlugin")(
 			this.checkLocalStorageCapacity();
 			this.currentOffset = 0;
 		},
+		lastSave: 0,
 		save: function(){
 			
-			
+			if(Date.now() - this.lastSave > 100){
+				this._save();
+				this.lastSave = Date.now();
+			}
+			console.log("save");
 		},
 		
 		_save: function(){

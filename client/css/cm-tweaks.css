@@ -19,7 +19,7 @@ div.CodeMirror span.CodeMirror-matchingbracket {
 
 .CodeMirror {
 	background: rgba(255, 255, 255, 0.6);
-	height: auto;
+	height: 100%;
 }
 .CodeMirror-scroll {
 margin-right: 0px;

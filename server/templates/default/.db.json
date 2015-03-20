@@ -117,6 +117,26 @@
 					"id": 4,
 					"fullPath": "/Loading",
 					"isClosed": true
+				},
+				{
+					"__image": "launcher.png",
+					"id": "launcher",
+					"name": "launcher.png",
+					"path": "/launcher.png",
+					"fullPath": "/launcher.png",
+					"key": "/launcher.png",
+					"width": 128,
+					"height": 128,
+					"frameWidth": 128,
+					"frameHeight": 128,
+					"frameMax": -1,
+					"margin": 0,
+					"spacing": 0,
+					"anchorX": 0,
+					"anchorY": 0,
+					"fps": 10,
+					"updated": 1406817915034,
+					"atlas": ""
 				}
 			],
 			"count": 4

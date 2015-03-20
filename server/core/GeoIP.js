@@ -15,6 +15,9 @@ MT.core.GeoIP = function(server, hostInIterest){
 			// address = "198.100.30.134";
 			// Synchronous method(the recommended way):
 			var country_obj = country.lookupSync(address);
+			if(!country_obj){
+				country_obj = {};
+			}
 			country_obj.ip = address;
 			res.writeHead(200);
 			res.end(JSON.stringify(country_obj));

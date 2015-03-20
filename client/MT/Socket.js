@@ -34,11 +34,9 @@ MT.extend("core.Emitter")(
 			var that = this;
 			
 			this.ws = new WebSocket(this.url);
-			console.log("connecting....");
 			this.ws.binaryType = "arraybuffer";
 			
 			this.ws.onopen = function(e){
-				console.log("connected");
 				that.emit("core","open");
 			};
 			
@@ -64,7 +62,6 @@ MT.extend("core.Emitter")(
 			};
 			
 			this.ws.onclose = function(){
-				console.log("WS close");
 				that.emit("core","close");
 				window.setTimeout(function(){
 					that.connect();

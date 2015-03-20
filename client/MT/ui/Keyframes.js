@@ -25,6 +25,17 @@ MT.extend("core.Emitter")(
 		this.tv = new MT.ui.TreeView([], {root: pp.path});
 		this.tv.tree.addClass("ui-keyframes-tree");
 		
+		this.tv.on("dblclick", function(e, item){
+			//that.emit("select",item.data);
+			var d = item.data;
+			var movie;
+			if(d.submovie){
+				movie = d.name;
+			}
+			mm.selectObjectForce(mm.om.getById(d.objectId || d.id));
+			mm.keyframes.setActiveMovie(movie);
+		});
+		
 		
 		this.scrollTop = 0;
 		this.tv.tree.el.onscroll = function(){
@@ -34,7 +45,9 @@ MT.extend("core.Emitter")(
 			
 		};
 		
+		this.lastSelect = [];
 		var select = function(data, el){
+			that.lastSelect.push([select, data, el]);
 			if(data.isMovie){
 				that.unselect();
 				that.active = el;
@@ -57,7 +70,7 @@ MT.extend("core.Emitter")(
 			that.showFrames();
 			
 			that.updateTree(data);
-		}
+		};
 		
 		this.tv.on("click", function(data, el){
 			select(data, el);
@@ -104,7 +117,12 @@ MT.extend("core.Emitter")(
 	},
 	{
 		activeMovie: "",
-		
+		reactivate: function(){
+			var sel = this.lastSelect.pop();
+			if(sel){
+				sel[0](sel[1], sel[2]);
+			}
+		},
 		getMovie: function(){
 			if(!this.data || !this.data.movies){
 				return null;
@@ -177,6 +195,10 @@ MT.extend("core.Emitter")(
 			this.showFrames();
 		},
 		
+		update: function(){
+			this.hideFrames();
+			this.showFrames();
+		},
 		createPanel: function(name, pp){
 			var p = this.panels[name];
 			if(p){
@@ -196,12 +218,10 @@ MT.extend("core.Emitter")(
 				p.fitIn();
 			}
 			p.el.style.height = "18px";
+			p.el.style.paddingLeft = "70px";
 			var that = this;
 			p.on("show", function(){
-				that.activeMovie = p.name;
-				that.mm.changeFrame(0);
-				that.fpsInput.setObject(that.data.movies[that.activeMovie].info);
-				that.updateFrames();
+				that.setActiveMovie(p.name, true);
 			});
 			p.on("rename", function(n, o){
 				that.rename(n, o);
@@ -237,6 +257,7 @@ MT.extend("core.Emitter")(
 				this.activeMovie = newName;
 			}
 			this.updateFrames();
+			this.mm.om.sync();
 		},
 		
 		removeConf: function(name){
@@ -261,12 +282,12 @@ MT.extend("core.Emitter")(
 				movie = item.movies[name];
 				delete item.movies[name];
 			}
-			
-			this.panels[name].close();
-			
+			if(this.panels[name]){
+				this.panels[name].close();
+			}
 			
 			var k = Object.keys(this.data.movies);
-			if(!k.length){
+			if(!k.length || (k.length == 1 && k[0] == "__main") ){
 				this.mm.clear();
 				this.activeMovie = null;
 				this.mm.activeMovie = null;
@@ -442,7 +463,7 @@ MT.extend("core.Emitter")(
 		},
 		
 		makeControls: function(){
-			//console.log("make controls", this.tv.items[0]);
+			
 		},
 		
 		
@@ -649,6 +670,12 @@ MT.extend("core.Emitter")(
 			};
 			this.controls = c;
 		},
+		
+		hideDelete: function(){
+			console.log("hide DELETE!");
+			this.controls.delete.style.display = "none";
+		},
+		
 		getLastFrame: function(){
 			
 			var movie = this.getMovie();
@@ -866,12 +893,11 @@ MT.extend("core.Emitter")(
 		},
 		
 		markActive: function(data){
-			console.log("mark active",data);
 			
 		},
 		
 		addEvents: function(){
-			console.log("add Events");
+			
 		},
 		
 		setActiveFrame: function(index){
@@ -885,7 +911,20 @@ MT.extend("core.Emitter")(
 			this.emit("frameChanged", this.active);
 		},
 		
-
+		setActiveMovie: function(name, fromPanel){
+			if(!this.data.movies || !this.data.movies[name]){
+				console.log("SHOW?", this.panels);
+				return;
+			}
+			
+			this.activeMovie = name;
+			this.mm.changeFrame(0);
+			this.fpsInput.setObject(this.data.movies[this.activeMovie].info);
+			this.updateFrames();
+			if(!fromPanel){
+				this.panels[name].show();
+			}
+		},
 
 
 	}

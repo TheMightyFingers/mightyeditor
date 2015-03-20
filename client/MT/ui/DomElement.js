@@ -149,7 +149,6 @@ MT(
 			this._x = val;
 			this.style.left = val+"px";
 			//this.width = this._width;
-			
 			//this.style.transform =  "translate(" + this.y + "px," + this.y + "px)";
 		},
    
@@ -167,7 +166,7 @@ MT(
 		
 		setY: function(val){
 			this._y = val;
-			this.style.top = val;
+			this.style.top = val+"px";
 			//this.style.transform =  "translate(" + this.x + "px," + this.y + "px)";
 		},
    
@@ -307,7 +306,14 @@ MT(
 		sort: function(a,b){
 			return a.index - b.index;
 		},
-   
+		
+		addChildFast: function(child, index){
+			if(index !== void(0)){
+				child.index = index;
+			}
+			this.children.push(child);
+			return child;
+		},
 		addChild: function(child, index){
 			child.index = index;
 			this.children.push(child);

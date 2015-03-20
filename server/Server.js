@@ -11,6 +11,7 @@ MT.require("core.GeoIP");
 MT.require("core.Exporter");
 MT.require("plugins.Auth");
 MT.require("plugins.Postman");
+MT.require("core.Queue");
 
 
 var config = (process.env.RELEASE ? require("./config.js").config : require("./config-dev.js").config);
@@ -18,8 +19,10 @@ var config = (process.env.RELEASE ? require("./config.js").config : require("./c
 var sm = new MT.core.ShutdownManager(config),
 	server = new MT.http.Httpd(config),
 	auth = MT.plugins.Auth;
+	
+global.postman = new MT.plugins.Postman(config);
 
-auth.init(server, config);
+auth.init(server, postman, config);
 
 MT.core.Project.started = Date.now();
 
@@ -33,7 +36,7 @@ server.openSocket(function(socket){
 		return;
 	}
 
-	new MT.core.Project(s, config, server);
+	new MT.core.Project(s, config, server, postman);
 });
 
 

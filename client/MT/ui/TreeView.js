@@ -43,7 +43,7 @@ MT.extend("core.Emitter")(
 		create: function(data){
 			this.tree = new MT.ui.DomElement();
 			this.tree.style.position = "relative";
-			this.tree.addClass("ui-treeView");
+			this.tree.addClass("ui-treeview");
 			
 			this.updateFullPath(data);
 			
@@ -297,8 +297,6 @@ MT.extend("core.Emitter")(
 				im.src = im.origSource = that.cache[src];
 				return;
 			}
-			
-			console.log("redraw image");
 			
 			var img = new Image();
 			im.updated = data.updated;
@@ -919,6 +917,7 @@ MT.extend("core.Emitter")(
 			
 			if(data.length !== 0){
 				this.tree.show();
+				this.tree.children.forEach(function(c){c.show();});
 			}
 			this.tree.el.scrollTop = scroll;
 		},

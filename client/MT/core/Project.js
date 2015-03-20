@@ -20,6 +20,7 @@ MT.DROP = "drop";
  
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.core.Project = function(ui, socket){
+		var that = this;
 		MT.core.BasicPlugin.call(this, "Project");
 		this.isReady = false;
 		this.data = {
@@ -80,11 +81,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		this.initSocket(socket);
 		this.ui.events.on("hashchange", function(){
-			console.log("hash changed", "reload?");
-			window.location.reload();
+			if(!that.preventReload){
+				window.location.reload();
+			}
 		});
 	},
 	{
+		preventReload: false,
 		a_maintenance: function(data){
 			var seconds = data.seconds;
 			var content = "System will go down for maintenance in ";
@@ -128,7 +131,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		a_selectProject: function(info){
 			this.id = info.id;
+			this.preventReload = true;
 			window.location.hash = info.id;
+			
+			var that = this;
+			window.setTimeout(function(){
+				that.preventReload = false;
+			}, 1000);
+			
 			this.path = "data/projects/"+info.id;
 			
 			this.a_getProjectInfo(info);
@@ -146,73 +156,47 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 		},
 		
-		setUpData: function(){
-			document.body.style.backgroundColor = this.data.backgroundColor;
-			this.emit("updateData", this.data);
-		},
-		
 		a_newProject: function(){
 			this.newProject();
 		},
 		
 		a_needUpdate: function(){
-			var that = this;
-			var pop = new MT.ui.Popup("Update Project", "");
-			pop.removeHeader();
-			
-			pop.el.style.width = "50%";
-			pop.el.style.height= "40%";
-			pop.el.style["min-height"] = "200px"
-			pop.el.style.top= "20%";
-			
-			
-			var p = new MT.ui.Panel("Update Project");
-			
-			p.hide().show(pop.content).fitIn();
-			p.removeBorder();
-			
-			var cont = document.createElement("div");
-			cont.innerHTML = "Enter project title";
-			cont.style.margin = "20px 10px";
-			p.content.el.appendChild(cont);
-			
-			
-			
-			var prop = {
-				title: "New Game",
-				namespace: "NewGame"
-			};
-			
-			var iName = new MT.ui.Input(this.ui, {key: "title", type: "text"}, prop);
-			var iNs = new MT.ui.Input(this.ui, {key: "namespace", type: "text"}, prop);
-			
-			iName.show(p.content.el);
-			iNs.show(p.content.el);
-			
-			iName.enableInput();
-			
-			iName.on("change", function(n, o){
-				iNs.setValue(n.replace(/\W/g, ''));
+			this.showProjectInfo({
+				cb: function(prop){
+					that.send("updateProject", prop);
+				},
+				title: "Update project",
+				description: "Enter project title",
+				button: "Upate"
 			});
-			
-			
-			pop.addButton("Update", function(){
-				that.send("updateProject", prop);
-				pop.hide();
-			});
-			
 		},
 		
 		a_getProjectInfo: function(data){
 			MT.core.Helper.updateObject(this.data, data);
 			var that = this;
 			this.send("getOwnerInfo", null, function(data){
-				console.log("DATA@", data);
-				
-				that.setProjectTimer(data);
-				
+				console.log("@project info", data);
+				//that.setProjectTimer(data);
 			});
 		},
+		
+		a_goToHome: function(){
+			window.location = window.location.toString().split("#").shift();
+		},
+		
+		a_copyInProgress: function(){
+			var content = "System is being maintained. Will be back in ";
+			var desc = "<p>Please wait. Editor will load a project automatically.</p>";
+			var pop = new MT.ui.Popup("Copy in progress", desc);
+			pop.showClose();
+			this.copyPopup = pop;
+		},
+		
+		setUpData: function(){
+			document.body.style.backgroundColor = this.data.backgroundColor;
+			this.emit("updateData", this.data);
+		},
+		
 		setProjectTimer: function(data){
 			if(data.level > 0){
 				return;
@@ -285,18 +269,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}, 1000);
 		},
 		
-		a_goToHome: function(){
-			window.location = window.location.toString().split("#").shift();
-		},
-		
 		copyPopup: null,
-		a_copyInProgress: function(){
-			var content = "System is being maintained. Will be back in ";
-			var desc = "<p>Please wait. Editor will load a project automatically.</p>";
-			var pop = new MT.ui.Popup("Copy in progress", desc);
-			pop.showClose();
-			this.copyPopup = pop;
-		},
 		
 		reload: function(){
 			window.location.reload();
@@ -441,9 +414,37 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			return list;
 		},
 		
+		updateProject: function(cb){
+			var that = this;
+			this.showProjectInfo({
+				cb: function(prop){
+					that.send("updateProject", prop);
+					if(cb){cb(prop);}
+				},
+				title: "Update project",
+				desc: "please review project details and update uproject",
+				button: "Update",
+				showNamespace: false,
+				props: that.data,
+				hideNS: true
+			});
+		},
+		
 		newProjectNext: function(){
 			var that = this;
-			var pop = new MT.ui.Popup("New Project", "");
+			this.showProjectInfo({
+				cb: function(prop){
+					that.send("newProject", prop);
+				},
+				title: "New Project",
+				button: "Create"
+			});
+		},
+		
+		showProjectInfo: function(options){
+			
+			var that = this;
+			var pop = new MT.ui.Popup(options.title || "New Project", "");
 			pop.removeHeader();
 			
 			pop.el.style.width = "50%";
@@ -452,42 +453,70 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			pop.el.style.top= "20%";
 			
 			
-			var p = new MT.ui.Panel("New Project");
+			var p = new MT.ui.Panel(options.title || "New Project");
 			//p.removeHeader()
 			
 			p.hide().show(pop.content).fitIn();
 			p.removeBorder();
 			
 			var cont = document.createElement("div");
-			cont.innerHTML = "Enter project title";
+			cont.innerHTML = options.desc || "Enter project title";
 			cont.style.margin = "20px 10px";
 			p.content.el.appendChild(cont);
 			
-			
-			
-			var prop = {
+			if(options.props){
+				options.props.title = options.props.title || "New Game";
+				options.props.namespace = options.props.namespace || "NewGame";
+				options.props.package = options.props.package || "com."+this.getPackageName()+".newgame";
+				
+				var parts = options.props.package.split(".");
+				var val = parts.pop();
+				options.props.package = (parts.join(".") + "." + options.props.namespace.replace(/\W/g, '').toLowerCase());
+			}
+			var prop = options.props || {
 				title: "New Game",
-				namespace: "NewGame"
+				namespace: "NewGame",
+				package: "com."+this.getPackageName()+".newgame"
 			};
 			
+			
+			
 			var iName = new MT.ui.Input(this.ui, {key: "title", type: "text"}, prop);
-			var iNs = new MT.ui.Input(this.ui, {key: "namespace", type: "text"}, prop);
+			var iNs;
+			
+			if(!options.hideNS){
+				var iNs = new MT.ui.Input(this.ui, {key: "namespace", type: "text"}, prop);
+			}
+			
+			var iPac = new MT.ui.Input(this.ui, {key: "package", type: "text"}, prop);
 			
 			iName.show(p.content.el);
-			iNs.show(p.content.el);
+			
+			if(!options.hideNS){
+				iNs.show(p.content.el);
+			}
+			
+			iPac.show(p.content.el);
+			
 			
 			iName.enableInput();
-			
 			iName.on("change", function(n, o){
-				iNs.setValue(n.replace(/\W/g, ''));
+				var strip = n.replace(/\W/g, '');
+				
+				if(!options.hideNS){
+					iNs.setValue(strip);
+				}
+				
+				var parts = prop.package.split(".");
+				var val = parts.pop();
+				iPac.setValue(parts.join(".") + "." + n.replace(/\W/g, '').toLowerCase());
 			});
 			
 			
-			pop.addButton("Create", function(){
-				that.send("newProject", prop);
+			pop.addButton(options.button || "Create", function(){
+				options.cb(prop);
 				pop.hide();
 			});
-			//this.send("newProject");
 		},
 		
 		loadProject: function(pid){
@@ -575,14 +604,31 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				return;
 			}
 		},
-		
+		getPackageName: function(){
+			var dom = window.location.hostname.split(".").shift();
+			var tmpProp = "me"+ dom.substring(0, 2);
+			if(this.plugins.auth.userId){
+				tmpProp += this.plugins.auth.userId;
+			}
+			else{
+				tmpProp += Math.floor(Math.random()*1000);
+			}
+			
+			return tmpProp;
+		},
 		createSettings: function(){
 			var that = this;
 			if(this.data.sourceEditor.autocomplete === void(0)){
 				this.data.sourceEditor.autocomplete = 1;
 			}
+			
+			if(!this.data.package){
+				this.data.package = ("com."+this.getPackageName()+"." + this.data.namespace.replace(/\W/g, '').toLowerCase());
+			}
+			
 			this.setInputs = {
 				label: new MT.ui.Input(this.ui, {key: "title", type: "text"}, this.data),
+				package: new MT.ui.Input(this.ui, {key: "package", type: "text"}, this.data),
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
 				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor),
 				autocomplete: new MT.ui.Input(this.ui, {key: "autocomplete", type: "bool"}, this.data.sourceEditor)
@@ -612,7 +658,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			MT.ui.addClass(this.setPanel.el, "editor-settings");
 			
 			this.setPanel.on("show", function(){
-				console.log("pop show");
 				lastData = JSON.stringify(that.data);
 			});
 			
@@ -644,6 +689,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			this.setInputs.label.show(this.setFields.project.el);
+			this.setInputs.package.show(this.setFields.project.el);
 			this.setInputs.bgColor.show(this.setFields.ui.el);
 			this.setButtons.resetLayout.show(this.setFields.ui.el);
 			
@@ -786,7 +832,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			};
 			fr.readAsArrayBuffer(file);
 		},
-		
 		
 		isAction: function(name){
 			if(name.indexOf("need-login") === 0){

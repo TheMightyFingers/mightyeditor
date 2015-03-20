@@ -13,8 +13,6 @@ MT.extend("core.BasicPlugin")(
 			var path = MT.core.FS.path.resolve(this.project.path + "/src" + font);
 			var cmd = this.fontforge + " -script info.pe '" + path + "'";
 
-
-			console.log("cmd:", cmd);
 			child.exec(cmd, {
 				cwd: process.cwd() + "/bin/ff"
 			}, function(err, sout, serr){
@@ -53,7 +51,6 @@ MT.extend("core.BasicPlugin")(
 					return;
 				}
 
-				console.log("got body", body);
 				var start = body.indexOf("url(");
 				var stop = body.substring(start).indexOf(")");
 				var url = body.substring(start + 4, start + stop);
@@ -84,9 +81,7 @@ MT.extend("core.BasicPlugin")(
 		 */
 		prepareTTF: function(font, info, cb){
 			var name = info["Family name"] || info["Font name"];
-
-			console.log("FONT NAME:", info, name);
-
+			
 			var dst = MT.core.FS.path.resolve(this.project.path + "/src/fonts/" + name);
 			var that = this;
 
@@ -109,7 +104,6 @@ MT.extend("core.BasicPlugin")(
 			MT.core.FS.exists(dst, function(yes){
 				if(yes){
 					// all ok continue;
-					console.log("TTF exists");
 					if(cb){cb();}
 					return;
 				}
@@ -117,12 +111,10 @@ MT.extend("core.BasicPlugin")(
 					if(cb){cb();}
 
 					if(err){
-						MT.error("COPY ERROR: ",err);
-						MT.log("");
+						MT.error("TTF -> COPY ERROR: ",err);
 						return;
 					}
 					MT.core.FS.rm(src, function(){
-						console.log("removed", src);
 						that.convert(target);
 					});
 				});
@@ -225,7 +217,6 @@ MT.extend("core.BasicPlugin")(
 					that.ttf2woff(font, done);
 				}
 				else{
-					console.log("skipping woff");
 					done();
 				}
 			});

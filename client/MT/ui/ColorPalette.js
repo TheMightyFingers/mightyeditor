@@ -14,12 +14,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				that.emit("change", e.target.color);
 			}
 		};
-		/*this.el.onmousemove = function(e){
-			console.log("clicked", e.target.style.backgroundColor);
-			if(e.target.color){
-				that.emit("hover", e.target.color);
-			}
-		};*/
 	},
 	{
 		createPalette: function(){

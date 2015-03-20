@@ -227,7 +227,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			this.tv.on("context", function(e, item){
-				console.log("context");
 				select(item.data, item);
 				list.x = e.pageX;
 				list.y = e.pageY;
@@ -684,9 +683,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var off = imgData.margin + imgData.spacing * Math.floor( image.width / imgData.frameWidth - imgData.spacing );
 			
 			var widthInFrames = (image.width - off) / (imgData.frameWidth );
-			console.log("width", widthInFrames);
-			console.log("FRAME", this.activeFrame);
-			
 			var dx = this.getTileX(this.activeFrame, widthInFrames);
 			var dy = this.getTileY(this.activeFrame, widthInFrames);
 			
@@ -1080,8 +1076,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		getFrame: function(o, x, y){
-			
-			
 			var dx = (x - o.margin);
 			var dy = (y - o.margin);
 			
@@ -1097,12 +1091,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var maxX = Math.floor( o.width / o.frameWidth);
 			
 			var frame = gx + maxX * gy;
-			
-			console.log(frame, "frame");
-			
 			return frame;
 		},
-		
 		
 		update: function(){
 			var data = this.tv.getData();
@@ -1278,28 +1268,29 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		confirmDeleteAsset: function(id){
 			var that = this;
-			var pop = new MT.ui.Popup("Delete Asset?", "Do you really want to delete asset?");
 			
+			var pop = new MT.ui.Popup("Delete Asset?", "Do you really want to delete asset?");
 			pop.addButton("no", function(){
 				pop.hide();
 			});
-			
 			pop.addButton("yes", function(){
 				that.deleteAsset(id);
 				pop.hide();
 			});
 			pop.showClose();
 		},
-		confirmDeleteSelected: function(id){
+		confirmDeleteSelected: function(){
+			if(!this.selector.count){
+				return;
+			}
 			var that = this;
-			var pop = new MT.ui.Popup("Delete all selected assets?", "Do you really want to delete all selected assets?");
 			
+			var pop = new MT.ui.Popup("Delete selected assets?", "Do you really want to delete selected assets?");
 			pop.addButton("no", function(){
 				pop.hide();
 			});
-			
 			pop.addButton("yes", function(){
-				that.deleteSelected(id);
+				that.deleteSelected();
 				pop.hide();
 			});
 			pop.showClose();

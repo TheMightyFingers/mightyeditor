@@ -67,9 +67,6 @@ MT.extend("core.Emitter")(
 			
 			list.panel.content.style.position = "relative";
 			
-			
-			
-			
 			list.on("show", function(){
 				var b = button.el.getBoundingClientRect();
 				list.style.top = (b.top + b.height)+"px";
@@ -95,6 +92,9 @@ MT.extend("core.Emitter")(
 			
 			list.on("hide", function(){
 				that.hide();
+			});
+			that.on("hide", function(){
+				list.hide();
 			});
 		}
 		else{

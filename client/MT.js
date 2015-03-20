@@ -17,12 +17,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				that.emit("change", e.target.color);
 			}
 		};
-		/*this.el.onmousemove = function(e){
-			console.log("clicked", e.target.style.backgroundColor);
-			if(e.target.color){
-				that.emit("hover", e.target.color);
-			}
-		};*/
 	},
 	{
 		createPalette: function(){
@@ -816,9 +810,6 @@ MT.extend("core.Emitter")(
 			
 			list.panel.content.style.position = "relative";
 			
-			
-			
-			
 			list.on("show", function(){
 				var b = button.el.getBoundingClientRect();
 				list.style.top = (b.top + b.height)+"px";
@@ -844,6 +835,9 @@ MT.extend("core.Emitter")(
 			
 			list.on("hide", function(){
 				that.hide();
+			});
+			that.on("hide", function(){
+				list.hide();
 			});
 		}
 		else{
@@ -1330,7 +1324,6 @@ MT.extend("core.Emitter")(
 		input.onkeyup = function(e){
 			
 			var key = e.which;
-			console.log(key);
 			if(key == MT.keys.ESC){
 				input.blur();
 				return;
@@ -1387,8 +1380,6 @@ MT.extend("core.Emitter")(
 		inheritStyle: function(){
 		
 			var bounds = this.el.getBoundingClientRect();
-			console.log(bounds);
-			
 			var style = window.getComputedStyle(this.el);
 			for(var i in style){
 				this.input.style[i] = style[i];
@@ -1736,8 +1727,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			}
 		},
 		updatePreview: function(asset){
-			console.log("update");
-			console.log(this.panels);
 			this.drawImage(this.panels[asset.id]);
 		},
 		getTileX: function(tile, width){
@@ -1778,9 +1767,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			var maxX = Math.floor( o.width / o.frameWidth);
 			
 			var frame = gx + maxX * gy;
-			
-			console.log(frame, "frame");
-			
 			return frame;
 		},
 		
@@ -1990,7 +1976,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 							this.activePanel.show();
 						}
 					}
-					//console.log(this.active.data.images);
 				}
 			}
 			if(this.activePanel){
@@ -2162,7 +2147,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.fontFace.on("update", function(Val){
 				if(Val == ""){
 					that.fontFace.list.reset();
-					console.log("reset");
 					return;
 				}
 				var val = Val.toLowerCase();
@@ -2456,7 +2440,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		change: function(e){
-			//console.log("TEXT:: change", e);
+			
 		},
 		
 		setFill: function(color){
@@ -2556,8 +2540,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		__setFontFamily: function(fontFamily){
 			
-			console.log("Set font family");
-			
 			this.map = this.tools.map;
 			if(!this.map.activeObject){
 				return;
@@ -2641,7 +2623,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			
 			//this._setFontFamily(obj);
-			this.tester.style.fontSize = size;
+			this.tester.style.fontSize = size + "px";
 			
 			obj.fontSize = this.tester.style.fontSize;
 			
@@ -2894,13 +2876,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		mouseDown: function(e){
 			this.mDown = true;
-			
-			//console.log("mouse down");
 		},
 		mouseUp: function(e){
-			//this.tools.tools.select.mouseUp(e);
-			
-			
 			if(!this.mDown){
 				return;
 			}
@@ -3060,7 +3037,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseUp: function(e){
-			//console.log("upp", e);
+			
 		},
 		
 		deactivate: function(){
@@ -3185,7 +3162,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		mouseUp: function(e){
-			//console.log("upp", e);
+			
 		},
 		
 		deactivate: function(){
@@ -3293,6 +3270,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.altKeyReady = false;
 			var copy = [];
 			var sel = this.map.selector;
+
+			sel.sort(function(a, b){
+				return (a.object.z - b.object.z);
+			});
+			
 			sel.forEach(function(o){
 				copy.push(o.data);
 			});
@@ -3310,7 +3292,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			for(var i=0; i<data.length; i++){
 				sprite = this.map.getById(data[i].id);
 				if(!sprite){
-					console.log("Failed to find a sprite");
 					continue;
 				}
 				sprite.object.updateTransform();
@@ -3368,8 +3349,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(this.tools.activeTool != this){
 				return;
 			}
-			
-			console.log("INIT MOVE");
 			
 			this.checkAltKey(e);
 			
@@ -3496,7 +3475,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				obj.mouseDown(x, y, e);
 			}
 			else{
-				console.log(this.map.selector.count);
 				this.map.activeObject = null;
 				this.map.emit("select", this.map.settings);
 				this.altKeyReady = e.altKey;
@@ -3553,7 +3531,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		filter: function(cb){
 			this.list = this.origList.filter(cb);
 			this.update();
-			console.log("filter");
 		},
 		update: function(){
 			//this.clear();
@@ -3595,7 +3572,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				item.create(b);
 			}
 
-			
+			if(item.contents) {
+				b.addClass("has-menu");
+			}
 
 			this._items.push(b);
 			item.button = b;
@@ -3703,7 +3682,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.addChild(this.label).show();
 		
 		this.addClass("ui-input");
-		this.label.el.innerHTML = this.key;
+		this.label.el.innerHTML = properties.label || this.key;
 		this.label.style.bottom = "initial";
 		this.label.style.right = "50%";
 		
@@ -4019,7 +3998,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				this.selectInput.removeChild(this.selectInput.firstChild);
 			}
 			var val = this.inputBox.value;
-			console.log("show");
 			
 			for(var i=0; i<this.options.length; i++){
 				if(!filter){
@@ -4036,20 +4014,18 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			var rect = this.inputBox.getBoundingClientRect();
 			
-			this.selectInput.style.top = rect.top + rect.height;
-			this.selectInput.style.left = rect.left;
+			this.selectInput.style.top = (rect.top + rect.height) + "px";
+			this.selectInput.style.left = rect.left + "px";
 			
 			
 			var bounds = this.selectInput.getBoundingClientRect();
 			if(bounds.right > window.innerWidth){
-				this.selectInput.style.left = window.innerWidth - bounds.width;
+				this.selectInput.style.left = (window.innerWidth - bounds.width)+"px";
 			}
 			
 			if(bounds.bottom > window.innerHeight){
-				this.selectInput.style.top = rect.top - bounds.height;
+				this.selectInput.style.top = (rect.top - bounds.height)+"px";
 			}
-			
-			
 		},
 		
 		hideOptions: function(){
@@ -6174,6 +6150,10 @@ MT.extend("core.Emitter")(
 		
 		get: function(index){
 			return this._selected[index];
+		},
+		
+		sort: function(cb){
+			this._selected.sort(cb);
 		}
 		
 		
@@ -6419,7 +6399,7 @@ MT.extend("core.Emitter")(
 		create: function(data){
 			this.tree = new MT.ui.DomElement();
 			this.tree.style.position = "relative";
-			this.tree.addClass("ui-treeView");
+			this.tree.addClass("ui-treeview");
 			
 			this.updateFullPath(data);
 			
@@ -6673,8 +6653,6 @@ MT.extend("core.Emitter")(
 				im.src = im.origSource = that.cache[src];
 				return;
 			}
-			
-			console.log("redraw image");
 			
 			var img = new Image();
 			im.updated = data.updated;
@@ -7295,6 +7273,7 @@ MT.extend("core.Emitter")(
 			
 			if(data.length !== 0){
 				this.tree.show();
+				this.tree.children.forEach(function(c){c.show();});
 			}
 			this.tree.el.scrollTop = scroll;
 		},
@@ -7528,7 +7507,6 @@ MT(
 			this._x = val;
 			this.style.left = val+"px";
 			//this.width = this._width;
-			
 			//this.style.transform =  "translate(" + this.y + "px," + this.y + "px)";
 		},
    
@@ -7546,7 +7524,7 @@ MT(
 		
 		setY: function(val){
 			this._y = val;
-			this.style.top = val;
+			this.style.top = val+"px";
 			//this.style.transform =  "translate(" + this.x + "px," + this.y + "px)";
 		},
    
@@ -7686,7 +7664,14 @@ MT(
 		sort: function(a,b){
 			return a.index - b.index;
 		},
-   
+		
+		addChildFast: function(child, index){
+			if(index !== void(0)){
+				child.index = index;
+			}
+			this.children.push(child);
+			return child;
+		},
 		addChild: function(child, index){
 			child.index = index;
 			this.children.push(child);
@@ -8014,16 +7999,11 @@ MT(
 		},
 		
 		emit: function(type, action, data){
-			
-			//this.debug(type);
-			
-			//console.log("emit:", type, action);
 			if(!this.callbacks){
 				return;
 			}
 			
 			if(!this.callbacks[type]){
-				//console.warn("received unhandled data", type, data);
 				return;
 			}
 			
@@ -8190,7 +8170,6 @@ MT.extend("core.Emitter")(
 			if(!mdown){
 				return;
 			}
-			//console.log(ev.mouse.mx);
 			
 			that.slh.change(ev.mouse.mx);
 			
@@ -8201,7 +8180,6 @@ MT.extend("core.Emitter")(
 			}
 			else{
 				impact = (that.slh - max) * 0.01;
-				console.log("impact:", impact);
 				/*var w = startWidth / impact;
 				if(w < 20){
 					w = 20;
@@ -8278,7 +8256,7 @@ MT.extend("core.Emitter")(
 					el.removeAttribute("data-seconds");
 				}
 				el.className = "ui-frame-sep";
-				el.style.left = i*framesize + drawOffset;
+				el.style.left = i*framesize + drawOffset + "px";
 				
 				this.sepHolder.appendChild(el);
 				info = i + this.mm.startFrame;
@@ -8517,6 +8495,10 @@ MT.extend("ui.Keyframes")(
 				
 			}
 			
+			if(!data.info){
+				data.info = {};
+			}
+			
 			frames.push({keyframe: this.mm.activeFrame, length: data.info.lastFrame});
 			
 			this.mm.sortFrames(frames);
@@ -8555,6 +8537,17 @@ MT.extend("core.Emitter")(
 		this.tv = new MT.ui.TreeView([], {root: pp.path});
 		this.tv.tree.addClass("ui-keyframes-tree");
 		
+		this.tv.on("dblclick", function(e, item){
+			//that.emit("select",item.data);
+			var d = item.data;
+			var movie;
+			if(d.submovie){
+				movie = d.name;
+			}
+			mm.selectObjectForce(mm.om.getById(d.objectId || d.id));
+			mm.keyframes.setActiveMovie(movie);
+		});
+		
 		
 		this.scrollTop = 0;
 		this.tv.tree.el.onscroll = function(){
@@ -8564,7 +8557,9 @@ MT.extend("core.Emitter")(
 			
 		};
 		
+		this.lastSelect = [];
 		var select = function(data, el){
+			that.lastSelect.push([select, data, el]);
 			if(data.isMovie){
 				that.unselect();
 				that.active = el;
@@ -8587,7 +8582,7 @@ MT.extend("core.Emitter")(
 			that.showFrames();
 			
 			that.updateTree(data);
-		}
+		};
 		
 		this.tv.on("click", function(data, el){
 			select(data, el);
@@ -8634,7 +8629,12 @@ MT.extend("core.Emitter")(
 	},
 	{
 		activeMovie: "",
-		
+		reactivate: function(){
+			var sel = this.lastSelect.pop();
+			if(sel){
+				sel[0](sel[1], sel[2]);
+			}
+		},
 		getMovie: function(){
 			if(!this.data || !this.data.movies){
 				return null;
@@ -8707,6 +8707,10 @@ MT.extend("core.Emitter")(
 			this.showFrames();
 		},
 		
+		update: function(){
+			this.hideFrames();
+			this.showFrames();
+		},
 		createPanel: function(name, pp){
 			var p = this.panels[name];
 			if(p){
@@ -8726,12 +8730,10 @@ MT.extend("core.Emitter")(
 				p.fitIn();
 			}
 			p.el.style.height = "18px";
+			p.el.style.paddingLeft = "70px";
 			var that = this;
 			p.on("show", function(){
-				that.activeMovie = p.name;
-				that.mm.changeFrame(0);
-				that.fpsInput.setObject(that.data.movies[that.activeMovie].info);
-				that.updateFrames();
+				that.setActiveMovie(p.name, true);
 			});
 			p.on("rename", function(n, o){
 				that.rename(n, o);
@@ -8767,6 +8769,7 @@ MT.extend("core.Emitter")(
 				this.activeMovie = newName;
 			}
 			this.updateFrames();
+			this.mm.om.sync();
 		},
 		
 		removeConf: function(name){
@@ -8791,12 +8794,12 @@ MT.extend("core.Emitter")(
 				movie = item.movies[name];
 				delete item.movies[name];
 			}
-			
-			this.panels[name].close();
-			
+			if(this.panels[name]){
+				this.panels[name].close();
+			}
 			
 			var k = Object.keys(this.data.movies);
-			if(!k.length){
+			if(!k.length || (k.length == 1 && k[0] == "__main") ){
 				this.mm.clear();
 				this.activeMovie = null;
 				this.mm.activeMovie = null;
@@ -8972,7 +8975,7 @@ MT.extend("core.Emitter")(
 		},
 		
 		makeControls: function(){
-			//console.log("make controls", this.tv.items[0]);
+			
 		},
 		
 		
@@ -9179,6 +9182,12 @@ MT.extend("core.Emitter")(
 			};
 			this.controls = c;
 		},
+		
+		hideDelete: function(){
+			console.log("hide DELETE!");
+			this.controls.delete.style.display = "none";
+		},
+		
 		getLastFrame: function(){
 			
 			var movie = this.getMovie();
@@ -9396,12 +9405,11 @@ MT.extend("core.Emitter")(
 		},
 		
 		markActive: function(data){
-			console.log("mark active",data);
 			
 		},
 		
 		addEvents: function(){
-			console.log("add Events");
+			
 		},
 		
 		setActiveFrame: function(index){
@@ -9415,7 +9423,20 @@ MT.extend("core.Emitter")(
 			this.emit("frameChanged", this.active);
 		},
 		
-
+		setActiveMovie: function(name, fromPanel){
+			if(!this.data.movies || !this.data.movies[name]){
+				console.log("SHOW?", this.panels);
+				return;
+			}
+			
+			this.activeMovie = name;
+			this.mm.changeFrame(0);
+			this.fpsInput.setObject(this.data.movies[this.activeMovie].info);
+			this.updateFrames();
+			if(!fromPanel){
+				this.panels[name].show();
+			}
+		},
 
 
 	}
@@ -9562,7 +9583,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				//strange chrome bug
 				if(that.handleMouseMove === void(0)){
-					console.log("chrome bugging");
 					return;
 				}
 				
@@ -10309,13 +10329,16 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				h = p.size.height;
 			}
 			
+			w = w * obj.scaleX;
+			h = h * obj.scaleY;
+			
 			ctx.translate(mat.tx, mat.ty);
 			ctx.rotate(obj.object.rotation);
 			ctx.scale(this.scale.x, this.scale.y);
 			
 			//ctx.setTransform(mat.a, -mat.b, -mat.c, mat.d, mat.tx, mat.ty);
 			
-			ctx.fillRect(-w*obj.object.anchor.x + p.size.offsetX ,-h*obj.object.anchor.y + p.size.offsetY, w, h);
+			ctx.fillRect(-w*obj.object.anchor.x + p.size.offsetX,-h*obj.object.anchor.y + p.size.offsetY, w, h);
 			ctx.restore();
 		},
 		
@@ -10479,7 +10502,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		ajax: function(src, cb){
-			console.log("ajax used?");
 			var xhr = new XMLHttpRequest();
 			xhr.open('get', src);
 			xhr.onreadystatechange = function() {
@@ -10726,7 +10748,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				tmp.isRemoved = false;
 				tmp.update(o.data, group);
 				tmp.object.visible = tmp.isVisible;
-				//tmp.object.z = 0;
+				//tmp.object.z = i;
 				
 				// handle group and parents
 				if(tmp.data.contents){
@@ -10784,10 +10806,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		/* TODO: clean up - and seperate object types by corresponding tools*/
 		addObject: function(obj, group){
-			console.log("removed - addObject");
+			console.error("removed - addObject");
 			return;
-			
-			
 			var oo = null;
 			var od = null;
 			for(var i=0; i<this.oldObjects.length; i++){
@@ -11323,11 +11343,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.input = new MT.ui.InputHelper();
 		
 		this.input.on("change", function(value){
-			if(value == ""){
-				console.log("should remove");
-			}
-			
-			
 			that.input.el.innerHTML = value;
 			
 		});
@@ -11351,12 +11366,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.table.onclick = function(e){
 			e.preventDefault();
 			e.stopPropagation();
-			console.log(e.target.data);
-			
 			if(!e.target.data){
 				return;
 			}
-			
 			that.input.show(e.target);
 		};
 		
@@ -11421,7 +11433,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			var row = el.data.row;
 			var cell = el.data.index;
 			var val = el.innerHTML;
-			console.log(row, cell, val);
 			
 			// is new value added ?
 			if(row == -1){
@@ -11830,9 +11841,14 @@ MT.extend("core.BasicPlugin")(
 			this.checkLocalStorageCapacity();
 			this.currentOffset = 0;
 		},
+		lastSave: 0,
 		save: function(){
 			
-			
+			if(Date.now() - this.lastSave > 100){
+				this._save();
+				this.lastSave = Date.now();
+			}
+			console.log("save");
 		},
 		
 		_save: function(){
@@ -12025,17 +12041,29 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				
 				if(e.which == MT.keys.DELETE){
-					var data = om.tv.getData();
+					var ap = that.ui.pickPanelGlobal();
+					if(!ap){
+						return;
+					}
 					
-					that.map.selector.forEach(function(obj){
-						om.deleteObj(obj.id, true, data);
-						om.selector.clear();
-					});
+					if(ap == that.map.panel || ap == om.panel){
+						var data = om.tv.getData();
+						
+						that.map.selector.forEach(function(obj){
+							om.deleteObj(obj.id, true, data);
+							om.selector.clear();
+						});
+						
+						om.tv.merge(data);
+						
+						om.sync();
+						om.update();
+						return;
+					}
+					if(ap === am.panel){
+						am.confirmDeleteSelected();
+					}
 					
-					om.tv.merge(data);
-					
-					om.sync();
-					om.update();
 					return;
 				}
 				
@@ -12058,8 +12086,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(e.ctrlKey){
 					if(e.which === MT.keys.C){
 						toCopy.length = 0;
+						
 						map.selector.forEach(function(obj){
 							toCopy.push(obj);
+						});
+						
+						toCopy.sort(function(a, b){
+							return (map.loadedObjects.indexOf(a) - map.loadedObjects.indexOf(b));
 						});
 						return;
 					}
@@ -12087,7 +12120,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							bounds = toCopy[i].getBounds();
 							
 							if(!e.shiftKey){
-								cop = that.copy(toCopy[i].data, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
+								cop = that.copy(toCopy[i].data, bounds.x - midX + (x - map.offsetX) / map.scale.x, bounds.y - midY + (y - map.offsetY) / map.scale.y);
 							}
 							else{
 								cop = that.copy(toCopy[i].data, toCopy[i].data.x, toCopy[i].data.y);
@@ -12324,8 +12357,13 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					title: "Phaser.io Project",
 					className: "",
 					cb: function () {
-						that.export("phaser", function (data) {
+						var not = that.project.plugins.notification.show("Exporting project...", that.project.data.title);
+						that.export("phaser", {
+							zip: 1
+						},
+						function (data) {
 							window.location = that.project.path + "/" + data.file;
+							not.hide();
 						});
 					}
 				},
@@ -12337,6 +12375,44 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						that.minify();
                     }
 				},
+				{
+					label: "Android",
+					contents: [
+						{
+							label: "Crosswalk - debug (ARM)",
+							title: "most android phones uses arm processors",
+							className: "",
+							cb: function () {
+								that.crosswalk("arm");
+							}
+						},
+						{
+							label: "Crosswalk - debug (x86)",
+							title: "some phones and tablets uses intel atom or similar cpus",
+							className: "",
+							cb: function () {
+								that.crosswalk("x86");
+							}
+						},
+						{
+							label: "Crosswalk - release (ARM)",
+							title: "most android phones uses arm processors",
+							className: "",
+							cb: function () {
+								that.crosswalk("arm", true);
+							}
+						},
+						{
+							label: "Crosswalk - release (x86)",
+							title: "some phones and tablets uses intel atom or similar cpus",
+							className: "",
+							cb: function () {
+								that.crosswalk("x86", true);
+							}
+						}
+					]
+				},
+				
 				{
 					label: "data only - js",
 					title: "data generated by editor - javascript format",
@@ -12368,7 +12444,6 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				om.sync();
 				that.openLink("_open_game");
 			});
-
 		},
 
 		export: function(dest, data, cb){
@@ -12376,8 +12451,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				cb = data;
 				data = null;
 			}
-			this.send(dest, data);
-			this.once("done", cb);
+			this.send(dest, data, cb);
 		},
 
 		showList: function(){
@@ -12406,22 +12480,22 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			//w.opener = null;
 
 			var path = this.project.path;
-			this.export("phaser", function(data){
+			this.export("phaser", {
+				zip: 0
+			},
+			function(data){
 				if(w.location){
 					w.location.href = path + "/" +data.name + "/index.html";
 					w.focus();
 				}
 			});
-
 		},
 		
-		minify: function(){
-			var that = this;
-			var label = "Export in progress";
+		popWithDots: function(label){
 			var dots = "...";
+			
 			var pop = new MT.ui.Popup("Export", label + dots);
 			
-			pop.el.style.width = "80%";
 			pop.y = 150;
 			var interval = window.setInterval(function(){
 				dots += ".";
@@ -12431,10 +12505,163 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				pop.content.innerHTML = label + dots;
 			}, 300);
 			
+			pop.clear = function(){
+				window.clearInterval(interval);
+			};
+			
+			return pop;
+		},
+		
+		crosswalk: function(arch, release){
+			var that = this;
+			
+			if( !this.project.data.package ){
+				this.project.updateProject(function(props){
+					that.crosswalk(arch, release);
+				});
+				return;
+			}
+			
+			var pop = this.popWithDots("Building apk");
+			that.export("crosswalk", {arch: arch, rel: release}, function (data) {
+				pop.clear();
+				
+				if(data.requireProLevel){
+					pop.showClose();
+					pop.content.innerHTML = "Only subscribers can use this feature!";
+					pop.addButton("OK", function(){pop.hide();});
+					return;
+				}
+				
+				if(data.requireSignature){
+					pop.hide();
+					that.genKeystoreForm(function(){
+						that.crosswalk(arch, release);
+					});
+					return;
+				}
+				
+				if(data.requirePackage){
+					pop.hide();
+					that.project.updateProject(function(props){
+						that.crosswalk(arch, release);
+					});
+					return;
+				}
+				
+				pop.showClose();
+				pop.addButton("Done", function(){pop.hide();});
+				
+				if(data.serr && data.serr.length){
+					pop.content.innerHTML = "Please review errors and try again!<br />";
+					var list = '<ul class="error-list">';
+					for(var i=0; i<data.serr.length; i++){
+						list += "<li>"+data.serr[i].trim()+"</li>";
+					}
+					pop.content.innerHTML += list + "</ul>";
+					
+				}
+				else{
+					pop.content.innerHTML = "DONE!";
+					
+					var base = window.location.origin + "/" + that.project.path + "/" + data.title;
+					var link = base + "-minified/build/" + data.file;
+					
+					that.linkWithQR(pop.content, "Download", link);
+				}
+			});
+		},
+		
+		genKeystoreForm: function(cb){
+			var that = this;
+			
+			var info = {
+				CN: "John Smith",
+				OU: "Mobile Games", 
+				O: "My Company", 
+				L: "My Town",
+				ST: "My State",
+				C: "UN"
+			};
+			
+			var names = {
+				CN: "First and Last Name (CN)",
+				OU: "Organizational Unit (OU)", 
+				O: "Organization (O)", 
+				L: "City or Location (L)",
+				ST: "State or Province (ST)",
+				C: "Country Code (XX) (C)"
+			};
+			
+			var pop = new MT.ui.Popup("Keystore", "");
+			pop.showClose();
+			var input;
+			for(var i in info){
+				input = new MT.ui.Input(this.project.ui, {key: i, label: names[i], type: "text"}, info, function(n,o){
+					//console.log("xxx", n, o);
+				});
+				input.show(pop.content);
+			}
+			pop.show();
+			
+			pop.addButton("Next", function(){
+				pop.hide();
+				that.send("genKeystore", info, function(error){
+					if(error){
+						console.error(error);
+						return;
+					}
+					if(cb){
+						cb();
+					}
+				});
+				
+			});
+		},
+		
+		linkWithQR: function(parent, label, link){
+			var div = document.createElement("div");
+			div.className = "table";
+			
+			var a = document.createElement("a");
+			a.style.width = "90px";
+			a.setAttribute("target", "_blank");
+			a.setAttribute("href", link);
+			a.appendChild(document.createTextNode(label));
+			
+			var input = document.createElement("input");
+			input.value = link;
+			input.style.cssText = "padding: 3px; width: 100%";
+			
+			var qr = document.createElement("div");
+			var qrcode = new QRCode(qr, {
+				text: link,
+				width: 256,
+				height: 256,
+				colorDark : "#000000",
+				colorLight : "#ffffff",
+				correctLevel : QRCode.CorrectLevel.H
+			});
+			
+			div.appendChild(a);
+			div.appendChild(input);
+			
+			parent.appendChild(div);
+			parent.appendChild(qr);
+		},
+		
+		
+		minify: function(){
+			var that = this;
+			var label = "Export in progress";
+			
+			
+			var pop = this.popWithDots(label);
 			
 			
 			this.export("phaserMinify", function (data) {
-				window.clearInterval(interval);
+				pop.clear();
+				
 				pop.showClose();
 				pop.addButton("Done", function(){pop.hide();});
 				
@@ -12458,18 +12685,24 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					correctLevel : QRCode.CorrectLevel.H
 				});
 				
-				var img = x.lastChild;
-				img.width = 32;
-				img.height = 32;
-				img.onmouseup = function(e){
-					console.log(e.which, e.button, e);
+				var img1 = x.lastChild;
+				img1.style.cursor = "pointer";
+				img1.width = 32;
+				img1.height = 32;
+				img1.onmouseup = function(e){
 					if(this.width < 256){
 						this.width = 256;
 						this.height = 256;
+						
+						img2.width = 32;
+						img2.height = 32;
 					}
 					else{
 						this.width = 32;
 						this.height = 32;
+						
+						img2.width = 256;
+						img2.height = 256;
 					}
 				};
 				
@@ -12484,17 +12717,25 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					correctLevel : QRCode.CorrectLevel.H
 				});
 				
-				img = x.lastChild;
-				//img.width = 32;
-				//img.height = 32;
-				img.onmouseup = function(e){
+				var img2 = x.lastChild;
+				img2.style.cursor = "pointer";
+				//img2.width = 32;
+				//img2.height = 32;
+				img2.onmouseup = function(e){
 					if(this.width < 256){
 						this.width = 256;
 						this.height = 256;
+						
+						img1.width = 32;
+						img1.height = 32;
 					}
 					else{
 						this.width = 32;
 						this.height = 32;
+						
+						img1.width = 256;
+						img1.height = 256;
+						
 					}
 				};
 				
@@ -12700,11 +12941,6 @@ MT(
 			var sel = document.createElement("select");
 			sel.className = "ui-input-value";
 			
-			
-			
-			
-			console.log(buff);
-			
 			var opt;
 			for(var i=0; i<buff.length; i++){
 				opt = document.createElement("option");
@@ -12715,7 +12951,7 @@ MT(
 			}
 			
 			sel.onchange = function(){
-				console.log("change", this.value);
+				//console.log("change", this.value);
 			};
 			
 			div.appendChild(sel);
@@ -13148,7 +13384,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.tv.on(["click", "select"], function(data, el){
 				that.emit(MT.OBJECT_SELECTED, data);
-				console.log("SELECT");
 			});
 			
 			var timeouts = {};
@@ -13290,13 +13525,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			obj.index = -1;
 			
+			/*map.loadedObjects.forEach(function(o, index){
+				o.object.z = index;
+			});
+			*/
 			
 			if(!silent){
 				this.tv.rootPath = this.project.path
 				this.tv.merge(data);
 				this.update();
-				this.emit(MT.OBJECT_ADDED, obj);
 				this.sync();
+				this.emit(MT.OBJECT_ADDED, obj);
 			}
 			
 			
@@ -13305,7 +13544,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		updateTree: function(){
 			this.tv.merge(this.tv.getData());
-			
 		},
 		
 		createObject: function(asset, x, y){
@@ -13524,6 +13762,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		multiCopy: function(arr, cb){
+			console.log("multiCopy!");
+			
 			var data = this.tv.getData();
 			var name, obj, clone;
 			var out = [];
@@ -13657,23 +13897,28 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		groupSelected: function(){
+			
 			var folder = this.createGroup(true, true);
 			folder.isClosed = false;
 			var that = this;
 			
 			var data = this.tv.getData();
 			
-			this.selector.forEach(function(el){
-				var o = el.data;
+			var map = this.project.plugins.mapeditor;
+			map.selector.sort(function(a, b){
+				return (b.object.z - a.object.z);
+			});
+			map.selector.forEach(function(me){
+				console.log("GROUP:", me.data.name);
+				
+				var o = me.data;
 				this._delete(o.id, data);
-				
 				folder.contents.push(o);
-				
 			}, this);
 			
 			this.tv.merge(data);
-			this.update();
 			this.sync();
+			this.update();
 		},
 		
 		_syncTm: 0,
@@ -13697,7 +13942,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.emit(MT.OBJECTS_SYNC, data);
 				}
 				
-				console.log("sync");
 				that.send("updateData", data);
 				that._syncTm = 0;
 				that.updateTree();
@@ -13714,7 +13958,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var that = this;
 			this._saveTm = window.setTimeout(function(){
 				that.send("save", obj);
-				console.log("save");
 				that.emit(MT.OBJECTS_SYNC, that.tv.getData());
 				that.updateTree();
 			}, 1000);
@@ -13964,7 +14207,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			this.tv.on("context", function(e, item){
-				console.log("context");
 				select(item.data, item);
 				list.x = e.pageX;
 				list.y = e.pageY;
@@ -14421,9 +14663,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var off = imgData.margin + imgData.spacing * Math.floor( image.width / imgData.frameWidth - imgData.spacing );
 			
 			var widthInFrames = (image.width - off) / (imgData.frameWidth );
-			console.log("width", widthInFrames);
-			console.log("FRAME", this.activeFrame);
-			
 			var dx = this.getTileX(this.activeFrame, widthInFrames);
 			var dy = this.getTileY(this.activeFrame, widthInFrames);
 			
@@ -14817,8 +15056,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		getFrame: function(o, x, y){
-			
-			
 			var dx = (x - o.margin);
 			var dy = (y - o.margin);
 			
@@ -14834,12 +15071,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var maxX = Math.floor( o.width / o.frameWidth);
 			
 			var frame = gx + maxX * gy;
-			
-			console.log(frame, "frame");
-			
 			return frame;
 		},
-		
 		
 		update: function(){
 			var data = this.tv.getData();
@@ -15015,28 +15248,29 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		confirmDeleteAsset: function(id){
 			var that = this;
-			var pop = new MT.ui.Popup("Delete Asset?", "Do you really want to delete asset?");
 			
+			var pop = new MT.ui.Popup("Delete Asset?", "Do you really want to delete asset?");
 			pop.addButton("no", function(){
 				pop.hide();
 			});
-			
 			pop.addButton("yes", function(){
 				that.deleteAsset(id);
 				pop.hide();
 			});
 			pop.showClose();
 		},
-		confirmDeleteSelected: function(id){
+		confirmDeleteSelected: function(){
+			if(!this.selector.count){
+				return;
+			}
 			var that = this;
-			var pop = new MT.ui.Popup("Delete all selected assets?", "Do you really want to delete all selected assets?");
 			
+			var pop = new MT.ui.Popup("Delete selected assets?", "Do you really want to delete selected assets?");
 			pop.addButton("no", function(){
 				pop.hide();
 			});
-			
 			pop.addButton("yes", function(){
-				that.deleteSelected(id);
+				that.deleteSelected();
 				pop.hide();
 			});
 			pop.showClose();
@@ -15265,8 +15499,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			this.input.style.left = (el.calcOffsetX(document.body))+"px";
 			this.input.style.top = (el.calcOffsetY(document.body) - 2) + "px"; // check padding here instead of 2 :)
-			this.input.style.width = el.width - 10;
-
+			this.input.style.width = (el.width - 10) + "px";
+			
 
 			this.input.value = this.title;
 			var lastValue = this.title;
@@ -15345,7 +15579,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		focus: function(){
 			this.saveScroll();
-			this._input.focus();
+			//this._input.focus();
 			this.restoreScroll();
 		},
 		
@@ -15627,7 +15861,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		setLeftRight: function(key, value){
-			//console.log("TODO");
+			
 		},
 		
 		unjoin: function(){
@@ -15914,7 +16148,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			while(next){
 				depth++;
 				if(depth > 10){
-					console.log("recursivity warning");
+					console.warn("recursivity warning");
 					break;
 				}
 				if(next == this  || next == val){
@@ -15942,11 +16176,11 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			while(next){
 				depth++;
 				if(depth > 10){
-					console.log("recursivity warning");
+					console.warn("recursivity warning");
 					break;
 				}
 				if(next == this || (next == val && next != this._top)){
-					console.log("recursivity warning");
+					console.warn("recursivity warning");
 					this._top = val;
 					return;
 				}
@@ -16055,9 +16289,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 					return this.joints[i];
 				}
 			}
-			console.log("smth is broken");
-			this.show(this._parent, false);
 			
+			this.show(this._parent, false);
 			return this;
 		},
 		hide: function(silent, noEmit){
@@ -16378,6 +16611,9 @@ MT(
 			var that = this;
 			var cb = function(e){
 				e = e || event;
+				if(e.ctrlKey){
+					e.metaKey = e.ctrlKey;
+				}
 				
 				if(type.indexOf("drop") > -1 || type.indexOf("drag") > -1 ){
 					e.preventDefault();
@@ -16445,7 +16681,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 		},
 		execCmd: function(cmd){
-			console.log("exec", cmd);
 			this.hideLoading();
 			this.hideLogin();
 			
@@ -16517,7 +16752,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 		},
 		showProperties: function(){
-			console.log("show properties");
 			if(!this.propContainer){
 				this.buildPropContainer();
 			}
@@ -16607,19 +16841,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		buildShareOptions: function(el){
 			var that = this;
 			this.send("getShareOptions", null, function(options){
-				console.log("share options", options);
 				if(options == void(0)){
 					that.buildCopyToAccessPermissions(el);
 					return;
 				}
-				
 				
 				that.userId = options.userId;
 				if(!options){
 					console.log("cannot get options", options);
 					return;
 				}
-				
 				
 				if(options.action == "goPro"){
 					that.buildGoPro(el);
@@ -16670,7 +16901,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			var that = this;
 			checkbox.onchange = function(){
-				console.log(this, this.checked);
 				if(this.checked){
 					f.appendChild(link);
 					MT.core.Helper.select(link);
@@ -16719,7 +16949,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			var that = this;
 			checkbox.onchange = function(){
-				console.log(this, this.checked);
 				if(this.checked){
 					f.appendChild(link);
 					MT.core.Helper.select(link);
@@ -16890,7 +17119,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var title = document.createElement("div");
 			title.className = "title";
-			title.appendChild(document.createTextNode("Get pro account"));
+			title.appendChild(document.createTextNode("Get a pro account"));
 			
 			
 			var desc = document.createElement("div");
@@ -17000,6 +17229,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		installUI: function(ui, pop){
 			if(this.panel){
+				
+				if(this.project.id && this.userLevel === 0){
+					this.showProperties();
+				}
+				
 				return;
 			}
 			
@@ -17411,13 +17645,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					this.onstart();
 					this.onstart = null;
 				}
-				this.send("checkSession", sessionId);
 			}
 		},
 		
 		a_sessionId: function(id){
-			console.log("received session ID", id);
-			
 			MT.core.Helper.setCookie(this.sessionCookie, id);
 			
 			if(this.onlogin){
@@ -17456,7 +17687,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.standAlone = false;
 				return;
 			}
-			console.log("LoggedIn: projects", projects);
 			// first login call
 			if(this.onstart){
 				this.onstart();
@@ -17471,7 +17701,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.hideLoading();
 			this.hideContainer();
 			this.panel.title = "My Projects";
-			this.panel.show();
 			
 			if(projects && projects.length > 0){
 				var that = this;
@@ -17487,16 +17716,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			}
 			
-			if(this.isLogged && this.userLevel == 0){
-				this.subscribe = this.ui.createPanel("Go Pro");
-				this.subscribe.mainTab.addClass("goprotab");
-				this.subscribe.mainTab
-				this.subscribe.hide();
-				this.subscribe.fitIn();
-				this.subscribe.removeBorder();
-				this.panel.addJoint(this.subscribe);
-				this.subscribe.show();
-				this.buildGoPro(this.subscribe.content.el);
+			if(this.userLevel == 0){
+				if(this.panel && this.project.id){
+					this.showProperties();
+				}
+				else{
+					this.subscribe = this.ui.createPanel("Go Pro");
+					this.subscribe.mainTab.addClass("goprotab");
+					this.subscribe.mainTab
+					this.subscribe.hide();
+					this.subscribe.fitIn();
+					this.subscribe.removeBorder();
+					this.panel.addJoint(this.subscribe);
+					this.subscribe.show();
+					this.buildGoPro(this.subscribe.content.el);
+				}
 			}
 			this.panel.content.el.appendChild(this.logoutButton.el);
 		}
@@ -17603,6 +17837,22 @@ MT.extend("core.Emitter")(
 		get frameSize(){
 			return this._frameSize*this.scale;
 		},
+		
+		_keyframes: null,
+		set keyframes(val){
+			this._keyframes = val;
+			if(val == this.keyframesMain){
+				this.location.style.display = "none";
+			}
+			else{
+				this.location.style.display = "block";
+			}
+			
+		},
+		get keyframes(){
+			return this._keyframes;
+		},
+		
 		initUI: function(ui){
 			this.ui = ui;
 			this.panel = this.ui.createPanel("timeline");
@@ -17633,10 +17883,26 @@ MT.extend("core.Emitter")(
 			this.settings = this.ui.createPanel("Easing");
 			this.settings.setFree();
 			
+			this.location = document.createElement("div");
+			this.location.className = "ui-movie-location";
+			this.location.innerHTML = "Back";
+			this.location.style.display = "none";
 			
-			this.location = new MT.ui.DomElement("div");
-			this.location.addClass("ui-movie-location");
-			this.location.el.innerHTML = "";
+			this.panel.content.el.appendChild(this.location);
+			
+			this.location.onclick = function(){
+				that.location.style.display.block;
+				var selected = that.map.activeObject;
+				
+				var d = that.data;
+				
+				that.clear();
+				that.createMainMovie();
+				that.keyframes.reactivate();
+			};
+			
+			
+			
 		},
 		
 		genEasings: function(eas, label, buffer){
@@ -17748,6 +18014,7 @@ MT.extend("core.Emitter")(
 				if(e.which == MT.keys.ESC){
 					that.clear();
 					that.createMainMovie();
+					that.keyframes.reactivate();
 					return;
 				}
 			});
@@ -17866,6 +18133,8 @@ MT.extend("core.Emitter")(
 			
 			
 			this.keyframesMain = new MT.ui.MovieLayer(this, 60);
+			this.keyframesMain.hideDelete();
+			
 			this.keyframesMain.on("select", function(data){
 				that.forwardObjectSelect(data);
 			});
@@ -17951,7 +18220,7 @@ MT.extend("core.Emitter")(
 			this.frameControl.build();
 			this.frameControl.el.show(this.rightPanel.content.el);
 			
-			this.panel.content.el.appendChild(this.location.el);
+			//this.panel.content.el.appendChild(this.location.el);
 			
 		},
 		hideHelpers: function(){
@@ -17963,7 +18232,7 @@ MT.extend("core.Emitter")(
 			this.frameControl.hide();
 			
 			this.sidebar.hide();
-			this.location.hide();
+			//this.location.hide();
 		},
    
 		clear: function(){
@@ -17985,6 +18254,7 @@ MT.extend("core.Emitter")(
 			
 			this.leftPanel.fitIn();
 			this.leftPanel.width = 270;
+			this.leftPanel.style.top = 19+"px";
 			this.leftPanel.style.setProperty("border-right", "none 1px #000");
 			this.leftPanel.isResizeable = true;
 			this.leftPanel.removeHeader();
@@ -18001,11 +18271,6 @@ MT.extend("core.Emitter")(
 			this.rightPanel.removeClass("animated");
 			
 			
-			this.leftPanel.el.style.position = "relative";
-			this.leftPanel.content.el.style.position = "relative";
-			this.leftPanel.content.el.style["min-height"] = "100%";
-			
-			
 			this.leftPanel.content.style.overflow = "visible";
 			this.rightPanel.content.style.overflow = "visible";
 			
@@ -18018,9 +18283,13 @@ MT.extend("core.Emitter")(
 			// 1 - moveFrame;
 			var action = 0;
 			
-			
-			
-			this.rightPanel._input.onkeyup = function(e){
+			this.ui.events.on(this.ui.events.KEYUP, function(e){
+				var p = that.ui.pickPanelGlobal();
+				if(p != that.panel && p != that.leftPanel && p != that.rightPanel){
+					return;
+				}
+				
+				
 				if(e.which == MT.keys.DELETE){
 					that.removeFrame(activeFrame);
 					e.preventDefault();
@@ -18048,16 +18317,22 @@ MT.extend("core.Emitter")(
 					if(e.which == MT.keys.C){
 						//copy frame;
 						that.copyFrame(activeFrame);
+						e.preventDefault();
+						e.stopPropagation();
 					}
 					if(e.which == MT.keys.X){
 						//copy frame;
 						that.cutFrame(activeFrame);
+						e.preventDefault();
+						e.stopPropagation();
 					}
 					if(e.which == MT.keys.V){
 						that.pasteFrame();
+						e.preventDefault();
+						e.stopPropagation();
 					}
 				}
-			};
+			}, true);
 			
 			// global shortcuts
 			this.ui.events.on(this.ui.events.KEYUP, function(e){
@@ -18150,9 +18425,6 @@ MT.extend("core.Emitter")(
 				sl.change(that.ui.events.mouse.mx);
 				that.changeFrame((sl - that.frameOffset) / that.frameSize + that.startFrame);
 				if(action == 1 && activeFrame){
-					
-					console.log(that.activeFrame, startFrame);
-					
 					if(that.moveFrame(that.selectedFrame, activeFrame, that.selectedFrame.keyframe - (startFrame - that.activeFrame))){
 						startFrame = that.activeFrame;
 					}
@@ -18197,18 +18469,23 @@ MT.extend("core.Emitter")(
 				}
 				return;
 			}
+			this.selectObjectForce(obj);
+			
+			
+			
+			//this.location.el.innerHTML = obj.name;
+			/*var p = this.keyframes.panels[this.keyframes.activeMovie];
+			if(p){
+				p.x = this.location.width;
+			}*/
+		},
+		
+		selectObjectForce: function(obj){
 			this.hide();
 			this.keyframes = this.keyframesSub;
 			this.setActive(obj);
-			
-			
-			this.location.el.innerHTML = obj.name;
-			var p = this.keyframes.panels[this.keyframes.activeMovie];
-			if(p){
-				p.x = this.location.width;
-			}
 		},
-   
+		
 		addMovie: function(item, name){
 			
 			if(item && name){
@@ -18240,6 +18517,11 @@ MT.extend("core.Emitter")(
 			this.keyframes = this.keyframesSub;
 			this.setActive(this.data);
 			this.showHelpers();
+			this.keyframes.setActiveMovie(name);
+			var that = this;
+			window.setTimeout(function(){
+				that.keyframes.update();
+			});
 		},
    
 		__addMovie: function(item, name){
@@ -18652,7 +18934,7 @@ MT.extend("core.Emitter")(
 			this.keyframes.hide();
 			this.keyframes = this.keyframesMain;
 			
-			this.location.el.innerHTML = "Main Timeline";
+			//this.location.el.innerHTML = "Main Timeline";
 			
 			this.mainMovie = {
 				name: this.mainName,
@@ -18970,9 +19252,7 @@ MT(
 			};
 			
 			tools.on(MT.ASSET_FRAME_CHANGED, function(obj){
-				/*updateData(obj);
-				that.type = "asset";
-				console.log("asset GO");*/
+				
 			});
 			tools.on(MT.OBJECT_SELECTED, function(mo){
 				updateData(mo.data);
@@ -19456,7 +19736,6 @@ var defs = [];
 	for(var i=0; i<defFiles.length; i++){
 		(function(i){
 			MT.loader.get(defFiles[i], function(src){
-				console.log("loaded",i);
 				defs[i] = JSON.parse(src);
 			});
 		})(i);
@@ -19569,7 +19848,7 @@ var defs = [];
 })();
 
 MT.FILE_UPLOADED = "FILE_UPLOADED";
-MT.FILE_LIST_RECEIVED = "MT.FILE_LIST_RECEIVED";
+MT.FILE_LIST_RECEIVED = "FILE_LIST_RECEIVED";
 
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.SourceEditor = function(project){
@@ -19643,6 +19922,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.addButtons(tools.panel);
 				
 				that.leftPanel.width = parseInt(that.leftPanel.style.width);
+				//????
+				window.setTimeout(function(){
+					that.editor.refresh();
+					that.editor.focus();
+				},100);
+				
+				that.editor.refresh();
 			});
 			this.panel.on("unselect", function(){
 				tools.panel.content.show();
@@ -19917,8 +20203,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						info = JSON.parse(infostr);
 					}
 					var fontFamily = info["Family name"];
-					
-					console.log("asd");
 					var pangrams = "";
 					
 					for(var j=0; j<5; j++){
@@ -19967,9 +20251,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.loadMode(mode, function(){
 				var doc = that.documents[data.fullPath].data.doc;
 				that.documents[data.fullPath].data.src = data.src;
-				
+				var edmode = mode._mode || mode;
 				if(!doc){
-					doc = CodeMirror.Doc(data.src, mode, 0);
+					doc = CodeMirror.Doc(data.src, edmode, 0);
 					doc.name = data.fullPath;
 					that.documents[data.fullPath].data.doc = doc;
 				}
@@ -20477,7 +20761,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		guessMode: function(ext){
-			var mode = {};
+			var mode = {
+				ext: ext
+			};
 			if(ext == "js"){
 				mode.name = "javascript";
 				mode.hint = "javascript";
@@ -20502,6 +20788,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			if(ext == "json"){
 				mode.name = "javascript";
+				mode._mode = "application/ld+json";
 			}
 			return mode;
 		},
@@ -20803,7 +21090,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		loadedFonts: [],
 		loadPrivateFonts: function(list){
-			console.log("LOAD LIST", list);
 			var font;
 			var fullstr = "";
 			var str;
@@ -21313,11 +21599,9 @@ MT.extend("core.Emitter")(
 			var that = this;
 			
 			this.ws = new WebSocket(this.url);
-			console.log("connecting....");
 			this.ws.binaryType = "arraybuffer";
 			
 			this.ws.onopen = function(e){
-				console.log("connected");
 				that.emit("core","open");
 			};
 			
@@ -21343,7 +21627,6 @@ MT.extend("core.Emitter")(
 			};
 			
 			this.ws.onclose = function(){
-				console.log("WS close");
 				that.emit("core","close");
 				window.setTimeout(function(){
 					that.connect();
@@ -21645,6 +21928,7 @@ MT.extend("core.Emitter")(
 		});
 		
 		this.events.on(this.events.MOUSEMOVE, function(e){
+			that.lastEvent.move = e;
 			if(!mDown){
 				var panel = e.target.panel || that.pickPanel(e);
 				if(!panel){
@@ -21662,18 +21946,14 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			
-			
 			if(!that.activePanel){
 				return;
 			}
-			//e.preventDefault();
-			//e.stopPropagation();
 			if(needResize){
 				that.resizePanel(that.activePanel, e);
 				return;
 			}
-			
-			
+
 			if(!that.tryUnjoin(that.activePanel, e)){
 				return;
 			}
@@ -21682,7 +21962,6 @@ MT.extend("core.Emitter")(
 		});
 		
 		this.events.on(this.events.DBLCLICK, function(e){
-			console.log("rename");
 			if(!that.activePanel){
 				return;
 			}
@@ -21696,6 +21975,8 @@ MT.extend("core.Emitter")(
 		var prevClicked = null;
 		
 		this.events.on(this.events.MOUSEDOWN, function(e){
+			that.lastEvent.down = e;
+			that.reloadSize(e);
 			if(e.button != 0){
 				if(e.button == 1){
 					if(e.target.data && e.target.data.panel && e.target.data.panel.isCloseable){
@@ -21740,12 +22021,13 @@ MT.extend("core.Emitter")(
 		});
 		
 		this.events.on(this.events.MOUSEUP, function(e){
+			that.lastEvent.up = e;
 			mDown = false;
 			
 			if(!that.activePanel){
 				return;
 			}
-			e.stopPropagation();
+			//e.stopPropagation();
 			that.activePanel.addClass("animated");
 			that.activePanel.isNeedUnjoin = true;
 			that.activePanel.mdown = false;
@@ -21765,7 +22047,7 @@ MT.extend("core.Emitter")(
 			that.sortPanels();
 			that.update();
 			that.saveLayout();
-		}, true);
+		}, false);
 		
 		
 		// delay a little bit first animation - sometimes game do not resize well 
@@ -21785,6 +22067,11 @@ MT.extend("core.Emitter")(
 		this.colorPicker.hide();
 	},
 	{
+		lastEvent: {
+			down: null,
+			up: null,
+			key: null
+		},
 		resetOldLayout: function(){
 			var key;
 			for(var i=0; i<localStorage.length; i++){
@@ -22760,7 +23047,8 @@ MT.extend("core.Emitter")(
 			return null;
 		},
 		pickPanel: function(point){
-			var p = null
+			point = point || this.lastEvent.up;
+			var p = null;
 			for(var i=this.panels.length-1; i>-1; i--){
 				p = this.panels[i];
 				if(!p.isVisible || !p.isPickable){
@@ -22773,7 +23061,24 @@ MT.extend("core.Emitter")(
 			}
 			return null;
 		},
-		
+		pickPanelGlobal: function(point){
+			point = point || this.lastEvent.down;
+			if(!point){
+				return null;
+			}
+			var p = null;
+			for(var i=this.panels.length-1; i>-1; i--){
+				p = this.panels[i];
+				if(!p.isVisible){
+					continue;
+				}
+				
+				if(p.vsPoint(point)){
+					return p;
+				}
+			}
+			return null;
+		},
 		dockToHelper: function(panel, helper){
 			if(panel.isDocked){
 				return;
@@ -22877,7 +23182,6 @@ MT.extend("core.Emitter")(
 			if(slot != void(0)){
 				this.saveSlot = slot;
 			}
-			console.log("loading from slot", this.saveSlot);
 			var def = this.resetLayout(this.saveSlot, true);
 			this._loadLayout(def, true);
 			
@@ -23167,6 +23471,7 @@ MT.DROP = "drop";
  
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.core.Project = function(ui, socket){
+		var that = this;
 		MT.core.BasicPlugin.call(this, "Project");
 		this.isReady = false;
 		this.data = {
@@ -23227,11 +23532,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		this.initSocket(socket);
 		this.ui.events.on("hashchange", function(){
-			console.log("hash changed", "reload?");
-			window.location.reload();
+			if(!that.preventReload){
+				window.location.reload();
+			}
 		});
 	},
 	{
+		preventReload: false,
 		a_maintenance: function(data){
 			var seconds = data.seconds;
 			var content = "System will go down for maintenance in ";
@@ -23275,7 +23582,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		a_selectProject: function(info){
 			this.id = info.id;
+			this.preventReload = true;
 			window.location.hash = info.id;
+			
+			var that = this;
+			window.setTimeout(function(){
+				that.preventReload = false;
+			}, 1000);
+			
 			this.path = "data/projects/"+info.id;
 			
 			this.a_getProjectInfo(info);
@@ -23293,66 +23607,58 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 		},
 		
-		setUpData: function(){
-			document.body.style.backgroundColor = this.data.backgroundColor;
-			this.emit("updateData", this.data);
-		},
-		
 		a_newProject: function(){
 			this.newProject();
 		},
 		
 		a_needUpdate: function(){
-			var that = this;
-			var pop = new MT.ui.Popup("Update Project", "");
-			pop.removeHeader();
-			
-			pop.el.style.width = "50%";
-			pop.el.style.height= "40%";
-			pop.el.style["min-height"] = "200px"
-			pop.el.style.top= "20%";
-			
-			
-			var p = new MT.ui.Panel("Update Project");
-			
-			p.hide().show(pop.content).fitIn();
-			p.removeBorder();
-			
-			var cont = document.createElement("div");
-			cont.innerHTML = "Enter project title";
-			cont.style.margin = "20px 10px";
-			p.content.el.appendChild(cont);
-			
-			
-			
-			var prop = {
-				title: "New Game",
-				namespace: "NewGame"
-			};
-			
-			var iName = new MT.ui.Input(this.ui, {key: "title", type: "text"}, prop);
-			var iNs = new MT.ui.Input(this.ui, {key: "namespace", type: "text"}, prop);
-			
-			iName.show(p.content.el);
-			iNs.show(p.content.el);
-			
-			iName.enableInput();
-			
-			iName.on("change", function(n, o){
-				iNs.setValue(n.replace(/\W/g, ''));
+			this.showProjectInfo({
+				cb: function(prop){
+					that.send("updateProject", prop);
+				},
+				title: "Update project",
+				description: "Enter project title",
+				button: "Upate"
 			});
-			
-			
-			pop.addButton("Update", function(){
-				that.send("updateProject", prop);
-				pop.hide();
-			});
-			
 		},
 		
 		a_getProjectInfo: function(data){
-			for(var i in data){
-				this.data[i] = data[i];
+			MT.core.Helper.updateObject(this.data, data);
+			var that = this;
+			this.send("getOwnerInfo", null, function(data){
+				console.log("@project info", data);
+				that.setProjectTimer(data);
+			});
+		},
+		
+		a_goToHome: function(){
+			window.location = window.location.toString().split("#").shift();
+		},
+		
+		a_copyInProgress: function(){
+			var content = "System is being maintained. Will be back in ";
+			var desc = "<p>Please wait. Editor will load a project automatically.</p>";
+			var pop = new MT.ui.Popup("Copy in progress", desc);
+			pop.showClose();
+			this.copyPopup = pop;
+		},
+		
+		setUpData: function(){
+			document.body.style.backgroundColor = this.data.backgroundColor;
+			this.emit("updateData", this.data);
+		},
+		
+		setProjectTimer: function(data){
+			if(data.level > 0){
+				return;
+			}
+			
+			
+			var button = this.plugins.auth.mainButton;
+			
+			var min = new Date(Date.parse("2015-03-01"));
+			if(data.created < min.getTime()){
+				data.created = min.getTime();
 			}
 			
 			
@@ -23414,18 +23720,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}, 1000);
 		},
 		
-		a_goToHome: function(){
-			window.location = window.location.toString().split("#").shift();
-		},
-		
 		copyPopup: null,
-		a_copyInProgress: function(){
-			var content = "System is being maintained. Will be back in ";
-			var desc = "<p>Please wait. Editor will load a project automatically.</p>";
-			var pop = new MT.ui.Popup("Copy in progress", desc);
-			pop.showClose();
-			this.copyPopup = pop;
-		},
 		
 		reload: function(){
 			window.location.reload();
@@ -23570,9 +23865,37 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			return list;
 		},
 		
+		updateProject: function(cb){
+			var that = this;
+			this.showProjectInfo({
+				cb: function(prop){
+					that.send("updateProject", prop);
+					if(cb){cb(prop);}
+				},
+				title: "Update project",
+				desc: "please review project details and update uproject",
+				button: "Update",
+				showNamespace: false,
+				props: that.data,
+				hideNS: true
+			});
+		},
+		
 		newProjectNext: function(){
 			var that = this;
-			var pop = new MT.ui.Popup("New Project", "");
+			this.showProjectInfo({
+				cb: function(prop){
+					that.send("newProject", prop);
+				},
+				title: "New Project",
+				button: "Create"
+			});
+		},
+		
+		showProjectInfo: function(options){
+			
+			var that = this;
+			var pop = new MT.ui.Popup(options.title || "New Project", "");
 			pop.removeHeader();
 			
 			pop.el.style.width = "50%";
@@ -23581,42 +23904,70 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			pop.el.style.top= "20%";
 			
 			
-			var p = new MT.ui.Panel("New Project");
+			var p = new MT.ui.Panel(options.title || "New Project");
 			//p.removeHeader()
 			
 			p.hide().show(pop.content).fitIn();
 			p.removeBorder();
 			
 			var cont = document.createElement("div");
-			cont.innerHTML = "Enter project title";
+			cont.innerHTML = options.desc || "Enter project title";
 			cont.style.margin = "20px 10px";
 			p.content.el.appendChild(cont);
 			
-			
-			
-			var prop = {
+			if(options.props){
+				options.props.title = options.props.title || "New Game";
+				options.props.namespace = options.props.namespace || "NewGame";
+				options.props.package = options.props.package || "com."+this.getPackageName()+".newgame";
+				
+				var parts = options.props.package.split(".");
+				var val = parts.pop();
+				options.props.package = (parts.join(".") + "." + options.props.namespace.replace(/\W/g, '').toLowerCase());
+			}
+			var prop = options.props || {
 				title: "New Game",
-				namespace: "NewGame"
+				namespace: "NewGame",
+				package: "com."+this.getPackageName()+".newgame"
 			};
 			
+			
+			
 			var iName = new MT.ui.Input(this.ui, {key: "title", type: "text"}, prop);
-			var iNs = new MT.ui.Input(this.ui, {key: "namespace", type: "text"}, prop);
+			var iNs;
+			
+			if(!options.hideNS){
+				var iNs = new MT.ui.Input(this.ui, {key: "namespace", type: "text"}, prop);
+			}
+			
+			var iPac = new MT.ui.Input(this.ui, {key: "package", type: "text"}, prop);
 			
 			iName.show(p.content.el);
-			iNs.show(p.content.el);
+			
+			if(!options.hideNS){
+				iNs.show(p.content.el);
+			}
+			
+			iPac.show(p.content.el);
+			
 			
 			iName.enableInput();
-			
 			iName.on("change", function(n, o){
-				iNs.setValue(n.replace(/\W/g, ''));
+				var strip = n.replace(/\W/g, '');
+				
+				if(!options.hideNS){
+					iNs.setValue(strip);
+				}
+				
+				var parts = prop.package.split(".");
+				var val = parts.pop();
+				iPac.setValue(parts.join(".") + "." + n.replace(/\W/g, '').toLowerCase());
 			});
 			
 			
-			pop.addButton("Create", function(){
-				that.send("newProject", prop);
+			pop.addButton(options.button || "Create", function(){
+				options.cb(prop);
 				pop.hide();
 			});
-			//this.send("newProject");
 		},
 		
 		loadProject: function(pid){
@@ -23704,12 +24055,31 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				return;
 			}
 		},
-		
+		getPackageName: function(){
+			var dom = window.location.hostname.split(".").shift();
+			var tmpProp = "me"+ dom.substring(0, 2);
+			if(this.plugins.auth.userId){
+				tmpProp += this.plugins.auth.userId;
+			}
+			else{
+				tmpProp += Math.floor(Math.random()*1000);
+			}
+			
+			return tmpProp;
+		},
 		createSettings: function(){
 			var that = this;
+			if(this.data.sourceEditor.autocomplete === void(0)){
+				this.data.sourceEditor.autocomplete = 1;
+			}
+			
+			if(!this.data.package){
+				this.data.package = ("com."+this.getPackageName()+"." + this.data.namespace.replace(/\W/g, '').toLowerCase());
+			}
 			
 			this.setInputs = {
 				label: new MT.ui.Input(this.ui, {key: "title", type: "text"}, this.data),
+				package: new MT.ui.Input(this.ui, {key: "package", type: "text"}, this.data),
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
 				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor),
 				autocomplete: new MT.ui.Input(this.ui, {key: "autocomplete", type: "bool"}, this.data.sourceEditor)
@@ -23739,7 +24109,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			MT.ui.addClass(this.setPanel.el, "editor-settings");
 			
 			this.setPanel.on("show", function(){
-				console.log("pop show");
 				lastData = JSON.stringify(that.data);
 			});
 			
@@ -23771,6 +24140,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			this.setInputs.label.show(this.setFields.project.el);
+			this.setInputs.package.show(this.setFields.project.el);
 			this.setInputs.bgColor.show(this.setFields.ui.el);
 			this.setButtons.resetLayout.show(this.setFields.ui.el);
 			
@@ -23913,7 +24283,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			};
 			fr.readAsArrayBuffer(file);
 		},
-		
 		
 		isAction: function(name){
 			if(name.indexOf("need-login") === 0){

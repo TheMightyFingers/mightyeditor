@@ -79,6 +79,10 @@ MT.extend("core.Emitter")(
 		
 		get: function(index){
 			return this._selected[index];
+		},
+		
+		sort: function(cb){
+			this._selected.sort(cb);
 		}
 		
 		

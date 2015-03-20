@@ -129,17 +129,29 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				
 				
 				if(e.which == MT.keys.DELETE){
-					var data = om.tv.getData();
+					var ap = that.ui.pickPanelGlobal();
+					if(!ap){
+						return;
+					}
 					
-					that.map.selector.forEach(function(obj){
-						om.deleteObj(obj.id, true, data);
-						om.selector.clear();
-					});
+					if(ap == that.map.panel || ap == om.panel){
+						var data = om.tv.getData();
+						
+						that.map.selector.forEach(function(obj){
+							om.deleteObj(obj.id, true, data);
+							om.selector.clear();
+						});
+						
+						om.tv.merge(data);
+						
+						om.sync();
+						om.update();
+						return;
+					}
+					if(ap === am.panel){
+						am.confirmDeleteSelected();
+					}
 					
-					om.tv.merge(data);
-					
-					om.sync();
-					om.update();
 					return;
 				}
 				
@@ -162,8 +174,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				if(e.ctrlKey){
 					if(e.which === MT.keys.C){
 						toCopy.length = 0;
+						
 						map.selector.forEach(function(obj){
 							toCopy.push(obj);
+						});
+						
+						toCopy.sort(function(a, b){
+							return (map.loadedObjects.indexOf(a) - map.loadedObjects.indexOf(b));
 						});
 						return;
 					}
@@ -191,7 +208,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							bounds = toCopy[i].getBounds();
 							
 							if(!e.shiftKey){
-								cop = that.copy(toCopy[i].data, bounds.x - midX + x - map.offsetX, bounds.y - midY + y - map.offsetY);
+								cop = that.copy(toCopy[i].data, bounds.x - midX + (x - map.offsetX) / map.scale.x, bounds.y - midY + (y - map.offsetY) / map.scale.y);
 							}
 							else{
 								cop = that.copy(toCopy[i].data, toCopy[i].data.x, toCopy[i].data.y);

@@ -31,7 +31,11 @@ MT.extend(MT.core.BasicPlugin)(
 	},
 	{
 		get md5(){
-			return require('crypto').createHash("md5");
+			return "848a8b83c4084ad604f25293c118781b";
+		},
+		
+		randomMD5: function(){
+			return this.md5;
 		},
 		a_test: function(data, cb){
 			cb(data);
@@ -61,15 +65,7 @@ MT.extend(MT.core.BasicPlugin)(
 				MT.log("get socialConfig: nocb");
 				return;
 			}
-			var conf = this.config.social;
-			var out = {};
-			for(var i in conf){
-				out[i] = conf[i].public;
-				out[i].name = conf[i].name;
-				out[i].params.redirect_uri = conf[i].redirect_uri;
-				out[i].params.client_id = conf[i].client_id;
-			}
-			cb(out);
+			cb({}); 
 		},
 		
 		
@@ -201,7 +197,7 @@ MT.extend(MT.core.BasicPlugin)(
 			var user = this.user || {
 				id: 0
 			};
-			this.db.run("INSERT INTO projects (user_id, title, created, link, secret) VALUES (?, ?, ?, ?, ?)", [user.id, info.title, Date.now(), link, this.md5.update(Date.now()+"").digest('hex')]);
+			this.db.run("INSERT INTO projects (user_id, title, created, link, secret) VALUES (?, ?, ?, ?, ?)", [user.id, info.title, Date.now(), link, this.md5]);
 		},
 		
 		updateTitle: function(info, link){

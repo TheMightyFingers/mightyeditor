@@ -12,9 +12,11 @@ MT.require("core.FS");
 var exec = require('child_process').exec;
 
 MT.extend("core.BasicPlugin")(
-	MT.core.Project = function(socket, config, server){
+	MT.core.Project = function(socket, config, server, postman){
 		this.socket = socket;
+		this.config = config;
 		this.server = server;
+		this.postman = postman;
 		
 		MT.core.BasicPlugin.call(this, this, "Project");
 		
@@ -25,7 +27,7 @@ MT.extend("core.BasicPlugin")(
 		this.dbObject  = null;
 		this.dbName = config.dbName;
 		
-		this.config = config;
+		
 		var that = this;
 		socket.onClose(function(){
 			MT.log("Socket closed", that.id);
@@ -60,6 +62,13 @@ MT.extend("core.BasicPlugin")(
 			this.loadCommand(idr[0], idr[1]);
 		},
 		
+		a_getOwnerInfo: function(data, cb){
+			if(!cb){
+				return;
+			}
+			cb({level: 0});
+		},
+		
 		checkAndOpenProject: function(id){
 			var that = this;
 			// is own project?
@@ -81,16 +90,12 @@ MT.extend("core.BasicPlugin")(
 						}
 						else{
 							var d = {domain: "project", action: "loadProject", arguments:[id]};
-							console.log("Request Login", d);
 							that.auth.send("login", d);
 						}
 					}
 				});
 				return;
 			}
-			
-			console.log("opening own project: FULL ACCESS");
-			
 			this.openProject(id, function(){
 				var info = that.getProjectInfo();
 				info.id = that.id;
@@ -111,6 +116,10 @@ MT.extend("core.BasicPlugin")(
 		
 		a_updateProject: function(info){
 			this.updateProject(info);
+		},
+		
+		a_updateProjectInfo: function(info){
+			this.updateProjectInfo(info);
 		},
 		
 		a_getProjectInfo: function(){
@@ -206,12 +215,10 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		saveProjectInfo: function(info){
-			console.log("save Project Info", info);
 			var old = this.data.contents[0];
 			if(old && old.title != info.title){
 				this.auth.updateTitle(info, this.id);
 			}
-			
 			this.data.contents[0] = info;
 		},
 		
@@ -251,8 +258,6 @@ MT.extend("core.BasicPlugin")(
 		
 		openProject: function(pid, cb){
 			var that = this;
-			console.log("OPEN PROJECT!", pid);
-			
 			that.path = that.root + MT.core.FS.path.sep + pid;
 			this.fs.exists(this.path, function(yes){
 				if(!yes){
@@ -306,7 +311,9 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		initProject: function(cb){
-			MT.error("OLD:", this.socket.groups);
+			if(this.socket.groups.length > 0){
+				MT.error("OLD:", this.socket.groups);
+			}
 			this.loadPlugins();
 			this.socket.leaveAllGroups();
 			this.socket.joinGroup(this.id);
@@ -346,7 +353,6 @@ MT.extend("core.BasicPlugin")(
 		updateProject: function(info){
 			this.checkNs(info);
 			var atLast = function(){
-				
 				that.saveProjectInfo(info);
 				that.initProject(function(){
 					info.id = that.id;
@@ -360,6 +366,11 @@ MT.extend("core.BasicPlugin")(
 					that.createSources(data, info, 0, atLast);
 				});
 			});
+		},
+		
+		updateProjectInfo: function(){
+			this.checkNs(info);
+			this.saveProjectInfo(info);
 		},
 		
 		checkNs: function(info){

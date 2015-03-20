@@ -10,12 +10,17 @@ MT.extend("core.BasicPlugin")(
 		this.phaserSrc = "phaser.js";
 		this.phaserMinSrc = "phaser.min.js";
 
+		var p = this.fs.path.sep;
+		this.tplPath = "templates"+p+"default"+p;
+		
 		this.importFile = "mt.helper.js";
 		this.dataFile = "mt.data.js";
 		this.jsonFile = "mt.data.json";
 		this.exampleFile = "index.html";
 		this.hacksFiles = ["phaserHacks2.0.7.js", "phaserHacks2.1.3.js", "phaserHacks.js"];
 
+		
+		
 		this.phaserPath = "phaser";
 		this.assetsPath = "assets";
 
@@ -24,37 +29,31 @@ MT.extend("core.BasicPlugin")(
 		this.idList = {};
 	},
 	{
-		
-		_dir: "",
 		get dir(){
-			
-			
-			
 			return this.project.path + this.sep + this.name;
 		},
-		
+		_name: undefined,
 		get name(){
-			var info = this.project.getProjectInfo();
-			var name = info.namespace;
-			name = name.replace(/\W+/g, "_");
-			return name;
+			if(!this._name){
+				var info = this.project.getProjectInfo();
+				var name = info.namespace;
+				name = name.replace(/\W+/g, "_");
+				this._name = name;
+			}
+			return this._name;
 		},
 		
-		a_phaserDataOnly: function(){
+		a_phaserDataOnly: function(data, cb){
 			var that = this;
-		
 			this.phaserDataOnly(function(err, localFilePath, filePath){
-				that.send("complete",{
+				cb({
 					file: localFilePath,
 					action: "phaserDataOnly"
 				});
 			});
-
-
 		},
 
 		_cleanUp: function(o){
-
 			delete o.__image;
 			delete o.source;
 			delete o.path;
@@ -64,7 +63,6 @@ MT.extend("core.BasicPlugin")(
 
 		phaserDataOnly: function(cb, contents){
 			this.zipName = this.name + ".zip";
-			
 			var that = this;
 			this.fs.mkdir(this.dir);
 			var data;
@@ -81,18 +79,20 @@ MT.extend("core.BasicPlugin")(
 			}
 
 			this.createIdList(data.assets.contents, this.dir + this.sep + this.assetsPath);
-
 			this.parseAssets(data.assets.contents);
 			this.parseObjects(data.objects.contents);
 
 			contents = JSON.stringify(data, null, "\t");
-
+			
+			
+			var p = this.fs.path.sep;
+			
 			var srcPath = this.dir + this.sep;
 			var libsPath = srcPath + "js/lib/";
-			var tplPath = "templates/default/src/js/lib/";
-			var localFilePath = "phaser/js/lib/" +  this.dataFile;
+			var tplPath = this.tplPath + "src" + p + "js" + p + "lib" + p;
+			var localFilePath = this.name + "/js/lib/" +  this.dataFile;
 			var filePath = libsPath + this.dataFile;
-
+			
 			that.fs.copy(this.project.path + this.sep + "src", this.dir);
 
 			that.fs.copy(tplPath + this.importFile, libsPath + this.importFile);
@@ -137,59 +137,276 @@ MT.extend("core.BasicPlugin")(
 		copyFile: function(info, path, cb){
 
 		},
-
-		a_phaser: function(){
+		
+		a_phaser: function(data, cb){
+			MT.log("Export phaser", this.project.id);
+			
 			var that = this;
-			
-			
+			var dd = this.dir;
 			
 			this.fs.rmdir(this.dir);
-			this.fs.rm(this.project.path + this.sep +  this.zipName);
-
-
-			this.fs.mkdir(this.dir);
 			this.fs.mkdir(this.dir + this.sep + this.assetsPath);
 			
-			
-			
-			
 			this.phaser(function(error, stdout, stderr){
-			    //zip -9 -r <zip file> <folder name>
-				
-			    exec("zip -9 -r ../" + that.zipName + " ./", { cwd: that.dir }, function () {
-			        that.send("complete", {
-			            file: that.zipName,
+				if(data.zip){
+					that.zip(that.name, that.dir, function(zipName){
+						cb({
+							file: zipName,
+							name: that.name,
+							action: "phaser"
+						});
+					});
+				}
+				else{
+					cb({
+						file: that.zipName,
 						name: that.name,
-			            action: "phaser"
-			        });
-			    });
+						action: "phaser"
+					});
+				}
 			});
 		},
-
-		a_phaserMinify: function(){
+		
+		/*
+		{
+			email: ...
+			template: ...
+			cmd: ...
+			env: ...
+		}
+		*/
+		
+		a_genKeystore: function(info, cb){
+			var that = this;
+			var auth = this.project.auth;
+			if(!auth.user.id){
+				cb();
+				MT.log("genKeystore: BAD AUTH");
+				return;
+			}
+			
+			var p = this.fs.path.sep;
+			var path = "secret" + p + auth.user.id;
+			var keystore = path + p + "keystore";
+			
+			args = [info.CN, info.OU, info.O, info.L, info.ST, info.C];
+			for(var i=0; i<args.length; i++){
+				if(args[i] == void(0)){
+					cb();
+					return;
+				}
+				args[i] = args[i].replace(/"/gi, '\"');
+			}
+			
+			var astr = '"' + args.join('" "') + '"';
+			
+			this.fs.mkdir(path, function(){
+				
+				var password = auth.randomMD5();
+				auth.setKeystorePassword(password)
+				
+				MT.core.Queue({
+						cmd: that.project.config.tools.crosswalk + " keystore " + astr,
+						env: {
+							cwd: path,
+								env:{
+									PASSWORD: password
+								}
+						}
+					},
+					function(){
+						cb();
+					}
+				);
+			});
+			
+			
+		},
+		
+		a_crosswalk: function(opts, cb){
+			var that = this;
+			var auth = this.project.auth;
+			if(!auth.user || !auth.user.level){
+				cb({requireProLevel: 1});
+				return;
+			}
+			
+			
+			var arch = opts.arch;
+			
+			this.info = this.project.getProjectInfo();
+			
+			if(!this.info.package){
+				cb({requirePackage: 1});
+				return;
+			}
+			
+			var config = this.project.config;
+			var p = this.fs.path.sep;
+			var path = "secret" + p + auth.user.id;
+			var keystore = this.fs.path.resolve(path + p + "keystore");
+			
+			var getName = function(json, package){
+				var name = package.split(".").pop();
+				name = name.substring(0, 1).toUpperCase() + name.substring(1);
+				if(json.version){
+					name += "_" + json.version;
+				}
+				else if(json.xwalk_version){
+					name += "_" + json.xwalk_version;
+				}
+				
+				name += "_"+arch+".apk";
+				return name;
+			};
+			
+			var proceed = function(el, dir, name, launcher){
+				var after = function(password){
+					var base = that.project.config.hostname + "/data/projects/" + that.project.id + "/" + that.name;
+					var link = base + "-minified/build/" + name;
+			
+					that.fs.after(function(){
+						var d = that.fs.path.resolve(dir);
+						var settings = {
+							cmd: that.project.config.tools.crosswalk + " make " + that.info.package + " ./manifest.json " + arch +" "+ keystore,
+							env: {
+								cwd: d,
+								env:{
+									PASSWORD: password
+								},
+							},
+							password: password,
+							email: auth.user.email,
+							template: opts.rel ? "appIsReadySigned" : "appIsReadyDebug",
+							link: link
+						};
+						
+						if(opts.rel){
+							settings.attachments = [{ path: keystore }];
+						}
+						
+						
+						MT.core.Queue(settings, function(err, serr){
+							cb({
+								file: name,
+								title: that.name,
+								err: err,
+								serr: serr,
+								action: "phaser"
+							});
+						});
+					});
+				};
+				
+				if(!el){
+					that.fs.copy(that.tplPath + "launcher.png", launcher);
+				}
+				if(opts.rel){
+					auth.getKeystorePassword(function(password){
+						if(!password){
+							MT.error("BAD password");
+							cb();
+							return;
+						}
+						after(password);
+						
+					});
+				}
+				else{
+					after();
+				}
+			};
+			
+			var minify = function(){
+				that.phaserMinify(function(name, dir){
+					var manifest = dir + p + "manifest.json";
+					var launcher = dir + p + "assets" + p + "launcher.png";
+					
+					that.fs.exists(manifest, function(em){
+						that.fs.exists(launcher, function(el){
+							if(!em){
+								that.fs.readFile(that.tplPath + "src" + p + "manifest.json", function(e, c){
+									var json = JSON.parse(c);
+									json.name = that.info.title;
+									
+									that.fs.writeFile(manifest, JSON.stringify(json));
+									proceed(el, dir, getName(json, that.info.package), launcher);
+								}, "UTF-8");
+							}
+							else{
+								that.fs.readFile(manifest, function(e, c){
+									var json = JSON.parse(c);
+									proceed(el, dir, getName(json, that.info.package), launcher);
+								});
+							}
+						});
+					});
+				});
+			};
+			if(opts.rel){
+				MT.log("Exporting release apk", that.project.id);
+				this.fs.exists(keystore, function(y){
+					if(!y){
+						cb({requireSignature: 1});
+						return;
+					}
+					minify();
+				});
+			}
+			else{
+				MT.log("Exporting debug apk", that.project.id);
+				minify();
+			}
+			
+			
+			
+		},
+		
+		a_phaserMinify: function(data, cb){
+			var that = this;
+			this.phaserMinify(function(name, dir){
+				that.zip(name, dir, function(){
+					cb({
+						file: name,
+						name: name + "-minified",
+						action: "phaser"
+					});
+				})
+			});
+		},
+		
+		phaserMinify: function(cb){
 		    var that = this;
 		    this.fs.rmdir(this.dir);
+			var info = this.info = this.project.getProjectInfo();
+			
+			this.zipName = this.name + ".min.zip";
+			
+			
 		    this.fs.rm(this.project.path + this.sep + this.zipName);
 
 
 		    this.fs.mkdir(this.dir);
 		    this.fs.mkdir(this.dir + this.sep + this.assetsPath);
 			
-			var info = this.info = this.project.getProjectInfo();
+			
 			
 		    this.phaser(function (error, stdout, stderr) {
 		        that.minify(function(dir){
-						that.zipName = info.title;
-						
-						exec("zip -9 -r ../" + that.zipName + ".min.zip ./", { cwd: dir }, function () {
-							that.send("complete", {
-								file: that.zipName,
-								name: that.name + "-minified",
-								action: "phaser"
-							});
-						});
+					cb(that.name, dir);
 		        });
 		    });
+		},
+		
+		zip: function(name, dir, cb){
+			var zipName = name+ ".min.zip";
+			this.fs.rm(dir + this.fs.path.sep + ".."+ this.fs.path.sep + zipName, function(){
+				exec("zip -9 -r ../" + zipName + " ./", { cwd: dir }, function(){
+					if(cb){
+						cb(zipName, dir);
+					}
+				});
+			});
 		},
 
 
@@ -207,11 +424,13 @@ MT.extend("core.BasicPlugin")(
 
 
 			var miniPath = MT.core.FS.path.normalize(this.project.path + this.sep + name + "-minified" + this.sep);
-
+			this.fs.rm(miniPath);
 
 			this.fs.readFile(index, function(err, cont){
 				if(err){
-					console.log("ERROR!", err);
+					MT.log("ERROR!", err);
+					if(cb){cb();}
+					return;
 				}
 				var Parser = require("../lib/HTMLWalker.js").HTMLWalker;
 				var scripts = [],
@@ -352,7 +571,6 @@ MT.extend("core.BasicPlugin")(
 					MT.core.FS.writeFile(miniPath + indexFile, html, function(){
 						if(cb){cb(miniPath);}
 					});
-					//MT.core.FS.copy(that.dir + );
 				};
 				todo++;
 
@@ -366,8 +584,8 @@ MT.extend("core.BasicPlugin")(
 					todo++;
 					MT.core.FS.readFile(file, function(e, code){
 						if(e){
-							MT.log("Error:", e);
-							process.exit();
+							MT.log("Export -> Minify Error:", e);
+							//process.exit();
 						}
 						toplevel = UglifyJS.parse(code.toString("UTF-8"), {
 							filename: file,
@@ -377,11 +595,9 @@ MT.extend("core.BasicPlugin")(
 						done();
 					});
 				});
-
-				console.log(scripts, styles);
-				console.log(html);
 			});
 		},
+		
 		phaser: function(cb){
 			var that = this;
 
@@ -447,13 +663,13 @@ MT.extend("core.BasicPlugin")(
 					continue;
 				}
 
-				asset.source = path + this.sep + asset.name;
+				var source = path + this.sep + asset.name;
 				if(asset.__image){
-					this.fs.copy(this.project.path + this.sep + asset.__image, asset.source);
+					this.fs.copy(this.project.path + this.sep + asset.__image, source);
 				}
 				if(asset.atlas){
 					var aext = asset.atlas.split(".").pop();
-					this.fs.copy(this.project.path + this.sep + asset.id + "." + aext, asset.source + "." + aext);
+					this.fs.copy(this.project.path + this.sep + asset.id + "." + aext, source + "." + aext);
 					asset.atlas = asset.name + "." + aext;
 				}
 			}

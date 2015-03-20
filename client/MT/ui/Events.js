@@ -225,6 +225,9 @@ MT(
 			var that = this;
 			var cb = function(e){
 				e = e || event;
+				if(e.ctrlKey){
+					e.metaKey = e.ctrlKey;
+				}
 				
 				if(type.indexOf("drop") > -1 || type.indexOf("drag") > -1 ){
 					e.preventDefault();

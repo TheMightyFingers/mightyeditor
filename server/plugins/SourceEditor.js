@@ -135,7 +135,7 @@ MT.extend("core.BasicPlugin")(
 
 			var item = this.delete(data.id);
 			var that = this;
-			this.fs.rm(this.path + path, function(){
+			this.fs.rm(this.path + data.fullPath, function(){
 				that.a_getFiles();
 			});
 		},
@@ -277,9 +277,7 @@ MT.extend("core.BasicPlugin")(
 
 
 		getId: function(path){
-			console.log("Getting ID:");
 			for(var i in this.ids){
-				//console.log(this.ids[i]);
 				if(this.ids[i].fullPath == path){
 					return i;
 				}

@@ -34,8 +34,6 @@
  
 		_writeFile: function(file, contents, encoding, cb){
 			if(encoding){
-				
-				console.log("witing binary data", file, encoding);
 				fs.writeFile(file, contents, encoding, function(e){
 					cb(e);
 				});

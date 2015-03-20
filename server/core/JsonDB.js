@@ -31,7 +31,10 @@ MT(
 					}
 					catch(e){
 						MT.error(e, "FAILED TO PARSE DB");
-						this.fs.writeFile(this.fs.path.dirname(this.dbfile) + this.fs.path.sep + Date.now()+".db-backup", contents);
+						
+						that.fs.copy(that.dbfile, that.fs.path.dirname(that.dbfile) + that.fs.path.sep + Date.now()+".db-backup");
+						
+						//that.fs.writeFile(that.fs.path.dirname(that.dbfile) + that.fs.path.sep + Date.now()+".db-backup", contents);
 						that.data = {
 							contents: [],
 							count: 0

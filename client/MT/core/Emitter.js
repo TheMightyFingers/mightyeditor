@@ -96,16 +96,11 @@ MT(
 		},
 		
 		emit: function(type, action, data){
-			
-			//this.debug(type);
-			
-			//console.log("emit:", type, action);
 			if(!this.callbacks){
 				return;
 			}
 			
 			if(!this.callbacks[type]){
-				//console.warn("received unhandled data", type, data);
 				return;
 			}
 			

@@ -1,7 +1,8 @@
 MT(
 	MT.ui.MainMovie = function(mm){
 		this.mm = mm;
-
+		
+		this.hideDelete();
 	},
 	{
 		show: function(){

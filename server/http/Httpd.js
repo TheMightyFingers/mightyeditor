@@ -294,7 +294,7 @@ MT(
 			
 			res.on('end', function(){
 				MT.log("res.ended");
-				cb(null, body, res);
+				cb(body, res);
 			});
 		},
 

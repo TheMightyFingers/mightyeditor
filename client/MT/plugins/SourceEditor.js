@@ -14,7 +14,6 @@ var defs = [];
 	for(var i=0; i<defFiles.length; i++){
 		(function(i){
 			MT.loader.get(defFiles[i], function(src){
-				console.log("loaded",i);
 				defs[i] = JSON.parse(src);
 			});
 		})(i);
@@ -127,7 +126,7 @@ var defs = [];
 })();
 
 MT.FILE_UPLOADED = "FILE_UPLOADED";
-MT.FILE_LIST_RECEIVED = "MT.FILE_LIST_RECEIVED";
+MT.FILE_LIST_RECEIVED = "FILE_LIST_RECEIVED";
 
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.SourceEditor = function(project){
@@ -201,6 +200,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.addButtons(tools.panel);
 				
 				that.leftPanel.width = parseInt(that.leftPanel.style.width);
+				//????
+				window.setTimeout(function(){
+					that.editor.refresh();
+					that.editor.focus();
+				},100);
+				
+				that.editor.refresh();
 			});
 			this.panel.on("unselect", function(){
 				tools.panel.content.show();
@@ -475,8 +481,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						info = JSON.parse(infostr);
 					}
 					var fontFamily = info["Family name"];
-					
-					console.log("asd");
 					var pangrams = "";
 					
 					for(var j=0; j<5; j++){
@@ -525,9 +529,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.loadMode(mode, function(){
 				var doc = that.documents[data.fullPath].data.doc;
 				that.documents[data.fullPath].data.src = data.src;
-				
+				var edmode = mode._mode || mode;
 				if(!doc){
-					doc = CodeMirror.Doc(data.src, mode, 0);
+					doc = CodeMirror.Doc(data.src, edmode, 0);
 					doc.name = data.fullPath;
 					that.documents[data.fullPath].data.doc = doc;
 				}
@@ -1035,7 +1039,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		guessMode: function(ext){
-			var mode = {};
+			var mode = {
+				ext: ext
+			};
 			if(ext == "js"){
 				mode.name = "javascript";
 				mode.hint = "javascript";
@@ -1060,6 +1066,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			if(ext == "json"){
 				mode.name = "javascript";
+				mode._mode = "application/ld+json";
 			}
 			return mode;
 		},

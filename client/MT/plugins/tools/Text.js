@@ -111,7 +111,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.fontFace.on("update", function(Val){
 				if(Val == ""){
 					that.fontFace.list.reset();
-					console.log("reset");
 					return;
 				}
 				var val = Val.toLowerCase();
@@ -405,7 +404,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		},
 		
 		change: function(e){
-			//console.log("TEXT:: change", e);
+			
 		},
 		
 		setFill: function(color){
@@ -505,8 +504,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		__setFontFamily: function(fontFamily){
 			
-			console.log("Set font family");
-			
 			this.map = this.tools.map;
 			if(!this.map.activeObject){
 				return;
@@ -590,7 +587,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			
 			//this._setFontFamily(obj);
-			this.tester.style.fontSize = size;
+			this.tester.style.fontSize = size + "px";
 			
 			obj.fontSize = this.tester.style.fontSize;
 			
@@ -843,13 +840,8 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 		
 		mouseDown: function(e){
 			this.mDown = true;
-			
-			//console.log("mouse down");
 		},
 		mouseUp: function(e){
-			//this.tools.tools.select.mouseUp(e);
-			
-			
 			if(!this.mDown){
 				return;
 			}

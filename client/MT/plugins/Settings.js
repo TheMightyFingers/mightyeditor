@@ -188,11 +188,6 @@ MT(
 			var sel = document.createElement("select");
 			sel.className = "ui-input-value";
 			
-			
-			
-			
-			console.log(buff);
-			
 			var opt;
 			for(var i=0; i<buff.length; i++){
 				opt = document.createElement("option");
@@ -203,7 +198,7 @@ MT(
 			}
 			
 			sel.onchange = function(){
-				console.log("change", this.value);
+				//console.log("change", this.value);
 			};
 			
 			div.appendChild(sel);

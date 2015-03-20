@@ -44,7 +44,6 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		filter: function(cb){
 			this.list = this.origList.filter(cb);
 			this.update();
-			console.log("filter");
 		},
 		update: function(){
 			//this.clear();
@@ -86,7 +85,9 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 				item.create(b);
 			}
 
-			
+			if(item.contents) {
+				b.addClass("has-menu");
+			}
 
 			this._items.push(b);
 			item.button = b;

@@ -42,7 +42,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 		},
 		execCmd: function(cmd){
-			console.log("exec", cmd);
 			this.hideLoading();
 			this.hideLogin();
 			
@@ -114,7 +113,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 		},
 		showProperties: function(){
-			console.log("show properties");
 			if(!this.propContainer){
 				this.buildPropContainer();
 			}
@@ -204,19 +202,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		buildShareOptions: function(el){
 			var that = this;
 			this.send("getShareOptions", null, function(options){
-				console.log("share options", options);
 				if(options == void(0)){
 					that.buildCopyToAccessPermissions(el);
 					return;
 				}
-				
 				
 				that.userId = options.userId;
 				if(!options){
 					console.log("cannot get options", options);
 					return;
 				}
-				
 				
 				if(options.action == "goPro"){
 					that.buildGoPro(el);
@@ -267,7 +262,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			var that = this;
 			checkbox.onchange = function(){
-				console.log(this, this.checked);
 				if(this.checked){
 					f.appendChild(link);
 					MT.core.Helper.select(link);
@@ -316,7 +310,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			var that = this;
 			checkbox.onchange = function(){
-				console.log(this, this.checked);
 				if(this.checked){
 					f.appendChild(link);
 					MT.core.Helper.select(link);
@@ -487,7 +480,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var title = document.createElement("div");
 			title.className = "title";
-			title.appendChild(document.createTextNode("Get pro account"));
+			title.appendChild(document.createTextNode("Get a pro account"));
 			
 			
 			var desc = document.createElement("div");
@@ -597,6 +590,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		installUI: function(ui, pop){
 			if(this.panel){
+				
+				if(this.project.id && this.userLevel === 0){
+					this.showProperties();
+				}
+				
 				return;
 			}
 			
@@ -999,22 +997,19 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		checkSession: function(){
 			var sessionId = MT.core.Helper.getCookie(this.sessionCookie);
-			if(sessionId){
+			//if(sessionId){
 				this.send("checkSession", sessionId);
 				return;
-			}
+			/*}
 			else{
 				if(this.onstart){
 					this.onstart();
 					this.onstart = null;
 				}
-				this.send("checkSession", sessionId);
-			}
+			}*/
 		},
 		
 		a_sessionId: function(id){
-			console.log("received session ID", id);
-			
 			MT.core.Helper.setCookie(this.sessionCookie, id);
 			
 			if(this.onlogin){
@@ -1053,7 +1048,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.standAlone = false;
 				return;
 			}
-			console.log("LoggedIn: projects", projects);
 			// first login call
 			if(this.onstart){
 				this.onstart();
@@ -1068,7 +1062,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.hideLoading();
 			this.hideContainer();
 			this.panel.title = "My Projects";
-			this.panel.show();
 			
 			if(projects && projects.length > 0){
 				var that = this;
@@ -1084,16 +1077,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			}
 			
-			if(this.isLogged && this.userLevel == 0){
-				this.subscribe = this.ui.createPanel("Go Pro");
-				this.subscribe.mainTab.addClass("goprotab");
-				this.subscribe.mainTab
-				this.subscribe.hide();
-				this.subscribe.fitIn();
-				this.subscribe.removeBorder();
-				this.panel.addJoint(this.subscribe);
-				this.subscribe.show();
-				this.buildGoPro(this.subscribe.content.el);
+			if(this.userLevel == 0){
+				if(this.panel && this.project.id){
+					this.showProperties();
+				}
+				else{
+					this.subscribe = this.ui.createPanel("Go Pro");
+					this.subscribe.mainTab.addClass("goprotab");
+					this.subscribe.mainTab
+					this.subscribe.hide();
+					this.subscribe.fitIn();
+					this.subscribe.removeBorder();
+					this.panel.addJoint(this.subscribe);
+					this.subscribe.show();
+					this.buildGoPro(this.subscribe.content.el);
+				}
 			}
 			this.panel.content.el.appendChild(this.logoutButton.el);
 		}

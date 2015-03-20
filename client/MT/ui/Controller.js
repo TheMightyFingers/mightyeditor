@@ -148,6 +148,7 @@ MT.extend("core.Emitter")(
 		});
 		
 		this.events.on(this.events.MOUSEMOVE, function(e){
+			that.lastEvent.move = e;
 			if(!mDown){
 				var panel = e.target.panel || that.pickPanel(e);
 				if(!panel){
@@ -165,18 +166,14 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			
-			
 			if(!that.activePanel){
 				return;
 			}
-			//e.preventDefault();
-			//e.stopPropagation();
 			if(needResize){
 				that.resizePanel(that.activePanel, e);
 				return;
 			}
-			
-			
+
 			if(!that.tryUnjoin(that.activePanel, e)){
 				return;
 			}
@@ -185,7 +182,6 @@ MT.extend("core.Emitter")(
 		});
 		
 		this.events.on(this.events.DBLCLICK, function(e){
-			console.log("rename");
 			if(!that.activePanel){
 				return;
 			}
@@ -199,6 +195,8 @@ MT.extend("core.Emitter")(
 		var prevClicked = null;
 		
 		this.events.on(this.events.MOUSEDOWN, function(e){
+			that.lastEvent.down = e;
+			that.reloadSize(e);
 			if(e.button != 0){
 				if(e.button == 1){
 					if(e.target.data && e.target.data.panel && e.target.data.panel.isCloseable){
@@ -243,12 +241,13 @@ MT.extend("core.Emitter")(
 		});
 		
 		this.events.on(this.events.MOUSEUP, function(e){
+			that.lastEvent.up = e;
 			mDown = false;
 			
 			if(!that.activePanel){
 				return;
 			}
-			e.stopPropagation();
+			//e.stopPropagation();
 			that.activePanel.addClass("animated");
 			that.activePanel.isNeedUnjoin = true;
 			that.activePanel.mdown = false;
@@ -268,7 +267,7 @@ MT.extend("core.Emitter")(
 			that.sortPanels();
 			that.update();
 			that.saveLayout();
-		}, true);
+		}, false);
 		
 		
 		// delay a little bit first animation - sometimes game do not resize well 
@@ -288,6 +287,11 @@ MT.extend("core.Emitter")(
 		this.colorPicker.hide();
 	},
 	{
+		lastEvent: {
+			down: null,
+			up: null,
+			key: null
+		},
 		resetOldLayout: function(){
 			var key;
 			for(var i=0; i<localStorage.length; i++){
@@ -1263,7 +1267,8 @@ MT.extend("core.Emitter")(
 			return null;
 		},
 		pickPanel: function(point){
-			var p = null
+			point = point || this.lastEvent.up;
+			var p = null;
 			for(var i=this.panels.length-1; i>-1; i--){
 				p = this.panels[i];
 				if(!p.isVisible || !p.isPickable){
@@ -1276,7 +1281,24 @@ MT.extend("core.Emitter")(
 			}
 			return null;
 		},
-		
+		pickPanelGlobal: function(point){
+			point = point || this.lastEvent.down;
+			if(!point){
+				return null;
+			}
+			var p = null;
+			for(var i=this.panels.length-1; i>-1; i--){
+				p = this.panels[i];
+				if(!p.isVisible){
+					continue;
+				}
+				
+				if(p.vsPoint(point)){
+					return p;
+				}
+			}
+			return null;
+		},
 		dockToHelper: function(panel, helper){
 			if(panel.isDocked){
 				return;
@@ -1380,7 +1402,6 @@ MT.extend("core.Emitter")(
 			if(slot != void(0)){
 				this.saveSlot = slot;
 			}
-			console.log("loading from slot", this.saveSlot);
 			var def = this.resetLayout(this.saveSlot, true);
 			this._loadLayout(def, true);
 			

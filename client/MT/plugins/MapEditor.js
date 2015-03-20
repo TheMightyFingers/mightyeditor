@@ -138,7 +138,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				//strange chrome bug
 				if(that.handleMouseMove === void(0)){
-					console.log("chrome bugging");
 					return;
 				}
 				
@@ -885,13 +884,16 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				h = p.size.height;
 			}
 			
+			w = w * obj.scaleX;
+			h = h * obj.scaleY;
+			
 			ctx.translate(mat.tx, mat.ty);
 			ctx.rotate(obj.object.rotation);
 			ctx.scale(this.scale.x, this.scale.y);
 			
 			//ctx.setTransform(mat.a, -mat.b, -mat.c, mat.d, mat.tx, mat.ty);
 			
-			ctx.fillRect(-w*obj.object.anchor.x + p.size.offsetX ,-h*obj.object.anchor.y + p.size.offsetY, w, h);
+			ctx.fillRect(-w*obj.object.anchor.x + p.size.offsetX,-h*obj.object.anchor.y + p.size.offsetY, w, h);
 			ctx.restore();
 		},
 		
@@ -1055,7 +1057,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		ajax: function(src, cb){
-			console.log("ajax used?");
 			var xhr = new XMLHttpRequest();
 			xhr.open('get', src);
 			xhr.onreadystatechange = function() {
@@ -1302,7 +1303,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				tmp.isRemoved = false;
 				tmp.update(o.data, group);
 				tmp.object.visible = tmp.isVisible;
-				//tmp.object.z = 0;
+				//tmp.object.z = i;
 				
 				// handle group and parents
 				if(tmp.data.contents){
@@ -1360,10 +1361,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		/* TODO: clean up - and seperate object types by corresponding tools*/
 		addObject: function(obj, group){
-			console.log("removed - addObject");
+			console.error("removed - addObject");
 			return;
-			
-			
 			var oo = null;
 			var od = null;
 			for(var i=0; i<this.oldObjects.length; i++){

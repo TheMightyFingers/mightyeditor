@@ -85,7 +85,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		loadedFonts: [],
 		loadPrivateFonts: function(list){
-			console.log("LOAD LIST", list);
 			var font;
 			var fullstr = "";
 			var str;

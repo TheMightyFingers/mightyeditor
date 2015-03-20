@@ -92,6 +92,11 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.altKeyReady = false;
 			var copy = [];
 			var sel = this.map.selector;
+
+			sel.sort(function(a, b){
+				return (a.object.z - b.object.z);
+			});
+			
 			sel.forEach(function(o){
 				copy.push(o.data);
 			});
@@ -109,7 +114,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			for(var i=0; i<data.length; i++){
 				sprite = this.map.getById(data[i].id);
 				if(!sprite){
-					console.log("Failed to find a sprite");
 					continue;
 				}
 				sprite.object.updateTransform();
@@ -167,8 +171,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			if(this.tools.activeTool != this){
 				return;
 			}
-			
-			console.log("INIT MOVE");
 			
 			this.checkAltKey(e);
 			
@@ -295,7 +297,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				obj.mouseDown(x, y, e);
 			}
 			else{
-				console.log(this.map.selector.count);
 				this.map.activeObject = null;
 				this.map.emit("select", this.map.settings);
 				this.altKeyReady = e.altKey;

@@ -20,11 +20,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.input = new MT.ui.InputHelper();
 		
 		this.input.on("change", function(value){
-			if(value == ""){
-				console.log("should remove");
-			}
-			
-			
 			that.input.el.innerHTML = value;
 			
 		});
@@ -48,12 +43,9 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.table.onclick = function(e){
 			e.preventDefault();
 			e.stopPropagation();
-			console.log(e.target.data);
-			
 			if(!e.target.data){
 				return;
 			}
-			
 			that.input.show(e.target);
 		};
 		
@@ -118,7 +110,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			var row = el.data.row;
 			var cell = el.data.index;
 			var val = el.innerHTML;
-			console.log(row, cell, val);
 			
 			// is new value added ?
 			if(row == -1){

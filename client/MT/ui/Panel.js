@@ -93,8 +93,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			
 			this.input.style.left = (el.calcOffsetX(document.body))+"px";
 			this.input.style.top = (el.calcOffsetY(document.body) - 2) + "px"; // check padding here instead of 2 :)
-			this.input.style.width = el.width - 10;
-
+			this.input.style.width = (el.width - 10) + "px";
+			
 
 			this.input.value = this.title;
 			var lastValue = this.title;
@@ -173,7 +173,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		focus: function(){
 			this.saveScroll();
-			this._input.focus();
+			//this._input.focus();
 			this.restoreScroll();
 		},
 		
@@ -455,7 +455,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		},
 		
 		setLeftRight: function(key, value){
-			//console.log("TODO");
+			
 		},
 		
 		unjoin: function(){
@@ -742,7 +742,7 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			while(next){
 				depth++;
 				if(depth > 10){
-					console.log("recursivity warning");
+					console.warn("recursivity warning");
 					break;
 				}
 				if(next == this  || next == val){
@@ -770,11 +770,11 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			while(next){
 				depth++;
 				if(depth > 10){
-					console.log("recursivity warning");
+					console.warn("recursivity warning");
 					break;
 				}
 				if(next == this || (next == val && next != this._top)){
-					console.log("recursivity warning");
+					console.warn("recursivity warning");
 					this._top = val;
 					return;
 				}
@@ -883,9 +883,8 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 					return this.joints[i];
 				}
 			}
-			console.log("smth is broken");
-			this.show(this._parent, false);
 			
+			this.show(this._parent, false);
 			return this;
 		},
 		hide: function(silent, noEmit){

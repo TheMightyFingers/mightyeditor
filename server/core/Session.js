@@ -11,9 +11,7 @@ MT(
 			this.created = Date.now();
 		},
 		genId: function(){
-			var crypto = require("crypto");
-			var md5 = crypto.createHash("md5");
-			return md5.update(Date.now()+"").digest('hex');
+			return "848a8b83c4084ad604f25293c118781b";
 		},
 		update: function(sessionId, created){
 			this.created = created || Date.now();

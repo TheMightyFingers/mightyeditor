@@ -56,7 +56,6 @@ MT.extend("core.Emitter")(
 			if(!mdown){
 				return;
 			}
-			//console.log(ev.mouse.mx);
 			
 			that.slh.change(ev.mouse.mx);
 			
@@ -67,7 +66,6 @@ MT.extend("core.Emitter")(
 			}
 			else{
 				impact = (that.slh - max) * 0.01;
-				console.log("impact:", impact);
 				/*var w = startWidth / impact;
 				if(w < 20){
 					w = 20;
@@ -144,7 +142,7 @@ MT.extend("core.Emitter")(
 					el.removeAttribute("data-seconds");
 				}
 				el.className = "ui-frame-sep";
-				el.style.left = i*framesize + drawOffset;
+				el.style.left = i*framesize + drawOffset + "px";
 				
 				this.sepHolder.appendChild(el);
 				info = i + this.mm.startFrame;

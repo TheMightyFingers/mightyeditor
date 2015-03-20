@@ -59,7 +59,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		this.addChild(this.label).show();
 		
 		this.addClass("ui-input");
-		this.label.el.innerHTML = this.key;
+		this.label.el.innerHTML = properties.label || this.key;
 		this.label.style.bottom = "initial";
 		this.label.style.right = "50%";
 		
@@ -375,7 +375,6 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 				this.selectInput.removeChild(this.selectInput.firstChild);
 			}
 			var val = this.inputBox.value;
-			console.log("show");
 			
 			for(var i=0; i<this.options.length; i++){
 				if(!filter){
@@ -392,20 +391,18 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			var rect = this.inputBox.getBoundingClientRect();
 			
-			this.selectInput.style.top = rect.top + rect.height;
-			this.selectInput.style.left = rect.left;
+			this.selectInput.style.top = (rect.top + rect.height) + "px";
+			this.selectInput.style.left = rect.left + "px";
 			
 			
 			var bounds = this.selectInput.getBoundingClientRect();
 			if(bounds.right > window.innerWidth){
-				this.selectInput.style.left = window.innerWidth - bounds.width;
+				this.selectInput.style.left = (window.innerWidth - bounds.width)+"px";
 			}
 			
 			if(bounds.bottom > window.innerHeight){
-				this.selectInput.style.top = rect.top - bounds.height;
+				this.selectInput.style.top = (rect.top - bounds.height)+"px";
 			}
-			
-			
 		},
 		
 		hideOptions: function(){

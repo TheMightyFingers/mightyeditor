@@ -136,7 +136,6 @@
 				
 				script.onreadystatechange = function(a,b,c){
 					console.log("script",a,b,c,this);
-					
 				};
 				
 				

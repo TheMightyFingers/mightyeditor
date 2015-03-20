@@ -24,7 +24,6 @@ MT.extend("core.Emitter")(
 		input.onkeyup = function(e){
 			
 			var key = e.which;
-			console.log(key);
 			if(key == MT.keys.ESC){
 				input.blur();
 				return;
@@ -81,8 +80,6 @@ MT.extend("core.Emitter")(
 		inheritStyle: function(){
 		
 			var bounds = this.el.getBoundingClientRect();
-			console.log(bounds);
-			
 			var style = window.getComputedStyle(this.el);
 			for(var i in style){
 				this.input.style[i] = style[i];
