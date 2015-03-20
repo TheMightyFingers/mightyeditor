@@ -1,0 +1,15 @@
+{
+	"name": "%title%",
+	"description": "",
+	"version": "1",
+	"start_url": "index.html",
+	"icons": [
+		{
+			"src": "assets/launcher.png",
+			"sizes": "128x128",
+			"type": "image/png",
+			"density": "4.0"
+		}
+	],
+	"orientation": "landscape"
+}
