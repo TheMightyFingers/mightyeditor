@@ -19,6 +19,23 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.panel.content.style.position = "relative";
 		var that = this;
 		
+		var hasSubList = function(list, el){
+			var sub, l;
+			for(var i=0; i<list.list.length; i++){
+				l = list.list[i];
+				if(l._list){
+					sub = hasSubList(l._list, el);
+					if(sub){
+						return sub;
+					}
+				}
+				if(l.button.el == el){
+					return true;
+				}
+			}
+			return false;
+		};
+		
 		ui.events.on("mouseup", function(e){
 			for(var i=0; i<that.panel.buttons.length; i++){
 				if(that.panel.buttons[i].el == e.target){
@@ -28,10 +45,14 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(MT.ui.hasParent(e.target, that.el)){
 				return;
 			}
-			if(autohide){
+			if(that.isVisible && autohide){
+				if(hasSubList(that, e.target)){
+					return;
+				}
+				
 				that.hide();
 			}
-		});
+		}, true);
 		
 		this.isVisible = false;
 		this.list = list;
@@ -67,12 +88,16 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			var b;
 			if (item.contents) {
 				var that = this;
-				item.list = new MT.ui.List(item.contents, this.ui, true);
+				item._list = new MT.ui.List(item.contents, this.ui, true);
+				item._list.__parent = this;
 				item.cb = function (e) {
-					item.list.show();
+					item._list.show();
+					
 					var bounds = b.bounds;
-					item.list.x = bounds.left + bounds.width;
-					item.list.y = bounds.top;
+					item._list.x = bounds.left + bounds.width;
+					item._list.y = bounds.top;
+					e.preventDefault();
+					e.stopPropagation();
 				};
 			}
 

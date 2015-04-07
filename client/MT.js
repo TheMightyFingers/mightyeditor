@@ -3506,6 +3506,23 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 		this.panel.content.style.position = "relative";
 		var that = this;
 		
+		var hasSubList = function(list, el){
+			var sub, l;
+			for(var i=0; i<list.list.length; i++){
+				l = list.list[i];
+				if(l._list){
+					sub = hasSubList(l._list, el);
+					if(sub){
+						return sub;
+					}
+				}
+				if(l.button.el == el){
+					return true;
+				}
+			}
+			return false;
+		};
+		
 		ui.events.on("mouseup", function(e){
 			for(var i=0; i<that.panel.buttons.length; i++){
 				if(that.panel.buttons[i].el == e.target){
@@ -3515,10 +3532,14 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			if(MT.ui.hasParent(e.target, that.el)){
 				return;
 			}
-			if(autohide){
+			if(that.isVisible && autohide){
+				if(hasSubList(that, e.target)){
+					return;
+				}
+				
 				that.hide();
 			}
-		});
+		}, true);
 		
 		this.isVisible = false;
 		this.list = list;
@@ -3554,12 +3575,16 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			var b;
 			if (item.contents) {
 				var that = this;
-				item.list = new MT.ui.List(item.contents, this.ui, true);
+				item._list = new MT.ui.List(item.contents, this.ui, true);
+				item._list.__parent = this;
 				item.cb = function (e) {
-					item.list.show();
+					item._list.show();
+					
 					var bounds = b.bounds;
-					item.list.x = bounds.left + bounds.width;
-					item.list.y = bounds.top;
+					item._list.x = bounds.left + bounds.width;
+					item._list.y = bounds.top;
+					e.preventDefault();
+					e.stopPropagation();
 				};
 			}
 
@@ -4446,6 +4471,9 @@ MT(
 				this.hide();
 			}
 			
+			this.object.scrollFactorX = 0;
+			this.object.scrollFactorY = 0;
+			
 		},
 		
 		createTileMap: function(){
@@ -4628,7 +4656,7 @@ MT(
 				
 			}
 			
-			if(parent){
+			if(parent && parent != this.parent){
 				// remove before
 				if(this.parent.type == Phaser.Sprite){
 					this.parent.removeChild(this.object);
@@ -6650,7 +6678,9 @@ MT.extend("core.Emitter")(
 			}
 			
 			if(that.cache[src] && im.updated == data.updated){
-				im.src = im.origSource = that.cache[src];
+				if(im.src !== im.origSource){
+					im.src = im.origSource = that.cache[src];
+				}
 				return;
 			}
 			
@@ -8035,7 +8065,6 @@ MT.namespace('core');
 MT(
 	MT.core.BasicPlugin = function(channel){
 		this.channel = channel;
-		this.dealys = {};
 	},
 	{
 		
@@ -8052,6 +8081,7 @@ MT(
 				return;
 			}
 			
+			this.dealys = {};
 			var that = this;
 			this.socket = socket;
 			
@@ -8212,10 +8242,22 @@ MT.extend("core.Emitter")(
 		this.labels = [];
 	},
 	{
+		buildtm: 0,
+		
+		buildDelay:function(){
+			var that = this;
+			if(this.buildtm){
+				window.clearTimeout(this.build);
+			}
+			this.buildtm = window.setTimeout(function(){
+				that.buildtm = 0;
+				that._build();
+			}, 100);
+			
+		},
+		
 		build: function(){
 			this.clear();
-			
-			
 			var m = this.mm.keyframes;
 			var len = m.getLastFrame();
 			var framesize = this.mm.frameSize;
@@ -9445,11 +9487,26 @@ MT.extend("core.Emitter")(
 MT.namespace('plugins');
 "use strict";
 (function(){
-	var phaserSrc = "js/";
-	phaserSrc += (window.release ? "phaser.min.js" : "phaser.js");
+	var phaserSrc = "js/phaser/";
+	var pixiSrc = phaserSrc;
+	phaserSrc += (window.release ? "phaser-no-physics.min.js" : "phaser-no-physics.js");
+	pixiSrc += (window.release ? "pixi.min.js" : "pixi.js");
+	
+	MT.requireFilesSync([
+		phaserSrc,
+	]);
+	
+	/*
 	MT.requireFile(phaserSrc, function(){
-		MT.requireFile("js/phaserHacks.js");
+		MT.requireFile("js/phaser/pixi.js");
+		MT.requireFile("js/phaser/geom.js", function(){
+			MT.requireFile("js/phaser/components.js", function(){
+				MT.requireFile("js/phaser/text.js");
+				MT.requireFile("js/phaserHacks.js");
+			});
+		});
 	});
+	*/
 })();
 MT.require("core.Helper");
 MT.require("core.Selector");
@@ -9480,6 +9537,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		this.tileLayers = [];
 		
 		this.dist = {};
+		this.cache = {};
 		
 		this.selection = new Phaser.Rectangle();
 		
@@ -9639,6 +9697,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 					if(tmp.id == id){
 						that.loadedObjects.splice(i, 1);
+						that.cache[id] = null;
 						tmp.remove();
 						if(that.activeObject == tmp){
 							that.activeObject = null;
@@ -9668,12 +9727,17 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var that = this;
 			this.activeObject = null;
 			
-			var ctx = null;
+			var canvas, ctx = null, FG = null;
 			var drawObjects = function(obj){
 				obj.highlight(ctx);
 			};
 			
-			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
+			var mode = Phaser.CANVAS;
+			if(this.project.data.webGl){
+				mode = Phaser.AUTO;
+			}
+			
+			var game = this.game = window.game = new Phaser.Game(800, 600, mode, '', { 
 				preload: function(){
 					game.stage.disableVisibilityChange = true;
 					var c = game.canvas;
@@ -9686,112 +9750,114 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				create: function(){
 					that.resize();
 					that.scale = game.camera.scale;
-					if(!ctx){
+					/*if(!ctx){
 						ctx = game.canvas.getContext("2d");
-					}
+					}*/
 					
 					that.setCameraBounds();
 					that.postUpdateSetting();
-					//return;
-					that.game.plugins.add({
-						postUpdate: function(){
-							for(var i=0; i<that.tileLayers.length; i++){
-								var layer = that.tileLayers[i];
-								if(layer.fixedToCamera){
-									continue;
-								}
-								if(layer._mc.x || layer._mc.y){
-									layer._ox = layer._mc.x;
-									layer._oy = layer._mc.y;
-									layer.x += layer._mc.x;
-									layer.y += layer._mc.y;
-								}
-								
-							}
-						},
-						
-						postRender: function(){
-							
-							for(var i=0; i<that.tileLayers.length; i++){
-								var layer = that.tileLayers[i];
-								if(layer.fixedToCamera){
-									continue;
-								}
-								if(layer._ox !== void(0)){
-									layer.x -= layer._ox;
-									layer._ox = void(0);
-								}
-								if(layer._oy !== void(0)){
-									layer.y -= layer._oy;
-									layer._oy = void(0);
-								}
-								
-							}
-						}
-						
-					});
+					//var texture = new Phaser.RenderTexture();
 					
 					
-					var graphics = window.graphics = new PIXI.Graphics();
-					
+					var graphics = window.graphics = new Phaser.Graphics();
 					// begin a green fill..
 					graphics.beginFill(0xffffff);
-					
 					// top
 					graphics.drawRect(0, 0, that.game.canvas.width, -that.game.camera.y);
-					
 					// right
 					graphics.drawRect(that.settings.viewportWidth, -that.game.camera.y, that.game.canvas.width, that.settings.viewportHeight);
-					
 					// bottom
 					graphics.drawRect(0, that.settings.viewportWidth, that.game.canvas.width, that.game.canvas.height);
-					
 					// left
 					graphics.drawRect(0, -that.game.camera.y, -that.game.camera.x, that.settings.viewportHeight);
-					
 					// end the fill
 					graphics.endFill();
-					
 					graphics.alpha = 0.05;
-					
 					graphics.postUpdate = graphics.preUpdate = function(){};
-
-					graphics.update = function(){
+					
+					graphics._update = function(){
 						//graphics.x = -that.game.camera.x;
 						//graphics.y = -that.game.camera.y;
-						
+						var shape;
 						//update top
-						graphics.graphicsData[0].points[2] = that.game.canvas.width;
-						graphics.graphicsData[0].points[3] = -that.game.camera.y;
+						//graphics.graphicsData[0].points[2] = that.game.canvas.width;
+						//graphics.graphicsData[0].points[3] = -that.game.camera.y;
+						shape = graphics.graphicsData[0].shape;
+						shape.width = that.game.canvas.width;
+						shape.height = -that.game.camera.y;
 						
 						// update right
+						/*
 						graphics.graphicsData[1].points[0] = (that.settings.viewportWidth* that.game.camera.scale.x - that.game.camera.x) ;
 						graphics.graphicsData[1].points[1] = -that.game.camera.y;
 						graphics.graphicsData[1].points[2] = that.game.canvas.width + that.game.camera.x;
 						graphics.graphicsData[1].points[3] = that.settings.viewportHeight* that.game.camera.scale.y;
+						*/
+						
+						shape = graphics.graphicsData[1].shape;
+						shape.x = (that.settings.viewportWidth* that.game.camera.scale.x - that.game.camera.x);
+						shape.y = -that.game.camera.y;
+						shape.width = that.game.canvas.width + that.game.camera.x;
+						shape.height = that.settings.viewportHeight* that.game.camera.scale.y;
+						
 						
 						// update bottom
-						graphics.graphicsData[2].points[1] = that.settings.viewportHeight* that.game.camera.scale.y - that.game.camera.y;
+						/*graphics.graphicsData[2].points[1] = that.settings.viewportHeight* that.game.camera.scale.y - that.game.camera.y;
 						graphics.graphicsData[2].points[2] = that.game.canvas.width;
 						graphics.graphicsData[2].points[3] = that.game.canvas.height + that.game.camera.y;
+						*/
+						shape = graphics.graphicsData[2].shape;
+						shape.y = that.settings.viewportHeight* that.game.camera.scale.y - that.game.camera.y;
+						shape.width = that.game.canvas.width;
+						shape.height = that.game.canvas.height + that.game.camera.y;
 						
 						
 						// update left
+						/*
 						graphics.graphicsData[3].points[1] = -that.game.camera.y;
 						graphics.graphicsData[3].points[2] = -that.game.camera.x;
 						graphics.graphicsData[3].points[3] = that.settings.viewportHeight* that.game.camera.scale.y;
-						
+						*/
+						shape = graphics.graphicsData[3].shape;
+						shape.y = -that.game.camera.y;
+						shape.width = -that.game.camera.x;
+						shape.height = that.settings.viewportHeight* that.game.camera.scale.y;
 						//graphics.drawRect(0, 0, that.settings.width, that.settings.height);
+						
+						// buggy buggy 
+						graphics.webGLDirty = true; graphics.clearDirty = true;
 					};
 
 					// add it the stage so we see it on our screens..
-					map.game.stage.children.unshift(graphics);
-					graphics.parent = map.game.stage;
+					game.stage.addChild(graphics);
+					//graphics.parent = map.game.stage;
+					
+					
+					canvas = document.createElement("canvas");
+					canvas.width = game.canvas.width;
+					canvas.height = game.canvas.height;
+					game.cache.addImage("__gridBG","__gridBG", canvas);
+					ctx = canvas.getContext("2d");
+					ctx.fillStyle = "#ff0000";
+					ctx.fillRect(10, 10, 40,50);
+					
+					FG = window.FG = game.add.sprite(0, 0, "__gridBG", 0);
+					FG.fixedToCamera = true;
+					FG.bringToTop();
 				},
 				
 				
-				render: function(){
-					ctx.globalAlpha = 1;
+				preRender: function(){
+					
+					canvas.width = game.canvas.width;// / game.camera.scale.x;
+					canvas.height = game.canvas.height;//  / game.camera.scale.y;
+					
+					
+					FG.bringToTop();
+					FG.loadTexture("__gridBG");
+					FG.scale.set(1/game.camera.scale.x, 1/game.camera.scale.y);
+					
+					
 					that.drawGrid(ctx);
 					
 					that.selector.forEach(drawObjects);
@@ -9802,7 +9868,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 					that.drawPhysics(ctx);
 					
-				}
+					game.cache.addImage("__gridBG","__gridBG", canvas);
+					graphics._update();
+				},
+				
+				update: function(){
+					
+				},
 			});
 			
 			
@@ -10678,8 +10750,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					}
 				}
 			}
-			
-			
 		},
 		
 		_addTimeout: 0,
@@ -10715,6 +10785,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				tmp = this.loadedObjects[i];
 				if(tmp.isRemoved){
 					this.loadedObjects.splice(i, 1);
+					this.cache[tmp.id] = null;
 					tmp.remove();
 					i--;
 				}
@@ -10732,16 +10803,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var tmp, k=0, o;
 			for(var i=objs.length-1; i>-1; i--){
 				o = objs[i];
-				
-				if(o instanceof MT.core.MagicObject){
-					tmp = o;
-				}
-				else{
-					tmp = this.getById(o.id);
-				}
+				tmp = this.getById(o.id);
 				
 				if(!tmp ){
 					tmp = new MT.core.MagicObject(o, group, this);
+					this.cache[o.id] = tmp;
 					this.loadedObjects.push(tmp);
 				}
 				
@@ -10749,6 +10815,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				tmp.update(o.data, group);
 				tmp.object.visible = tmp.isVisible;
 				//tmp.object.z = i;
+				
+				tmp.bringToTop();
 				
 				// handle group and parents
 				if(tmp.data.contents){
@@ -10758,11 +10826,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 			}
 			
-			
-			for(var i=objs.length-1; i>-1; i--){
-				tmp = this.getById(objs[i].id);
-				tmp.bringToTop();
-			}
 			if(this.tools.tmpObject){
 				this.tools.tmpObject.bringToTop();
 			}
@@ -11263,7 +11326,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		/* TODO: refactor so all can use MagicObject */
 		getById: function(id){
-			for(var i=0; i<this.loadedObjects.length; i++){
+			
+			return this.cache[id];
+			
+			/*for(var i=0; i<this.loadedObjects.length; i++){
 				if(!this.loadedObjects[i].data){
 					console.warn("smth wrong");
 					continue;
@@ -11271,7 +11337,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				if(this.loadedObjects[i].data.id == id){
 					return this.loadedObjects[i];
 				}
-			}
+			}*/
 		}
 	}
 );
@@ -12100,7 +12166,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					if(e.which === MT.keys.V && e.target == document.body){
 						var x = that.ui.events.mouse.lastEvent.x;
 						var y = that.ui.events.mouse.lastEvent.y;
-						that.map.selector.clear();
+						
+						
+						//that.map.selector.clear();
 						
 						var bounds = null;
 						var midX = 0;
@@ -12349,6 +12417,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		this.project = project;
 	},
 	{
+		get path(){
+			return "data/build/"+this.project.id;
+		},
+		
 		initUI: function(ui){
 			var that = this;
 			this.list = new MT.ui.List([
@@ -12362,7 +12434,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 							zip: 1
 						},
 						function (data) {
-							window.location = that.project.path + "/" + data.file;
+							window.location = that.path + "/" + data.file;
 							not.hide();
 						});
 					}
@@ -12379,36 +12451,58 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					label: "Android",
 					contents: [
 						{
-							label: "Crosswalk - debug (ARM)",
-							title: "most android phones uses arm processors",
-							className: "",
-							cb: function () {
-								that.crosswalk("arm");
-							}
+							label: "Crosswalk",
+							contents: [
+								{
+									label: "Debug (ARM)",
+									title: "most android phones uses arm processors",
+									className: "",
+									cb: function () {
+										that.crosswalk("arm");
+									}
+								},
+								{
+									label: "Debug (x86)",
+									title: "some phones and tablets uses intel atom or similar cpus",
+									className: "",
+									cb: function () {
+										that.crosswalk("x86");
+									}
+								},
+								{
+									label: "Release (ARM)",
+									title: "most android phones uses arm processors",
+									className: "",
+									cb: function () {
+										that.crosswalk("arm", true);
+									}
+								},
+								{
+									label: "Release (x86)",
+									title: "some phones and tablets uses intel atom or similar cpus",
+									className: "",
+									cb: function () {
+										that.crosswalk("x86", true);
+									}
+								}
+							]
 						},
 						{
-							label: "Crosswalk - debug (x86)",
-							title: "some phones and tablets uses intel atom or similar cpus",
-							className: "",
-							cb: function () {
-								that.crosswalk("x86");
-							}
-						},
-						{
-							label: "Crosswalk - release (ARM)",
-							title: "most android phones uses arm processors",
-							className: "",
-							cb: function () {
-								that.crosswalk("arm", true);
-							}
-						},
-						{
-							label: "Crosswalk - release (x86)",
-							title: "some phones and tablets uses intel atom or similar cpus",
-							className: "",
-							cb: function () {
-								that.crosswalk("x86", true);
-							}
+							label: "Cordova",
+							contents: [
+								{
+									label: "Debug",
+									cb: function () {
+										that.cordova();
+									}
+								},
+								{
+									label: "Release",
+									cb: function () {
+										that.cordova(1);
+									}
+								}
+							]
 						}
 					]
 				},
@@ -12471,7 +12565,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var l = (window.innerWidth - w)*0.5;
 			var t = (window.innerHeight - h)*0.5;
 
-			window.open(this.project.path + "/" + data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
+			window.open(this.path + "/" + data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
 		},
 
 		openLink: function(name){
@@ -12479,7 +12573,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			w.focus();
 			//w.opener = null;
 
-			var path = this.project.path;
+			var path = this.path;
 			this.export("phaser", {
 				zip: 0
 			},
@@ -12563,15 +12657,51 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				else{
 					pop.content.innerHTML = "DONE!";
-					
-					var base = window.location.origin + "/" + that.project.path + "/" + data.title;
-					var link = base + "-minified/build/" + data.file;
-					
-					that.linkWithQR(pop.content, "Download", link);
+					that.linkWithQR(pop.content, "Download", data.link);
 				}
 			});
 		},
 		
+		cordova: function(release){
+			if( !this.project.data.package ){
+				this.project.updateProject(function(props){
+					that.cordova();
+				});
+				return;
+			}
+			
+			var that = this;
+			var pop = this.popWithDots("Building apk");
+			that.export("cordova", {rel: release}, function (data) {
+				pop.clear();
+				pop.showClose();
+				
+				if(data.requireProLevel){
+					pop.content.innerHTML = "Only subscribers can use this feature!";
+					pop.addButton("OK", function(){pop.hide();});
+					return;
+				}
+				
+				pop.showClose();
+				pop.addButton("Done", function(){pop.hide();});
+				if(data.serr && data.serr.length){
+					pop.content.innerHTML = "Please review errors and try again!<br />";
+					var list = '<ul class="error-list">';
+					for(var i=0; i<data.serr.length; i++){
+						list += "<li>"+data.serr[i].trim()+"</li>";
+					}
+					pop.content.innerHTML += list + "</ul>";
+					
+				}
+				else{
+					pop.content.innerHTML = "DONE!";
+					that.linkWithQR(pop.content, "Download", data.link);
+				}
+			});
+		},
+		cordovaProject: function(){
+			
+		},
 		genKeystoreForm: function(cb){
 			var that = this;
 			
@@ -12665,7 +12795,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				pop.showClose();
 				pop.addButton("Done", function(){pop.hide();});
 				
-				var base = window.location.origin + "/" + that.project.path + "/" + data.file;
+				var base = window.location.origin + "/" + that.path + "/" + data.file;
 				
 				var link1 = base + "-minified/index.html";
 				var link2 = base + '.min.zip';
@@ -13492,7 +13622,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		
-		insertObject: function(obj, silent, data, affectParent){
+		insertObject: function(obj, silent, data, active){
 			data = data || this.tv.getData();
 			//var data = this.tv.getData();
 			var map = this.project.plugins.mapeditor;
@@ -13515,9 +13645,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			obj.id = "tmp"+this.mkid();
 			
 			obj.tmpName = obj.tmpName || obj.name;
-			
-			
-			
 			
 			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, cont, 0);
 			
@@ -13744,7 +13871,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			return obj;
 		},
 		
-		
 		copy: function(obj, x, y, name, silent){
 			
 			name = name || obj.name + this.getNewNameId(obj.name, this.tv.getData());
@@ -13752,7 +13878,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			clone.name = name;
 			clone.x = x;
 			clone.y = y;
-			
 			
 			this.cleanUpClone(clone);
 			
@@ -14918,26 +15043,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
-			
 			this.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				that.setPreviewAssets(asset);
 				if(tools.activeTool != tools.tools.select){
 					return;
 				}
 				
-				
 				that.project.map.selector.forEach(function(o){
 					if(asset){
 						o.data.assetId = asset.id;
 						o.data.__image = asset.__image;
-						o.frame = frame;
-						
-						that.activeFrame = frame;
 					}
 					else{
 						delete o.data.assetId;
 						delete o.data.__image;
-						o.frame = 0;
+						
+						if(frame != void(0)){
+							o.frame = 0;
+						}
 						that.activeFrame = 0;
 					}
 					that.project.plugins.objectmanager.update();
@@ -15021,10 +15144,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.emit(MT.ASSET_FRAME_CHANGED, asset, that.activeFrame);
 					that.active.data = asset;
 					that.send("updateImage", {asset: asset, data: data});
-					
-					that.project.plugins.mapeditor.addAtlas(asset, null, null, function(){
+					if(asset.atlas){
+						that.project.plugins.mapeditor.addAtlas(asset, null, null, function(){
+							notify.hide();
+						});
+					}
+					else{
 						notify.hide();
-					});
+					}
 				};
 				img.src = that.toPng(fr.result);
 			});
@@ -16538,9 +16665,10 @@ MT(
 			
 			var that = this;
 			var cb = function(e){
-				e.x = e.x || e.pageX;
-				e.y = e.y || e.pageY;
-				
+				if(e.x == void(0)){
+					e.x = e.pageX;
+					e.y = e.pageY;
+				}
 				if(e.offsetX === void(0)){
 					e.offsetX = e.layerX;
 					e.offsetY = e.layerY;
@@ -16568,8 +16696,10 @@ MT(
 			
 			var that = this;
 			var cb = function(e){
-				e.x = e.x || e.pageX;
-				e.y = e.y || e.pageY;
+				if(e.x == void(0)){
+					e.x = e.pageX;
+					e.y = e.pageY;
+				}
 				that.mouse.down = true;
 				that.mouse.lastClick = e;
 				
@@ -16578,12 +16708,14 @@ MT(
 			cb.type = that.MOUSEDOWN;
 			return cb;
 		},
+   
 		_mk_mouseup: function(){
-			
 			var that = this;
 			var cb = function(e){
-				e.x = e.x || e.pageX;
-				e.y = e.y || e.pageY;
+				if(e.x == void(0)){
+					e.x = e.pageX;
+					e.y = e.pageY;
+				}
 				that.mouse.down = false;
 				that.mouse.lastClick = e;
 				
@@ -16592,7 +16724,6 @@ MT(
 			cb.type = that.MOUSEUP;
 			return cb;
 		},
-   
    
 		_mk_cb: function(type){
 			if(type == this.MOUSEMOVE){
@@ -16606,7 +16737,6 @@ MT(
 			if(type == this.MOUSEDOWN){
 				return this._mk_mousedown();
 			}
-			
 			
 			var that = this;
 			var cb = function(e){
@@ -17636,16 +17766,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		checkSession: function(){
 			var sessionId = MT.core.Helper.getCookie(this.sessionCookie);
-			//if(sessionId){
+			if(sessionId){
 				this.send("checkSession", sessionId);
 				return;
-			/*}
+			}
 			else{
 				if(this.onstart){
 					this.onstart();
 					this.onstart = null;
 				}
-			}*/
+			}
 		},
 		
 		a_sessionId: function(id){
@@ -18012,9 +18142,12 @@ MT.extend("core.Emitter")(
 			
 			ev.on(ev.KEYDOWN, function(e){
 				if(e.which == MT.keys.ESC){
+					var oldF = that.keyframes;
 					that.clear();
 					that.createMainMovie();
-					that.keyframes.reactivate();
+					if(that.keyframes != oldF){
+						that.keyframes.reactivate();
+					}
 					return;
 				}
 			});
@@ -19418,7 +19551,6 @@ MT.extend("core.BasicPlugin")(
 				};
 			}
 			
-			
 			return {
 				enable: 1,
 				immovable: 1,
@@ -19637,7 +19769,6 @@ MT.extend("core.BasicPlugin")(
 			
 			map.on("select", function(obj){
 				updateData(map.settings);
-				
 			});
 			
 			tools.on(MT.ASSET_FRAME_CHANGED, updateData);
@@ -19669,9 +19800,6 @@ MT.extend("core.BasicPlugin")(
 			this.ui = ui;
 			this.panel = this.ui.createPanel("GamePreview");
 			this.el = this.panel.content;
-			
-			
-			
 		},
 
 		installUI: function(){
@@ -20614,7 +20742,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				return;
 			}
 			
-			if(this.editor.doc.mode.name != "javascript"){
+			var name = this.editor.doc.name;
+			var n = name.substring(name.length -3, name.length)
+			
+			if(n != ".js"){
 				this.__showHints = true;
 				this.editor.showHint({completeSingle: !autocall, selectFirst: !autocall});
 				window.setTimeout(function(){
@@ -21571,7 +21702,7 @@ MT.extend("core.Emitter")(
 			this.url = url;
 		}
 		else{
-			this.url = "ws://"+window.location.host;
+			this.url = "ws://"+window.location.host+"/ws/";
 		}
 		
 		if(autoconnect !== false){
@@ -21603,6 +21734,7 @@ MT.extend("core.Emitter")(
 			
 			this.ws.onopen = function(e){
 				that.emit("core","open");
+				that.startHeartbeat();
 			};
 			
 			this.ws.onmessage = function (event) {
@@ -21623,6 +21755,7 @@ MT.extend("core.Emitter")(
 			};
 			
 			this.ws.onerror = function(err){
+				
 				console.error(err);
 			};
 			
@@ -21635,9 +21768,22 @@ MT.extend("core.Emitter")(
 			
 			return;
 		},
-		
+		lastBeat: 0,
+		heartBeatInterval: 25,
+		startHeartbeat: function(){
+			var diff = Date.now() - this.lastBeat;
+			if(diff > this.heartBeatInterval * 1000){
+				this.send("HeartBeat");
+			}
+			
+			var that = this;
+			window.setTimeout(function(){
+				that.startHeartbeat();
+			}, (this.heartBeatInterval - diff)*1000);
+		},
 		send: function(channel, action, data, cb){
 			if(this.ws.readyState == this.ws.OPEN){
+				this.lastBeat = Date.now();
 				this.sendObject.channel = channel;
 				this.sendObject.action = action;
 				this.sendObject.data = data;
@@ -23476,6 +23622,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.isReady = false;
 		this.data = {
 			backgroundColor: "#666666",
+			webGl: 1,
 			sourceEditor:{
 				fontSize: 12,
 				autocomplete: true
@@ -23545,10 +23692,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var desc = "<p>All your current work in progress has been saved.</p><p>Please wait. Editor will reload automatically.</p>";
 			
 			if(data.type == "new"){
-				content = "System is being maintained. Will be back in ";
+				content = "System is being maintained.";
 				desc = "<p>Please wait. Editor will reload automatically.</p>";
+				if(data.seconds){
+					content += " Be back in ";
+				}
 			}
 			
+			if(!data.seconds){
+				var pop = new MT.ui.Popup("Maintenance", content + desc);
+				return;
+			}
 			
 			var pop = new MT.ui.Popup("Maintenance", content + '<span style="color: red">' + seconds +"</span> seconds." + desc);
 			
@@ -23627,7 +23781,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var that = this;
 			this.send("getOwnerInfo", null, function(data){
 				console.log("@project info", data);
-				//that.setProjectTimer(data);
+				that.setProjectTimer(data);
 			});
 		},
 		
@@ -23667,6 +23821,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			//var 
 			button.addClass("expires");
 			button.el.title = "Project will expire";
+			
+			var second = 1000;
+			var minute = 60 * second;
+			var hour = 60 * minute;
+			var day = 24 * hour;
+			
+			var expire = (30 * day + (data.created)) - Date.now() + diff;
+			if(expire < day){
+				data.created = Date.now() - 29*day - second;
+			}
+			
 			this.updateExpireTime(button, data.created, diff);
 			
 			
@@ -23680,7 +23845,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var day = 24 * hour;
 			
 			var expire = (30 * day + (created)) - Date.now() + off;
-			
 			var dd = "", hh = "", mm = "", ss = "";
 			
 			var days = Math.floor(expire / day);
@@ -23712,7 +23876,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				ss = "0"+ss;
 			}
 			
-			button.el.setAttribute("data-expires", dd + "d" + " " + hh + ":" + mm + ":" + ss);
+			var ds = dd ? dd + "d" : "";
+			button.el.setAttribute("data-expires", ds + " " + hh + ":" + mm + ":" + ss);
 			
 			var that = this;
 			window.setTimeout(function(){
@@ -24081,6 +24246,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				label: new MT.ui.Input(this.ui, {key: "title", type: "text"}, this.data),
 				package: new MT.ui.Input(this.ui, {key: "package", type: "text"}, this.data),
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
+				webGl: new MT.ui.Input(this.ui, {key: "webGl", type: "bool"}, this.data),
 				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor),
 				autocomplete: new MT.ui.Input(this.ui, {key: "autocomplete", type: "bool"}, this.data.sourceEditor)
 			};
@@ -24141,7 +24307,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.setInputs.label.show(this.setFields.project.el);
 			this.setInputs.package.show(this.setFields.project.el);
+			
 			this.setInputs.bgColor.show(this.setFields.ui.el);
+			this.setInputs.webGl.show(this.setFields.ui.el);
+			
 			this.setButtons.resetLayout.show(this.setFields.ui.el);
 			
 			this.setInputs.srcEdFontSize.show(this.setFields.sourceEditor.el);
@@ -24226,6 +24395,23 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.ui.loadLayout();
 			this.ui.isSaveAllowed = true;
 			this.isReady = true;
+		},
+		
+		addPlugin: function(name){
+			MT.require("plugins."+name);
+			var that = this;
+			MT.onReady(function(){
+				that.initPlugin(name);
+			});
+		},
+		
+		initPlugin: function(name){
+			var p = new MT.plugins[name](this);
+			this.plugins[name.toLowerCase()] = p;
+			
+			p.initSocket(this.socket);
+			p.initUI(this.ui);
+			p.installUI(this.ui);
 		},
 		
 		handleDrop: function(e){
@@ -24342,7 +24528,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		hostInInterest = "mightyeditor.mightyfingers.com";
 	}
 
-	// hack for miniser
+	// hack for minimiser
 	if(typeof document != "undefined"){
 		var loading = document.createElement("div");
 		loading.className = "loading";
@@ -24409,9 +24595,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				window.hideLoading();
 				new MT.core.Project(new MT.ui.Controller(), socket);
 			}
-			if(type == "close"){
+			if(type == "close" && hasClosed === false){
 				document.body.innerHTML = "";
 				hasClosed = true;
+				MT.core.Project.a_maintenance({type: "new"});
 			}
 		});
 	}

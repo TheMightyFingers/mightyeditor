@@ -160,6 +160,16 @@ MT(
 		},
 		
 		listen: function(port, host){
+			// unix socket
+			if(port == void(0)){
+				port = host;
+				var that = this;
+				this.fs.unlink(port, function(){
+					that.server.listen(port);
+					that.fs.chmod(port, "0777");
+				});
+				return;
+			}
 			this.server.listen(port, host);
 		},
 		

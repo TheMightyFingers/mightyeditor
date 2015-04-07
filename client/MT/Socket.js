@@ -6,7 +6,7 @@ MT.extend("core.Emitter")(
 			this.url = url;
 		}
 		else{
-			this.url = "ws://"+window.location.host;
+			this.url = "ws://"+window.location.host+"/ws/";
 		}
 		
 		if(autoconnect !== false){
@@ -38,6 +38,7 @@ MT.extend("core.Emitter")(
 			
 			this.ws.onopen = function(e){
 				that.emit("core","open");
+				that.startHeartbeat();
 			};
 			
 			this.ws.onmessage = function (event) {
@@ -58,6 +59,7 @@ MT.extend("core.Emitter")(
 			};
 			
 			this.ws.onerror = function(err){
+				
 				console.error(err);
 			};
 			
@@ -70,9 +72,22 @@ MT.extend("core.Emitter")(
 			
 			return;
 		},
-		
+		lastBeat: 0,
+		heartBeatInterval: 25,
+		startHeartbeat: function(){
+			var diff = Date.now() - this.lastBeat;
+			if(diff > this.heartBeatInterval * 1000){
+				this.send("HeartBeat");
+			}
+			
+			var that = this;
+			window.setTimeout(function(){
+				that.startHeartbeat();
+			}, (this.heartBeatInterval - diff)*1000);
+		},
 		send: function(channel, action, data, cb){
 			if(this.ws.readyState == this.ws.OPEN){
+				this.lastBeat = Date.now();
 				this.sendObject.channel = channel;
 				this.sendObject.action = action;
 				this.sendObject.data = data;

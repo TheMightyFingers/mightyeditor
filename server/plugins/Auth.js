@@ -26,7 +26,8 @@ MT.extend(MT.core.BasicPlugin)(
 		this.user = {
 			id: 1,
 			email: "test@example.com",
-			level: 1
+			level: 1,
+			password: "test123"
 		};
 	},
 	{
@@ -68,7 +69,9 @@ MT.extend(MT.core.BasicPlugin)(
 			cb({}); 
 		},
 		
-		
+		getOwnerInfo: function(){
+			return this.user;
+		},
 		getShareOptions: function(projects, cb){
 			var proj = this.getProject(this.project.id);
 			if(!proj){

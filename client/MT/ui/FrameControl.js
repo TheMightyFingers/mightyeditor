@@ -98,10 +98,22 @@ MT.extend("core.Emitter")(
 		this.labels = [];
 	},
 	{
+		buildtm: 0,
+		
+		buildDelay:function(){
+			var that = this;
+			if(this.buildtm){
+				window.clearTimeout(this.build);
+			}
+			this.buildtm = window.setTimeout(function(){
+				that.buildtm = 0;
+				that._build();
+			}, 100);
+			
+		},
+		
 		build: function(){
 			this.clear();
-			
-			
 			var m = this.mm.keyframes;
 			var len = m.getLastFrame();
 			var framesize = this.mm.frameSize;

@@ -14,12 +14,12 @@
 		this.cbs = [];
 	};
 	Accumulator.prototype = {
-		release: function(){
+		release: function(data){
 			if(!this.cbs.length){
 				return;
 			}
 			while(this.cbs.length){
-				this.cbs.shift()();
+				this.cbs.shift()(data);
 			}
 		},
 		push: function(cb){
@@ -67,6 +67,7 @@
 			this.loadings = 0;
 			this.acc = new Accumulator();
 			this.cache = {};
+			this._cache = {};
 			this.className = className;
 			this.accumulator = accumulator;
 		};
@@ -158,6 +159,40 @@
 				}
 				return str.join("&");
 			},
+			
+			getCached: function(url, cb){
+				var that = this;
+				if(this._cache[url] && this._cache[url].status === 2){
+					this.loadings -= this._cache[url].cbs.length;
+					this._cache[url].cbs.push(cb);
+					window.setTimeout(function(){
+						that._cache[url].cbs.release(that._cache[url].data);
+					}, 0)
+					return;
+				}
+				
+				if(this._cache[url]){
+					if(typeof cb === "function"){
+						this._cache[url].cbs.push(cb);
+					}
+					return;
+				}
+				
+				this._cache[url] = {
+					status: 1,
+					cbs: new Accumulator(),
+					data: null
+				};
+				
+				this._cache[url].cbs.push(cb);
+				var that = this;
+				this.get(url, function(data){
+					that._cache[url].cbs.release(data);
+					that._cache[url].status++;
+					that._cache[url].data = data;
+				});
+			},
+ 
 			get: function(url, cb){
 				var req = new XMLHttpRequest();
 				req.onreadystatechange = function() {
@@ -424,9 +459,35 @@
 			require(include, path, cb);
 			return this;
 		};
-		
+		Class.include = function(include, path, cb){
+			require(include, path, cb);
+			return this;
+		};
 		Class.requireFile = function(include, cb){
 			Class.loader.getScript(include, cb);
+			return this;
+		};
+		
+		Class.requireFiles = function(includes, cb){
+			for(var i=0; i<includes.length - 1; i++){
+				Class.loader.getScript(includes[i]);
+			}
+			Class.loader.getScript(includes[include.length -1], cb);
+			return this;
+		};
+		
+		Class.requireFilesSync = function(includes, cb){
+			var out = function(){
+				var inc = includes.shift();
+				console.log("getting", inc);
+				if(includes.length > 0){
+					Class.loader.getScript(inc, out);
+				}
+				else{
+					Class.loader.getScript(inc, cb);
+				}
+			};
+			out();
 			return this;
 		};
 		

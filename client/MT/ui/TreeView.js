@@ -294,7 +294,9 @@ MT.extend("core.Emitter")(
 			}
 			
 			if(that.cache[src] && im.updated == data.updated){
-				im.src = im.origSource = that.cache[src];
+				if(im.src !== im.origSource){
+					im.src = im.origSource = that.cache[src];
+				}
 				return;
 			}
 			

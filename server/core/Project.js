@@ -66,7 +66,7 @@ MT.extend("core.BasicPlugin")(
 			if(!cb){
 				return;
 			}
-			cb({level: 0});
+			this.auth.getOwnerInfo(this.id, cb);
 		},
 		
 		checkAndOpenProject: function(id){

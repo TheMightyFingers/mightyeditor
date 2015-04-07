@@ -4,9 +4,10 @@ MT.core.Exporter = function(server, auth, config){
 		var projectId = req.url.substring(8);
 		
 		if(!projectId){
+			console.log("cannot find project", projectId);
 			return true;
 		}
-		
+		console.log("exporting:", projectId);
 		auth.db.get("SELECT access FROM projects WHERE link = ?", projectId, function(err, row){
 			
 			if(err){

@@ -1,27 +1,30 @@
-var host = "http://tools.mightyfingers.com:8080";
+var host = "http://localhost";
 this.config = {
 	root: "../client",
 	hostname: host,
-	host: "0.0.0.0",
-	port: 8080,
+	host: "localhost",
+	port: "8080", // undefined for socket connection
 	shutdownTimeout: 0.5,
 	index: "index.html",
 	prefix: "p",
 	servers: {
-		p: "tools.mightyfingers.com"
+		p: "localhost"
 	},
 	projectsPath: "../client/data/projects",
+	buildDir: "../client/data/build",
 	dbName: ".db.json",
 	email: {
 		from: "info@mightyfingers.com"
+	},
+	tools:{
+		// path to fontforge - or executable if it's in the path
+		fontforge: "fontforge",
+		// script that makes APKs
+		mobile: "mobile"
 	},
 	auth: {
 		// one week
 		sessionLifeTime: 1000*60*60*24*7,
 		hashRounds: 12
-	},
-	tools:{
-		// path to fonforge - or executable if it's in the path
-		fontforge: "fontforge"
 	}
 };

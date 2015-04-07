@@ -1,10 +1,25 @@
 "use strict";
 (function(){
-	var phaserSrc = "js/";
-	phaserSrc += (window.release ? "phaser.min.js" : "phaser.js");
+	var phaserSrc = "js/phaser/";
+	var pixiSrc = phaserSrc;
+	phaserSrc += (window.release ? "phaser-no-physics.min.js" : "phaser-no-physics.js");
+	pixiSrc += (window.release ? "pixi.min.js" : "pixi.js");
+	
+	MT.requireFilesSync([
+		phaserSrc,
+	]);
+	
+	/*
 	MT.requireFile(phaserSrc, function(){
-		MT.requireFile("js/phaserHacks.js");
+		MT.requireFile("js/phaser/pixi.js");
+		MT.requireFile("js/phaser/geom.js", function(){
+			MT.requireFile("js/phaser/components.js", function(){
+				MT.requireFile("js/phaser/text.js");
+				MT.requireFile("js/phaserHacks.js");
+			});
+		});
 	});
+	*/
 })();
 MT.require("core.Helper");
 MT.require("core.Selector");
@@ -35,6 +50,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		this.tileLayers = [];
 		
 		this.dist = {};
+		this.cache = {};
 		
 		this.selection = new Phaser.Rectangle();
 		
@@ -194,6 +210,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 					if(tmp.id == id){
 						that.loadedObjects.splice(i, 1);
+						that.cache[id] = null;
 						tmp.remove();
 						if(that.activeObject == tmp){
 							that.activeObject = null;
@@ -223,12 +240,17 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var that = this;
 			this.activeObject = null;
 			
-			var ctx = null;
+			var canvas, ctx = null, FG = null;
 			var drawObjects = function(obj){
 				obj.highlight(ctx);
 			};
 			
-			var game = this.game = window.game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { 
+			var mode = Phaser.CANVAS;
+			if(this.project.data.webGl){
+				mode = Phaser.AUTO;
+			}
+			
+			var game = this.game = window.game = new Phaser.Game(800, 600, mode, '', { 
 				preload: function(){
 					game.stage.disableVisibilityChange = true;
 					var c = game.canvas;
@@ -241,112 +263,114 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				create: function(){
 					that.resize();
 					that.scale = game.camera.scale;
-					if(!ctx){
+					/*if(!ctx){
 						ctx = game.canvas.getContext("2d");
-					}
+					}*/
 					
 					that.setCameraBounds();
 					that.postUpdateSetting();
-					//return;
-					that.game.plugins.add({
-						postUpdate: function(){
-							for(var i=0; i<that.tileLayers.length; i++){
-								var layer = that.tileLayers[i];
-								if(layer.fixedToCamera){
-									continue;
-								}
-								if(layer._mc.x || layer._mc.y){
-									layer._ox = layer._mc.x;
-									layer._oy = layer._mc.y;
-									layer.x += layer._mc.x;
-									layer.y += layer._mc.y;
-								}
-								
-							}
-						},
-						
-						postRender: function(){
-							
-							for(var i=0; i<that.tileLayers.length; i++){
-								var layer = that.tileLayers[i];
-								if(layer.fixedToCamera){
-									continue;
-								}
-								if(layer._ox !== void(0)){
-									layer.x -= layer._ox;
-									layer._ox = void(0);
-								}
-								if(layer._oy !== void(0)){
-									layer.y -= layer._oy;
-									layer._oy = void(0);
-								}
-								
-							}
-						}
-						
-					});
+					//var texture = new Phaser.RenderTexture();
 					
 					
-					var graphics = window.graphics = new PIXI.Graphics();
-					
+					var graphics = window.graphics = new Phaser.Graphics();
 					// begin a green fill..
 					graphics.beginFill(0xffffff);
-					
 					// top
 					graphics.drawRect(0, 0, that.game.canvas.width, -that.game.camera.y);
-					
 					// right
 					graphics.drawRect(that.settings.viewportWidth, -that.game.camera.y, that.game.canvas.width, that.settings.viewportHeight);
-					
 					// bottom
 					graphics.drawRect(0, that.settings.viewportWidth, that.game.canvas.width, that.game.canvas.height);
-					
 					// left
 					graphics.drawRect(0, -that.game.camera.y, -that.game.camera.x, that.settings.viewportHeight);
-					
 					// end the fill
 					graphics.endFill();
-					
 					graphics.alpha = 0.05;
-					
 					graphics.postUpdate = graphics.preUpdate = function(){};
-
-					graphics.update = function(){
+					
+					graphics._update = function(){
 						//graphics.x = -that.game.camera.x;
 						//graphics.y = -that.game.camera.y;
-						
+						var shape;
 						//update top
-						graphics.graphicsData[0].points[2] = that.game.canvas.width;
-						graphics.graphicsData[0].points[3] = -that.game.camera.y;
+						//graphics.graphicsData[0].points[2] = that.game.canvas.width;
+						//graphics.graphicsData[0].points[3] = -that.game.camera.y;
+						shape = graphics.graphicsData[0].shape;
+						shape.width = that.game.canvas.width;
+						shape.height = -that.game.camera.y;
 						
 						// update right
+						/*
 						graphics.graphicsData[1].points[0] = (that.settings.viewportWidth* that.game.camera.scale.x - that.game.camera.x) ;
 						graphics.graphicsData[1].points[1] = -that.game.camera.y;
 						graphics.graphicsData[1].points[2] = that.game.canvas.width + that.game.camera.x;
 						graphics.graphicsData[1].points[3] = that.settings.viewportHeight* that.game.camera.scale.y;
+						*/
+						
+						shape = graphics.graphicsData[1].shape;
+						shape.x = (that.settings.viewportWidth* that.game.camera.scale.x - that.game.camera.x);
+						shape.y = -that.game.camera.y;
+						shape.width = that.game.canvas.width + that.game.camera.x;
+						shape.height = that.settings.viewportHeight* that.game.camera.scale.y;
+						
 						
 						// update bottom
-						graphics.graphicsData[2].points[1] = that.settings.viewportHeight* that.game.camera.scale.y - that.game.camera.y;
+						/*graphics.graphicsData[2].points[1] = that.settings.viewportHeight* that.game.camera.scale.y - that.game.camera.y;
 						graphics.graphicsData[2].points[2] = that.game.canvas.width;
 						graphics.graphicsData[2].points[3] = that.game.canvas.height + that.game.camera.y;
+						*/
+						shape = graphics.graphicsData[2].shape;
+						shape.y = that.settings.viewportHeight* that.game.camera.scale.y - that.game.camera.y;
+						shape.width = that.game.canvas.width;
+						shape.height = that.game.canvas.height + that.game.camera.y;
 						
 						
 						// update left
+						/*
 						graphics.graphicsData[3].points[1] = -that.game.camera.y;
 						graphics.graphicsData[3].points[2] = -that.game.camera.x;
 						graphics.graphicsData[3].points[3] = that.settings.viewportHeight* that.game.camera.scale.y;
-						
+						*/
+						shape = graphics.graphicsData[3].shape;
+						shape.y = -that.game.camera.y;
+						shape.width = -that.game.camera.x;
+						shape.height = that.settings.viewportHeight* that.game.camera.scale.y;
 						//graphics.drawRect(0, 0, that.settings.width, that.settings.height);
+						
+						// buggy buggy 
+						graphics.webGLDirty = true; graphics.clearDirty = true;
 					};
 
 					// add it the stage so we see it on our screens..
-					map.game.stage.children.unshift(graphics);
-					graphics.parent = map.game.stage;
+					game.stage.addChild(graphics);
+					//graphics.parent = map.game.stage;
+					
+					
+					canvas = document.createElement("canvas");
+					canvas.width = game.canvas.width;
+					canvas.height = game.canvas.height;
+					game.cache.addImage("__gridBG","__gridBG", canvas);
+					ctx = canvas.getContext("2d");
+					ctx.fillStyle = "#ff0000";
+					ctx.fillRect(10, 10, 40,50);
+					
+					FG = window.FG = game.add.sprite(0, 0, "__gridBG", 0);
+					FG.fixedToCamera = true;
+					FG.bringToTop();
 				},
 				
 				
-				render: function(){
-					ctx.globalAlpha = 1;
+				preRender: function(){
+					
+					canvas.width = game.canvas.width;// / game.camera.scale.x;
+					canvas.height = game.canvas.height;//  / game.camera.scale.y;
+					
+					
+					FG.bringToTop();
+					FG.loadTexture("__gridBG");
+					FG.scale.set(1/game.camera.scale.x, 1/game.camera.scale.y);
+					
+					
 					that.drawGrid(ctx);
 					
 					that.selector.forEach(drawObjects);
@@ -357,7 +381,13 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					
 					that.drawPhysics(ctx);
 					
-				}
+					game.cache.addImage("__gridBG","__gridBG", canvas);
+					graphics._update();
+				},
+				
+				update: function(){
+					
+				},
 			});
 			
 			
@@ -1233,8 +1263,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					}
 				}
 			}
-			
-			
 		},
 		
 		_addTimeout: 0,
@@ -1270,6 +1298,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				tmp = this.loadedObjects[i];
 				if(tmp.isRemoved){
 					this.loadedObjects.splice(i, 1);
+					this.cache[tmp.id] = null;
 					tmp.remove();
 					i--;
 				}
@@ -1287,16 +1316,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var tmp, k=0, o;
 			for(var i=objs.length-1; i>-1; i--){
 				o = objs[i];
-				
-				if(o instanceof MT.core.MagicObject){
-					tmp = o;
-				}
-				else{
-					tmp = this.getById(o.id);
-				}
+				tmp = this.getById(o.id);
 				
 				if(!tmp ){
 					tmp = new MT.core.MagicObject(o, group, this);
+					this.cache[o.id] = tmp;
 					this.loadedObjects.push(tmp);
 				}
 				
@@ -1304,6 +1328,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				tmp.update(o.data, group);
 				tmp.object.visible = tmp.isVisible;
 				//tmp.object.z = i;
+				
+				tmp.bringToTop();
 				
 				// handle group and parents
 				if(tmp.data.contents){
@@ -1313,11 +1339,6 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 			}
 			
-			
-			for(var i=objs.length-1; i>-1; i--){
-				tmp = this.getById(objs[i].id);
-				tmp.bringToTop();
-			}
 			if(this.tools.tmpObject){
 				this.tools.tmpObject.bringToTop();
 			}
@@ -1818,7 +1839,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		
 		/* TODO: refactor so all can use MagicObject */
 		getById: function(id){
-			for(var i=0; i<this.loadedObjects.length; i++){
+			
+			return this.cache[id];
+			
+			/*for(var i=0; i<this.loadedObjects.length; i++){
 				if(!this.loadedObjects[i].data){
 					console.warn("smth wrong");
 					continue;
@@ -1826,7 +1850,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				if(this.loadedObjects[i].data.id == id){
 					return this.loadedObjects[i];
 				}
-			}
+			}*/
 		}
 	}
 );

@@ -25,6 +25,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.isReady = false;
 		this.data = {
 			backgroundColor: "#666666",
+			webGl: 1,
 			sourceEditor:{
 				fontSize: 12,
 				autocomplete: true
@@ -94,10 +95,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var desc = "<p>All your current work in progress has been saved.</p><p>Please wait. Editor will reload automatically.</p>";
 			
 			if(data.type == "new"){
-				content = "System is being maintained. Will be back in ";
+				content = "System is being maintained.";
 				desc = "<p>Please wait. Editor will reload automatically.</p>";
+				if(data.seconds){
+					content += " Be back in ";
+				}
 			}
 			
+			if(!data.seconds){
+				var pop = new MT.ui.Popup("Maintenance", content + desc);
+				return;
+			}
 			
 			var pop = new MT.ui.Popup("Maintenance", content + '<span style="color: red">' + seconds +"</span> seconds." + desc);
 			
@@ -176,7 +184,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var that = this;
 			this.send("getOwnerInfo", null, function(data){
 				console.log("@project info", data);
-				//that.setProjectTimer(data);
+				that.setProjectTimer(data);
 			});
 		},
 		
@@ -216,6 +224,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			//var 
 			button.addClass("expires");
 			button.el.title = "Project will expire";
+			
+			var second = 1000;
+			var minute = 60 * second;
+			var hour = 60 * minute;
+			var day = 24 * hour;
+			
+			var expire = (30 * day + (data.created)) - Date.now() + diff;
+			if(expire < day){
+				data.created = Date.now() - 29*day - second;
+			}
+			
 			this.updateExpireTime(button, data.created, diff);
 			
 			
@@ -229,7 +248,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var day = 24 * hour;
 			
 			var expire = (30 * day + (created)) - Date.now() + off;
-			
 			var dd = "", hh = "", mm = "", ss = "";
 			
 			var days = Math.floor(expire / day);
@@ -261,7 +279,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				ss = "0"+ss;
 			}
 			
-			button.el.setAttribute("data-expires", dd + "d" + " " + hh + ":" + mm + ":" + ss);
+			var ds = dd ? dd + "d" : "";
+			button.el.setAttribute("data-expires", ds + " " + hh + ":" + mm + ":" + ss);
 			
 			var that = this;
 			window.setTimeout(function(){
@@ -630,6 +649,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				label: new MT.ui.Input(this.ui, {key: "title", type: "text"}, this.data),
 				package: new MT.ui.Input(this.ui, {key: "package", type: "text"}, this.data),
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
+				webGl: new MT.ui.Input(this.ui, {key: "webGl", type: "bool"}, this.data),
 				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor),
 				autocomplete: new MT.ui.Input(this.ui, {key: "autocomplete", type: "bool"}, this.data.sourceEditor)
 			};
@@ -690,7 +710,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.setInputs.label.show(this.setFields.project.el);
 			this.setInputs.package.show(this.setFields.project.el);
+			
 			this.setInputs.bgColor.show(this.setFields.ui.el);
+			this.setInputs.webGl.show(this.setFields.ui.el);
+			
 			this.setButtons.resetLayout.show(this.setFields.ui.el);
 			
 			this.setInputs.srcEdFontSize.show(this.setFields.sourceEditor.el);
@@ -775,6 +798,23 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.ui.loadLayout();
 			this.ui.isSaveAllowed = true;
 			this.isReady = true;
+		},
+		
+		addPlugin: function(name){
+			MT.require("plugins."+name);
+			var that = this;
+			MT.onReady(function(){
+				that.initPlugin(name);
+			});
+		},
+		
+		initPlugin: function(name){
+			var p = new MT.plugins[name](this);
+			this.plugins[name.toLowerCase()] = p;
+			
+			p.initSocket(this.socket);
+			p.initUI(this.ui);
+			p.installUI(this.ui);
 		},
 		
 		handleDrop: function(e){

@@ -34,6 +34,6 @@ MT(
 		},
 		prolong: function(){
 			
-		},
+		}
 	}
 );

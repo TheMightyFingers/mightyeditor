@@ -10,17 +10,23 @@ MT.core.GeoIP = function(server, hostInIterest){
 			if(req.headers.host != hostInIterest){
 				return true;
 			}
-			var address = req.connection.remoteAddress;
 			
-			// address = "198.100.30.134";
-			// Synchronous method(the recommended way):
-			var country_obj = country.lookupSync(address);
-			if(!country_obj){
-				country_obj = {};
-			}
-			country_obj.ip = address;
+			var address = httpd.getIp(req);
 			res.writeHead(200);
-			res.end(JSON.stringify(country_obj));
+			try{
+				country.lookup(address, function(err, country_obj){
+					if(!country_obj){
+						country_obj = {};
+					}
+					country_obj.ip = address;
+					res.end(JSON.stringify(country_obj));
+				});
+
+			}
+			catch(e){
+				MT.log("GEO IP lookup failed", address);
+				res.end("{}");
+			}
 			return false;
 		});
 	}

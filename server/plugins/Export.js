@@ -1,3 +1,5 @@
+"use strict";
+var _ = require(process.cwd() + "/../client/js/lodash.js");
 MT.require("core.FS");
 var exec = require('child_process').exec;
 MT.extend("core.BasicPlugin")(
@@ -19,9 +21,6 @@ MT.extend("core.BasicPlugin")(
 		this.exampleFile = "index.html";
 		this.hacksFiles = ["phaserHacks2.0.7.js", "phaserHacks2.1.3.js", "phaserHacks.js"];
 
-		
-		
-		this.phaserPath = "phaser";
 		this.assetsPath = "assets";
 
 		this.sep = this.fs.path.sep;
@@ -30,8 +29,9 @@ MT.extend("core.BasicPlugin")(
 	},
 	{
 		get dir(){
-			return this.project.path + this.sep + this.name;
+			return this.project.config.buildDir + this.sep + this.project.id;
 		},
+		
 		_name: undefined,
 		get name(){
 			if(!this._name){
@@ -42,6 +42,7 @@ MT.extend("core.BasicPlugin")(
 			}
 			return this._name;
 		},
+		
 		
 		a_phaserDataOnly: function(data, cb){
 			var that = this;
@@ -64,9 +65,11 @@ MT.extend("core.BasicPlugin")(
 		phaserDataOnly: function(cb, contents){
 			this.zipName = this.name + ".zip";
 			var that = this;
-			this.fs.mkdir(this.dir);
+			
+			var dir = this.dir + this.sep + this.name;
+			this.fs.mkdir(dir);
+			
 			var data;
-
 			if(contents == void(0)){
 				data = JSON.parse(JSON.stringify({
 					assets: this.project.db.get("assets"),
@@ -78,7 +81,7 @@ MT.extend("core.BasicPlugin")(
 				data = contents;
 			}
 
-			this.createIdList(data.assets.contents, this.dir + this.sep + this.assetsPath);
+			this.createIdList(data.assets.contents, dir + this.sep + this.assetsPath);
 			this.parseAssets(data.assets.contents);
 			this.parseObjects(data.objects.contents);
 
@@ -87,13 +90,13 @@ MT.extend("core.BasicPlugin")(
 			
 			var p = this.fs.path.sep;
 			
-			var srcPath = this.dir + this.sep;
+			var srcPath = dir + this.sep;
 			var libsPath = srcPath + "js/lib/";
 			var tplPath = this.tplPath + "src" + p + "js" + p + "lib" + p;
 			var localFilePath = this.name + "/js/lib/" +  this.dataFile;
 			var filePath = libsPath + this.dataFile;
 			
-			that.fs.copy(this.project.path + this.sep + "src", this.dir);
+			that.fs.copy(this.project.path + this.sep + "src", dir);
 
 			that.fs.copy(tplPath + this.importFile, libsPath + this.importFile);
 
@@ -139,17 +142,17 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		a_phaser: function(data, cb){
-			MT.log("Export phaser", this.project.id);
-			
+			MT.log("Export phaser", this.project.id, this.dir);
 			var that = this;
-			var dd = this.dir;
+			var dir = this.dir + this.sep + this.name;
 			
-			this.fs.rmdir(this.dir);
-			this.fs.mkdir(this.dir + this.sep + this.assetsPath);
+			
+			this.fs.rmdir(dir);
+			this.fs.mkdir(dir + this.sep + this.assetsPath);
 			
 			this.phaser(function(error, stdout, stderr){
 				if(data.zip){
-					that.zip(that.name, that.dir, function(zipName){
+					that.zip(that.name, dir, function(zipName){
 						cb({
 							file: zipName,
 							name: that.name,
@@ -202,11 +205,12 @@ MT.extend("core.BasicPlugin")(
 			
 			this.fs.mkdir(path, function(){
 				
-				var password = auth.randomMD5();
-				auth.setKeystorePassword(password)
+				info.password = auth.randomMD5();
+				auth.setKeystoreInfo(info)
 				
 				MT.core.Queue({
-						cmd: that.project.config.tools.crosswalk + " keystore " + astr,
+						cmd: that.project.config.tools.mobile,
+						args: ["keystore", astr],
 						env: {
 							cwd: path,
 								env:{
@@ -231,7 +235,6 @@ MT.extend("core.BasicPlugin")(
 				return;
 			}
 			
-			
 			var arch = opts.arch;
 			
 			this.info = this.project.getProjectInfo();
@@ -242,12 +245,15 @@ MT.extend("core.BasicPlugin")(
 			}
 			
 			var config = this.project.config;
-			var p = this.fs.path.sep;
+			var p = this.sep;
+			
 			var path = "secret" + p + auth.user.id;
 			var keystore = this.fs.path.resolve(path + p + "keystore");
 			
-			var getName = function(json, package){
-				var name = package.split(".").pop();
+			var userInfo;
+			
+			var getName = function(json, pkg){
+				var name = pkg.split(".").pop();
 				name = name.substring(0, 1).toUpperCase() + name.substring(1);
 				if(json.version){
 					name += "_" + json.version;
@@ -261,21 +267,26 @@ MT.extend("core.BasicPlugin")(
 			};
 			
 			var proceed = function(el, dir, name, launcher){
-				var after = function(password){
-					var base = that.project.config.hostname + "/data/projects/" + that.project.id + "/" + that.name;
-					var link = base + "-minified/build/" + name;
+				var after = function(){
+					var base = that.project.config.hostname + "/data/build/" + that.project.id + "/crosswalk/";
+					var link = base + name;
 			
 					that.fs.after(function(){
 						var d = that.fs.path.resolve(dir);
+						console.log("DIR:", d);
+						//process.exit();
+						
+						
 						var settings = {
-							cmd: that.project.config.tools.crosswalk + " make " + that.info.package + " ./manifest.json " + arch +" "+ keystore,
+							cmd: that.project.config.tools.mobile,
+							args:["crosswalk", that.info.package, d + p + "manifest.json", arch, "crosswalk", opts.rel ? keystore : ""],
 							env: {
-								cwd: d,
+								cwd: d + p + "..",
 								env:{
-									PASSWORD: password
+									PASSWORD: opts.rel ? userInfo.password : ""
 								},
 							},
-							password: password,
+							password: opts.rel ? userInfo.password : "",
 							email: auth.user.email,
 							template: opts.rel ? "appIsReadySigned" : "appIsReadyDebug",
 							link: link
@@ -292,25 +303,15 @@ MT.extend("core.BasicPlugin")(
 								title: that.name,
 								err: err,
 								serr: serr,
-								action: "phaser"
+								action: "phaser",
+								link: link
 							});
 						});
 					});
 				};
 				
 				if(!el){
-					that.fs.copy(that.tplPath + "launcher.png", launcher);
-				}
-				if(opts.rel){
-					auth.getKeystorePassword(function(password){
-						if(!password){
-							MT.error("BAD password");
-							cb();
-							return;
-						}
-						after(password);
-						
-					});
+					that.fs.copy(that.tplPath + "launcher.png", launcher, after);
 				}
 				else{
 					after();
@@ -343,6 +344,143 @@ MT.extend("core.BasicPlugin")(
 					});
 				});
 			};
+			
+			
+			auth.getKeystoreInfo(function(info){
+				userInfo = info || {};
+				if(opts.rel && !info || !info.password){
+					MT.error("BAD password");
+					this.fs.exists(keystore, function(y){
+						if(!y){
+							cb({requireSignature: 1});
+							return;
+						}
+						minify();
+					});
+					
+					cb();
+					return;
+				}
+				minify();
+			});
+			
+		},
+		
+		a_cordova: function(opts, cb){
+			var that = this;
+			var auth = this.project.auth;
+			if(!auth.user || !auth.user.level){
+				cb({requireProLevel: 1});
+				return;
+			}
+			
+			this.info = this.project.getProjectInfo();
+			
+			if(!this.info.package){
+				cb({requirePackage: 1});
+				return;
+			}
+			
+			var p = this.fs.path.sep;
+			var path = "secret" + p + auth.user.id;
+			var keystore = this.fs.path.resolve(path + p + "keystore");
+			
+			var buildDir = this.dir;
+			var config;
+			
+			var proceed = function(el, dir, name, launcher){
+				
+				var after = function(password){
+					var link = [
+						that.project.config.hostname,
+						"data",
+						"build", that.project.id, that.info.package, that.name + ".apk"
+					].join(p);
+					
+					that.fs.after(function(){
+						var d = that.fs.path.resolve(buildDir);
+						var c = that.project.config.tools.mobile;// +" "+ keystore;
+						console.log("CCC\n", c);
+						console.log("DDD\n", d);
+						//return;
+						 opts.rel ? console.log("Will sign this apk") : console.log("Won't sign this apk");
+						var settings = {
+							cmd: c,
+							args: ["cordova", that.info.package, that.name, that.fs.path.resolve(dir), config, opts.rel ? keystore : ""],
+							env: {
+								cwd: d,
+								env:{
+									PASSWORD: password || ""
+								},
+							},
+							password: password || "",
+							email: auth.user.email,
+							template: opts.rel ? "appIsReadySigned" : "appIsReadyDebug",
+							link: link
+						};
+						
+						if(opts.rel){
+							settings.attachments = [{ path: keystore }];
+						}
+						
+						
+						MT.core.Queue(settings, function(err, serr){
+							cb({
+								file: name,
+								title: that.name,
+								err: err,
+								serr: serr,
+								action: "phaser",
+								link: link
+							});
+						});
+					});
+				};
+				
+				if(!el){
+					that.fs.copy(that.tplPath + "launcher.png", launcher);
+				}
+				if(opts.rel){
+					auth.getKeystoreInfo(function(info){
+						if(!info.password){
+							MT.error("BAD password");
+							cb();
+							return;
+						}
+						after(info.password);
+						
+					});
+				}
+				else{
+					after();
+				}
+			};
+			
+			var minify = function(){
+				that.phaserMinify(function(name, dir){
+					console.log("AFTER MINIFY (dir):", dir);
+					
+					config = dir + p + "config.xml";
+					
+					var launcher = dir + p + "assets" + p + "launcher.png";
+					
+					that.fs.exists(config, function(em){
+						that.fs.exists(launcher, function(el){
+							if(!em){
+								that.convertManifestToConfig(dir, function(xml, json){
+									that.fs.writeFile(config, xml, function(){
+										proceed(el, dir, that.name + ".apk", launcher);
+									}, "UTF-8");
+								});
+							}
+							else{
+								proceed(el, dir, that.name + ".apk", launcher);
+							}
+						});
+					});
+				});
+			};
+			
 			if(opts.rel){
 				MT.log("Exporting release apk", that.project.id);
 				this.fs.exists(keystore, function(y){
@@ -359,7 +497,85 @@ MT.extend("core.BasicPlugin")(
 			}
 			
 			
+		},
+		
+		makeEmptyConfig: function(data){
+			var icon = "assets/launcher.png";
+			if(data.icons && data.icons.length > 0){
+				icon = data.icons[0].src;
+			}
+			var version = "1.0.0";
+			if(data.version != void(0)){
+				version = data.version;
+			}
 			
+			var prefs = {};
+			
+			loop:
+			for(var key in data){
+				switch(key){
+					case "icons":
+					case "description":
+					case "start_url":
+					case "version":
+					case "name":
+					case "title":
+						continue loop;
+				}
+				if(typeof(data[key]) == "object"){
+					continue loop;
+				}
+				
+				prefs[key] = data[key];
+			}
+			
+			var xml = [
+				'<widget id="' + this.info.package + '" version="' + data.version + '">',
+					'<name>' + this.info.title + '</name>',
+					'<description>'+data.description+'</description>',
+					'<icon src="/www/'+icon+'" />',
+					'<content src="'+data.start_url+'" />',
+					'<access origin="*" />'
+			].join("");
+
+			var dpi = [
+				"ldpi","mdpi","hdpi","xhdpi"
+			];
+			for(var i=0; i<dpi.length; i++){
+				xml += '<icon src="/www/'+icon+'" platform="android" density="'+dpi[i]+'" />';
+			}
+			
+			for(var key in prefs){
+				xml += '<preference name="'+key+'" value="'+prefs[key]+'" />';
+			}
+			
+			xml += '</widget>';
+
+			return xml;
+		},
+
+		convertManifestToConfig: function(ppath, cb){
+			var that = this;
+			var p = this.fs.path.sep;
+			var manifest = ppath + "manifest.json";
+			var defaultManifest = that.tplPath + "src" + p + "manifest.json";
+			
+			var convert = function(err, c){
+				var json = JSON.parse(c);
+				json.name = that.info.title;
+				var xml = that.makeEmptyConfig(json);
+				cb(xml);
+			};
+			
+			// check orig manifest.json
+			that.fs.exists(manifest, function(yes){
+				if(!yes){
+					that.fs.readFile(defaultManifest, convert, "utf-8");
+				}
+				else{
+					that.fs.readFile(manifest, convert, "utf-8");
+				}
+			});
 		},
 		
 		a_phaserMinify: function(data, cb){
@@ -377,19 +593,11 @@ MT.extend("core.BasicPlugin")(
 		
 		phaserMinify: function(cb){
 		    var that = this;
-		    this.fs.rmdir(this.dir);
 			var info = this.info = this.project.getProjectInfo();
 			
 			this.zipName = this.name + ".min.zip";
 			
-			
-		    this.fs.rm(this.project.path + this.sep + this.zipName);
-
-
-		    this.fs.mkdir(this.dir);
-		    this.fs.mkdir(this.dir + this.sep + this.assetsPath);
-			
-			
+			this.fs.rm(this.dir + this.sep + this.zipName);
 			
 		    this.phaser(function (error, stdout, stderr) {
 		        that.minify(function(dir){
@@ -409,21 +617,21 @@ MT.extend("core.BasicPlugin")(
 			});
 		},
 
-
 		minify: function(cb){
-			var index = this.dir + this.sep + this.index;
+			var dir = this.dir + this.sep + this.name;
+			var index = dir + this.sep + this.index;
+			
 			var that = this;
 			var info = this.info;
 			var name = info.namespace;
 			name = name.replace(/\W+/g, "_");
-
 
 			var cssFileName = name + ".min.css";
 			var jsFileName = name + ".min.js";
 			var indexFile = "index.html";
 
 
-			var miniPath = MT.core.FS.path.normalize(this.project.path + this.sep + name + "-minified" + this.sep);
+			var miniPath = MT.core.FS.path.normalize(this.dir + this.sep + name + "-minified" + this.sep);
 			this.fs.rm(miniPath);
 
 			this.fs.readFile(index, function(err, cont){
@@ -503,7 +711,7 @@ MT.extend("core.BasicPlugin")(
 						if(currentTag == "script"){
 							var s = scriptAttribs.src;
 							if(s && s.substring(s.length - 6, s.length - 3) !== "min" && s.substring(0, 4) != "http"){
-								scripts.push(that.dir + that.fs.path.sep + s);
+								scripts.push(dir + that.sep + s);
 								return;
 							}
 
@@ -565,7 +773,7 @@ MT.extend("core.BasicPlugin")(
 					compressed_ast.print(stream);
 					var code = stream.toString();
 
-					MT.core.FS.copy(that.dir, miniPath);
+					MT.core.FS.copy(dir, miniPath);
 					MT.core.FS.writeFile(miniPath + jsFileName, code);
 					MT.core.FS.writeFile(miniPath + cssFileName, css);
 					MT.core.FS.writeFile(miniPath + indexFile, html, function(){
@@ -574,7 +782,7 @@ MT.extend("core.BasicPlugin")(
 				};
 				todo++;
 
-				new CleanCSS({root: that.dir}).minify(styles, function(e, min){
+				new CleanCSS({root: dir}).minify(styles, function(e, min){
 					css = min.styles;
 					done();
 				});
@@ -601,14 +809,11 @@ MT.extend("core.BasicPlugin")(
 		phaser: function(cb){
 			var that = this;
 
-			this.dir = this.project.path + this.sep + this.phaserPath;
-			this.fs.mkdir(this.dir);
-
-			this.assets = JSON.parse( JSON.stringify(this.project.db.get("assets")) );
-			this.objects = JSON.parse( JSON.stringify(this.project.db.get("objects")) );
+			this.assets = _.cloneDeep(this.project.db.get("assets"));
+			this.objects = _.cloneDeep(this.project.db.get("objects"));
 
 			if(this.project.db.get("map").contents && this.project.db.get("map").contents.length > 0){
-				this.map = JSON.parse( JSON.stringify(this.project.db.get("map").contents[0]) );
+				this.map = _.cloneDeep(this.project.db.get("map").contents[0]);
 			}
 			else{
 				this.map = {};
@@ -647,7 +852,7 @@ MT.extend("core.BasicPlugin")(
 		},
 
 		parseAssets: function(assets, path){
-			path = path || this.dir + this.sep + this.assetsPath;
+			path = path || this.dir + this.sep + this.name + this.sep + this.assetsPath;
 			this.fs.mkdir(path);
 
 			var asset = null;

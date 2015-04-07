@@ -6,7 +6,7 @@
 		hostInInterest = "mightyeditor.mightyfingers.com";
 	}
 
-	// hack for miniser
+	// hack for minimiser
 	if(typeof document != "undefined"){
 		var loading = document.createElement("div");
 		loading.className = "loading";
@@ -73,9 +73,10 @@
 				window.hideLoading();
 				new MT.core.Project(new MT.ui.Controller(), socket);
 			}
-			if(type == "close"){
+			if(type == "close" && hasClosed === false){
 				document.body.innerHTML = "";
 				hasClosed = true;
+				MT.core.Project.a_maintenance({type: "new"});
 			}
 		});
 	}

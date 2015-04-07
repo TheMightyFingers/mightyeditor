@@ -1,7 +1,7 @@
 {
 	"name": "%title%",
 	"description": "",
-	"version": "1",
+	"version": "0.0.1",
 	"start_url": "index.html",
 	"icons": [
 		{
@@ -11,5 +11,6 @@
 			"density": "4.0"
 		}
 	],
-	"orientation": "landscape"
+	"orientation": "landscape",
+	"fullscreen": "true"
 }

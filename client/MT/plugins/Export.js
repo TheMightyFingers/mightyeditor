@@ -6,6 +6,10 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		this.project = project;
 	},
 	{
+		get path(){
+			return "data/build/"+this.project.id;
+		},
+		
 		initUI: function(ui){
 			var that = this;
 			this.list = new MT.ui.List([
@@ -19,7 +23,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 							zip: 1
 						},
 						function (data) {
-							window.location = that.project.path + "/" + data.file;
+							window.location = that.path + "/" + data.file;
 							not.hide();
 						});
 					}
@@ -36,36 +40,58 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 					label: "Android",
 					contents: [
 						{
-							label: "Crosswalk - debug (ARM)",
-							title: "most android phones uses arm processors",
-							className: "",
-							cb: function () {
-								that.crosswalk("arm");
-							}
+							label: "Crosswalk",
+							contents: [
+								{
+									label: "Debug (ARM)",
+									title: "most android phones uses arm processors",
+									className: "",
+									cb: function () {
+										that.crosswalk("arm");
+									}
+								},
+								{
+									label: "Debug (x86)",
+									title: "some phones and tablets uses intel atom or similar cpus",
+									className: "",
+									cb: function () {
+										that.crosswalk("x86");
+									}
+								},
+								{
+									label: "Release (ARM)",
+									title: "most android phones uses arm processors",
+									className: "",
+									cb: function () {
+										that.crosswalk("arm", true);
+									}
+								},
+								{
+									label: "Release (x86)",
+									title: "some phones and tablets uses intel atom or similar cpus",
+									className: "",
+									cb: function () {
+										that.crosswalk("x86", true);
+									}
+								}
+							]
 						},
 						{
-							label: "Crosswalk - debug (x86)",
-							title: "some phones and tablets uses intel atom or similar cpus",
-							className: "",
-							cb: function () {
-								that.crosswalk("x86");
-							}
-						},
-						{
-							label: "Crosswalk - release (ARM)",
-							title: "most android phones uses arm processors",
-							className: "",
-							cb: function () {
-								that.crosswalk("arm", true);
-							}
-						},
-						{
-							label: "Crosswalk - release (x86)",
-							title: "some phones and tablets uses intel atom or similar cpus",
-							className: "",
-							cb: function () {
-								that.crosswalk("x86", true);
-							}
+							label: "Cordova",
+							contents: [
+								{
+									label: "Debug",
+									cb: function () {
+										that.cordova();
+									}
+								},
+								{
+									label: "Release",
+									cb: function () {
+										that.cordova(1);
+									}
+								}
+							]
 						}
 					]
 				},
@@ -128,7 +154,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			var l = (window.innerWidth - w)*0.5;
 			var t = (window.innerHeight - h)*0.5;
 
-			window.open(this.project.path + "/" + data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
+			window.open(this.path + "/" + data.file,"","width="+w+",height="+h+",left="+l+",top="+t+"");
 		},
 
 		openLink: function(name){
@@ -136,7 +162,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			w.focus();
 			//w.opener = null;
 
-			var path = this.project.path;
+			var path = this.path;
 			this.export("phaser", {
 				zip: 0
 			},
@@ -220,15 +246,51 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				}
 				else{
 					pop.content.innerHTML = "DONE!";
-					
-					var base = window.location.origin + "/" + that.project.path + "/" + data.title;
-					var link = base + "-minified/build/" + data.file;
-					
-					that.linkWithQR(pop.content, "Download", link);
+					that.linkWithQR(pop.content, "Download", data.link);
 				}
 			});
 		},
 		
+		cordova: function(release){
+			if( !this.project.data.package ){
+				this.project.updateProject(function(props){
+					that.cordova();
+				});
+				return;
+			}
+			
+			var that = this;
+			var pop = this.popWithDots("Building apk");
+			that.export("cordova", {rel: release}, function (data) {
+				pop.clear();
+				pop.showClose();
+				
+				if(data.requireProLevel){
+					pop.content.innerHTML = "Only subscribers can use this feature!";
+					pop.addButton("OK", function(){pop.hide();});
+					return;
+				}
+				
+				pop.showClose();
+				pop.addButton("Done", function(){pop.hide();});
+				if(data.serr && data.serr.length){
+					pop.content.innerHTML = "Please review errors and try again!<br />";
+					var list = '<ul class="error-list">';
+					for(var i=0; i<data.serr.length; i++){
+						list += "<li>"+data.serr[i].trim()+"</li>";
+					}
+					pop.content.innerHTML += list + "</ul>";
+					
+				}
+				else{
+					pop.content.innerHTML = "DONE!";
+					that.linkWithQR(pop.content, "Download", data.link);
+				}
+			});
+		},
+		cordovaProject: function(){
+			
+		},
 		genKeystoreForm: function(cb){
 			var that = this;
 			
@@ -322,7 +384,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				pop.showClose();
 				pop.addButton("Done", function(){pop.hide();});
 				
-				var base = window.location.origin + "/" + that.project.path + "/" + data.file;
+				var base = window.location.origin + "/" + that.path + "/" + data.file;
 				
 				var link1 = base + "-minified/index.html";
 				var link2 = base + '.min.zip';

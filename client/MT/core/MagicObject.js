@@ -238,6 +238,9 @@ MT(
 				this.hide();
 			}
 			
+			this.object.scrollFactorX = 0;
+			this.object.scrollFactorY = 0;
+			
 		},
 		
 		createTileMap: function(){
@@ -420,7 +423,7 @@ MT(
 				
 			}
 			
-			if(parent){
+			if(parent && parent != this.parent){
 				// remove before
 				if(this.parent.type == Phaser.Sprite){
 					this.parent.removeChild(this.object);

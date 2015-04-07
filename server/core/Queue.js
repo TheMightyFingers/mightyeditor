@@ -1,5 +1,8 @@
 MT.require("core.FS");
 
+var _ = require(process.cwd() + "/../client/js/lodash.min.js");
+
+
 var inProgress = false;
 var data = [];
 var cbs = [];
@@ -30,11 +33,21 @@ MT.core.Queue = function(options, cb){
 		});
 	};
 	
-	var ch = child.exec(options.cmd,  options.env , function(err, sout, serr){
-		var error = sout.split("Error:");
+	var env = _.cloneDeep(process.env);
+	for(var k in options.env.env){
+		env[k] = options.env.env[k];
+	}
+
+	options.env.env = env;
+	
+	MT.log("EXEC", options.env);
+	MT.log("EXEC:", options.cmd, options.args);
+	
+	var ch = child.execFile(options.cmd, options.args,  options.env, function(err, sout, serr){
+		var error = sout.split("EXEC ERROR: ");
 		error.shift();
 		if(err){
-			MT.error("ERROR", err, options);
+			MT.error("EXEC ERROR", err);
 			MT.error(sout, serr);
 			if(cb){
 				cb(err, error);
@@ -42,6 +55,8 @@ MT.core.Queue = function(options, cb){
 			next();
 			return;
 		}
+		
+		MT.error(sout, serr);
 		if(options.email && options.template){
 			MT.log("SENDING MAIL to:", options.email);
 			options.to = options.email;

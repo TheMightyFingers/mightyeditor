@@ -938,26 +938,24 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 			});
 			
-			
 			this.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				that.setPreviewAssets(asset);
 				if(tools.activeTool != tools.tools.select){
 					return;
 				}
 				
-				
 				that.project.map.selector.forEach(function(o){
 					if(asset){
 						o.data.assetId = asset.id;
 						o.data.__image = asset.__image;
-						o.frame = frame;
-						
-						that.activeFrame = frame;
 					}
 					else{
 						delete o.data.assetId;
 						delete o.data.__image;
-						o.frame = 0;
+						
+						if(frame != void(0)){
+							o.frame = 0;
+						}
 						that.activeFrame = 0;
 					}
 					that.project.plugins.objectmanager.update();
@@ -1041,10 +1039,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					that.emit(MT.ASSET_FRAME_CHANGED, asset, that.activeFrame);
 					that.active.data = asset;
 					that.send("updateImage", {asset: asset, data: data});
-					
-					that.project.plugins.mapeditor.addAtlas(asset, null, null, function(){
+					if(asset.atlas){
+						that.project.plugins.mapeditor.addAtlas(asset, null, null, function(){
+							notify.hide();
+						});
+					}
+					else{
 						notify.hide();
-					});
+					}
 				};
 				img.src = that.toPng(fr.result);
 			});

@@ -422,7 +422,7 @@
 			}
 		},
 		start: function(){
-			var i, j, tween, l;
+			var i, j, l, tween;
 			if(!this._subtweens.length && !this._tweens.length){
 				return this;
 			}
@@ -436,10 +436,22 @@
 			this._mainTimer.removeAll();
 			
 			this._mainTimer.add(this._ifps * this._lastFrame, this._complete, this);
-			this._mainTimer.start();
+			
+			
 			this.reset();
 			this.resume();
 			
+			if(this._delay){
+				this._mainTimer.add(this._ifps * this._delay, this._start, this);
+			}
+			else{
+				this._start();
+			}		
+			this._mainTimer.start();
+			return this;
+		},
+		_start: function(){
+			var i,j,l,  tween;
 			for(i=0; i<this._subtweens.length; i++){
 				this._subtweens[i].start();
 			}
@@ -456,10 +468,7 @@
 					tween._paused = false;
 					tween.pendingDelete = false;
 				}
-			}
-			
-			
-			return this;
+			}	
 		},
 		stop: function(reset){
 			

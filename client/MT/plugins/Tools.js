@@ -188,7 +188,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					if(e.which === MT.keys.V && e.target == document.body){
 						var x = that.ui.events.mouse.lastEvent.x;
 						var y = that.ui.events.mouse.lastEvent.y;
-						that.map.selector.clear();
+						
+						
+						//that.map.selector.clear();
 						
 						var bounds = null;
 						var midX = 0;

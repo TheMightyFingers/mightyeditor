@@ -9,9 +9,6 @@ MT.extend("core.BasicPlugin")(
 			this.ui = ui;
 			this.panel = this.ui.createPanel("GamePreview");
 			this.el = this.panel.content;
-			
-			
-			
 		},
 
 		installUI: function(){

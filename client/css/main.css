@@ -5,6 +5,11 @@
 	font-weight: 400;
 	font-style: normal;
 }
+canvas{
+	width: auto !important;
+	height: auto !important;
+}
+
 .fa {
 	font-family: FontAwesome;
 	text-rendering: auto;

@@ -201,9 +201,12 @@ MT.extend("core.Emitter")(
 			
 			ev.on(ev.KEYDOWN, function(e){
 				if(e.which == MT.keys.ESC){
+					var oldF = that.keyframes;
 					that.clear();
 					that.createMainMovie();
-					that.keyframes.reactivate();
+					if(that.keyframes != oldF){
+						that.keyframes.reactivate();
+					}
 					return;
 				}
 			});

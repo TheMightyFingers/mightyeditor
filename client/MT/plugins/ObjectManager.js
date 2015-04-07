@@ -228,7 +228,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		
-		insertObject: function(obj, silent, data, affectParent){
+		insertObject: function(obj, silent, data, active){
 			data = data || this.tv.getData();
 			//var data = this.tv.getData();
 			var map = this.project.plugins.mapeditor;
@@ -251,9 +251,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			obj.id = "tmp"+this.mkid();
 			
 			obj.tmpName = obj.tmpName || obj.name;
-			
-			
-			
 			
 			obj.name = obj.tmpName + this.getNewNameId(obj.tmpName, cont, 0);
 			
@@ -480,7 +477,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			return obj;
 		},
 		
-		
 		copy: function(obj, x, y, name, silent){
 			
 			name = name || obj.name + this.getNewNameId(obj.name, this.tv.getData());
@@ -488,7 +484,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			clone.name = name;
 			clone.x = x;
 			clone.y = y;
-			
 			
 			this.cleanUpClone(clone);
 			

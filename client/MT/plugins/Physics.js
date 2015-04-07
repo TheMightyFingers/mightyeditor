@@ -130,7 +130,6 @@ MT.extend("core.BasicPlugin")(
 				};
 			}
 			
-			
 			return {
 				enable: 1,
 				immovable: 1,
@@ -349,7 +348,6 @@ MT.extend("core.BasicPlugin")(
 			
 			map.on("select", function(obj){
 				updateData(map.settings);
-				
 			});
 			
 			tools.on(MT.ASSET_FRAME_CHANGED, updateData);

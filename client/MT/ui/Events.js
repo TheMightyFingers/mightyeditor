@@ -152,9 +152,10 @@ MT(
 			
 			var that = this;
 			var cb = function(e){
-				e.x = e.x || e.pageX;
-				e.y = e.y || e.pageY;
-				
+				if(e.x == void(0)){
+					e.x = e.pageX;
+					e.y = e.pageY;
+				}
 				if(e.offsetX === void(0)){
 					e.offsetX = e.layerX;
 					e.offsetY = e.layerY;
@@ -182,8 +183,10 @@ MT(
 			
 			var that = this;
 			var cb = function(e){
-				e.x = e.x || e.pageX;
-				e.y = e.y || e.pageY;
+				if(e.x == void(0)){
+					e.x = e.pageX;
+					e.y = e.pageY;
+				}
 				that.mouse.down = true;
 				that.mouse.lastClick = e;
 				
@@ -192,12 +195,14 @@ MT(
 			cb.type = that.MOUSEDOWN;
 			return cb;
 		},
+   
 		_mk_mouseup: function(){
-			
 			var that = this;
 			var cb = function(e){
-				e.x = e.x || e.pageX;
-				e.y = e.y || e.pageY;
+				if(e.x == void(0)){
+					e.x = e.pageX;
+					e.y = e.pageY;
+				}
 				that.mouse.down = false;
 				that.mouse.lastClick = e;
 				
@@ -206,7 +211,6 @@ MT(
 			cb.type = that.MOUSEUP;
 			return cb;
 		},
-   
    
 		_mk_cb: function(type){
 			if(type == this.MOUSEMOVE){
@@ -220,7 +224,6 @@ MT(
 			if(type == this.MOUSEDOWN){
 				return this._mk_mousedown();
 			}
-			
 			
 			var that = this;
 			var cb = function(e){

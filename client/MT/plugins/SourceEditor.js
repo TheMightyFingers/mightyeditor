@@ -892,7 +892,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				return;
 			}
 			
-			if(this.editor.doc.mode.name != "javascript"){
+			var name = this.editor.doc.name;
+			var n = name.substring(name.length -3, name.length)
+			
+			if(n != ".js"){
 				this.__showHints = true;
 				this.editor.showHint({completeSingle: !autocall, selectFirst: !autocall});
 				window.setTimeout(function(){

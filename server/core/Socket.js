@@ -184,6 +184,10 @@ MT(
 				catch(e){}
 				return;
 			}
+			if(data.channel == "HeartBeat"){
+				return;
+			}
+			
 			if(data.__cb){
 				cb = this.__mkcb(data.channel, data.__cb);
 			}

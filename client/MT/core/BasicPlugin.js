@@ -1,7 +1,6 @@
 MT(
 	MT.core.BasicPlugin = function(channel){
 		this.channel = channel;
-		this.dealys = {};
 	},
 	{
 		
@@ -18,6 +17,7 @@ MT(
 				return;
 			}
 			
+			this.dealys = {};
 			var that = this;
 			this.socket = socket;
 			
