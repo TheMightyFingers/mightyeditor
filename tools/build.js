@@ -10,6 +10,8 @@ var cc = global.createClass;
 
 var ignore = [
 	"js/phaser.js",
+	"js/phaser-no-physics.js",
+	"js/phaser-no-physics.min.js",
 	"js/phaser.min.js",
 	"js/phaserHacks.js",
 	"js/cm/lib/codemirror.js"
@@ -124,12 +126,16 @@ global.createClass = function(className, classScope, basePath){
 console.log(file);
 require(file);
 
-var miscFiles = ["js/jshint", "js/cm/addon/scroll/scrollpastend", "js/phaser"];
+var miscFiles = ["js/jshint", "js/cm/addon/scroll/scrollpastend", "js/eClass"];
+var mapsFiles = ["jshint", "scrollpastend"];
 var UglifyJS = require("uglify-js");
 var result;
 for(var i in miscFiles){
 	console.log("minify: ", miscFiles[i]);
-	result = UglifyJS.minify(miscFiles[i]+".js", {outSourceMap: miscFiles[i]+".min.js.map"});
+	result = UglifyJS.minify(miscFiles[i]+".js");
 	fs.writeFile(miscFiles[i]+".min.js", result.code);
-	fs.writeFile(miscFiles[i]+".map", result.map);
+	fs.writeFile(miscFiles[i]+".min.js.map", result.map);
 }
+
+// expose version to the client
+fs.createReadStream("../version").pipe(fs.createWriteStream('version'));
