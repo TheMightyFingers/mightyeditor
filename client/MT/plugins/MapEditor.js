@@ -1294,6 +1294,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			group = group || game.world;
 			this._addObjects(objs, group);
 			
+			if(this.tools.tmpObject){
+				this.tools.tmpObject.bringToTop();
+			}
+			
 			for(var i=0; i< this.loadedObjects.length; i++){
 				tmp = this.loadedObjects[i];
 				if(tmp.isRemoved){
@@ -1312,8 +1316,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		_addObjects: function(objs, group){
-			
 			var tmp, k=0, o;
+			
 			for(var i=objs.length-1; i>-1; i--){
 				o = objs[i];
 				tmp = this.getById(o.id);
@@ -1326,21 +1330,15 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				tmp.isRemoved = false;
 				tmp.update(o.data, group);
+				
 				tmp.object.visible = tmp.isVisible;
 				//tmp.object.z = i;
 				
 				tmp.bringToTop();
-				
 				// handle group and parents
 				if(tmp.data.contents){
 					this._addObjects(tmp.data.contents, tmp.object);
-					continue;
 				}
-				
-			}
-			
-			if(this.tools.tmpObject){
-				this.tools.tmpObject.bringToTop();
 			}
 		},
 		

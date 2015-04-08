@@ -961,7 +961,7 @@ MT.extend("core.Emitter")(
 				}
 				
 				if(data[i].contents){
-					this.updateFullPath(data[i].contents, data[i].fullPath, shouldNotify);
+					this.updateFullPath(data[i].contents, data[i].fullPath, false);
 				}
 			}
 			

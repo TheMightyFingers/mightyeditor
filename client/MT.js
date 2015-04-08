@@ -7345,7 +7345,7 @@ MT.extend("core.Emitter")(
 				}
 				
 				if(data[i].contents){
-					this.updateFullPath(data[i].contents, data[i].fullPath, shouldNotify);
+					this.updateFullPath(data[i].contents, data[i].fullPath, false);
 				}
 			}
 			
@@ -10781,6 +10781,10 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			group = group || game.world;
 			this._addObjects(objs, group);
 			
+			if(this.tools.tmpObject){
+				this.tools.tmpObject.bringToTop();
+			}
+			
 			for(var i=0; i< this.loadedObjects.length; i++){
 				tmp = this.loadedObjects[i];
 				if(tmp.isRemoved){
@@ -10799,8 +10803,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		_addObjects: function(objs, group){
-			
 			var tmp, k=0, o;
+			
 			for(var i=objs.length-1; i>-1; i--){
 				o = objs[i];
 				tmp = this.getById(o.id);
@@ -10813,21 +10817,15 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				
 				tmp.isRemoved = false;
 				tmp.update(o.data, group);
+				
 				tmp.object.visible = tmp.isVisible;
 				//tmp.object.z = i;
 				
 				tmp.bringToTop();
-				
 				// handle group and parents
 				if(tmp.data.contents){
 					this._addObjects(tmp.data.contents, tmp.object);
-					continue;
 				}
-				
-			}
-			
-			if(this.tools.tmpObject){
-				this.tools.tmpObject.bringToTop();
 			}
 		},
 		
@@ -12168,7 +12166,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						var y = that.ui.events.mouse.lastEvent.y;
 						
 						
-						//that.map.selector.clear();
+						//
 						
 						var bounds = null;
 						var midX = 0;
@@ -12182,7 +12180,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						
 						midY /= toCopy.length;
 						midX /= toCopy.length;
-						
+						that.map.selector.clear();
 						var cop = null;
 						for(var i=0; i<toCopy.length; i++){
 							bounds = toCopy[i].getBounds();
@@ -23766,6 +23764,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		a_needUpdate: function(){
+			var that = this;
 			this.showProjectInfo({
 				cb: function(prop){
 					that.send("updateProject", prop);

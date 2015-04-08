@@ -169,6 +169,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		a_needUpdate: function(){
+			var that = this;
 			this.showProjectInfo({
 				cb: function(prop){
 					that.send("updateProject", prop);

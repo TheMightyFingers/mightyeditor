@@ -190,7 +190,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						var y = that.ui.events.mouse.lastEvent.y;
 						
 						
-						//that.map.selector.clear();
+						//
 						
 						var bounds = null;
 						var midX = 0;
@@ -204,7 +204,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						
 						midY /= toCopy.length;
 						midX /= toCopy.length;
-						
+						that.map.selector.clear();
 						var cop = null;
 						for(var i=0; i<toCopy.length; i++){
 							bounds = toCopy[i].getBounds();
