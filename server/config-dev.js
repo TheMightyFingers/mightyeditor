@@ -14,7 +14,11 @@ this.config = {
 	buildDir: "../client/data/build",
 	dbName: ".db.json",
 	email: {
-		from: "info@mightyfingers.com"
+		from: "info@mightyfingers.com",
+		auth: {
+			user: "info@mightyfingers.com",
+			pass: "********"
+		}
 	},
 	tools:{
 		// path to fontforge - or executable if it's in the path
