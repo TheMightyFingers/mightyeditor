@@ -117,9 +117,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var toCopy = [];
 			this.ui.events.on(this.ui.events.KEYDOWN, function(e){
-				console.log("prevented");
-				if(e.which == MT.keys.D){
-					
+				if(e.target == document.body && e.ctrlKey && e.which == MT.keys.D){
 					e.preventDefault();
 					e.stopPropagation();
 				}
