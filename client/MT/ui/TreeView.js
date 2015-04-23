@@ -166,17 +166,13 @@ MT.extend("core.Emitter")(
 					el.addClass("open");
 				}
 				
-				head.el.onclick = function(e){
-					if(e.target != el.head.el && e.target != el.head.label.el){
-						return;
-					}
-					
+				head.label.el.onclick = function(e){
 					if(el.isFolder && e.offsetX > 30){
 						return;
 					}
 					
 					e.stopPropagation();
-					
+					e.preventDefault();
 					el.visible = !el.visible;
 					if(el.visible){
 						el.addClass("open");
@@ -488,6 +484,14 @@ MT.extend("core.Emitter")(
 				}
 
 				var item = that.getOwnItem(e.target.parentNode.parentNode);
+				// sometimes happens when browser freezes for few ms
+				if(!item){
+					return;
+				}
+				if(item.isFolder && e.offsetX < 30){
+					return;
+				}
+				
 				if(item && item == ditem){
 					if(e.button == 0){
 						that.emit("click", item.data, item);
@@ -606,7 +610,9 @@ MT.extend("core.Emitter")(
 			
 			
 			ev.on("mouseup", function(e){
-				
+				if(e.target.isFolder && e.offsetX > 30){
+					return;
+				}
 				dragHelper.style.display = "none";
 				dd.style.display = "none";
 				dragHelper.y = 0;
@@ -946,7 +952,7 @@ MT.extend("core.Emitter")(
 			return null;
 		},
 		
-		updateFullPath: function(data, path, shouldNotify){
+		updateFullPath: function(data, path, shouldNotify, skipGlobalNotify){
 			path = path || "";
 			for(var i=0; i<data.length; i++){
 				var fullPath = path + "/" + data[i].name;
@@ -957,15 +963,14 @@ MT.extend("core.Emitter")(
 					if(shouldNotify){
 						this.emit("change", op, fullPath);
 					}
-					
 				}
 				
 				if(data[i].contents){
-					this.updateFullPath(data[i].contents, data[i].fullPath, false);
+					this.updateFullPath(data[i].contents, data[i].fullPath, shouldNotify, true);
 				}
 			}
 			
-			if(shouldNotify){
+			if(shouldNotify && !skipGlobalNotify){
 				this.emit("change", null, null);
 			}
 			

@@ -73,7 +73,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			am.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				that.activeAsset = asset;
 				that.activeFrame = frame;
-				
 				that.emit(MT.ASSET_FRAME_CHANGED, asset, frame);
 			});
 			
@@ -117,7 +116,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var lastKey = 0;
 			
 			var toCopy = [];
-			
+			this.ui.events.on(this.ui.events.KEYDOWN, function(e){
+				console.log("prevented");
+				if(e.which == MT.keys.D){
+					
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			});
 			this.ui.events.on(this.ui.events.KEYUP, function(e){
 				
 				if(lastKey == MT.keys.ESC){
@@ -171,6 +177,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					y: 0
 				};
 				
+				// copy / paste
 				if(e.ctrlKey){
 					if(e.which === MT.keys.C){
 						toCopy.length = 0;
@@ -189,9 +196,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						var x = that.ui.events.mouse.lastEvent.x;
 						var y = that.ui.events.mouse.lastEvent.y;
 						
-						
-						//
-						
 						var bounds = null;
 						var midX = 0;
 						var midY = 0;
@@ -207,9 +211,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						that.map.selector.clear();
 						var cop = null;
 						for(var i=0; i<toCopy.length; i++){
-							bounds = toCopy[i].getBounds();
 							
 							if(!e.shiftKey){
+								bounds = toCopy[i].getBounds();
 								cop = that.copy(toCopy[i].data, bounds.x - midX + (x - map.offsetX) / map.scale.x, bounds.y - midY + (y - map.offsetY) / map.scale.y);
 							}
 							else{
@@ -218,8 +222,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							
 							that.map.selector.add(cop);
 						}
-						
 					}
+					
+					if(e.which == MT.keys.D && e.target == document.body){
+						that.duplicate();
+						e.preventDefault();
+					}
+					
+					
 				}
 				else if(e.target.tagName != "INPUT" && e.target.tagName != "TEXTAREA") {
 					var tools = Object.keys(that.tools);
@@ -238,9 +248,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					if(e.which == "5".charCodeAt(0)){
 						that.setTool(that.tools[tools[4]]);
 					}
-					
 				}
-				
 			});
 			
 			for(var i in this.tools){
@@ -248,19 +256,31 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			this.setTool(this.tools.select);
-			
-			
 		},
 		
 		lastAsset: null,
 		
+		duplicate: function(){
+			var tcp = [], cop, that = this, map = this.map;
+			map.selector.forEach(function(obj){
+				tcp.push(obj);
+			});
+			tcp.sort(function(a, b){
+				return (map.loadedObjects.indexOf(a) - map.loadedObjects.indexOf(b));
+			});
+			
+			that.map.selector.clear();
+			for(var i=0; i<tcp.length; i++){
+				cop = that.copy(tcp[i].data, tcp[i].data.x, tcp[i].data.y);
+				that.map.selector.add(cop);
+			}
+		},
 		
 		select: function(object){
 			this.tools.select.select(object);
 			if(this.activeTool != this.tools.select){
 				this.activeTool.select(object);
 			}
-			
 		},
 		
 		copy: function(toCopy, x, y){
@@ -387,6 +407,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		removeTmpObject: function(){
 			if(this.tmpObject){
 				this.tmpObject.hide();
+			}
+			
+			if(this.map.activeObject == this.tmpObject){
+				this.map.activeObject = null;
 			}
 			this.tmpObject = null;
 		},

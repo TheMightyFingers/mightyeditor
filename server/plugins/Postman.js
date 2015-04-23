@@ -6,6 +6,8 @@ MT(
 		var transport = require("nodemailer-sendmail-transport");
 		//this.transport = mailer.createTransport(transport());
 		
+		console.log("AUTH:", this.config);
+		
 		var auth = this.config.auth ? this.config.auth : {};
 		this.transport = mailer.createTransport({
 			service: 'gmail', // <- resolved as 'Postmark' from the wellknown info
@@ -35,7 +37,6 @@ MT(
 				}
 			});
 		},
-   
 		prepareTemplate: function(tpl, options){
 			var out = {};
 			for(var t in tpl){

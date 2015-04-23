@@ -974,8 +974,8 @@ MT.extend("core.Emitter")(
 			}
 			
 			
-			this.centerBottomRightBox.style.left = centerPanel.x + centerPanel.width;
-			this.centerBottomRightBox.style.top = centerPanel.y + centerPanel.height;
+			this.centerBottomRightBox.style.left = (centerPanel.x + centerPanel.width) + "px";
+			this.centerBottomRightBox.style.top = (centerPanel.y + centerPanel.height) + "px";
 			this.centerBottomRightBox.style.zIndex = 1001;
 			this.centerBottomRightBox.style.backgroundColor = "inherit";
 			//this.centerBottomRightBox.style.overflow = "hidden";

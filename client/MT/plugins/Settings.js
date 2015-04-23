@@ -492,6 +492,7 @@ MT(
 			this.scene.showGrid = this.addInput( {key: "showGrid", min: 0, max: 1}, obj, true, cb);
 			this.scene.gridOpacity = this.addInput( {key: "gridOpacity", min: 0, max: 1, step: 0.1}, obj, true, cb);
 			this.scene.backgroundColor = this.addInput( {key: "backgroundColor", type: "color" }, obj, true, cb);
+			this.scene.pixelPerfectPicking = this.addInput( {key: "pixelPerfectPicking", type: "bool" }, obj, true, cb);
 			
 		},
    

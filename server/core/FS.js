@@ -32,15 +32,17 @@
 			this.addQueue([this._writeFile, file, contents, encoding, this.mkcb(cb) ]);//no arguments
 		},
  
-		_writeFile: function(file, contents, encoding, cb){
+		_writeFile: function(file_r, contents, encoding, cb){
+			var file = file_r+Math.random();
+			var t = this;
 			if(encoding){
 				fs.writeFile(file, contents, encoding, function(e){
-					cb(e);
+					t._move(file, file_r, cb);
 				});
 			}
 			else{
 				fs.writeFile(file, contents, function(e){
-					cb(e);
+					t._move(file, file_r, cb);
 				});
 			}
 			
@@ -289,6 +291,7 @@
 					buffer.push({
 						name: file,
 						fullPath: p,
+						stats: stats,
 						contents: []
 					});
 					if(recurse){
@@ -303,6 +306,7 @@
 				else{
 					buffer.push({
 						name: file,
+						stats: stats,
 						fullPath: p
 					});
 					that._readdir_stat(dir, list, index + 1, cb, buffer, recurse);

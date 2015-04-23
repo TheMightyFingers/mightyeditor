@@ -255,6 +255,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		};
 		
 		input.onblur = function(){
+			//return;
 			input.parentNode.removeChild(input);
 			input.isVisible = false;
 			

@@ -530,6 +530,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			ctx = panel.data.ctx;
 			
 			var frames = cache.frameData;
+			panel.data.frameData = frames;
+			
 			var src = cache.data;
 			
 			var frame;
@@ -796,8 +798,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				panel.data.scrollTop = panel.content.el.scrollTop;
 				panel.data.scrollLeft = panel.content.el.scrollLeft;
 				*/
-				that.activeFrame = frame;
 				panel.data.group.active = panel;
+				
 				
 				if(panel.title == "all_frames"){
 					var g = panel.data.group, p;
@@ -813,6 +815,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				else{
 					that.tmpName = panel.title;
 				}
+				
+				/*var frameInfo = panel.data.frameData.getFrame(frame);
+
+				if(frameInfo.name){
+					frame = frameInfo.name;
+				}*/
+				
+				that.activeFrame = frame;
 				that.emit(MT.ASSET_FRAME_CHANGED, panel.data.asset, frame);
 			};
 			panel.data.canvas.oncontextmenu = function(e){
@@ -1161,9 +1171,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var that = this;
 			var input = document.createElement("input");
-			input.type = "file";
+			input.setAttribute("type", "file");
 			input.onchange = function(e){
 				that.handleFiles(this.files);
+			};
+			input.onclick = function(){
+				console.log("Clicked!;");
 			};
 			input.click();
 		},

@@ -148,6 +148,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.propContainer.appendChild(this.logoutButton.el);
 			
 			this.emit("showProperties", this.propPanels.projects);
+			
+			this.propPanels.projects.hide();
+			
 		},
 		initUI: function(ui){
 			this.ui = ui;
@@ -186,17 +189,27 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.buildShareOptions(this.propPanels.share.content.el);
 			
-			this.propPanels.projects = this.ui.createPanel("My Projects");
+			this.propPanels.projects = this.buildMyProjects();
 			this.propPanels.projects.fitIn();
+			
+			this.propPanels.share.addJoint(this.propPanels.projects);
+			this.propPanels.share.show(this.propContainer);
+		},
+		
+		_myProjectsPanel: null,
+		buildMyProjects: function(){
+			if(this._myProjectsPanel){
+				return this._myProjectsPanel;
+			}
+			var p = this.ui.createPanel("My Projects");
+			
 			
 			var list = this.project.makeProjectList(this.projects, function(id, cb){
 				that.deleteProject(id, cb);
 			});
+			p.content.el.appendChild(list);
 			
-			this.propPanels.projects.content.el.appendChild(list);
-			
-			this.propPanels.share.addJoint(this.propPanels.projects);
-			this.propPanels.share.show(this.propContainer);
+			return p;
 		},
 		
 		buildShareOptions: function(el){
@@ -499,6 +512,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			middle.appendChild(basic);
 			middle.appendChild(advanced);
+			var clear = document.createElement("div");
+			clear.style.clear = "both";
+			middle.appendChild(clear);
 			
 			
 			pro.appendChild(top);

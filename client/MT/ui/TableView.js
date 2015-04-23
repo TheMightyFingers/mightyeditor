@@ -67,7 +67,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			this.origData = data;
 			
-			this.data = JSON.parse(JSON.stringify(data));
+			this.data = _.cloneDeep(data);
 			this.header = this.header || header;
 			
 			

@@ -84,7 +84,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			movieInfo: {
 				fps: 60,
 				lastFrame: 60
-			}
+			},
+			pixelPerfectPicking: 1
 		};
 		
 		
@@ -185,6 +186,15 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			ui.events.on(ui.events.KEYUP, function(e){
 				that.isCtrlDown = false;
+				
+				if(e.which == MT.keys.G){
+					var first = that.selector.get(0)
+					if(first && first.parent && first.parent.magic){
+						that.activeObject = first.parent.magic;
+						that.selector.clear();
+						that.selector.add(that.activeObject);
+					}
+				}
 				om.sync();
 			});
 			
@@ -254,6 +264,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				preload: function(){
 					game.stage.disableVisibilityChange = true;
 					var c = game.canvas;
+					if(!c.parentNode){
+						return;
+					}
 					c.parentNode.removeChild(c);
 					that.panel.content.el.appendChild(c);
 					c.style.position = "relative";
@@ -1246,7 +1259,17 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		cleanImage: function(id){
-			this.game.cache.removeImage(id);
+			// hack 
+			
+			
+			this.game.cache._images[id];
+			this.game.cache.removeImage(id, false);
+			
+			var img = PIXI.BaseTextureCache[id];
+			if(img){
+				img.destroy();
+			}
+			
 			delete this.atlasNames[id];
 		},
 		
@@ -1682,9 +1705,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			// chek if we are picking already selected object
 			if(this.activeObject){
-				
 				if(this.activeObject.type == MT.objectTypes.GROUP){
-					return this.checkBounds(this.activeObject, x, y);
+				//if(!this.ui.events.mouse.lastEvent.shiftKey){
+					if(this.checkBounds(this.activeObject, x, y)){
+						return this.activeObject;
+					}
 				}
 				
 				if(this.activeObject.type == MT.objectTypes.SPRITE || this.activeObject.type == MT.objectTypes.TEXT){
@@ -1722,13 +1747,18 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return null;;
 			}
 			
+			var ob = this.checkBounds(obj, x, y);
+			
+			if(!ob){
+				return null;
+			}
 			// check bounds
-			if(!obj.object.input){
-				return this.checkBounds(obj, x, y);
+			if(!obj.object.input || !this.settings.pixelPerfectPicking){
+				return ob;
 			}
 			
 			if( obj.object.input.checkPointerOver(this.game.input.activePointer)){
-				if(this.ui.events.mouse.lastEvent.ctrlKey && !this.activeObject && checkGroup){
+				/*if(this.ui.events.mouse.lastEvent.ctrlKey && !this.activeObject && checkGroup){
 					if(obj.parent && obj.parent.magic){
 						this.activeObject = obj.parent.magic;
 					}
@@ -1736,7 +1766,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						this.activeObject = obj;
 					}
 					return this.activeObject
-				}
+				}*/
 				
 				this.activeObject = obj;
 				return obj;

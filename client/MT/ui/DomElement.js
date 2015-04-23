@@ -327,6 +327,12 @@ MT(
 					if(ch.el.parentNode){
 						ch.el.parentNode.removeChild(ch.el);
 					}
+					// ugly hack for tree view
+					if(this.data && this.data.isClosed){
+						//ch.isVisible = false;
+						continue;
+					}
+					
 					if(ch.isVisible){
 						this.el.appendChild(ch.el);
 					}

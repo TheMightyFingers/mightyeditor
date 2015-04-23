@@ -88,6 +88,7 @@ MT.extend("core.Emitter")(
 				that.clear();
 				that.createMainMovie();
 				that.keyframes.reactivate();
+				
 			};
 			
 			
@@ -201,6 +202,7 @@ MT.extend("core.Emitter")(
 			
 			ev.on(ev.KEYDOWN, function(e){
 				if(e.which == MT.keys.ESC){
+					
 					var oldF = that.keyframes;
 					that.clear();
 					that.createMainMovie();
@@ -428,10 +430,15 @@ MT.extend("core.Emitter")(
 		},
    
 		clear: function(){
+			this.changeFrame(0);
+			
 			this.keyframes = this.keyframesSub;
 			this.keyframes.tv.merge([]);
 			this.items = {};
 			this.hide();
+			
+			this.keyframesMain.stop();
+			this.keyframesSub.stop();
 		},
    
 		addPanels: function(){
@@ -946,7 +953,7 @@ MT.extend("core.Emitter")(
 			if(this.framesToCopy){
 				for(var i=0; i<this.framesToCopy.length; i++){
 					info = this.framesToCopy[i];
-					frame = JSON.parse(JSON.stringify(info.frame));
+					frame = _.copyDeep(info.frame);
 					frame.keyframe = this.activeFrame;
 					info.data.frames.push(frame);
 					this.sortFrames(info.data.frames);
@@ -960,7 +967,7 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			var frames = this.frameBuffer.frames;
-			frame = JSON.parse(JSON.stringify(frames[this.frameBuffer.index]));
+			frame = _.copyDeep(frames[this.frameBuffer.index]);
 			
 			frame.keyframe = this.activeFrame;
 			frames.push( frame );

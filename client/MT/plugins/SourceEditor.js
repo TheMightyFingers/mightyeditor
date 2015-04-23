@@ -42,7 +42,7 @@ var defs = [];
 			
 			MT.requireFile(cmPath+"/tern/tern.js");
 			MT.requireFile(cmPath+"/scroll/scrollpastend.min.js"); 
-			MT.requireFile("js/jshint.min.js");
+			//MT.requireFile("js/jshint.min.js");
 			
 			addCss("css/codemirror.css");
 			addCss(cmPath+"/hint/show-hint.css");
@@ -83,7 +83,7 @@ var defs = [];
 		MT.requireFile(cmPath+"/selection/active-line.js");
 		
 		
-		MT.requireFile("js/jshint.js");
+		//MT.requireFile("js/jshint.js");
 		MT.requireFile(cmPath+"/tern/tern.js");
 
 		
@@ -983,6 +983,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						
 						msg.className = "lint-error";
 						that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
+						
+						
 						
 						//var evidence = msg.appendChild(document.createElement("span"));
 						//evidence.className = "lint-error-text evidence";

@@ -1,7 +1,7 @@
 (function(window){
 	"use strict";
 	window.MT = createClass("MT");
-	var hostInInterest = "tools.mightyfingers.com:8080";
+	var hostInInterest = "tools.mightyfingers.com";
 	if(window.release){
 		hostInInterest = "mightyeditor.mightyfingers.com";
 	}

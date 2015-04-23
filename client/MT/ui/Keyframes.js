@@ -558,6 +558,8 @@ MT.extend("core.Emitter")(
 		},
 		
 		controlsHolder: null,
+		stop: null,
+		_looptm: 0,
 		addControls: function(){
 			this.controlsHolder = document.createElement("div");
 			this.controlsHolder.className = "ui-keyframes-controls";
@@ -603,8 +605,36 @@ MT.extend("core.Emitter")(
 			var next;
 			
 			var start = Date.now();
-			var loop = function(){
-				start = Date.now();
+			
+			
+			var settings = this.mm.project.data;
+			
+			
+			var loop = function(reset){
+				if(reset){
+					start = Date.now();
+				}
+				if(!isPlaying){
+					return;
+				}
+				if(settings.timeline.skipFrames){
+					loopSkipFrames();
+					return;
+				}
+				
+				next = that.mm.activeFrame + 1;
+				if(next > that.getLastFrame()){
+					next = 0;
+				}
+				
+				that.mm.changeFrame(next);
+				that.looptm = window.setTimeout(loop, 1000/that.getFps());
+			};
+			
+			var loopSkipFrames = function(reset){
+				if(reset){
+					start = Date.now();
+				}
 				if(!isPlaying){
 					return;
 				}
@@ -615,14 +645,14 @@ MT.extend("core.Emitter")(
 				}
 				
 				that.mm.changeFrame(next);
-				
-				var tm = 1000/that.getFps() - (Date.now() - start);
+				var step = 1000/that.getFps();
+				var tm = step - (Date.now() - start);
 				while(tm < 0){
-					tm += 1000/that.getFps();
+					tm += step;
 					that.mm.activeFrame++;
 				}
-				window.setTimeout(loop, tm);
-				
+				start = Date.now();
+				that.looptm = window.setTimeout(loop, tm);
 			};
 			
 			var playPause = function(){
@@ -630,7 +660,7 @@ MT.extend("core.Emitter")(
 					c.play.className = "ui-keyframes-pause";
 					isPlaying = true;
 					playStartFrame = that.mm.activeFrame;
-					loop();
+					loop(true);
 				}
 				else{
 					isPlaying = false;
@@ -638,7 +668,7 @@ MT.extend("core.Emitter")(
 				}
 			};
 			
-			var stop = function(){
+			var stop = this.stop = function(){
 				if(!isPlaying){
 					playStartFrame = 0;
 				}

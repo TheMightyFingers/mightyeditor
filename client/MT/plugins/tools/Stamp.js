@@ -92,7 +92,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.tools.tmpObject.data.frame = this.tools.activeFrame;
 			
-			var newObj = om.insertObject(JSON.parse(JSON.stringify(this.tools.tmpObject.data)));
+			var newObj = om.insertObject(_.cloneDeep(this.tools.tmpObject.data));
 			
 			this.tools.initTmpObject();
 			this.tools.tmpObject.frame = this.tools.activeFrame;

@@ -129,8 +129,6 @@
 			this.game = game;
 			this.game.load.crossOrigin = "anonymous";
 			
-			
-			
 			if(Phaser.VERSION == "2.0.7"){
 				this.game.load.script("hacks", "js/lib/phaserHacks2.0.7.js");
 			}
@@ -493,10 +491,7 @@
 			}
 			
 			if(asset.atlas){
-				var base = asset.fullPath.split("/");
-				base.pop();
-				base = base.join("/");
-				this.game.load.atlas(asset.key, this.assetsPath + asset.fullPath, this.assetsPath + base + "/" +asset.atlas, null,  asset.type);
+				this.game.load.atlas(asset.key, this.assetsPath + asset.fullPath, this.assetsPath + asset.atlas, null,  asset.type);
 			}
 			else if(asset.width != asset.frameWidth || asset.height != asset.frameHeight){
 				this.game.load.spritesheet(asset.key, this.assetsPath + asset.fullPath, asset.frameWidth, asset.frameHeight, asset.frameMax, asset.margin, asset.spacing);

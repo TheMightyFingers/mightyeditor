@@ -106,7 +106,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.tools.map.sync(this.tools.tmpObject, this.tools.tmpObject.data);
 			
 			this.tools.tmpObject.data.frame = this.tools.activeFrame;
-			om.insertObject(JSON.parse(JSON.stringify(this.tools.tmpObject.data)));
+			om.insertObject(_.cloneDeep(this.tools.tmpObject.data));
 			
 			this.lastX = this.tools.tmpObject.x;
 			this.lastY = this.tools.tmpObject.y;

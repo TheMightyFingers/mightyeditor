@@ -58,6 +58,8 @@ MT.extend("core.BasicPlugin")(
 		},
 
 		rename: function(o, n, cb){
+			console.log("RENAME:", o, n);
+			
 			this.project.db.move(this.fs.path.sep + this.name + o, this.fs.path.sep + this.name + n);
 			this.fs.move(this.path + o, this.path + n, cb);
 		},

@@ -93,6 +93,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.emit("show");
 			document.body.appendChild(this.bg);
 			document.body.appendChild(this.el);
+		},
+		
+		center: function(){
+			this.y = (window.innerHeight - this.height) * 0.5;
 		}
 
 

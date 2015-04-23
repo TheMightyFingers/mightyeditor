@@ -44,7 +44,7 @@ MT.extend("core.BasicPlugin")(
 			name = name.replace(/ /g, "+").trim();
 
 			var s = this.project.server;
-			s.get("http://fonts.googleapis.com/css?family="+name, function(err, body, res){
+			s.get("http://fonts.googleapis.com/css?family="+name, function(body, res){
 				if(res.statusCode < 200 || res.statusCode >= 300){
 					MT.log("failed to get css file: code", res.statusCode);
 					cb(false);

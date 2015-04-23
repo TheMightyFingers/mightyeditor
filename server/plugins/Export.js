@@ -29,7 +29,7 @@ MT.extend("core.BasicPlugin")(
 	},
 	{
 		get dir(){
-			return this.project.config.buildDir + this.sep + this.project.id;
+			return this.project.config.buildDir + this.sep + this.project.id + this.sep + this.project.rev;
 		},
 		
 		_name: undefined,
@@ -71,18 +71,18 @@ MT.extend("core.BasicPlugin")(
 			
 			var data;
 			if(contents == void(0)){
-				data = JSON.parse(JSON.stringify({
+				data = _.cloneDeep({
 					assets: this.project.db.get("assets"),
 					objects: this.project.db.get("objects"),
 					map: this.project.db.get("map").contents[0]
-				}, null, "\t"));
+				});
 			}
 			else{
 				data = contents;
 			}
-
-			this.createIdList(data.assets.contents, dir + this.sep + this.assetsPath);
 			this.parseAssets(data.assets.contents);
+			
+			this.createIdList(data.assets.contents, dir + this.sep + this.assetsPath);
 			this.parseObjects(data.objects.contents);
 
 			contents = JSON.stringify(data, null, "\t");
@@ -273,10 +273,6 @@ MT.extend("core.BasicPlugin")(
 			
 					that.fs.after(function(){
 						var d = that.fs.path.resolve(dir);
-						console.log("DIR:", d);
-						//process.exit();
-						
-						
 						var settings = {
 							cmd: that.project.config.tools.mobile,
 							args:["crosswalk", that.info.package, d + p + "manifest.json", arch, "crosswalk", opts.rel ? keystore : ""],
@@ -399,11 +395,7 @@ MT.extend("core.BasicPlugin")(
 					
 					that.fs.after(function(){
 						var d = that.fs.path.resolve(buildDir);
-						var c = that.project.config.tools.mobile;// +" "+ keystore;
-						console.log("CCC\n", c);
-						console.log("DDD\n", d);
-						//return;
-						 opts.rel ? console.log("Will sign this apk") : console.log("Won't sign this apk");
+						var c = that.project.config.tools.mobile;
 						var settings = {
 							cmd: c,
 							args: ["cordova", that.info.package, that.name, that.fs.path.resolve(dir), config, opts.rel ? keystore : ""],
@@ -458,8 +450,6 @@ MT.extend("core.BasicPlugin")(
 			
 			var minify = function(){
 				that.phaserMinify(function(name, dir){
-					console.log("AFTER MINIFY (dir):", dir);
-					
 					config = dir + p + "config.xml";
 					
 					var launcher = dir + p + "assets" + p + "launcher.png";
@@ -809,21 +799,22 @@ MT.extend("core.BasicPlugin")(
 		phaser: function(cb){
 			var that = this;
 
-			this.assets = _.cloneDeep(this.project.db.get("assets"));
-			this.objects = _.cloneDeep(this.project.db.get("objects"));
+			var assets = _.cloneDeep(this.project.db.get("assets"));
+			var objects = _.cloneDeep(this.project.db.get("objects"));
 
 			if(this.project.db.get("map").contents && this.project.db.get("map").contents.length > 0){
-				this.map = _.cloneDeep(this.project.db.get("map").contents[0]);
+				var map = _.cloneDeep(this.project.db.get("map").contents[0]);
 			}
 			else{
-				this.map = {};
+				var map = {};
 			}
-			this.parseAssets(this.assets.contents);
-
+			
+			//this.parseAssets(assets.contents);
+			
 			var contents = {
-					assets: this.assets,
-					objects: this.objects,
-					map: this.map
+					assets: assets,
+					objects: objects,
+					map: map
 			};
 
 			this.phaserDataOnly(function (err, local, pub) {
@@ -873,9 +864,17 @@ MT.extend("core.BasicPlugin")(
 					this.fs.copy(this.project.path + this.sep + asset.__image, source);
 				}
 				if(asset.atlas){
+					
+					// drop ext
+					var atlasName = asset.name.split(".");
+					atlasName.pop();
+					atlasName = atlasName.join();
+					
+					
 					var aext = asset.atlas.split(".").pop();
-					this.fs.copy(this.project.path + this.sep + asset.id + "." + aext, source + "." + aext);
-					asset.atlas = asset.name + "." + aext;
+					this.fs.copy(this.project.path + this.sep + asset.id + "." + aext, path + this.sep + atlasName + "." + aext);
+					var base = asset.fullPath.substring(0, asset.fullPath.length - asset.name.length);
+					asset.atlas = base + atlasName + "." + aext;
 				}
 			}
 		},

@@ -7,7 +7,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	},
 	{
 		get path(){
-			return "data/build/"+this.project.id;
+			return "data/build/" + this.project.id + "/" + this.project.data.rev;
 		},
 		
 		initUI: function(ui){

@@ -1,14 +1,15 @@
-var host = "http://localhost";
+// ensure we are working with right server
+var host = "http://localhost:8080";
+
 this.config = {
 	root: "../client",
-	hostname: host,
-	host: "localhost",
-	port: "8080", // undefined for socket connection
-	shutdownTimeout: 0.5,
-	index: "index.html",
+	host: "0.0.0.0",
+	port: 8080,
+	shutdownTimeout: 3,
+	index: "index.rel.html",
 	prefix: "p",
 	servers: {
-		p: "localhost"
+		p: "tools.mightyfingers.com"
 	},
 	projectsPath: "../client/data/projects",
 	buildDir: "../client/data/build",
@@ -18,13 +19,12 @@ this.config = {
 		auth: {
 			user: "info@mightyfingers.com",
 			pass: "********"
-		}
+		},
 	},
 	tools:{
 		// path to fontforge - or executable if it's in the path
 		fontforge: "fontforge",
-		// script that makes APKs
-		mobile: "mobile"
+		mobile: "/home/kaspars/compile"
 	},
 	auth: {
 		// one week

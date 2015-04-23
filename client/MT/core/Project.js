@@ -29,7 +29,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			sourceEditor:{
 				fontSize: 12,
 				autocomplete: true
-			}
+			},
+			timeline: {
+				skipFrames: 1
+			},
+			roundPosition: 0
 		};
 		this.defaultData = JSON.stringify(this.data);
 		
@@ -86,6 +90,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				window.location.reload();
 			}
 		});
+		
+		
+		console.log("before unload added");
+		
+		/*window.onbeforeunload = function(e){
+			console.log("load", e);
+			
+			return "Are you really want to leave MightyEditor?";
+		};*/
 	},
 	{
 		preventReload: false,
@@ -140,14 +153,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		a_selectProject: function(info){
 			this.id = info.id;
 			this.preventReload = true;
-			window.location.hash = info.id;
+			window.location.hash = info.id + "/" + info.rev;
 			
 			var that = this;
 			window.setTimeout(function(){
 				that.preventReload = false;
 			}, 1000);
 			
-			this.path = "data/projects/"+info.id;
+			this.path = "data/projects/" + info.id + "/" + info.rev;
 			
 			this.a_getProjectInfo(info);
 			
@@ -184,7 +197,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			MT.core.Helper.updateObject(this.data, data);
 			var that = this;
 			this.send("getOwnerInfo", null, function(data){
-				console.log("@project info", data);
 				that.setProjectTimer(data);
 			});
 		},
@@ -201,6 +213,18 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.copyPopup = pop;
 		},
 		
+		a_projectHasExpired: function(){
+			// reset all
+			document.body.innerHTML = "";
+			var pop = new MT.ui.Popup("Your project has expired", "");
+			this.plugins.auth.buildGoPro(pop.content);
+			var t = this;
+			pop.addButton("Home", function(){
+				t.a_goToHome();
+			});
+			pop.center();
+		},
+		
 		setUpData: function(){
 			document.body.style.backgroundColor = this.data.backgroundColor;
 			this.emit("updateData", this.data);
@@ -213,32 +237,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			var button = this.plugins.auth.mainButton;
-			
-			var min = new Date(Date.parse("2015-03-01"));
-			if(data.created < min.getTime()){
-				data.created = min.getTime();
-			}
-			
-			
 			var diff = Date.now() - data.now;
 			
 			//var 
 			button.addClass("expires");
 			button.el.title = "Project will expire";
 			
-			var second = 1000;
-			var minute = 60 * second;
-			var hour = 60 * minute;
-			var day = 24 * hour;
-			
-			var expire = (30 * day + (data.created)) - Date.now() + diff;
-			if(expire < day){
-				data.created = Date.now() - 29*day - second;
-			}
-			
 			this.updateExpireTime(button, data.created, diff);
-			
-			
 		},
 		
 		updateExpireTime: function(button, created, off){
@@ -249,6 +254,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var day = 24 * hour;
 			
 			var expire = (30 * day + (created)) - Date.now() + off;
+			if(expire < 0){
+				this.a_projectHasExpired();
+				return;
+			}
+			
+			
 			var dd = "", hh = "", mm = "", ss = "";
 			
 			var days = Math.floor(expire / day);
@@ -295,10 +306,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			window.location.reload();
 		},
 		// user gets here without hash
+		_newPop: null,
 		newProject: function(){
-			// enable Analytics
-			this.plugins.analytics.installUI(this.ui);
-			
+			if(this._newPop){
+				this._newPop.show();
+				return;
+			}
+			if(!this.id){
+				// enable Analytics
+				this.plugins.analytics.installUI(this.ui);
+			}
 			
 			var that = this;
 			var pop = new MT.ui.Popup("Welcome to MightyEditor", "");
@@ -324,11 +341,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				w.opener=null; w.location.href="http://mightyfingers.com/editor-features/";
 			});
 			
-			
-			
 			newProject.show(pop.content);
 			docs.show(pop.content)
-			
 			
 			var recentPanel = this.ui.createPanel("Recent Projects");
 			recentPanel.hide();
@@ -344,11 +358,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			recentPanel.show(projects);
 			
-			
-			// enable Auth
-			this.plugins.auth.installUI(this.ui);
-			this.plugins.auth.show(recentPanel, true);
-			
 			var tmp = null;
 			var items = this.getLocalProjects();
 			var list = this.makeProjectList(items);
@@ -357,12 +366,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				list.innerHTML = '<p>If you can\'t see you recent projects - try to click <a href="http://mightyeditor.mightyfingers.com/#no-redirect">here</a></p>';
 			}
 			
-			
 			recentPanel.content.el.appendChild(list);
 			
-			pop.on("close", function(){
-				that.newProjectNext();
-			});
+			// enable Auth
+			if(!this.id){
+				this.plugins.auth.installUI(this.ui);
+				this.plugins.auth.show(recentPanel, true);
+				pop.on("close", function(){
+					that.newProjectNext();
+				});
+			}
+			else{
+				this.plugins.auth.show(recentPanel, true);
+				pop.showClose();
+			}
+			
+			this._newPop = pop;
 		},
 		
 		getLocalProjects: function(){
@@ -392,9 +411,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var p, del;
 			for(var i=0; i<items.length; i++){
 				p = document.createElement("div");
-				p.className = "projectItem"
-				p.innerHTML = items[i].title + " ("+items[i].id+") <span class=\"remove\"></span>";
+				p.className = "projectItem";
+				if(items[i].id != items[i].title){
+					p.innerHTML = items[i].title + " ("+items[i].id+") <span class=\"remove\"></span>";
+				}
+				else{
+					p.innerHTML = items[i].title +" <span class=\"remove\"></span>";
+				}
 				p.project = items[i].id;
+				p.item = items[i];
 				
 				
 				list.appendChild(p);
@@ -408,7 +433,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			list.onclick = function(e){
 				if(e.target.className == "remove"){
 					if(ondelete){
-						ondelete(e.target.parentNode.project, function(remove){
+						ondelete(e.target.parentNode, function(remove){
 							if(remove){
 								removeItem(e);
 							}
@@ -421,14 +446,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				if(e.target.project){
 					if(onclick){
-						onclick(e.target.parentNode.project, function(remove){
+						onclick(e.target, function(remove){
 							if(remove){
 								removeItem(e);
 							}
 						});
 					}
-					e.preventDefault();
-					window.location.hash = e.target.project;
+					else{
+						e.preventDefault();
+						window.location.hash = e.target.project;
+					}
 				}
 			};
 			return list;
@@ -557,7 +584,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.createSettings();
 			
 			this.panel.addButton(null, "logo",  function(e){
-				
+				window.location = window.location.toString().split("#")[0];
 				//that.setPop.show();
 			});
 			
@@ -566,10 +593,20 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.list = new MT.ui.List([
 				{
-					label: "Home",
+					label: "Save",
 					className: "",
 					cb: function(){
-						window.location = window.location.toString().split("#")[0];
+						that.send("saveState");
+						that.list.hide();
+						that.plugins.notification.show("Saved", "...", 1000);
+					}
+				},
+				{
+					label: "Save As...",
+					className: "",
+					cb: function(){
+						that.saveAs();
+						that.list.hide();
 					}
 				},
 				{
@@ -595,34 +632,68 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
+		saveAs: function(){
+			var pop = new MT.ui.Popup("Save project state", "");
+			pop.showClose();
+			var that = this;
+			
+			var d = {name: ""};
+			var inp = new MT.ui.Input(this.ui, {key: "name", type: "text", placeholder: "name"}, d, function(){
+				
+			});
+			inp.addClass("full-size");
+			inp.show(pop.content);
+			inp.enableInput();
+			inp.input.setAttribute("placeholder", "name");
+			
+			pop.addButton("Save", function(){
+				that.send("saveState", d.name);
+				that.plugins.notification.show("Saved", d.name, 1000);
+				pop.hide();
+			});
+			
+			pop.addButton("Cancel", function(){
+				pop.hide();
+			});
+		},
+		
 		clone: function(us){
-			if(this.sub == "" && !us){
-				window.location = window.location.toString()+"-copy";
-				return;
-			}
-			if(this.sub == "us" && us){
-				window.location = window.location.toString()+"-copy";
-				return;
-			}
-			
-			// alien server
-			if(this.sub == "" && us){
+			var that = this;
+			this.send("allowTmpCopy", null, function(allow){
+				if(!allow){
+					that.plugins.notification.show("Project copy", "access denied", 1000);
+					return;
+				}
 				
-				var loc = window.location.toString()+"-copy";
-				loc = loc.replace("://", "://us.");
+				if(that.sub == "" && !us){
+					window.location = window.location.toString()+"-copy";
+					return;
+				}
+				if(that.sub == "us" && us){
+					window.location = window.location.toString()+"-copy";
+					return;
+				}
 				
-				window.location = loc;
-				return;
-			}
-			
-			if(this.sub == "us" && !us){
-				
-				var loc = window.location.toString()+"-copy";
-				loc = loc.replace("://us.", "://");
-				
-				window.location = loc;
-				return;
-			}
+				// alien servers
+				// eu -> us
+				if(that.sub == "" && us){
+					
+					var loc = window.location.toString()+"-copy";
+					loc = loc.replace("://", "://us.");
+					
+					window.location = loc;
+					return;
+				}
+				// us -> eu
+				if(that.sub == "us" && !us){
+					
+					var loc = window.location.toString()+"-copy";
+					loc = loc.replace("://us.", "://");
+					
+					window.location = loc;
+					return;
+				}
+			});
 		},
 		getPackageName: function(){
 			var dom = window.location.hostname.split(".").shift();
@@ -652,7 +723,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
 				webGl: new MT.ui.Input(this.ui, {key: "webGl", type: "bool"}, this.data),
 				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor),
-				autocomplete: new MT.ui.Input(this.ui, {key: "autocomplete", type: "bool"}, this.data.sourceEditor)
+				autocomplete: new MT.ui.Input(this.ui, {key: "autocomplete", type: "bool"}, this.data.sourceEditor),
+													 
+				skipFrames: new MT.ui.Input(this.ui, {key: "skipFrames", type: "bool"}, this.data.timeline),
+				roundPosition: new MT.ui.Input(this.ui, {key: "roundPosition", type: "bool"}, this.data)
 			};
 			
 			
@@ -668,14 +742,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.setFields = {
 				project: new MT.ui.Fieldset("Project"),
 				ui: new MT.ui.Fieldset("UI"),
-				sourceEditor: new MT.ui.Fieldset("SourceEditor")
+				sourceEditor: new MT.ui.Fieldset("SourceEditor"),
+				timeline: new MT.ui.Fieldset("Timeline"),
+				misc: new MT.ui.Fieldset("Misc")
 			};
 			
 			
 			
-			this.setPanel = new MT.ui.Panel("Personalise");
+			this.setPanel = new MT.ui.Panel("Properties");
 			this.setPanel.removeBorder();
 			this.setPanel.fitIn();
+			
 			MT.ui.addClass(this.setPanel.el, "editor-settings");
 			
 			this.setPanel.on("show", function(){
@@ -707,8 +784,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				})
 			};
 			
-			
-			
 			this.setInputs.label.show(this.setFields.project.el);
 			this.setInputs.package.show(this.setFields.project.el);
 			
@@ -719,6 +794,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.setInputs.srcEdFontSize.show(this.setFields.sourceEditor.el);
 			this.setInputs.autocomplete.show(this.setFields.sourceEditor.el);
+			
+			this.setInputs.skipFrames.show(this.setFields.timeline.el);
+			this.setInputs.roundPosition.show(this.setFields.misc.el);
+			
 			
 			for(var i in this.setFields){
 				this.setPanel.content.el.appendChild(this.setFields[i].el);
@@ -731,9 +810,35 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var that = this;
 			
+			
+			var statePanel = new MT.ui.Panel("Saved states");
+			statePanel.fitIn();
 			this.plugins.auth.on("showProperties", function(panel){
 				panel.addJoint(that.setPanel);
 				lastData = JSON.stringify(that.data);
+				
+				panel.addJoint(statePanel);
+				that.send("getSavedStates", null, function(states){
+					for(var i=0; i<states.length; i++){
+						states[i].title = states[i].name;
+						states[i].id = states[i].date;
+					}
+					
+					var list = that.makeProjectList(states, function(item, remove){
+						console.log("DELETE:", item);
+						that.send("removeState", item.item.name);
+						remove(true);
+					}, function(item, remove){
+						console.log("LOAD:", item);
+						that.send("loadState", item.item.name, function(){
+							window.location.hash = that.id + "/0";
+							window.location.reload();
+						});
+					});
+					statePanel.content.el.innerHTML = "";
+					statePanel.content.el.appendChild(list);
+				});
+				
 			});
 			
 			this.plugins.auth.on("hideProperties", function(){
@@ -741,6 +846,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.emit("updateData", that.data);
 				that.setUpData();
 			});
+			
 		},
 		
 		showList: function(){

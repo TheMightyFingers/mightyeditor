@@ -12,7 +12,7 @@ MT.extend("core.BasicPlugin")(
 			
 			ga('create', 'UA-23132569-11');
 			if(this.project.id){
-				document.title += " - " + this.project.id;
+				document.title += " - " + this.project.data.title + " (" + this.project.id + ")";
 			}
 			
 			ga('send', 'pageview');

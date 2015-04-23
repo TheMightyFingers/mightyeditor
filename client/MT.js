@@ -3024,7 +3024,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			this.tools.map.sync(this.tools.tmpObject, this.tools.tmpObject.data);
 			
 			this.tools.tmpObject.data.frame = this.tools.activeFrame;
-			om.insertObject(JSON.parse(JSON.stringify(this.tools.tmpObject.data)));
+			om.insertObject(_.cloneDeep(this.tools.tmpObject.data));
 			
 			this.lastX = this.tools.tmpObject.x;
 			this.lastY = this.tools.tmpObject.y;
@@ -3147,7 +3147,7 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			
 			this.tools.tmpObject.data.frame = this.tools.activeFrame;
 			
-			var newObj = om.insertObject(JSON.parse(JSON.stringify(this.tools.tmpObject.data)));
+			var newObj = om.insertObject(_.cloneDeep(this.tools.tmpObject.data));
 			
 			this.tools.initTmpObject();
 			this.tools.tmpObject.frame = this.tools.activeFrame;
@@ -3268,9 +3268,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			this.altKeyReady = false;
+			
 			var copy = [];
 			var sel = this.map.selector;
-
 			sel.sort(function(a, b){
 				return (a.object.z - b.object.z);
 			});
@@ -3278,8 +3278,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			sel.forEach(function(o){
 				copy.push(o.data);
 			});
-			
-			
 			
 			var bounds = null;
 			var cx = this.map.game.camera.x;
@@ -3295,18 +3293,17 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					continue;
 				}
 				sprite.object.updateTransform();
-				
-				//bounds = sprite.object.getBounds();
-				////data[i].x = bounds.x + cx;
-				//data[i].y = bounds.y + cy;
-				
 				sel.add(sprite);
+				
 			}
 			if(data.length > 0){
-				this.map.activeObject = null;
+				this.map.activeObject = this.map.getById(data[0].id);
+				
 				this.map.emit("select", this.map.settings);
 				this.initMove(e);
 			}
+			
+			
 		},
 		mouseMove: function(e){
 			if(!this.mDown){
@@ -3903,6 +3900,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 		};
 		
 		input.onblur = function(){
+			//return;
 			input.parentNode.removeChild(input);
 			input.isVisible = false;
 			
@@ -4239,8 +4237,9 @@ MT(
 		this.data = data;
 		this.parent = parent;
 		this.map = map;
-		this.settings = this.map.project.plugins.settings;
-		this.manager = this.map.project.plugins.objectmanager;
+		this.project = this.map.project;
+		this.settings = this.project.plugins.settings;
+		this.manager = this.project.plugins.objectmanager;
 		
 		this.game = map.game;
 		this.isRemoved = false;
@@ -5122,7 +5121,7 @@ MT(
 			this.y -= dyt;
 			mi.y = y;
 			
-			if(e.ctrlKey && angle == 0){
+			if(e.ctrlKey && angle % Math.PI*2 == 0){
 				var gx = this.map.settings.gridX;
 				var gy = this.map.settings.gridY;
 				
@@ -5558,6 +5557,9 @@ MT(
 			if(this.data.x == x){
 				return;
 			}
+			if(this.project.data.roundPosition){
+				x = Math.floor(x);
+			}
 			this.object.x = x;
 			this.data.x = x;
 			this.updateBox();
@@ -5575,6 +5577,9 @@ MT(
 			}
 			if(this.data.y == y){
 				return;
+			}
+			if(this.project.data.roundPosition){
+				y = Math.floor(y);
 			}
 			this.object.y = y;
 			this.data.y = y;
@@ -5727,6 +5732,9 @@ MT(
 			this.data.assetId = id;
 			this.object.loadTexture(id);
 			
+			
+			
+			
 			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
    
@@ -5753,9 +5761,29 @@ MT(
 			this.data.frame = val;
 			this.object.frame = val;
 			
+			var frameInfo = this.map.game.cache._images[this.assetId];
+			if(frameInfo.frameData.total > 1){
+				this.data.frameName = frameInfo.frameData.getFrame(val).name;
+			}
+			else{
+				delete this.data.frameName;
+			}
+			
 			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get frame(){
+			if(this.data.frameName){
+				var frameInfo = this.map.game.cache._images[this.assetId];
+				var frame = frameInfo.frameData.getFrameByName(this.data.frameName);
+				if(frame && this.data.frame != frame.index){
+					console.log("Frame changed by name!");
+					this.frame = frame.index;
+				}
+				
+				return this.data.frame;
+			}
+			
+			
 			return this.data.frame;
 		},
    
@@ -6550,17 +6578,13 @@ MT.extend("core.Emitter")(
 					el.addClass("open");
 				}
 				
-				head.el.onclick = function(e){
-					if(e.target != el.head.el && e.target != el.head.label.el){
-						return;
-					}
-					
+				head.label.el.onclick = function(e){
 					if(el.isFolder && e.offsetX > 30){
 						return;
 					}
 					
 					e.stopPropagation();
-					
+					e.preventDefault();
 					el.visible = !el.visible;
 					if(el.visible){
 						el.addClass("open");
@@ -6872,6 +6896,14 @@ MT.extend("core.Emitter")(
 				}
 
 				var item = that.getOwnItem(e.target.parentNode.parentNode);
+				// sometimes happens when browser freezes for few ms
+				if(!item){
+					return;
+				}
+				if(item.isFolder && e.offsetX < 30){
+					return;
+				}
+				
 				if(item && item == ditem){
 					if(e.button == 0){
 						that.emit("click", item.data, item);
@@ -6990,7 +7022,9 @@ MT.extend("core.Emitter")(
 			
 			
 			ev.on("mouseup", function(e){
-				
+				if(e.target.isFolder && e.offsetX > 30){
+					return;
+				}
 				dragHelper.style.display = "none";
 				dd.style.display = "none";
 				dragHelper.y = 0;
@@ -7330,7 +7364,7 @@ MT.extend("core.Emitter")(
 			return null;
 		},
 		
-		updateFullPath: function(data, path, shouldNotify){
+		updateFullPath: function(data, path, shouldNotify, skipGlobalNotify){
 			path = path || "";
 			for(var i=0; i<data.length; i++){
 				var fullPath = path + "/" + data[i].name;
@@ -7341,15 +7375,14 @@ MT.extend("core.Emitter")(
 					if(shouldNotify){
 						this.emit("change", op, fullPath);
 					}
-					
 				}
 				
 				if(data[i].contents){
-					this.updateFullPath(data[i].contents, data[i].fullPath, false);
+					this.updateFullPath(data[i].contents, data[i].fullPath, shouldNotify, true);
 				}
 			}
 			
-			if(shouldNotify){
+			if(shouldNotify && !skipGlobalNotify){
 				this.emit("change", null, null);
 			}
 			
@@ -7715,6 +7748,12 @@ MT(
 					if(ch.el.parentNode){
 						ch.el.parentNode.removeChild(ch.el);
 					}
+					// ugly hack for tree view
+					if(this.data && this.data.isClosed){
+						//ch.isVisible = false;
+						continue;
+					}
+					
 					if(ch.isVisible){
 						this.el.appendChild(ch.el);
 					}
@@ -9112,6 +9151,8 @@ MT.extend("core.Emitter")(
 		},
 		
 		controlsHolder: null,
+		stop: null,
+		_looptm: 0,
 		addControls: function(){
 			this.controlsHolder = document.createElement("div");
 			this.controlsHolder.className = "ui-keyframes-controls";
@@ -9157,8 +9198,36 @@ MT.extend("core.Emitter")(
 			var next;
 			
 			var start = Date.now();
-			var loop = function(){
-				start = Date.now();
+			
+			
+			var settings = this.mm.project.data;
+			
+			
+			var loop = function(reset){
+				if(reset){
+					start = Date.now();
+				}
+				if(!isPlaying){
+					return;
+				}
+				if(settings.timeline.skipFrames){
+					loopSkipFrames();
+					return;
+				}
+				
+				next = that.mm.activeFrame + 1;
+				if(next > that.getLastFrame()){
+					next = 0;
+				}
+				
+				that.mm.changeFrame(next);
+				that.looptm = window.setTimeout(loop, 1000/that.getFps());
+			};
+			
+			var loopSkipFrames = function(reset){
+				if(reset){
+					start = Date.now();
+				}
 				if(!isPlaying){
 					return;
 				}
@@ -9169,14 +9238,14 @@ MT.extend("core.Emitter")(
 				}
 				
 				that.mm.changeFrame(next);
-				
-				var tm = 1000/that.getFps() - (Date.now() - start);
+				var step = 1000/that.getFps();
+				var tm = step - (Date.now() - start);
 				while(tm < 0){
-					tm += 1000/that.getFps();
+					tm += step;
 					that.mm.activeFrame++;
 				}
-				window.setTimeout(loop, tm);
-				
+				start = Date.now();
+				that.looptm = window.setTimeout(loop, tm);
 			};
 			
 			var playPause = function(){
@@ -9184,7 +9253,7 @@ MT.extend("core.Emitter")(
 					c.play.className = "ui-keyframes-pause";
 					isPlaying = true;
 					playStartFrame = that.mm.activeFrame;
-					loop();
+					loop(true);
 				}
 				else{
 					isPlaying = false;
@@ -9192,7 +9261,7 @@ MT.extend("core.Emitter")(
 				}
 			};
 			
-			var stop = function(){
+			var stop = this.stop = function(){
 				if(!isPlaying){
 					playStartFrame = 0;
 				}
@@ -9571,7 +9640,8 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			movieInfo: {
 				fps: 60,
 				lastFrame: 60
-			}
+			},
+			pixelPerfectPicking: 1
 		};
 		
 		
@@ -9672,6 +9742,15 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			ui.events.on(ui.events.KEYUP, function(e){
 				that.isCtrlDown = false;
+				
+				if(e.which == MT.keys.G){
+					var first = that.selector.get(0)
+					if(first && first.parent && first.parent.magic){
+						that.activeObject = first.parent.magic;
+						that.selector.clear();
+						that.selector.add(that.activeObject);
+					}
+				}
 				om.sync();
 			});
 			
@@ -9741,6 +9820,9 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				preload: function(){
 					game.stage.disableVisibilityChange = true;
 					var c = game.canvas;
+					if(!c.parentNode){
+						return;
+					}
 					c.parentNode.removeChild(c);
 					that.panel.content.el.appendChild(c);
 					c.style.position = "relative";
@@ -10733,7 +10815,17 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 		},
 		
 		cleanImage: function(id){
-			this.game.cache.removeImage(id);
+			// hack 
+			
+			
+			this.game.cache._images[id];
+			this.game.cache.removeImage(id, false);
+			
+			var img = PIXI.BaseTextureCache[id];
+			if(img){
+				img.destroy();
+			}
+			
 			delete this.atlasNames[id];
 		},
 		
@@ -11169,9 +11261,11 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 			
 			// chek if we are picking already selected object
 			if(this.activeObject){
-				
 				if(this.activeObject.type == MT.objectTypes.GROUP){
-					return this.checkBounds(this.activeObject, x, y);
+				//if(!this.ui.events.mouse.lastEvent.shiftKey){
+					if(this.checkBounds(this.activeObject, x, y)){
+						return this.activeObject;
+					}
 				}
 				
 				if(this.activeObject.type == MT.objectTypes.SPRITE || this.activeObject.type == MT.objectTypes.TEXT){
@@ -11209,13 +11303,18 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 				return null;;
 			}
 			
+			var ob = this.checkBounds(obj, x, y);
+			
+			if(!ob){
+				return null;
+			}
 			// check bounds
-			if(!obj.object.input){
-				return this.checkBounds(obj, x, y);
+			if(!obj.object.input || !this.settings.pixelPerfectPicking){
+				return ob;
 			}
 			
 			if( obj.object.input.checkPointerOver(this.game.input.activePointer)){
-				if(this.ui.events.mouse.lastEvent.ctrlKey && !this.activeObject && checkGroup){
+				/*if(this.ui.events.mouse.lastEvent.ctrlKey && !this.activeObject && checkGroup){
 					if(obj.parent && obj.parent.magic){
 						this.activeObject = obj.parent.magic;
 					}
@@ -11223,7 +11322,7 @@ MT.plugins.MapEditor = MT.extend("core.Emitter").extend("core.BasicPlugin")(
 						this.activeObject = obj;
 					}
 					return this.activeObject
-				}
+				}*/
 				
 				this.activeObject = obj;
 				return obj;
@@ -11454,7 +11553,7 @@ MT.extend("ui.DomElement").extend("core.Emitter")(
 			
 			this.origData = data;
 			
-			this.data = JSON.parse(JSON.stringify(data));
+			this.data = _.cloneDeep(data);
 			this.header = this.header || header;
 			
 			
@@ -11675,7 +11774,7 @@ MT.extend("core.BasicPlugin")(
 			
 			ga('create', 'UA-23132569-11');
 			if(this.project.id){
-				document.title += " - " + this.project.id;
+				document.title += " - " + this.project.data.title + " (" + this.project.id + ")";
 			}
 			
 			ga('send', 'pageview');
@@ -12049,7 +12148,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			am.on(MT.ASSET_FRAME_CHANGED, function(asset, frame){
 				that.activeAsset = asset;
 				that.activeFrame = frame;
-				
 				that.emit(MT.ASSET_FRAME_CHANGED, asset, frame);
 			});
 			
@@ -12093,7 +12191,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var lastKey = 0;
 			
 			var toCopy = [];
-			
+			this.ui.events.on(this.ui.events.KEYDOWN, function(e){
+				console.log("prevented");
+				if(e.which == MT.keys.D){
+					
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			});
 			this.ui.events.on(this.ui.events.KEYUP, function(e){
 				
 				if(lastKey == MT.keys.ESC){
@@ -12147,6 +12252,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					y: 0
 				};
 				
+				// copy / paste
 				if(e.ctrlKey){
 					if(e.which === MT.keys.C){
 						toCopy.length = 0;
@@ -12165,9 +12271,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						var x = that.ui.events.mouse.lastEvent.x;
 						var y = that.ui.events.mouse.lastEvent.y;
 						
-						
-						//
-						
 						var bounds = null;
 						var midX = 0;
 						var midY = 0;
@@ -12183,9 +12286,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						that.map.selector.clear();
 						var cop = null;
 						for(var i=0; i<toCopy.length; i++){
-							bounds = toCopy[i].getBounds();
 							
 							if(!e.shiftKey){
+								bounds = toCopy[i].getBounds();
 								cop = that.copy(toCopy[i].data, bounds.x - midX + (x - map.offsetX) / map.scale.x, bounds.y - midY + (y - map.offsetY) / map.scale.y);
 							}
 							else{
@@ -12194,8 +12297,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 							
 							that.map.selector.add(cop);
 						}
-						
 					}
+					
+					if(e.which == MT.keys.D && e.target == document.body){
+						that.duplicate();
+						e.preventDefault();
+					}
+					
+					
 				}
 				else if(e.target.tagName != "INPUT" && e.target.tagName != "TEXTAREA") {
 					var tools = Object.keys(that.tools);
@@ -12214,9 +12323,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					if(e.which == "5".charCodeAt(0)){
 						that.setTool(that.tools[tools[4]]);
 					}
-					
 				}
-				
 			});
 			
 			for(var i in this.tools){
@@ -12224,19 +12331,31 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			this.setTool(this.tools.select);
-			
-			
 		},
 		
 		lastAsset: null,
 		
+		duplicate: function(){
+			var tcp = [], cop, that = this, map = this.map;
+			map.selector.forEach(function(obj){
+				tcp.push(obj);
+			});
+			tcp.sort(function(a, b){
+				return (map.loadedObjects.indexOf(a) - map.loadedObjects.indexOf(b));
+			});
+			
+			that.map.selector.clear();
+			for(var i=0; i<tcp.length; i++){
+				cop = that.copy(tcp[i].data, tcp[i].data.x, tcp[i].data.y);
+				that.map.selector.add(cop);
+			}
+		},
 		
 		select: function(object){
 			this.tools.select.select(object);
 			if(this.activeTool != this.tools.select){
 				this.activeTool.select(object);
 			}
-			
 		},
 		
 		copy: function(toCopy, x, y){
@@ -12364,6 +12483,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(this.tmpObject){
 				this.tmpObject.hide();
 			}
+			
+			if(this.map.activeObject == this.tmpObject){
+				this.map.activeObject = null;
+			}
 			this.tmpObject = null;
 		},
 
@@ -12416,7 +12539,7 @@ MT.extend("core.Emitter").extend("core.BasicPlugin")(
 	},
 	{
 		get path(){
-			return "data/build/"+this.project.id;
+			return "data/build/" + this.project.id + "/" + this.project.data.rev;
 		},
 		
 		initUI: function(ui){
@@ -13373,6 +13496,7 @@ MT(
 			this.scene.showGrid = this.addInput( {key: "showGrid", min: 0, max: 1}, obj, true, cb);
 			this.scene.gridOpacity = this.addInput( {key: "gridOpacity", min: 0, max: 1, step: 0.1}, obj, true, cb);
 			this.scene.backgroundColor = this.addInput( {key: "backgroundColor", type: "color" }, obj, true, cb);
+			this.scene.pixelPerfectPicking = this.addInput( {key: "pixelPerfectPicking", type: "bool" }, obj, true, cb);
 			
 		},
    
@@ -13421,7 +13545,7 @@ MT.OBJECTS_RECEIVED = "OBJECTS_RECEIVED";
 MT.OBJECTS_UPDATED = "OBJECTS_UPDATED";
 MT.OBJECTS_SYNC = "OBJECTS_SYNC";
 
-
+MT.requireFile("js/lodash.js");
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.ObjectManager = function(project){
 		MT.core.Emitter.call(this);
@@ -13457,6 +13581,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "add-group",
 					cb: function(){
 						that.createGroup();
+					}
+				},
+				{
+					label: "Duplicate selected object (ctrl + D)",
+					className: "duplicate",
+					cb: function(){
+						that.project.plugins.tools.duplicate();
 					}
 				},
 				/*{
@@ -13546,9 +13677,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					if(el.isFolder && el.data.type == MT.objectTypes.GROUP){
 						that.activeGroup = el.data;
 					}
+					else{
+						if(obj.parent && obj.parent.magic){
+							that.activeGroup = obj.parent.magic.data;
+						}
+					}
 					el.addClass("selected.active");
 					that.selector.add(el);
-					
 				}
 			});
 			
@@ -13620,7 +13755,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		
-		insertObject: function(obj, silent, data, active){
+		insertObject: function(obj, silent, data, skipActive){
 			data = data || this.tv.getData();
 			//var data = this.tv.getData();
 			var map = this.project.plugins.mapeditor;
@@ -13635,9 +13770,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			
-			if(active){
-				obj.x -= active.x;
-				obj.y -= active.y;
+			if(!skipActive && active){
+				active = map.getById(active.id);
+				while(active){
+					obj.x -= active.x;
+					obj.y -= active.y;
+					active = active.parent;
+					if(active){
+						active = active.magic;
+					}
+				}
 			}
 			
 			obj.id = "tmp"+this.mkid();
@@ -13697,8 +13839,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				type: MT.objectTypes.SPRITE,
 				anchorX: asset.anchorX,
 				anchorY: asset.anchorY,
-				userData: JSON.parse(JSON.stringify(asset.userData || {})),
-				physics: JSON.parse(JSON.stringify(asset.physics || {})),
+				userData: _.cloneDeep((asset.userData || {})),
+				physics: _.cloneDeep((asset.physics || {})),
 				scaleX: 1,
 				scaleY: 1,
 				angle: 0,
@@ -13751,8 +13893,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				cont = data;
 			}
 			
-			
-			
 			var tmpName= "Group";
 			var name = tmpName;
 			for(var i=0; i<cont.length; i++){
@@ -13787,43 +13927,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.sync();
 			}
 			return group;
-		},
-		
-		createMovieClip: function(silent){
-			var data = this.tv.getData();
-			
-			var tmpName= "Movie";
-			var name = tmpName;
-			for(var i=0; i<data.length; i++){
-				if(data[i].name == name){
-					name = tmpName+" "+i;
-				}
-			}
-			
-			var group = {
-				id: "tmp"+this.mkid(),
-				name: name,
-				x: 0,
-				y: 0,
-				type: MT.objectTypes.MOVIE_CLIP,
-				angle: 0,
-				contents: [],
-				isVisible: 1,
-				isLocked: 0,
-				isFixedToCamera: 0,
-				alpha: 1
-			};
-			
-			data.unshift(group);
-			
-			this.tv.merge(data);
-			
-			if(!silent){
-				this.update();
-				this.sync();
-			}
-			return group;
-			
 		},
 		
 		createTileLayer: function(silent){
@@ -13872,7 +13975,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		copy: function(obj, x, y, name, silent){
 			
 			name = name || obj.name + this.getNewNameId(obj.name, this.tv.getData());
-			var clone = JSON.parse(JSON.stringify(obj));
+			var clone = _.cloneDeep(obj);
 			clone.name = name;
 			clone.x = x;
 			clone.y = y;
@@ -13891,14 +13994,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var name, obj, clone;
 			var out = [];
 			
-			var insertIntoGroup = false;
+			
+			
+			var parent = this.activeGroup;
+			this.activeGroup = null;
+			
 			for(var i=0; i<arr.length; i++){
 				obj = arr[i];
 				name = obj.name + this.getNewNameId(obj.name, data);
-				clone = JSON.parse(JSON.stringify(obj));
+				clone = _.cloneDeep(obj);
 				clone.name = name;
+				if(parent && obj.id != parent.id){
+					console.log("WILL HAVE PARENT", parent);
+					this.activeGroup = parent;
+				}
 				
-				insertIntoGroup = (this.activeGroup ? this.activeGroup.id != clone.id : false);
 				
 				this.cleanUpClone(clone);
 				
@@ -13907,7 +14017,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				
 				out.push(clone);
-				this.insertObject(clone, true, data, insertIntoGroup);
+				
+				
+				this.insertObject(clone, true, data, true);
+				this.activeGroup = null;
 			}
 			
 			this.tv.rootPath = this.project.path
@@ -14633,6 +14746,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			ctx = panel.data.ctx;
 			
 			var frames = cache.frameData;
+			panel.data.frameData = frames;
+			
 			var src = cache.data;
 			
 			var frame;
@@ -14899,8 +15014,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				panel.data.scrollTop = panel.content.el.scrollTop;
 				panel.data.scrollLeft = panel.content.el.scrollLeft;
 				*/
-				that.activeFrame = frame;
 				panel.data.group.active = panel;
+				
 				
 				if(panel.title == "all_frames"){
 					var g = panel.data.group, p;
@@ -14916,6 +15031,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				else{
 					that.tmpName = panel.title;
 				}
+				
+				/*var frameInfo = panel.data.frameData.getFrame(frame);
+
+				if(frameInfo.name){
+					frame = frameInfo.name;
+				}*/
+				
+				that.activeFrame = frame;
 				that.emit(MT.ASSET_FRAME_CHANGED, panel.data.asset, frame);
 			};
 			panel.data.canvas.oncontextmenu = function(e){
@@ -15264,9 +15387,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var that = this;
 			var input = document.createElement("input");
-			input.type = "file";
+			input.setAttribute("type", "file");
 			input.onchange = function(e){
 				that.handleFiles(this.files);
+			};
+			input.onclick = function(){
+				console.log("Clicked!;");
 			};
 			input.click();
 		},
@@ -16915,6 +17041,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.propContainer.appendChild(this.logoutButton.el);
 			
 			this.emit("showProperties", this.propPanels.projects);
+			
+			this.propPanels.projects.hide();
+			
 		},
 		initUI: function(ui){
 			this.ui = ui;
@@ -16953,17 +17082,27 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.buildShareOptions(this.propPanels.share.content.el);
 			
-			this.propPanels.projects = this.ui.createPanel("My Projects");
+			this.propPanels.projects = this.buildMyProjects();
 			this.propPanels.projects.fitIn();
+			
+			this.propPanels.share.addJoint(this.propPanels.projects);
+			this.propPanels.share.show(this.propContainer);
+		},
+		
+		_myProjectsPanel: null,
+		buildMyProjects: function(){
+			if(this._myProjectsPanel){
+				return this._myProjectsPanel;
+			}
+			var p = this.ui.createPanel("My Projects");
+			
 			
 			var list = this.project.makeProjectList(this.projects, function(id, cb){
 				that.deleteProject(id, cb);
 			});
+			p.content.el.appendChild(list);
 			
-			this.propPanels.projects.content.el.appendChild(list);
-			
-			this.propPanels.share.addJoint(this.propPanels.projects);
-			this.propPanels.share.show(this.propContainer);
+			return p;
 		},
 		
 		buildShareOptions: function(el){
@@ -17266,6 +17405,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			middle.appendChild(basic);
 			middle.appendChild(advanced);
+			var clear = document.createElement("div");
+			clear.style.clear = "both";
+			middle.appendChild(clear);
 			
 			
 			pro.appendChild(top);
@@ -18027,6 +18169,7 @@ MT.extend("core.Emitter")(
 				that.clear();
 				that.createMainMovie();
 				that.keyframes.reactivate();
+				
 			};
 			
 			
@@ -18140,6 +18283,7 @@ MT.extend("core.Emitter")(
 			
 			ev.on(ev.KEYDOWN, function(e){
 				if(e.which == MT.keys.ESC){
+					
 					var oldF = that.keyframes;
 					that.clear();
 					that.createMainMovie();
@@ -18367,10 +18511,15 @@ MT.extend("core.Emitter")(
 		},
    
 		clear: function(){
+			this.changeFrame(0);
+			
 			this.keyframes = this.keyframesSub;
 			this.keyframes.tv.merge([]);
 			this.items = {};
 			this.hide();
+			
+			this.keyframesMain.stop();
+			this.keyframesSub.stop();
 		},
    
 		addPanels: function(){
@@ -18885,7 +19034,7 @@ MT.extend("core.Emitter")(
 			if(this.framesToCopy){
 				for(var i=0; i<this.framesToCopy.length; i++){
 					info = this.framesToCopy[i];
-					frame = JSON.parse(JSON.stringify(info.frame));
+					frame = _.copyDeep(info.frame);
 					frame.keyframe = this.activeFrame;
 					info.data.frames.push(frame);
 					this.sortFrames(info.data.frames);
@@ -18899,7 +19048,7 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			var frames = this.frameBuffer.frames;
-			frame = JSON.parse(JSON.stringify(frames[this.frameBuffer.index]));
+			frame = _.copyDeep(frames[this.frameBuffer.index]);
 			
 			frame.keyframe = this.activeFrame;
 			frames.push( frame );
@@ -19890,7 +20039,7 @@ var defs = [];
 			
 			MT.requireFile(cmPath+"/tern/tern.js");
 			MT.requireFile(cmPath+"/scroll/scrollpastend.min.js"); 
-			MT.requireFile("js/jshint.min.js");
+			//MT.requireFile("js/jshint.min.js");
 			
 			addCss("css/codemirror.css");
 			addCss(cmPath+"/hint/show-hint.css");
@@ -19931,7 +20080,7 @@ var defs = [];
 		MT.requireFile(cmPath+"/selection/active-line.js");
 		
 		
-		MT.requireFile("js/jshint.js");
+		//MT.requireFile("js/jshint.js");
 		MT.requireFile(cmPath+"/tern/tern.js");
 
 		
@@ -20832,6 +20981,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 						msg.className = "lint-error";
 						that.editor.setGutterMarker(err.line - 1,"CodeMirror-jslint", msg);
 						
+						
+						
 						//var evidence = msg.appendChild(document.createElement("span"));
 						//evidence.className = "lint-error-text evidence";
 						//evidence.appendChild(document.createTextNode(err.evidence));
@@ -21645,6 +21796,10 @@ MT.extend("core.Emitter").extend("ui.DomElement")(
 			this.emit("show");
 			document.body.appendChild(this.bg);
 			document.body.appendChild(this.el);
+		},
+		
+		center: function(){
+			this.y = (window.innerHeight - this.height) * 0.5;
 		}
 
 
@@ -22898,8 +23053,8 @@ MT.extend("core.Emitter")(
 			}
 			
 			
-			this.centerBottomRightBox.style.left = centerPanel.x + centerPanel.width;
-			this.centerBottomRightBox.style.top = centerPanel.y + centerPanel.height;
+			this.centerBottomRightBox.style.left = (centerPanel.x + centerPanel.width) + "px";
+			this.centerBottomRightBox.style.top = (centerPanel.y + centerPanel.height) + "px";
 			this.centerBottomRightBox.style.zIndex = 1001;
 			this.centerBottomRightBox.style.backgroundColor = "inherit";
 			//this.centerBottomRightBox.style.overflow = "hidden";
@@ -23624,7 +23779,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			sourceEditor:{
 				fontSize: 12,
 				autocomplete: true
-			}
+			},
+			timeline: {
+				skipFrames: 1
+			},
+			roundPosition: 0
 		};
 		this.defaultData = JSON.stringify(this.data);
 		
@@ -23681,6 +23840,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				window.location.reload();
 			}
 		});
+		
+		
+		console.log("before unload added");
+		
+		/*window.onbeforeunload = function(e){
+			console.log("load", e);
+			
+			return "Are you really want to leave MightyEditor?";
+		};*/
 	},
 	{
 		preventReload: false,
@@ -23735,14 +23903,14 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		a_selectProject: function(info){
 			this.id = info.id;
 			this.preventReload = true;
-			window.location.hash = info.id;
+			window.location.hash = info.id + "/" + info.rev;
 			
 			var that = this;
 			window.setTimeout(function(){
 				that.preventReload = false;
 			}, 1000);
 			
-			this.path = "data/projects/"+info.id;
+			this.path = "data/projects/" + info.id + "/" + info.rev;
 			
 			this.a_getProjectInfo(info);
 			
@@ -23779,7 +23947,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			MT.core.Helper.updateObject(this.data, data);
 			var that = this;
 			this.send("getOwnerInfo", null, function(data){
-				console.log("@project info", data);
 				that.setProjectTimer(data);
 			});
 		},
@@ -23796,6 +23963,18 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.copyPopup = pop;
 		},
 		
+		a_projectHasExpired: function(){
+			// reset all
+			document.body.innerHTML = "";
+			var pop = new MT.ui.Popup("Your project has expired", "");
+			this.plugins.auth.buildGoPro(pop.content);
+			var t = this;
+			pop.addButton("Home", function(){
+				t.a_goToHome();
+			});
+			pop.center();
+		},
+		
 		setUpData: function(){
 			document.body.style.backgroundColor = this.data.backgroundColor;
 			this.emit("updateData", this.data);
@@ -23808,32 +23987,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			var button = this.plugins.auth.mainButton;
-			
-			var min = new Date(Date.parse("2015-03-01"));
-			if(data.created < min.getTime()){
-				data.created = min.getTime();
-			}
-			
-			
 			var diff = Date.now() - data.now;
 			
 			//var 
 			button.addClass("expires");
 			button.el.title = "Project will expire";
 			
-			var second = 1000;
-			var minute = 60 * second;
-			var hour = 60 * minute;
-			var day = 24 * hour;
-			
-			var expire = (30 * day + (data.created)) - Date.now() + diff;
-			if(expire < day){
-				data.created = Date.now() - 29*day - second;
-			}
-			
 			this.updateExpireTime(button, data.created, diff);
-			
-			
 		},
 		
 		updateExpireTime: function(button, created, off){
@@ -23844,6 +24004,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var day = 24 * hour;
 			
 			var expire = (30 * day + (created)) - Date.now() + off;
+			if(expire < 0){
+				this.a_projectHasExpired();
+				return;
+			}
+			
+			
 			var dd = "", hh = "", mm = "", ss = "";
 			
 			var days = Math.floor(expire / day);
@@ -23890,10 +24056,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			window.location.reload();
 		},
 		// user gets here without hash
+		_newPop: null,
 		newProject: function(){
-			// enable Analytics
-			this.plugins.analytics.installUI(this.ui);
-			
+			if(this._newPop){
+				this._newPop.show();
+				return;
+			}
+			if(!this.id){
+				// enable Analytics
+				this.plugins.analytics.installUI(this.ui);
+			}
 			
 			var that = this;
 			var pop = new MT.ui.Popup("Welcome to MightyEditor", "");
@@ -23919,11 +24091,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				w.opener=null; w.location.href="http://mightyfingers.com/editor-features/";
 			});
 			
-			
-			
 			newProject.show(pop.content);
 			docs.show(pop.content)
-			
 			
 			var recentPanel = this.ui.createPanel("Recent Projects");
 			recentPanel.hide();
@@ -23939,11 +24108,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			recentPanel.show(projects);
 			
-			
-			// enable Auth
-			this.plugins.auth.installUI(this.ui);
-			this.plugins.auth.show(recentPanel, true);
-			
 			var tmp = null;
 			var items = this.getLocalProjects();
 			var list = this.makeProjectList(items);
@@ -23952,12 +24116,22 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				list.innerHTML = '<p>If you can\'t see you recent projects - try to click <a href="http://mightyeditor.mightyfingers.com/#no-redirect">here</a></p>';
 			}
 			
-			
 			recentPanel.content.el.appendChild(list);
 			
-			pop.on("close", function(){
-				that.newProjectNext();
-			});
+			// enable Auth
+			if(!this.id){
+				this.plugins.auth.installUI(this.ui);
+				this.plugins.auth.show(recentPanel, true);
+				pop.on("close", function(){
+					that.newProjectNext();
+				});
+			}
+			else{
+				this.plugins.auth.show(recentPanel, true);
+				pop.showClose();
+			}
+			
+			this._newPop = pop;
 		},
 		
 		getLocalProjects: function(){
@@ -23987,9 +24161,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var p, del;
 			for(var i=0; i<items.length; i++){
 				p = document.createElement("div");
-				p.className = "projectItem"
-				p.innerHTML = items[i].title + " ("+items[i].id+") <span class=\"remove\"></span>";
+				p.className = "projectItem";
+				if(items[i].id != items[i].title){
+					p.innerHTML = items[i].title + " ("+items[i].id+") <span class=\"remove\"></span>";
+				}
+				else{
+					p.innerHTML = items[i].title +" <span class=\"remove\"></span>";
+				}
 				p.project = items[i].id;
+				p.item = items[i];
 				
 				
 				list.appendChild(p);
@@ -24003,7 +24183,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			list.onclick = function(e){
 				if(e.target.className == "remove"){
 					if(ondelete){
-						ondelete(e.target.parentNode.project, function(remove){
+						ondelete(e.target.parentNode, function(remove){
 							if(remove){
 								removeItem(e);
 							}
@@ -24016,14 +24196,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				if(e.target.project){
 					if(onclick){
-						onclick(e.target.parentNode.project, function(remove){
+						onclick(e.target, function(remove){
 							if(remove){
 								removeItem(e);
 							}
 						});
 					}
-					e.preventDefault();
-					window.location.hash = e.target.project;
+					else{
+						e.preventDefault();
+						window.location.hash = e.target.project;
+					}
 				}
 			};
 			return list;
@@ -24152,7 +24334,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.createSettings();
 			
 			this.panel.addButton(null, "logo",  function(e){
-				
+				window.location = window.location.toString().split("#")[0];
 				//that.setPop.show();
 			});
 			
@@ -24161,10 +24343,20 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.list = new MT.ui.List([
 				{
-					label: "Home",
+					label: "Save",
 					className: "",
 					cb: function(){
-						window.location = window.location.toString().split("#")[0];
+						that.send("saveState");
+						that.list.hide();
+						that.plugins.notification.show("Saved", "...", 1000);
+					}
+				},
+				{
+					label: "Save As...",
+					className: "",
+					cb: function(){
+						that.saveAs();
+						that.list.hide();
 					}
 				},
 				{
@@ -24190,34 +24382,68 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 		},
 		
+		saveAs: function(){
+			var pop = new MT.ui.Popup("Save project state", "");
+			pop.showClose();
+			var that = this;
+			
+			var d = {name: ""};
+			var inp = new MT.ui.Input(this.ui, {key: "name", type: "text", placeholder: "name"}, d, function(){
+				
+			});
+			inp.addClass("full-size");
+			inp.show(pop.content);
+			inp.enableInput();
+			inp.input.setAttribute("placeholder", "name");
+			
+			pop.addButton("Save", function(){
+				that.send("saveState", d.name);
+				that.plugins.notification.show("Saved", d.name, 1000);
+				pop.hide();
+			});
+			
+			pop.addButton("Cancel", function(){
+				pop.hide();
+			});
+		},
+		
 		clone: function(us){
-			if(this.sub == "" && !us){
-				window.location = window.location.toString()+"-copy";
-				return;
-			}
-			if(this.sub == "us" && us){
-				window.location = window.location.toString()+"-copy";
-				return;
-			}
-			
-			// alien server
-			if(this.sub == "" && us){
+			var that = this;
+			this.send("allowTmpCopy", null, function(allow){
+				if(!allow){
+					that.plugins.notification.show("Project copy", "access denied", 1000);
+					return;
+				}
 				
-				var loc = window.location.toString()+"-copy";
-				loc = loc.replace("://", "://us.");
+				if(that.sub == "" && !us){
+					window.location = window.location.toString()+"-copy";
+					return;
+				}
+				if(that.sub == "us" && us){
+					window.location = window.location.toString()+"-copy";
+					return;
+				}
 				
-				window.location = loc;
-				return;
-			}
-			
-			if(this.sub == "us" && !us){
-				
-				var loc = window.location.toString()+"-copy";
-				loc = loc.replace("://us.", "://");
-				
-				window.location = loc;
-				return;
-			}
+				// alien servers
+				// eu -> us
+				if(that.sub == "" && us){
+					
+					var loc = window.location.toString()+"-copy";
+					loc = loc.replace("://", "://us.");
+					
+					window.location = loc;
+					return;
+				}
+				// us -> eu
+				if(that.sub == "us" && !us){
+					
+					var loc = window.location.toString()+"-copy";
+					loc = loc.replace("://us.", "://");
+					
+					window.location = loc;
+					return;
+				}
+			});
 		},
 		getPackageName: function(){
 			var dom = window.location.hostname.split(".").shift();
@@ -24247,7 +24473,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				bgColor: new MT.ui.Input(this.ui, {key: "backgroundColor", type: "color"}, this.data),
 				webGl: new MT.ui.Input(this.ui, {key: "webGl", type: "bool"}, this.data),
 				srcEdFontSize: new MT.ui.Input(this.ui, {key: "fontSize", type: "number"}, this.data.sourceEditor),
-				autocomplete: new MT.ui.Input(this.ui, {key: "autocomplete", type: "bool"}, this.data.sourceEditor)
+				autocomplete: new MT.ui.Input(this.ui, {key: "autocomplete", type: "bool"}, this.data.sourceEditor),
+													 
+				skipFrames: new MT.ui.Input(this.ui, {key: "skipFrames", type: "bool"}, this.data.timeline),
+				roundPosition: new MT.ui.Input(this.ui, {key: "roundPosition", type: "bool"}, this.data)
 			};
 			
 			
@@ -24263,14 +24492,17 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			this.setFields = {
 				project: new MT.ui.Fieldset("Project"),
 				ui: new MT.ui.Fieldset("UI"),
-				sourceEditor: new MT.ui.Fieldset("SourceEditor")
+				sourceEditor: new MT.ui.Fieldset("SourceEditor"),
+				timeline: new MT.ui.Fieldset("Timeline"),
+				misc: new MT.ui.Fieldset("Misc")
 			};
 			
 			
 			
-			this.setPanel = new MT.ui.Panel("Personalise");
+			this.setPanel = new MT.ui.Panel("Properties");
 			this.setPanel.removeBorder();
 			this.setPanel.fitIn();
+			
 			MT.ui.addClass(this.setPanel.el, "editor-settings");
 			
 			this.setPanel.on("show", function(){
@@ -24302,8 +24534,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				})
 			};
 			
-			
-			
 			this.setInputs.label.show(this.setFields.project.el);
 			this.setInputs.package.show(this.setFields.project.el);
 			
@@ -24314,6 +24544,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			this.setInputs.srcEdFontSize.show(this.setFields.sourceEditor.el);
 			this.setInputs.autocomplete.show(this.setFields.sourceEditor.el);
+			
+			this.setInputs.skipFrames.show(this.setFields.timeline.el);
+			this.setInputs.roundPosition.show(this.setFields.misc.el);
+			
 			
 			for(var i in this.setFields){
 				this.setPanel.content.el.appendChild(this.setFields[i].el);
@@ -24326,9 +24560,35 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			var that = this;
 			
+			
+			var statePanel = new MT.ui.Panel("Saved states");
+			statePanel.fitIn();
 			this.plugins.auth.on("showProperties", function(panel){
 				panel.addJoint(that.setPanel);
 				lastData = JSON.stringify(that.data);
+				
+				panel.addJoint(statePanel);
+				that.send("getSavedStates", null, function(states){
+					for(var i=0; i<states.length; i++){
+						states[i].title = states[i].name;
+						states[i].id = states[i].date;
+					}
+					
+					var list = that.makeProjectList(states, function(item, remove){
+						console.log("DELETE:", item);
+						that.send("removeState", item.item.name);
+						remove(true);
+					}, function(item, remove){
+						console.log("LOAD:", item);
+						that.send("loadState", item.item.name, function(){
+							window.location.hash = that.id + "/0";
+							window.location.reload();
+						});
+					});
+					statePanel.content.el.innerHTML = "";
+					statePanel.content.el.appendChild(list);
+				});
+				
 			});
 			
 			this.plugins.auth.on("hideProperties", function(){
@@ -24336,6 +24596,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				that.emit("updateData", that.data);
 				that.setUpData();
 			});
+			
 		},
 		
 		showList: function(){
@@ -24522,7 +24783,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 (function(window){
 	"use strict";
 	window.MT = createClass("MT");
-	var hostInInterest = "tools.mightyfingers.com:8080";
+	var hostInInterest = "tools.mightyfingers.com";
 	if(window.release){
 		hostInInterest = "mightyeditor.mightyfingers.com";
 	}

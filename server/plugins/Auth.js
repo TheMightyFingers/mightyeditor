@@ -46,6 +46,10 @@ MT.extend(MT.core.BasicPlugin)(
 			
 		},
 		
+		a_register: function(d, cb){
+			cb && cb();
+		},
+		
 		a_checkSession: function(sessionId){
 			this.proceed(sessionId);
 		},
@@ -250,7 +254,7 @@ MT.extend(MT.core.BasicPlugin)(
 			self.serverConfig = config;
 			self.config = config.auth;
 			self.request = require('request');
-			self.postman = new MT.plugins.Postman(config);
+			self.postman = global.postman;
 			
 			// init db
 			this.initDB();

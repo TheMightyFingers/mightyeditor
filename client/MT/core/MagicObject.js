@@ -6,8 +6,9 @@ MT(
 		this.data = data;
 		this.parent = parent;
 		this.map = map;
-		this.settings = this.map.project.plugins.settings;
-		this.manager = this.map.project.plugins.objectmanager;
+		this.project = this.map.project;
+		this.settings = this.project.plugins.settings;
+		this.manager = this.project.plugins.objectmanager;
 		
 		this.game = map.game;
 		this.isRemoved = false;
@@ -889,7 +890,7 @@ MT(
 			this.y -= dyt;
 			mi.y = y;
 			
-			if(e.ctrlKey && angle == 0){
+			if(e.ctrlKey && angle % Math.PI*2 == 0){
 				var gx = this.map.settings.gridX;
 				var gy = this.map.settings.gridY;
 				
@@ -1325,6 +1326,9 @@ MT(
 			if(this.data.x == x){
 				return;
 			}
+			if(this.project.data.roundPosition){
+				x = Math.floor(x);
+			}
 			this.object.x = x;
 			this.data.x = x;
 			this.updateBox();
@@ -1342,6 +1346,9 @@ MT(
 			}
 			if(this.data.y == y){
 				return;
+			}
+			if(this.project.data.roundPosition){
+				y = Math.floor(y);
 			}
 			this.object.y = y;
 			this.data.y = y;
@@ -1494,6 +1501,9 @@ MT(
 			this.data.assetId = id;
 			this.object.loadTexture(id);
 			
+			
+			
+			
 			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
    
@@ -1520,9 +1530,29 @@ MT(
 			this.data.frame = val;
 			this.object.frame = val;
 			
+			var frameInfo = this.map.game.cache._images[this.assetId];
+			if(frameInfo.frameData.total > 1){
+				this.data.frameName = frameInfo.frameData.getFrame(val).name;
+			}
+			else{
+				delete this.data.frameName;
+			}
+			
 			this.manager.emit(MT.OBJECT_UPDATED_LOCAL, this);
 		},
 		get frame(){
+			if(this.data.frameName){
+				var frameInfo = this.map.game.cache._images[this.assetId];
+				var frame = frameInfo.frameData.getFrameByName(this.data.frameName);
+				if(frame && this.data.frame != frame.index){
+					console.log("Frame changed by name!");
+					this.frame = frame.index;
+				}
+				
+				return this.data.frame;
+			}
+			
+			
 			return this.data.frame;
 		},
    

@@ -90,9 +90,9 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 				return;
 			}
 			this.altKeyReady = false;
+			
 			var copy = [];
 			var sel = this.map.selector;
-
 			sel.sort(function(a, b){
 				return (a.object.z - b.object.z);
 			});
@@ -100,8 +100,6 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 			sel.forEach(function(o){
 				copy.push(o.data);
 			});
-			
-			
 			
 			var bounds = null;
 			var cx = this.map.game.camera.x;
@@ -117,18 +115,17 @@ MT.extend("core.BasicTool").extend("core.Emitter")(
 					continue;
 				}
 				sprite.object.updateTransform();
-				
-				//bounds = sprite.object.getBounds();
-				////data[i].x = bounds.x + cx;
-				//data[i].y = bounds.y + cy;
-				
 				sel.add(sprite);
+				
 			}
 			if(data.length > 0){
-				this.map.activeObject = null;
+				this.map.activeObject = this.map.getById(data[0].id);
+				
 				this.map.emit("select", this.map.settings);
 				this.initMove(e);
 			}
+			
+			
 		},
 		mouseMove: function(e){
 			if(!this.mDown){

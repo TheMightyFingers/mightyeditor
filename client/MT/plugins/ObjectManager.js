@@ -29,7 +29,7 @@ MT.OBJECTS_RECEIVED = "OBJECTS_RECEIVED";
 MT.OBJECTS_UPDATED = "OBJECTS_UPDATED";
 MT.OBJECTS_SYNC = "OBJECTS_SYNC";
 
-
+MT.requireFile("js/lodash.js");
 MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	MT.plugins.ObjectManager = function(project){
 		MT.core.Emitter.call(this);
@@ -65,6 +65,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					className: "add-group",
 					cb: function(){
 						that.createGroup();
+					}
+				},
+				{
+					label: "Duplicate selected object (ctrl + D)",
+					className: "duplicate",
+					cb: function(){
+						that.project.plugins.tools.duplicate();
 					}
 				},
 				/*{
@@ -154,9 +161,13 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 					if(el.isFolder && el.data.type == MT.objectTypes.GROUP){
 						that.activeGroup = el.data;
 					}
+					else{
+						if(obj.parent && obj.parent.magic){
+							that.activeGroup = obj.parent.magic.data;
+						}
+					}
 					el.addClass("selected.active");
 					that.selector.add(el);
-					
 				}
 			});
 			
@@ -228,7 +239,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		
-		insertObject: function(obj, silent, data, active){
+		insertObject: function(obj, silent, data, skipActive){
 			data = data || this.tv.getData();
 			//var data = this.tv.getData();
 			var map = this.project.plugins.mapeditor;
@@ -243,9 +254,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			
 			
-			if(active){
-				obj.x -= active.x;
-				obj.y -= active.y;
+			if(!skipActive && active){
+				active = map.getById(active.id);
+				while(active){
+					obj.x -= active.x;
+					obj.y -= active.y;
+					active = active.parent;
+					if(active){
+						active = active.magic;
+					}
+				}
 			}
 			
 			obj.id = "tmp"+this.mkid();
@@ -305,8 +323,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				type: MT.objectTypes.SPRITE,
 				anchorX: asset.anchorX,
 				anchorY: asset.anchorY,
-				userData: JSON.parse(JSON.stringify(asset.userData || {})),
-				physics: JSON.parse(JSON.stringify(asset.physics || {})),
+				userData: _.cloneDeep((asset.userData || {})),
+				physics: _.cloneDeep((asset.physics || {})),
 				scaleX: 1,
 				scaleY: 1,
 				angle: 0,
@@ -359,8 +377,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				cont = data;
 			}
 			
-			
-			
 			var tmpName= "Group";
 			var name = tmpName;
 			for(var i=0; i<cont.length; i++){
@@ -395,43 +411,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.sync();
 			}
 			return group;
-		},
-		
-		createMovieClip: function(silent){
-			var data = this.tv.getData();
-			
-			var tmpName= "Movie";
-			var name = tmpName;
-			for(var i=0; i<data.length; i++){
-				if(data[i].name == name){
-					name = tmpName+" "+i;
-				}
-			}
-			
-			var group = {
-				id: "tmp"+this.mkid(),
-				name: name,
-				x: 0,
-				y: 0,
-				type: MT.objectTypes.MOVIE_CLIP,
-				angle: 0,
-				contents: [],
-				isVisible: 1,
-				isLocked: 0,
-				isFixedToCamera: 0,
-				alpha: 1
-			};
-			
-			data.unshift(group);
-			
-			this.tv.merge(data);
-			
-			if(!silent){
-				this.update();
-				this.sync();
-			}
-			return group;
-			
 		},
 		
 		createTileLayer: function(silent){
@@ -480,7 +459,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		copy: function(obj, x, y, name, silent){
 			
 			name = name || obj.name + this.getNewNameId(obj.name, this.tv.getData());
-			var clone = JSON.parse(JSON.stringify(obj));
+			var clone = _.cloneDeep(obj);
 			clone.name = name;
 			clone.x = x;
 			clone.y = y;
@@ -499,14 +478,21 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			var name, obj, clone;
 			var out = [];
 			
-			var insertIntoGroup = false;
+			
+			
+			var parent = this.activeGroup;
+			this.activeGroup = null;
+			
 			for(var i=0; i<arr.length; i++){
 				obj = arr[i];
 				name = obj.name + this.getNewNameId(obj.name, data);
-				clone = JSON.parse(JSON.stringify(obj));
+				clone = _.cloneDeep(obj);
 				clone.name = name;
+				if(parent && obj.id != parent.id){
+					console.log("WILL HAVE PARENT", parent);
+					this.activeGroup = parent;
+				}
 				
-				insertIntoGroup = (this.activeGroup ? this.activeGroup.id != clone.id : false);
 				
 				this.cleanUpClone(clone);
 				
@@ -515,7 +501,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				}
 				
 				out.push(clone);
-				this.insertObject(clone, true, data, insertIntoGroup);
+				
+				
+				this.insertObject(clone, true, data, true);
+				this.activeGroup = null;
 			}
 			
 			this.tv.rootPath = this.project.path

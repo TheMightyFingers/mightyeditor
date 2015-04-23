@@ -57,10 +57,10 @@ canvas{
 	background-position: 50% 50%
 }
 .selectable{
-	user-select: text;
-	-webkit-user-select: text;
-	-moz-user-select: text;
-	-ms-user-select: text;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+	-moz-user-select: text !important;
+	-ms-user-select: text !important;
 }
 body, html {
 	width: 100%;
@@ -709,18 +709,20 @@ body>div.ui-wrapper {
 	/*pointer-events: none;*/
 }
 .ui-popup {
-	margin: 0 auto;
-	top: 30%;
-	width: 50%;
-	border: 3px solid rgba(0, 0, 0, .7);
-	max-height: 100%;
-	padding: 0;
-	left: 0;
-	right: 0;
-	position: absolute;
-	background: inherit;
-	text-shadow: 0 0 1px rgba(0, 0, 0, .7);
-	min-height: 150px;
+  margin: 0 auto;
+  top: 30%;
+  width: 50%;
+  border: 1px solid rgba(0, 0, 0, .7);
+  max-height: 100%;
+  padding: 0;
+  left: 0;
+  right: 0;
+  position: absolute;
+  background-color: inherit;
+  text-shadow: 0 0 1px rgba(0, 0, 0, .7);
+  min-height: 150px;
+  border-radius: 5px;
+  background-image: linear-gradient(to bottom, rgba(50, 50, 50, .8) 0, rgba(50, 50, 50, .9) 100%);
 }
 .ui-popup-with-head div.ui-popup-content {
 	/*text-align: center;*/
@@ -739,15 +741,15 @@ div.ui-popup-head {
 	cursor: default;
 }
 div.ui-popup-content {
-	text-align: center;
-	padding: 0 10px 20px;
-	background-color: rgba(255, 255, 255, .1);
-	background-image: radial-gradient(ellipse at center, rgba(255, 255, 255, 0) 67%, rgba(0, 0, 0, .5) 150%);
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	left: 0;
-	right: 0;
+  text-align: center;
+  padding: 0 10px 20px;
+  background-color: rgba(255, 255, 255, .1);
+  background-image: radial-gradient(ellipse at 5% 3%, rgba(255, 255, 255, 0) 25%, rgba(0, 0, 0, 1) 150%);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
 div.ui-popup-content p{
@@ -2125,7 +2127,7 @@ pointer-events: none;
 }
 
 .goPro{
-	position: absolute;
+	/*position: absolute;*/
 	top: 0;
 	left: 0;
 	right: 0;
@@ -2160,7 +2162,7 @@ font-size: 15px;
 color: #bbb;
 text-align: center;
 width: 50%;
-max-height: 200px;
+/*max-height: 200px;*/
 }
 
 .side.basic {
@@ -2315,6 +2317,10 @@ text-shadow: 0 1px 1px #000;
 	content: "\f1b3";
 }
 
+.ui-button.panel-head-button.duplicate:before{
+	content: "\f0c5";
+}
+
 .ui-mysettings .editor-settings .ui-button {
 position: relative;
 width: auto;
@@ -2369,4 +2375,46 @@ right: 5px;
 	-ms-user-select: initial !important;
 	-moz-user-select: initial !important;
 	user-select: initial !important;
+}
+
+.ui-input.full-size{
+	text-indent: 0;
+	border: none;
+}
+
+.full-size .ui-input-label {
+  display: none;
+}
+
+.full-size a.ui-input-value, .full-size input.ui-input{
+  float: none;
+  border: 1px solid rgba(0, 0, 0, .6);
+  padding: 8px;
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: none;
+  text-align: left !important;
+  background-color: rgba(200, 200, 200, .8);
+  text-shadow: none;
+  color: #666;
+  font-weight: 400;
+  height: 34px;
+  overflow: visible;
+  
+}
+.full-size input.ui-input{
+position: absolute;
+top: 0 !important;
+  left: 0 !important;
+  padding: 0 4px !important;
+  margin: 0 !important;
+  width: 100% !important;
+  color: #333;
+  background-color: #efefef;
+}
+
+fieldset > div.ui-input:last-of-type {
+  margin-bottom: 0;
+  border-bottom: 0;
 }

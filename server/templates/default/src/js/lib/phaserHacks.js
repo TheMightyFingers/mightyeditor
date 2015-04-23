@@ -109,7 +109,7 @@
 		this.updateTexture();
 	};
 	// add scaleX/Y and anchorX/Y - so we can skip extra tweens
-	Object.defineProperty(Phaser.Sprite.prototype, "scaleX", {
+	Object.defineProperty(PIXI.Sprite.prototype, "scaleX", {
 		set: function(val){
 			this.scale.x = val;
 		},
@@ -118,7 +118,7 @@
 		}
 	});
 	
-	Object.defineProperty(Phaser.Sprite.prototype, "scaleY", {
+	Object.defineProperty(PIXI.Sprite.prototype, "scaleY", {
 		set: function(val){
 			this.scale.y = val;
 		},
@@ -127,7 +127,7 @@
 		}
 	});
 	
-	Object.defineProperty(Phaser.Sprite.prototype, "anchorX", {
+	Object.defineProperty(PIXI.Sprite.prototype, "anchorX", {
 		set: function(val){
 			this.anchor.x = val;
 		},
@@ -136,7 +136,7 @@
 		}
 	});
 	
-	Object.defineProperty(Phaser.Sprite.prototype, "anchorY", {
+	Object.defineProperty(PIXI.Sprite.prototype, "anchorY", {
 		set: function(val){
 			this.anchor.y = val;
 		},
@@ -397,6 +397,7 @@
 			this._subtweens.push(tween);
 		},
 		_stop: function(reset){
+			
 			mt.game.plugins.remove(this.manager);
 			this.manager.removeAll();
 			this.manager.update();
@@ -416,12 +417,18 @@
 					tween.stop();
 				}
 			}
-			
+			this.isStarted = false;
 			if(reset){
 				this.reset();
 			}
 		},
+		isStarted: false,
 		start: function(){
+			if(this.isStarted){
+				this.stop(true);
+			}
+			this.isStarted = true;
+			
 			var i, j, l, tween;
 			if(!this._subtweens.length && !this._tweens.length){
 				return this;
@@ -546,7 +553,7 @@
 		
 		_complete: function(){
 			this.onComplete.dispatch(this);
-			this._stop();
+			this._stop(true);
 			if(this.isLooping){
 				this.start();
 			}

@@ -1,4 +1,4 @@
-importScripts("jshint.js");
+importScripts("jshint.min.js");
 
 onmessage = function(e) {
 	var str = e.data[0];
