@@ -1136,6 +1136,8 @@ fieldset div.ui-button:active {
 	cursor: default;
 	line-height: 20px;
 	letter-spacing: 1.4px;
+	background-color: inherit;
+	
 }
 .ui-popup.starting-popup div.ui-popup-content {
 	position: absolute;
