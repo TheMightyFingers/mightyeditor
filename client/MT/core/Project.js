@@ -6,7 +6,7 @@ MT.require("ui.Fieldset");
 MT.require("plugins.HelpAndSupport");
 MT.require("plugins.FontManager");
 MT.require("plugins.MapManager");
-MT.require("plugins.SourceEditor");
+//MT.require("plugins.SourceEditor");
 MT.require("plugins.GamePreview");
 MT.require("plugins.Physics");
 MT.require("plugins.UserData");
@@ -56,7 +56,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"HelpAndSupport",
 			"FontManager",
 			"MapManager",
-			"SourceEditor",
+//			"SourceEditor",
 			"GamePreview",
 			"Physics",
 			"UserData",

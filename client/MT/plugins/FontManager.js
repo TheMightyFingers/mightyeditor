@@ -21,6 +21,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 	{
 		installUI: function(){
 			var that = this;
+			if(!this.project.plugins.sourceeditor){
+				return;
+			}
 			this.project.plugins.sourceeditor.on(MT.FILE_UPLOADED, function(path){
 				if(MT.core.Helper.isFont(path)){
 					that.send("convertFont", path);
