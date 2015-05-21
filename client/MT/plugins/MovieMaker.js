@@ -953,7 +953,7 @@ MT.extend("core.Emitter")(
 			if(this.framesToCopy){
 				for(var i=0; i<this.framesToCopy.length; i++){
 					info = this.framesToCopy[i];
-					frame = _.copyDeep(info.frame);
+					frame = _.cloneDeep(info.frame);
 					frame.keyframe = this.activeFrame;
 					info.data.frames.push(frame);
 					this.sortFrames(info.data.frames);
@@ -967,7 +967,7 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			var frames = this.frameBuffer.frames;
-			frame = _.copyDeep(frames[this.frameBuffer.index]);
+			frame = _.cloneDeep(frames[this.frameBuffer.index]);
 			
 			frame.keyframe = this.activeFrame;
 			frames.push( frame );
