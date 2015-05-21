@@ -17904,16 +17904,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		checkSession: function(){
 			var sessionId = MT.core.Helper.getCookie(this.sessionCookie);
-			if(sessionId){
+			//if(sessionId){
 				this.send("checkSession", sessionId);
 				return;
-			}
-			else{
+			//}
+			/*else{
 				if(this.onstart){
-					this.onstart();
+					this.onstart(true);
 					this.onstart = null;
 				}
-			}
+			}*/
 		},
 		
 		a_sessionId: function(id){
@@ -17930,7 +17930,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.project.a_goToHome();
 			}
 			if(this.onstart){
-				this.onstart();
+				this.onstart(true);
 				this.onstart = null;
 			}
 			else{
@@ -17949,7 +17949,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			if(!this.project.isReady){
 				if(this.onstart){
-					this.onstart();
+					this.onstart(true);
 					this.onstart = null;
 				}
 				this.standAlone = false;
@@ -17957,7 +17957,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			// first login call
 			if(this.onstart){
-				this.onstart();
+				this.onstart(true);
 				this.onstart = null;
 			}
 			
@@ -19032,7 +19032,7 @@ MT.extend("core.Emitter")(
 			if(this.framesToCopy){
 				for(var i=0; i<this.framesToCopy.length; i++){
 					info = this.framesToCopy[i];
-					frame = _.copyDeep(info.frame);
+					frame = _.cloneDeep(info.frame);
 					frame.keyframe = this.activeFrame;
 					info.data.frames.push(frame);
 					this.sortFrames(info.data.frames);
@@ -19046,7 +19046,7 @@ MT.extend("core.Emitter")(
 				return;
 			}
 			var frames = this.frameBuffer.frames;
-			frame = _.copyDeep(frames[this.frameBuffer.index]);
+			frame = _.cloneDeep(frames[this.frameBuffer.index]);
 			
 			frame.keyframe = this.activeFrame;
 			frames.push( frame );
