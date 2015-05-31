@@ -4,108 +4,17 @@
 
 (function(){
 	"use strict";
-	// fix align by wordWrapWidth
-	Phaser.Text.prototype.updateText = function () {
-		if(!this || !this.texture){
-			return;
-		}
-		this.texture.baseTexture.resolution = this.resolution;
+	
+	Phaser.TilemapLayer.prototype.getTileX = function (x) {
 
-		this.context.font = this.style.font;
+		// var tileWidth = this.tileWidth * this.scale.x;
+		return Math.floor(x / this._mc.tileWidth);
 
-		var outputText = this.text;
+	};
+	Phaser.TilemapLayer.prototype.getTileY = function (y) {
 
-		if (this.style.wordWrap)
-		{
-			outputText = this.runWordWrap(this.text);
-			maxLineWidth = this.wordWrapWidth;
-		}
+		// var tileWidth = this.tileWidth * this.scale.x;
+		return Math.floor(y / this._mc.tileHeight);
 
-		//split text into lines
-		var lines = outputText.split(/(?:\r\n|\r|\n)/);
-
-		//calculate text width
-		var lineWidths = [];
-		var maxLineWidth = 0;
-		var fontProperties = this.determineFontProperties(this.style.font);
-
-		for (var i = 0; i < lines.length; i++)
-		{
-			var lineWidth = this.context.measureText(lines[i]).width;
-			lineWidths[i] = lineWidth;
-			maxLineWidth = Math.max(maxLineWidth, lineWidth);
-		}
-
-		var width = maxLineWidth + this.style.strokeThickness;
-
-		this.canvas.width = (width + this.context.lineWidth) * this.resolution;
-
-		//calculate text height
-		var lineHeight = fontProperties.fontSize + this.style.strokeThickness;
-
-		var height = lineHeight * lines.length + this.style.shadowOffsetY;
-
-		this.canvas.height = height * this.resolution;
-
-		this.context.scale(this.resolution, this.resolution);
-
-		if (navigator.isCocoonJS)
-		{
-			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-		}
-
-		this.context.fillStyle = this.style.fill;
-		this.context.font = this.style.font;
-		this.context.strokeStyle = this.style.stroke;
-		this.context.textBaseline = 'alphabetic';
-		this.context.shadowOffsetX = this.style.shadowOffsetX;
-		this.context.shadowOffsetY = this.style.shadowOffsetY;
-		this.context.shadowColor = this.style.shadowColor;
-		this.context.shadowBlur = this.style.shadowBlur;
-		this.context.lineWidth = this.style.strokeThickness;
-		this.context.lineCap = 'round';
-		this.context.lineJoin = 'round';
-
-		var linePositionX;
-		var linePositionY;
-
-		this._charCount = 0;
-
-		//draw lines line by line
-		for (i = 0; i < lines.length; i++)
-		{
-			linePositionX = this.style.strokeThickness / 2;
-			linePositionY = (this.style.strokeThickness / 2 + i * lineHeight) + fontProperties.ascent;
-
-			if (this.style.align === 'right')
-			{
-				linePositionX += maxLineWidth - lineWidths[i];
-			}
-			else if (this.style.align === 'center')
-			{
-				linePositionX += (maxLineWidth - lineWidths[i]) / 2;
-			}
-
-			linePositionY += this._lineSpacing;
-
-			if (this.colors.length > 0)
-			{
-				this.updateLine(lines[i], linePositionX, linePositionY);
-			}
-			else
-			{
-				if (this.style.stroke && this.style.strokeThickness)
-				{
-					this.context.strokeText(lines[i], linePositionX, linePositionY);
-				}
-
-				if (this.style.fill)
-				{
-					this.context.fillText(lines[i], linePositionX, linePositionY);
-				}
-			}
-		}
-
-		this.updateTexture();
 	};
 })();

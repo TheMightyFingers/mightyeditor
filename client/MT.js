@@ -9558,11 +9558,11 @@ MT.namespace('plugins');
 (function(){
 	var phaserSrc = "js/phaser/";
 	var pixiSrc = phaserSrc;
-	phaserSrc += (window.release ? "phaser.min.js" : "phaser.js");
+	phaserSrc += (window.release ? "phaser.min.js" : "phaser2.2.2.js");
 	pixiSrc += (window.release ? "pixi.min.js" : "pixi.js");
 	
 	MT.requireFilesSync([
-		phaserSrc
+		phaserSrc, "js/phaserHacks.js"
 	]);
 	
 	/*
@@ -16692,9 +16692,7 @@ MT(
 		DBLCLICK: "dblclick",
 		
 		enable: function(){
-			var that = this;
 			for(var i in this.events){
-				
 				this.addEvent(i);
 			}
 		},
@@ -16735,11 +16733,11 @@ MT(
 		},
 		
 		off: function(type, cb){
-			var ev = null;
+			var ev = null, j=0;
 			
 			if(cb !== void(0)){
 				ev = this.events[type];
-				for(var j=0; j<ev.length; j++){
+				for(j=0; j<ev.length; j++){
 					if(ev[j] == cb){
 						ev[j] = ev[ev.length-1];
 						ev.length = ev.length-1;
@@ -16750,7 +16748,7 @@ MT(
 			
 			for(var i in this.events){
 				ev = this.events[i];
-				for(var j=0; j<ev.length; j++){
+				for(j=0; j<ev.length; j++){
 					if(ev[j] == cb){
 						ev[j] = ev[ev.length-1];
 						ev.length = ev.length-1;
@@ -16788,12 +16786,36 @@ MT(
 			var that = this;
 			var cb = function(e){
 				if(e.x == void(0)){
-					e.x = e.pageX;
-					e.y = e.pageY;
+					Object.defineProperties(e, {
+						x: {
+							get: function(){
+								return e.pageX;
+							}
+						},
+						y: {
+							get: function(){
+								return e.pageY;
+							}
+						}
+					});
+					//e.x = e.pageX;
+					//e.y = e.pageY;
 				}
 				if(e.offsetX === void(0)){
-					e.offsetX = e.layerX;
-					e.offsetY = e.layerY;
+					Object.defineProperties(e, {
+						offsetX: {
+							get: function(){
+								return e.layerX;
+							}
+						},
+						layerY: {
+							get: function(){
+								return e.layerY;
+							}
+						}
+					});
+					//e.offsetX = e.layerX;
+					//e.offsetY = e.layerY;
 				}
 				
 				that.mouse.mx = e.pageX - that.mouse.x;
@@ -16819,8 +16841,18 @@ MT(
 			var that = this;
 			var cb = function(e){
 				if(e.x == void(0)){
-					e.x = e.pageX;
-					e.y = e.pageY;
+					Object.defineProperties(e, {
+						x: {
+							get: function(){
+								return e.pageX;
+							}
+						},
+						y: {
+							get: function(){
+								return e.pageY;
+							}
+						}
+					});
 				}
 				that.mouse.down = true;
 				that.mouse.lastClick = e;
@@ -16835,8 +16867,18 @@ MT(
 			var that = this;
 			var cb = function(e){
 				if(e.x == void(0)){
-					e.x = e.pageX;
-					e.y = e.pageY;
+					Object.defineProperties(e, {
+						x: {
+							get: function(){
+								return e.pageX;
+							}
+						},
+						y: {
+							get: function(){
+								return e.pageY;
+							}
+						}
+					});
 				}
 				that.mouse.down = false;
 				that.mouse.lastClick = e;
@@ -16864,7 +16906,13 @@ MT(
 			var cb = function(e){
 				e = e || event;
 				if(e.ctrlKey){
-					e.metaKey = e.ctrlKey;
+					Object.defineProperties(e, {
+						metaKey: {
+							get: function(){
+								return this.metaKey;
+							}
+						}
+					});
 				}
 				
 				if(type.indexOf("drop") > -1 || type.indexOf("drag") > -1 ){
@@ -16882,8 +16930,7 @@ MT(
 		_mk_drop: function(e){
 			e.preventDefault();
 		}
-	   
-	   
+		
 	}
 );
 
@@ -17904,16 +17951,16 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		checkSession: function(){
 			var sessionId = MT.core.Helper.getCookie(this.sessionCookie);
-			//if(sessionId){
+			if(sessionId){
 				this.send("checkSession", sessionId);
 				return;
-			//}
-			/*else{
+			}
+			else{
 				if(this.onstart){
-					this.onstart(true);
+					this.onstart();
 					this.onstart = null;
 				}
-			}*/
+			}
 		},
 		
 		a_sessionId: function(id){
@@ -17930,7 +17977,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.project.a_goToHome();
 			}
 			if(this.onstart){
-				this.onstart(true);
+				this.onstart();
 				this.onstart = null;
 			}
 			else{
@@ -17949,7 +17996,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			if(!this.project.isReady){
 				if(this.onstart){
-					this.onstart(true);
+					this.onstart();
 					this.onstart = null;
 				}
 				this.standAlone = false;
@@ -17957,7 +18004,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			}
 			// first login call
 			if(this.onstart){
-				this.onstart(true);
+				this.onstart();
 				this.onstart = null;
 			}
 			

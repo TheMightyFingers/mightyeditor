@@ -2,11 +2,11 @@
 (function(){
 	var phaserSrc = "js/phaser/";
 	var pixiSrc = phaserSrc;
-	phaserSrc += (window.release ? "phaser.min.js" : "phaser.js");
+	phaserSrc += (window.release ? "phaser.min.js" : "phaser2.2.2.js");
 	pixiSrc += (window.release ? "pixi.min.js" : "pixi.js");
 	
 	MT.requireFilesSync([
-		phaserSrc
+		phaserSrc, "js/phaserHacks.js"
 	]);
 	
 	/*

@@ -57,9 +57,7 @@ MT(
 		DBLCLICK: "dblclick",
 		
 		enable: function(){
-			var that = this;
 			for(var i in this.events){
-				
 				this.addEvent(i);
 			}
 		},
@@ -100,11 +98,11 @@ MT(
 		},
 		
 		off: function(type, cb){
-			var ev = null;
+			var ev = null, j=0;
 			
 			if(cb !== void(0)){
 				ev = this.events[type];
-				for(var j=0; j<ev.length; j++){
+				for(j=0; j<ev.length; j++){
 					if(ev[j] == cb){
 						ev[j] = ev[ev.length-1];
 						ev.length = ev.length-1;
@@ -115,7 +113,7 @@ MT(
 			
 			for(var i in this.events){
 				ev = this.events[i];
-				for(var j=0; j<ev.length; j++){
+				for(j=0; j<ev.length; j++){
 					if(ev[j] == cb){
 						ev[j] = ev[ev.length-1];
 						ev.length = ev.length-1;
@@ -153,12 +151,36 @@ MT(
 			var that = this;
 			var cb = function(e){
 				if(e.x == void(0)){
-					e.x = e.pageX;
-					e.y = e.pageY;
+					Object.defineProperties(e, {
+						x: {
+							get: function(){
+								return e.pageX;
+							}
+						},
+						y: {
+							get: function(){
+								return e.pageY;
+							}
+						}
+					});
+					//e.x = e.pageX;
+					//e.y = e.pageY;
 				}
 				if(e.offsetX === void(0)){
-					e.offsetX = e.layerX;
-					e.offsetY = e.layerY;
+					Object.defineProperties(e, {
+						offsetX: {
+							get: function(){
+								return e.layerX;
+							}
+						},
+						layerY: {
+							get: function(){
+								return e.layerY;
+							}
+						}
+					});
+					//e.offsetX = e.layerX;
+					//e.offsetY = e.layerY;
 				}
 				
 				that.mouse.mx = e.pageX - that.mouse.x;
@@ -184,8 +206,18 @@ MT(
 			var that = this;
 			var cb = function(e){
 				if(e.x == void(0)){
-					e.x = e.pageX;
-					e.y = e.pageY;
+					Object.defineProperties(e, {
+						x: {
+							get: function(){
+								return e.pageX;
+							}
+						},
+						y: {
+							get: function(){
+								return e.pageY;
+							}
+						}
+					});
 				}
 				that.mouse.down = true;
 				that.mouse.lastClick = e;
@@ -200,8 +232,18 @@ MT(
 			var that = this;
 			var cb = function(e){
 				if(e.x == void(0)){
-					e.x = e.pageX;
-					e.y = e.pageY;
+					Object.defineProperties(e, {
+						x: {
+							get: function(){
+								return e.pageX;
+							}
+						},
+						y: {
+							get: function(){
+								return e.pageY;
+							}
+						}
+					});
 				}
 				that.mouse.down = false;
 				that.mouse.lastClick = e;
@@ -229,7 +271,13 @@ MT(
 			var cb = function(e){
 				e = e || event;
 				if(e.ctrlKey){
-					e.metaKey = e.ctrlKey;
+					Object.defineProperties(e, {
+						metaKey: {
+							get: function(){
+								return this.metaKey;
+							}
+						}
+					});
 				}
 				
 				if(type.indexOf("drop") > -1 || type.indexOf("drag") > -1 ){
@@ -247,7 +295,6 @@ MT(
 		_mk_drop: function(e){
 			e.preventDefault();
 		}
-	   
-	   
+		
 	}
 );
