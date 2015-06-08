@@ -1,3 +1,4 @@
+"use strict";
 MT.require("core.FS");
 
 MT.extend("core.BasicPlugin")(
@@ -29,6 +30,11 @@ MT.extend("core.BasicPlugin")(
 		},
 		
 		a_save: function(data){
+			this.b_save(data);
+			this.saveAndSync();
+		},
+		
+		b_save: function(data){
 			if(this.hashTable[data.id]){
 				for(var key in data){
 					this.hashTable[data.id][key] = data[key];
@@ -40,7 +46,6 @@ MT.extend("core.BasicPlugin")(
 			else{
 				this.hashTable[data.id] = data;
 			}
-			this.saveAndSync();
 		},
 		
 		a_updateData: function(data){
@@ -53,16 +58,13 @@ MT.extend("core.BasicPlugin")(
 		
 		updateData: function(data){
 			for(var i=0; i<data.length; i++){
-				this.a_save(data[i]);
-				if(data[i].contents){
-					this.updateData(data[i].contents);
-				}
+				this.b_save(data[i]);
 			}
 		},
 		
 		saveAndSync: function(){
 			this.project.db.save();
-			this.project.export.phaserDataOnly();
+			//this.project.export.phaserDataOnly();
 			//this.a_sendData();
 		},
 		
@@ -75,7 +77,6 @@ MT.extend("core.BasicPlugin")(
 				}
 				if(data[i].contents){
 					this.addIndices(data[i].contents);
-					continue;
 				}
 			}
 		}
