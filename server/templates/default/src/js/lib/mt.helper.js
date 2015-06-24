@@ -294,6 +294,7 @@
 		
 		getAssetByName: function(name, container){
 			container = container || this.data.assets.contents;
+			var ret;
 			for(var i in container){
 				if(container[i].name == name){
 					return container[i];
@@ -330,6 +331,7 @@
 		
 		getObjectByName: function(name, container){
 			container = container || this.data.objects.contents;
+			var ret;
 			for(var i in container){
 				if(container[i].name == name){
 					return container[i];
@@ -639,12 +641,18 @@
 		_addTileLayer: function(object, group){
 			group = group || this.game.world;
 			var map = this.game.add.tilemap(null, object.tileWidth, object.tileHeight, object.widthInTiles, object.heightInTiles);
-			
-			var tl = map.createBlankLayer(object.name, object.widthInTiles, object.heightInTiles, object.tileWidth, object.tileHeight);
+			// thanks to substandardgaussian
+			var tl = map.createBlankLayer(object.name, object.widthInTiles, object.heightInTiles, object.tileWidth, object.tileHeight, group);
 			
 			var nextId = 0;
 			var im = null;
 			var asset = "";
+			
+			// empty tilemaplayer - we can skip further action
+			if(!object.images){
+				return tl;
+			}
+			
 			for(var i=0; i<object.images.length; i++){
 				asset = this.getAssetById(object.images[i]);
 				
