@@ -17958,6 +17958,10 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		
 		checkSession: function(){
 			this.send("checkSession", sessionId);
+			if(this.onstart){
+				this.onstart();
+				this.onstart = null;
+			}
 			return;
 			var sessionId = MT.core.Helper.getCookie(this.sessionCookie);
 			if(sessionId){
