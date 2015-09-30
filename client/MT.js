@@ -1381,9 +1381,15 @@ MT.extend("core.Emitter")(
 		
 			var bounds = this.el.getBoundingClientRect();
 			var style = window.getComputedStyle(this.el);
-			for(var i in style){
-				this.input.style[i] = style[i];
-			}
+			// thanks nicklin
+			var styles = Object.keys(style);
+			var input = this.input;
+			styles.forEach(function(i){
+				input.style[i] = style[i];
+			});
+			//for(var i in style){
+			//	this.input.style[i] = style[i];
+			//}
 			this.input.style.zIndex = 10000;
 			this.input.style.position = "absolute";
 			this.input.style.visibility = "visible";
@@ -1402,6 +1408,7 @@ MT.extend("core.Emitter")(
 		}
 	}
 );
+
 //MT/plugins/tools/Physics.js
 MT.namespace('plugins.tools');
 MT.extend("core.BasicTool")(
@@ -17950,6 +17957,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		checkSession: function(){
+			this.send("checkSession", sessionId);
+			return;
 			var sessionId = MT.core.Helper.getCookie(this.sessionCookie);
 			if(sessionId){
 				this.send("checkSession", sessionId);

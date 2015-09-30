@@ -1012,6 +1012,8 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		checkSession: function(){
+			this.send("checkSession", sessionId);
+			return;
 			var sessionId = MT.core.Helper.getCookie(this.sessionCookie);
 			if(sessionId){
 				this.send("checkSession", sessionId);
