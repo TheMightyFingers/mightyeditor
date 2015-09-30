@@ -238,8 +238,8 @@ MT.extend(MT.core.BasicPlugin)(
 			})
 		},
 		
-		deleteProject: function(id){
-			this.db.run("DELETE FROM projects WHERE link = ? AND user_id = ?", id, this.user.id);
+		deleteProject: function(info){
+			this.db.run("DELETE FROM projects WHERE link = ? AND user_id = ?", info.project, this.user.id);
 		},
 		
 		//static methods;
