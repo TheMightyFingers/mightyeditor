@@ -524,15 +524,15 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		drawAtlasJSONImage: function(panel){
 			var map = this.project.plugins.mapeditor;
 			var game = map.game;
-			var cache = game.cache._images[panel.data.asset.id];
+			var cache = game.cache.getImage(panel.data.asset.id);//game.cache._images[panel.data.asset.id];
 			var ctx = null;
 			
 			ctx = panel.data.ctx;
 			
-			var frames = cache.frameData;
+			var frames = game.cache.getFrameData(panel.data.asset.id);//cache.frameData;
 			panel.data.frameData = frames;
 			
-			var src = cache.data;
+			var src = cache;//.data;
 			
 			var frame;
 			var startX = 0;
@@ -553,7 +553,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			
 			if(panel.title == "all_frames"){
-				var image = cache.data;
+				var image = cache;//.data;
 				
 				panel.data.canvas.width = image.width;
 				panel.data.canvas.height = image.height;
@@ -568,7 +568,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				for(var i=0; i<frames._frames.length; i++){
 					
 					frame = frames.getFrame(i);
-					pixi = PIXI.TextureCache[frame.uuid];
+					pixi = frame;//PIXI.TextureCache[frame.uuid];
 					
 					panel.data.rectangles.push(new Phaser.Rectangle(frame.x, frame.y, pixi.width, pixi.height));
 					if(this.activeFrame == i){
@@ -593,7 +593,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			
 			for(var i=panel.data.frames.start; i<panel.data.frames.end; i++){
 				frame = frames.getFrame(i);
-				pixi = PIXI.TextureCache[frame.uuid];
+				pixi = frame;//PIXI.TextureCache[frame.uuid];
 				
 				width += pixi.width;
 				if(height < pixi.height){
@@ -613,9 +613,9 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			for(var i=panel.data.frames.start; i<panel.data.frames.end; i++){
 				frame = frames.getFrame(i);
 				var r = frame.getRect();
-				pixi = PIXI.TextureCache[frame.uuid];
+				pixi = frame;//PIXI.TextureCache[frame.uuid];
 				
-				src = pixi.baseTexture.source;
+				//src = frame;//pixi.baseTexture.source;
 				var x = 0;
 				var y = 0;
 				if(pixi.trim){

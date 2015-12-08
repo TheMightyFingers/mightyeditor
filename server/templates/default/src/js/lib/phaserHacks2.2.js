@@ -4,24 +4,24 @@
 
 (function(){
 	"use strict";
-		var _loadFile = Phaser.Loader.prototype.loadFile;
-
-	Phaser.Loader.prototype.loadFile = function(file){
-		//var file = this._fileList[this._fileIndex];
+	
+	// for older phaser versions
+	var _loadFile = Phaser.Loader.prototype.loadFile;
+	Phaser.Loader.prototype.loadFile = function(){
+		var file = this._fileList[this._fileIndex];
 		this.onFileStart.dispatch(this.progress, file.key, file.url);
 		
 		if(file.type == "font"){
-			this.fontLoad(file, file.key, 'text', 'fileComplete', 'fileError');
+			this.fontLoad(this._fileIndex, file.key, 'text', 'fileComplete', 'fileError');
 			return;
 		}
 		
 		if(file.type != "script"){
-			_loadFile.call(this, file);
+			_loadFile.call(this);
 			return;
 		}
 		
-		file.type = "unknown";
-		this.scriptLoad(file, this.baseURL + file.url, 'text', 'fileComplete', 'fileError');
+		this.scriptLoad(this._fileIndex, this.baseURL + file.url, 'text', 'fileComplete', 'fileError');
 	};
 
 	Phaser.Loader.prototype.scriptLoad = function (index, url, type, onload, onerror) {
@@ -51,7 +51,8 @@
 
 		var outputText = this.text;
 
-		if (this.style.wordWrap) {
+		if (this.style.wordWrap)
+		{
 			outputText = this.runWordWrap(this.text);
 			maxLineWidth = this.wordWrapWidth;
 		}
@@ -264,6 +265,7 @@
 
 	};
 
+	
 	TweenCollection.prototype = {
 		isLooping: false,
 		_fps: -1,
@@ -281,38 +283,38 @@
 				if(this._fps == -1){
 					if(movie.subdata){
 						this._fps = mt.data.map.movieInfo.fps;
-
+						
 					}
 					else{
 						this._fps = movie.info.fps || mt.data.map.movieInfo.fps;
 					}
 					this._ifps = 1000/this._fps;
-
+					
 				}
 				if(this._lastFrame == -1){
 					if(movie.subdata){
 						this._lastFrame = mt.data.map.movieInfo.lastFrame;
-
+						
 					}
 					else{
 						this._lastFrame =  movie.info.lastFrame || mt.data.map.movieInfo.lastFrame;
 					}
-
+					
 				}
 				this._mainTimer = mt.game.time.create(false);
-
+				
 				if(movie.subdata && movie.subdata.length > 0){
 					this._buildSubTweens(movie.subdata);
 				}
 			}
-
+			
 			if(movie.frames.length === 0){
 				return null;
 			}
-
+			
 			var start = movie.frames[0];
 			this._startPos.push({obj: pack.self, start: start});
-
+			
 			for(var k in start){
 				tween = null;
 				delay = this._delay;
@@ -326,14 +328,14 @@
 					if(stop.easings){
 						ea = stop.easings[k];
 					}
-
+					
 					/*var ss = mt._mkDiff(start, stop);
 					if(!ss[k]){
 						continue;
 					}*/
 					var tmp = {};
 					tmp[k] = stop[k];
-
+					
 					tween = this._addTween(pack.self, start, stop, ea, tween, tmp, delay);
 					delay = 0;
 				}
@@ -343,7 +345,7 @@
 			}
 			return;
 		},
-
+		
 		_buildChildTweens: function(children){
 			var child;
 			for(var key in children){
@@ -355,11 +357,11 @@
 				this._buildChildTweens(child.mt.children);
 			}
 		},
-
+		
 		_buildSubTweens: function(sub){
 			var st, innerData, delay, frame;
 			var that = this;
-
+			
 			for(var i=0; i<sub.length; i++){
 				innerData = sub[i].movies[this.name];
 				if(!innerData || !innerData.frames || innerData.frames.length === 0){
@@ -368,14 +370,14 @@
 				for(var c in this._pack.children){
 					for(var fi=0; fi<innerData.frames.length; fi++){
 						frame = innerData.frames[fi];
-
+						
 						st = new TweenCollection(sub[i].name, this._pack.children[c].mt, this._fps, Math.min(frame.length + frame.keyframe, this._lastFrame)*this._ifps, frame.keyframe);
 						this._addSubTween(st);
 					}
 				}
 			}
 		},
-
+		
 		_mk_sub: function(timer, delay, name, children){
 			var that = this;
 			return function(){
@@ -390,7 +392,7 @@
 				children[c].mt.movies[movie].start().loop();
 			}
 		},
-
+ 
 		/*
 		 * TODO: make easings work
 		 */
@@ -398,7 +400,7 @@
 			var tween;
 			var st = start.keyframe * this._ifps;
 			var et = (stop.keyframe - start.keyframe) * this._ifps;
-
+			
 			if(!nextTween){
 				tween = new Phaser.Tween(obj, mt.game, this.manager);
 				if(delay){
@@ -408,13 +410,13 @@
 			else{
 				tween = nextTween;
 			}
-
+			
 			var ea = void(0);
 			if(easing){
 				if(easing == "NONE"){
 					// delay and complete tween in 1 ms
-					// delay not working here... use empty tween
-					tween = tween.to({}, et-1).to(to, 1);
+					tween = tween.delay(et - 1);
+					tween = tween.to(to, 1);
 					return tween;
 				}
 				ea = Phaser.Easing;
@@ -423,27 +425,27 @@
 					ea = ea[t.shift()];
 				}
 			}
-
+			
 			tween = tween.to(to, et, ea);
 			return tween;
 		},
-
+ 
 		_addSubTween: function(tween){
 			this._subtweens.push(tween);
 		},
 		_stop: function(reset){
-
+			
 			mt.game.plugins.remove(this.manager);
 			this.manager.removeAll();
 			this.manager.update();
-
+			
 			var i, j, tween, l;
 			this._mainTimer.stop();
-
+			
 			for(i=0; i<this._subtweens.length; i++){
 				this._subtweens[i].stop(reset);
 			}
-
+			
 			for(i=0; i<this._tweens.length; i++){
 				this._tweens[i].stop();
 				tween = this._tweens[i];
@@ -463,32 +465,32 @@
 				this.stop(true);
 			}
 			this.isStarted = true;
-
+			
 			var i, j, l, tween;
 			if(!this._subtweens.length && !this._tweens.length){
 				return this;
 			}
-
+			
 			if(!this._mainTimer){
 				return this;
 			}
-
+			
 			mt.game.plugins.add(this.manager);
-
+			
 			this._mainTimer.removeAll();
-
+			
 			this._mainTimer.add(this._ifps * this._lastFrame, this._complete, this);
-
-
+			
+			
 			this.reset();
 			this.resume();
-
+			
 			if(this._delay){
 				this._mainTimer.add(this._ifps * this._delay, this._start, this);
 			}
 			else{
 				this._start();
-			}
+			}		
 			this._mainTimer.start();
 			return this;
 		},
@@ -497,32 +499,32 @@
 			for(i=0; i<this._subtweens.length; i++){
 				this._subtweens[i].start();
 			}
-
+			
 			for(i=0; i<this._tweens.length; i++){
 				tween = this._tweens[i];
 				tween._paused = false;
 				tween.pendingDelete = false;
 				tween.start();
-
-
+				
+				
 				for(j=0,l=tween.timeline.length; j<l; j++){
 					tween = tween.timeline[j].parent;
 					tween._paused = false;
 					tween.pendingDelete = false;
 				}
-			}
+			}	
 		},
 		stop: function(reset){
-
+			
 			this._stop();
 			if(reset){
 				this.reset();
 			}
 			this.isLooping = false;
-
+			
 			return this;
 		},
-
+		
 		reset: function(){
 			var op, sub;
 			for(var i=0; i<this._startPos.length; i++){
@@ -546,7 +548,7 @@
 			for(i=0; i<this._subtweens.length; i++){
 				this._subtweens[i].pause();
 			}
-
+			
 			return this;
 		},
 		resume: function(){
@@ -559,22 +561,22 @@
 					tween = tween.timeline[j].parent;
 					tween.resume();
 				}
-
-
+				
+				
 			}
 			for(i=0; i<this._subtweens.length; i++){
 				this._subtweens[i].resume();
 			}
-
+			
 			return this;
 		},
-
+		
 		delay: function(ms){
 			this.delay.removeAll();
 			this._delay.add(ms, this.start, this);
 			return this;
 		},
-
+		
 		loop: function(){
 			if(this.isLooping){
 				return;
@@ -585,7 +587,7 @@
 			}
 			return this;
 		},
-
+		
 		_complete: function(){
 			this.onComplete.dispatch(this);
 			this._stop(true);

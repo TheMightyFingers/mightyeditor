@@ -8,6 +8,7 @@
 canvas{
 	width: auto !important;
 	height: auto !important;
+
 }
 
 .fa {
@@ -24,6 +25,7 @@ canvas{
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-ms-box-sizing: border-box;
+	cursor: inherit;
 }
 
 :not(.ui-input-value):not(input):not(textarea){
@@ -76,6 +78,7 @@ body {
 	min-width: 880px;
 	position: relative;
 	perspective: 1000;
+	cursor: default;
 }
 body.login{
 	min-width: 600px;
@@ -1137,7 +1140,7 @@ fieldset div.ui-button:active {
 	line-height: 20px;
 	letter-spacing: 1.4px;
 	background-color: inherit;
-	
+
 }
 .ui-popup.starting-popup div.ui-popup-content {
 	position: absolute;
@@ -2403,7 +2406,7 @@ right: 5px;
   font-weight: 400;
   height: 34px;
   overflow: visible;
-  
+
 }
 .full-size input.ui-input{
 position: absolute;
@@ -2419,4 +2422,9 @@ top: 0 !important;
 fieldset > div.ui-input:last-of-type {
   margin-bottom: 0;
   border-bottom: 0;
+}
+
+.ui-treeview-folder .ui-treeview-folder .ui-treeview-folder .ui-treeview-folder .ui-treeview-folder .ui-treeview-folder
+.ui-treeview-folder .ui-treeview-folder .ui-treeview-folder .ui-treeview-folder *{
+	color: black !important;
 }

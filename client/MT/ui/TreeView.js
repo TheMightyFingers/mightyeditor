@@ -836,24 +836,7 @@ MT.extend("core.Emitter")(
 				catch(e){}
 				
 				if(needSave && this.value != ""){
-					var part = "";
-					if(el.parent.data){
-						part = el.parent.data.fullPath;
-					}
-					
-					var op = el.data.name;
-					
-					el.data.fullPath = part+"/"+this.value;
-					el.data.name = this.value;
-					el.head.label.el.innerHTML = this.value;
-					
-					var o = part + "/" + op;
-					var n = part + "/" + this.value;
-					
-					if(o !== n){
-						that.emit("change", part + "/" + op, part + "/" + this.value);
-						that.emit("rename", el, op);
-					}
+					that.rename(el, this.value);
 				}
 				else{
 					el.head.label.el.innerHTML = lastValue;
@@ -894,7 +877,29 @@ MT.extend("core.Emitter")(
 			this.inputEnabled = true;
 			
 		},
-   
+
+		rename: function(el, name){
+			var that = this;
+			var part = "";
+			if(el.parent.data){
+				part = el.parent.data.fullPath;
+			}
+
+			var op = el.data.name;
+
+			el.data.fullPath = part+"/"+name;
+			el.data.name = name;
+			el.head.label.el.innerHTML = name;
+
+			var o = part + "/" + op;
+			var n = part + "/" + this.value;
+
+			if(o !== n){
+				that.emit("change", part + "/" + op, part + "/" + name);
+				that.emit("rename", el, op);
+			}
+		},
+
 		remove: function(){
 			this.tree.hide();
 		},

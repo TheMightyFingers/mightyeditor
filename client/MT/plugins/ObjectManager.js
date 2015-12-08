@@ -653,11 +653,11 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				var data = that.tv.getData();
 				var json = JSON.stringify(data);
 				if(this._lastData == json){
-					this._syncTm = 0;
+					that._syncTm = 0;
 					return;
 				}
-				
-				this._lastData = json;
+
+				that._lastData = json;
 				if(!silent){
 					that.emit(MT.OBJECTS_SYNC, data);
 				}

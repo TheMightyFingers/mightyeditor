@@ -42,6 +42,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		this.plugins = {};
 		
 		this.pluginsEnabled = [
+			"Auth",
 			"AssetManager",
 			"ObjectManager",
 			"MapEditor",
@@ -63,7 +64,7 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			"TooltipManager",
 			"Notification",
 			"MovieMaker",
-			"Auth",
+
 		];
 		
 		for(var id=0, i=""; id<this.pluginsEnabled.length; id++){
@@ -92,11 +93,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		});
 		
 		
-		console.log("before unload added");
+
 		
-		/*window.onbeforeunload = function(e){
+		/*
+		 console.log("before unload added");
+		window.onbeforeunload = function(e){
 			console.log("load", e);
-			
 			return "Are you really want to leave MightyEditor?";
 		};*/
 	},
@@ -224,6 +226,27 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			});
 			pop.center();
 		},
+		// find broken asstes and if images matches object images
+		// set Asset name to corresponding object
+		// fix due to bug related to the states 
+		// reported by guys from: imaginemachine.com
+		renameBrokenAssets: function(){
+			var atv = pp.plugins.assetmanager.tv;
+			atv.items.forEach(function(ii){
+				var om = pp.plugins.objectmanager;
+				var objs = om.tv.items;
+				
+				objs.forEach(function(ob){
+					if(ii.img && ob.img && ii.img.src == ob.img.src){
+						atv.rename(ii, ob.data.name + "." + ii.data.__image.split(".").pop());
+						var ob = map.getById(ob.data.id);
+						if(ob){
+							ob.assetId = ii.data.id;
+						}
+					}
+				});
+			});
+		},
 		
 		setUpData: function(){
 			document.body.style.backgroundColor = this.data.backgroundColor;
@@ -234,8 +257,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 			if(data.level > 0){
 				return;
 			}
-			
-			
 			var button = this.plugins.auth.mainButton;
 			var diff = Date.now() - data.now;
 			
@@ -258,8 +279,6 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				this.a_projectHasExpired();
 				return;
 			}
-			
-			
 			var dd = "", hh = "", mm = "", ss = "";
 			
 			var days = Math.floor(expire / day);
