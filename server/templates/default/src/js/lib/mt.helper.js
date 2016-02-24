@@ -44,10 +44,17 @@
 			var newBox = span.getBoundingClientRect();
 			if(csmsBox.width != newBox.width || csmsBox.height != newBox.height){
 				document.body.removeChild(span);
-				for(var i in PIXI.Text.heightCache){
+				// TODO: find out where PIXI stores cached fonts
+				/*for(var i in PIXI.Text.heightCache){
 					delete PIXI.Text.heightCache[i];
-				}
+				}*/
 				_this[onload](file);
+				mt._markDirty();
+				
+				// FIXIT: sometimes marking dirty for the first time is not enough
+				window.setTimeout(function(){
+					mt._markDirty();
+				}, 100);
 			}
 			else{
 				window.setTimeout(checkLoaded, 100);
@@ -61,7 +68,7 @@
 		data = global.mt.data;
 	}
 	
-	global.mt = {
+	var mt = global.mt = {
 		
 		SPRITE: 0,
 		GROUP: 1,
@@ -358,7 +365,8 @@
 					if(this.knownFonts.indexOf(object.style.fontFamily) != -1){
 						continue;
 					}
-					this.game.load.font(object.style.fontFamily);
+					
+					this.game.load.font(object.style.fontFamily, object.style.fontFamily);
 				}
 			}
 		},
@@ -602,7 +610,7 @@
 		_addText: function(object, group){
 			group = group || this.game.world;
 			var t = this.game.add.text(object.x, object.y, object.text || object.name, object.style);
-			group.add(t);
+			group.addChild(t);
 			return t;
 		},
 		
@@ -699,19 +707,20 @@
 		
 		//mark all texts dirty to force redraw
 		_markDirty: function(group){
-			group = group || game.world.children;
+			group = group || this.game.world.children;
 			
 			var child = null;
 			for(var i=0; i<group.length; i++){
 				child = group[i];
 				
-				if(child.type == Phaser.TEXT){
+				// instanceOf is required as child type in phaser 2.4.4 = 0
+				if(child.type == Phaser.TEXT || child instanceof Phaser.Text){
 					child.dirty = true;
 					continue;
 				}
 				
-				if(child.type == Phaser.GROUP){
-					this.markDirty(child.children);
+				if(child.children && child.children.length){
+					this._markDirty(child.children);
 				}
 			}
 		}
