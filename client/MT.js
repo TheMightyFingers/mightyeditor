@@ -1381,8 +1381,9 @@ MT.extend("core.Emitter")(
 		
 			var bounds = this.el.getBoundingClientRect();
 			var style = window.getComputedStyle(this.el);
-			for(var i in style){
-				this.input.style[i] = style[i];
+			var keys = Object.keys(style);
+			for(var i=0; i<keys.lenght; i++){
+				this.input.style[keys[i]] = style[keys[i]];
 			}
 			this.input.style.zIndex = 10000;
 			this.input.style.position = "absolute";
@@ -1402,6 +1403,7 @@ MT.extend("core.Emitter")(
 		}
 	}
 );
+
 //MT/plugins/tools/Physics.js
 MT.namespace('plugins.tools');
 MT.extend("core.BasicTool")(
@@ -17978,6 +17980,12 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 		},
 		
 		checkSession: function(){
+			this.send("checkSession", sessionId);
+			if(this.onstart){
+				this.onstart();
+				this.onstart = null;
+			}
+			return;
 			var sessionId = MT.core.Helper.getCookie(this.sessionCookie);
 			if(sessionId){
 				this.send("checkSession", sessionId);
@@ -24048,6 +24056,27 @@ MT.extend("core.BasicPlugin").extend("core.Emitter")(
 				t.a_goToHome();
 			});
 			pop.center();
+		},
+		// find broken asstes and if images matches object images
+		// set Asset name to corresponding object
+		// fix due to bug related to the states 
+		// reported by guys from: imaginemachine.com
+		renameBrokenAssets: function(){
+			var atv = pp.plugins.assetmanager.tv;
+			atv.items.forEach(function(ii){
+				var om = pp.plugins.objectmanager;
+				var objs = om.tv.items;
+				
+				objs.forEach(function(ob){
+					if(ii.img && ob.img && ii.img.src == ob.img.src){
+						atv.rename(ii, ob.data.name + "." + ii.data.__image.split(".").pop());
+						var ob = map.getById(ob.data.id);
+						if(ob){
+							ob.assetId = ii.data.id;
+						}
+					}
+				});
+			});
 		},
 		
 		setUpData: function(){
