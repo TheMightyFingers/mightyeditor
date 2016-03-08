@@ -82,7 +82,7 @@ MT.extend("core.Emitter")(
 			var bounds = this.el.getBoundingClientRect();
 			var style = window.getComputedStyle(this.el);
 			var keys = Object.keys(style);
-			for(var i=0; i<keys.lenght; i++){
+			for(var i=0; i<keys.length; i++){
 				this.input.style[keys[i]] = style[keys[i]];
 			}
 			this.input.style.zIndex = 10000;
